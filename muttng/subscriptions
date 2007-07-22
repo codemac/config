@@ -1,0 +1,9 @@
+# subscriptions
+
+unlists *
+
+lists `find ~/.mail/lists -type d | awk -F/ '{print $NF}' | egrep -v '(new|tmp|cur|lists)' | tr "\012" " "`
+
+unsubscribe *
+
+subscribe `find ~/.mail/lists -type d | awk -F/ '{print $NF}' | egrep -v '(new|tmp|cur|lists)' | tr "\012" " "`

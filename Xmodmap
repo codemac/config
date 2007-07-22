@@ -1,0 +1,14 @@
+! Swap caps lock to control, escape to caps lock, and control to escape
+remove Lock = Caps_Lock
+remove Control = Control_L
+
+keysym Control_L = Escape
+keysym Escape = Caps_Lock
+keysym Caps_Lock = Control_L 
+
+add Lock = Caps_Lock
+add Control = Control_L
+
+keycode 111 =
+keycode 94 = Alt_L
+keycode 116 = Super_L

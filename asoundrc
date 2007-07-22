@@ -1,0 +1,18 @@
+    pcm.mixin {
+        type dsnoop
+        ipc_key 5978293	# must be unique for all dmix plugins!!!!
+        ipc_key_add_uid yes
+        slave {
+                pcm "hw:0,0"
+		channels 2
+		period_size 1024
+		buffer_size 4096
+		rate 44100
+		periods 0 
+		period_time 0
+        }
+        bindings {
+                0 0
+                0 1
+        }
+    }

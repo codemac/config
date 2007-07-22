@@ -1,0 +1,2 @@
+#!/bin/zsh
+#	zlogout file

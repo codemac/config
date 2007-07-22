@@ -1,0 +1,384 @@
+# Most recent update: Sat 21 Jul 2007 03:31:49 PM EDT
+xterm*toolBar:	false
+xterm*utf8: 2
+
+xclock*hourColor:		blue
+xclock*minuteColor:		blue
+xclock*secondColor:		blue
+xclock*majorColor:		white
+xclock*minorColor:		blue
+xclock*buffer:			true
+xclock*background:		black
+
+urxvt*saveLines:        32767
+urxvt*scrollBar:        false
+urxvt*loginShell:       true
+urxvt*internalBorder:   0
+urxvt*termName:         rxvt-unicode
+urxvt*backgroundPixmap: /home/codemac/.background.xpm
+!urxvt*font:				-jis-fixed-medium-r-normal-*-12-110-100-100-c-160-jisx0208.1983-0
+!urxvt*font:				-bitstream-bitstream vera sans mono-*-r-normal-*-12-120-75-75-m-0-iso8859-1
+!urxvt*font:				-*-terminus-medium-r-normal--12-120-72-72-c-0-iso8859-1
+!urxvt*boldFont:			-*-terminus-bold-r-normal--12-120-72-72-c-0-iso8859-1
+urxvt*boldFont:			xft:Terminus:pixelsize=12
+!urxvt*italicFont:		-*-terminus-medium-i-normal--12-120-72-72-c-0-iso8859-1
+urxvt*font:				xft:Terminus:pixelsize=12
+!rxvt*font:				xft:smoothansi:pixelsize=12
+!urxvt*font:				xft:Bitstream Vera Sans Mono:pixelsize=10
+!urxvt*font:				-bitstream-bitstream vera sans mono-*-r-normal-*-12-120-75-75-m-0-iso8859-1
+!urxvt*font:				-xos4-terminus-medium-r-normal--12-120-72-72-c-60-iso8859-1
+!urxvt*boldFont:			-xos4-terminus-medium-r-normal--12-120-72-72-c-60-iso8859-1
+urxvt*perl-lib:         /usr/lib/urxvt/perl
+urxvt*perl-ext-common:  default,matcher,automove-background
+urxvt*matcher.button:	1
+urxvt*urlLauncher:      firefox
+
+
+aterm*loginShell:       true
+aterm*transparent:      true
+aterm*shading:          50
+aterm*background:       Black
+aterm*foreground:       White
+aterm*scrollBar:        true
+aterm*scrollBar_right:  true
+aterm*transpscrollbar:  true
+aterm*saveLines:        32767
+aterm*font:             -bitstream-bitstream vera sans mono-medium-r-normal-*-12-120-75-75-m-0-iso8859-1
+aterm*boldFont:         -bitstream-bitstream vera sans mono-bold-r-normal-*-12-120-75-75-m-0-iso8859-1
+
+!! phrakture
+!*foreground:       #bbbbbb
+!*background:       #000000
+!! Black + DarkGrey
+!*color0:            #000000
+!*color8:            #222222
+!! DarkRed + Red
+!*color1:            #803232
+!*color9:            #982b2b
+!! DarkGreen + Green
+!*color2:            #5b762f
+!*color10:           #89b83f
+!! DarkYellow + Yellow
+!*color3:            #aa9943
+!*color11:           #efef60
+!! DarkBlue + Blue
+!*color4:            #324c80
+!*color12:           #2b4f98
+!! DarkMangenta + Mangenta
+!*color5:            #706c9a
+!*color13:           #826ab1
+!!DarkCyan + Cyan
+!*color6:            #92b19e
+!*color14:           #a1cdcd
+!! LightGrey + White
+!*color7:            #ffffff
+!*color15:           #dededE
+
+
+!urxvt*foreground:   #EFEFEF
+!urxvt*background:   #000000
+
+!! Black + DarkGrey
+!urxvt*color0:       #000000
+!urxvt*color8:       #666666
+!
+!! DarkRed + Red
+!urxvt*color1:       #b45151
+!urxvt*color9:       #fe8686
+!
+!! DarkGreen + Green
+!urxvt*color2:       #aece92
+!urxvt*color10:      #97fa97
+!
+!! DarkYellow + Yellow
+!urxvt*color3:       Khaki3
+!urxvt*color11:      #efe58b
+!
+!! DarkBlue + Blue
+!urxvt*color4:       #2797d8
+!urxvt*color12:      #86cdea
+!
+!! DarkMangenta + Mangenta
+!urxvt*color5:       #aa6eaf
+!urxvt*color13:      #cb96ce
+!
+!!DarkCyan + Cyan
+!urxvt*color6:       #418179
+!urxvt*color14:      #71bebe
+!
+!! LightGrey + White
+!urxvt*color7:       #bebebe
+!urxvt*color15:      #ffffff
+
+! ---| scb |--- {{{
+!*color0: #000000
+!*color1: #bf7276
+!*color2: #86af80
+!*color3: #968a38
+!*color4: #3673b5
+!*color5: #9a70b2
+!*color6: #7abecc
+!*color7: #dbdbdb
+!*color8: #6692af
+!*color9: #e5505f
+!*color10: #87bc87
+!*color11: #e0d95c
+!*color12: #1b85d6
+!*color13: #ad73ba
+!*color14: #338eaa
+!*color15: #f4f4f4
+!*foreground: #ffffff
+!*background: #000000
+!*scrollBar: False
+! }}}
+
+! ---| rephorm |--- {{{
+!*foreground: #aaaaaa
+!*background: black
+!*cursorColor: #ffff00
+!*cursorColor2: #880000
+!*pointerColor: white
+!*color0:  black
+!*color1:  #9e1828
+!*color2:  #aece92
+!*color3:  #968a38
+!*color4:  #414171
+!*color5:  #963c59
+!*color6:  #7f9f7f
+!*color7:  gray
+!*color8:  gray40
+!*color9:  #cf6171
+!*color10: #afc5af
+!*color11: #f0dfaf
+!*color12: #8e9fbc
+!*color13: #dca3a3
+!*color14: #95c1c5
+!*color15: white
+!*colorbd: white
+!*saveLines: 5000
+!*keysym.0xFF50:   \001
+!*keysym.0xFF57:   \005
+! }}}
+
+! ---| hewbert |--- {{{
+!*foreground:gray
+!*transparent: true
+!*background: #1d2b3a
+!*shading: 50
+!*color0:         #000000
+!*color1:         #d36265
+!*color2:         #aece91
+!*color3:         #e7e18c
+!*color4:         #7a7ab0
+!*color5:         #963c59
+!*color6:         #418179
+!*color7:         gray
+!*color8:         gray40
+!*color9:         #ef8171
+!*color10:        #e5f779
+!*color11:        #fff799
+!*color12:        #4186be
+!*color13:        #ef9ebe
+!*color14:        #71bebe
+!*color15:        white
+!*cursorColor: white
+!*font: 6x10
+!*scrollBar:      false
+!*saveLines:    2000
+!}}}
+
+! ---| Rasterman? |--- {{{
+rasterman*background:  black
+rasterman*foreground:  #cccccc
+rasterman*cursorColor: yellow
+rasterman*color0:      black
+rasterman*color1:      #af1828
+rasterman*color2:      #aece92
+rasterman*color3:      #968a38
+rasterman*color4:      #414171
+rasterman*color5:      #a74d6a
+rasterman*color6:      #418179
+rasterman*color7:      gray
+rasterman*color8:      gray40
+rasterman*color9:      #df6171
+rasterman*color10:     #c5f779
+rasterman*color11:     #fff796
+rasterman*color12:     #4186be
+rasterman*color13:     #dfafcf
+rasterman*color14:     #71bebe
+rasterman*color15:     white
+!}}}
+
+! ---| jsolomon |--- {{{
+jterm*background: black
+jterm*foreground: gray90
+jterm*cursorColor: gray90
+
+jterm*color0:                   black
+jterm*color1:                   red
+jterm*color2:                   green
+jterm*color3:                   yellow
+jterm*color4:                   blue
+jterm*color5:                   magenta
+jterm*color6:                   cyan
+jterm*color7:                   white
+jterm*color8:                   burlywood1
+jterm*color9:                   sienna1
+jterm*color10:                  PaleVioletRed1
+jterm*color11:                  LightSkyBlue
+jterm*color12:                  white
+jterm*color13:                  white
+jterm*color14:                  white
+jterm*color15:                  white
+
+jterm*colorMode:                on
+jterm*dynamicColors:            on
+!}}}
+
+! ---| Jasta |--- {{{
+jasta*color0:  #000000
+jasta*color1:  #9e1828
+jasta*color2:  #5cb247
+jasta*color3:  #968a38
+jasta*color4:  #4161a0
+jasta*color5:  #9b768e
+jasta*color6:  #419189
+jasta*color7:  gray   
+jasta*color8:  gray40 
+jasta*color9:  #cf6171
+jasta*color10: #c5f779
+jasta*color11: #fff796
+jasta*color12: #4186be
+jasta*color13: #cf9ebe
+jasta*color14: #71bebe
+jasta*color15: #dddddd
+jasta*colorBD: #719b96
+jasta*colorUL: #719b96
+jasta*cursorColor:  #71bebe
+jasta*cursorColor2: #880000
+jasta*tinting:     #050f23
+jasta*tintingType: true
+jasta*fading:    85
+jasta*font:     9x15
+!}}}
+
+! ---| m3g | --- {{{
+m3g*loginShell:       true
+m3g*shading:          100
+m3g*transparent:      false
+m3g*scrollBar:        false
+m3g*cursorColor:      white
+m3g*font:             bleed2
+m3g*reverseVideo:     true
+
+!black
+m3g*color0:           rgb:00/00/00
+m3g*color8:           rgb:60/60/60
+
+!red
+m3g*color1:           rgb:b0/70/50
+m3g*color9:           rgb:b0/70/50
+
+!greenA
+m3g*color2:           rgb:12/91/4e
+m3g*color10:          rgb:12/91/4e
+
+!yellow
+m3g*color3:           rgb:a0/a0/70
+m3g*color11:          rgb:c0/c0/90
+
+!blue
+m3g*color4:           rgb:3e/45/81
+m3g*color12:          rgb:3e/45/81
+
+!magenta
+m3g*color5:           rgb:a0/70/a0
+m3g*color13:          rgb:c0/90/c0
+
+!cyan
+m3g*color6:           rgb:70/a0/a0
+m3g*color14:          rgb:90/c0/c0
+
+!white
+m3g*color7:           rgb:a0/a0/a0
+m3g*color15:          white
+
+m3g*colorBDMode:      on
+m3g*colorBD:          white
+m3g*colorULMode:      on
+m3g*colorUL:          white
+! }}}
+#! ---| xterminus |--- {{{
+!black
+urxvt*color0:           #000000
+urxvt*color8:           #505450
+!red
+urxvt*color1:           #bf7979
+urxvt*color9:           #f4a45f
+!green
+urxvt*color2:           #97b26b
+urxvt*color10:          #c5f779
+!yellow
+urxvt*color3:           #cdcda1
+urxvt*color11:          #ffffaf
+!blue
+urxvt*color4:		   #4a54A3
+urxvt*color12:		   #7d87A4
+!magenta
+urxvt*color5:	   #9c3885
+urxvt*color13:	   #e628ba
+!cyan
+urxvt*color6:           #88aadd
+urxvt*color14:          #99ccff
+!white
+urxvt*color7:           #ffffff
+urxvt*color15:          #dedede
+
+
+xterm*color0:           #000000
+xterm*color8:           #505450
+xterm*color1:           #bf7979
+xterm*color9:           #f4a45f
+xterm*color2:           #97b26b
+xterm*color10:          #c5f779
+xterm*color3:           #cdcda1
+xterm*color11:          #ffffaf
+xterm*color4:		   #4a54A3
+xterm*color12:		   #7d87A4
+xterm*color5:	   #9c3885
+xterm*color13:	   #e628ba
+xterm*color6:           #88aadd
+xterm*color14:          #99ccff
+xterm*color7:           #ffffff
+xterm*color15:          #dedede
+xterm*foreground: #DDDDDD
+xterm*background: #000000
+xterm*cursorColor: yellow
+xterm*cursorColor2: white
+xterm*pointerColor: yellow
+xterm*term:		xterm-color	  
+#! ---| hisham |--- {{{
+hisham*color0:	#303430
+hisham*color8:	#CDB5CD
+hisham*color1:	#bf7979
+hisham*color9:	#f4a45f
+hisham*color2:	#97b22b
+hisham*color10:	#c5f779
+hisham*color3:	#b6aa58
+hisham*color11:	#fff796
+hisham*color4:	#86a2be
+hisham*color12:	#98afd9
+hisham*color5:	#d9b798
+hisham*color13:	#d7d998
+hisham*color6:	#a1d5cd
+hisham*color14:	#a1d5cd
+hisham*color7:	#ffffff
+hisham*color15:	#dedede
+!}}}
+
+#!	---| cursor fun! |--- {{{
+urxvt*foreground: #DDDDDD
+urxvt*background: #000000
+urxvt*cursorColor: yellow
+urxvt*cursorColor2: white
+urxvt*pointerColor: yellow

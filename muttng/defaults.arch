@@ -1,0 +1,13 @@
+# Author: Charles Mauch (charles@mauch.name)
+# Description: Defaults for system, resource regularly
+# Legal: (c) 2005 Charles Mauch, released under the terms of the GPLv2
+
+
+# Set the From Line
+source ~/.mutt/defaults
+
+set realname = "Jeff 'codemac' Mickey"
+set from = "jeff@archlinux.org"
+
+# Last Modified: Sun 23 Oct 2005 08:05:55 PM PDT
+# EOF

@@ -1,0 +1,181 @@
+# $Id$
+#
+# Author: Charles Mauch (charles@mauch.name)
+# Description: mutt headers config
+# Legal: (c) 2005 Charles Mauch, released under the terms of the GPLv2
+
+# -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=-
+# Configure header displays.
+
+# UnIgnore all headers
+unignore *
+
+# -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=-
+# Then ignore the common other headers, this way I can
+# see user-created tidbits.  Yes, it was a pain to create
+
+#ignore To:
+ignore Reply-To:
+ignore Mail-Followup-To:
+#ignore Subject:
+#ignore Date:
+ignore Organization:
+ignore Newsgroups:
+#ignore CC:
+#ignore BCC:
+ignore Message-ID:
+ignore X-Hashcash:
+ignore X-Mailer:
+ignore X-Spam-Status:
+ignore X-CRM114-Version:
+ignore X-CRM114-Status:
+ignore Received:
+ignore X-Gmail-Received:
+ignore Return-Path:
+ignore Precedence:
+ignore Sender:
+ignore X-Accept-Language:
+ignore Mime-Version:
+ignore References:
+ignore Content-Type:
+#ignore From:
+ignore Delivered-To:
+ignore Received-SPF:
+ignore Mailing-List
+ignore Content-Transfer-Encoding:
+ignore Status:
+ignore Content-Length:
+ignore Lines:
+ignore X-Spam-Level:
+ignore X-Spam-Checker-Version:
+ignore X-Priority:
+ignore X-MSMail-Priority:
+ignore X-MimeOLE:
+ignore X-Virus-Scanned-kumar:
+ignore X-Note:
+ignore Thread-Index:
+ignore DomainKey-Status:
+ignore DomainKey-Signature:
+ignore X-MS-Has-Attach:
+ignore X-MS-TNEF-Correlator:
+ignore Thread-Topic:
+ignore X-OriginalArrivalTime:
+ignore X-Original-To:
+ignore X-UIDL:
+ignore Content-class:
+ignore In-Reply-To:
+ignore X-AntiAbuse:
+ignore X-Source:
+ignore X-Source-Args:
+ignore X-Source-Dir:
+ignore Content-Disposition:
+ignore X-VirusChecked:
+ignore X-Env-Sender:
+ignore X-Msg-Ref:
+ignore X-StarScan-Version:
+ignore X-Originating-IP:
+ignore X-MIMETrack:
+ignore X-SA-Exim-Mail-From:
+ignore X-SA-Exim-Version:
+ignore X-SA-Exim-Scanned:
+ignore X-uvscan-result:
+ignore X-Authenticated:
+ignore X-Auth-No:
+ignore X-Flags:
+ignore X-NAIMIME-Disclaimer:
+ignore X-NAIMIME-Modified:
+ignore X-ORBL:
+ignore X-Sasl-Enc:
+ignore X-Virus:
+ignore X-TN_AV:
+ignore X-Originating-Email:
+ignore X-Sender:
+ignore Importance: Normal
+ignore X-O-General-Status: 
+ignore X-O-Spam1-Status:
+ignore X-O-Spam2-Status:
+ignore X-O-URL-Status: 
+ignore X-O-Virus1-Status: 
+ignore X-O-Virus2-Status:
+ignore X-O-Virus3-Status:
+ignore X-O-Virus4-Status:
+ignore X-O-Virus5-Status:
+ignore X-O-Image-Status:
+ignore X-O-Attach-Status:
+ignore X-SpheriQ-Ver:
+ignore X-Virus-Scanner:
+ignore X-Virus-Scanned:
+ignore X-imss-version:
+ignore X-imss-result:
+ignore X-imss-scores:
+ignore X-imss-settings:
+ignore X-Source-IP:
+ignore X-Source-Sender:
+ignore X-AUTH:
+ignore X-Sun-Charset:
+ignore X-Gmane-NNTP-Posting-Host:
+ignore X-Complaints-To:
+ignore X-Injected-Via-Gmane:
+ignore X-wmSenderIP:
+ignore X-Complaints-To:
+ignore X-Y-GMX-Trusted:
+ignore X-Envelope-From:
+ignore X-Envelope-To:
+ignore X-Scanned-By:
+ignore X-WELL-Auth:
+ignore X-Virus-Status:
+ignore X-Qmail-Scanner-Mail-From:
+ignore X-Qmail-Scanner:
+ignore X-ME-UUID:
+ignore X-Authentication-Warning:
+ignore X-BeenThere:
+ignore X-Mailman-Version:
+ignore List-Id:
+ignore List-Unsubscribe:
+ignore List-Archive:
+ignore List-Post:
+ignore List-Help:
+ignore List-Subscribe:
+ignore Errors-To:
+ignore X-Mailman-Approved-At:
+ignore X-No-Archive:
+ignore Organisation:
+ignore X-PGP-Universal:
+ignore X-Relayed-By:
+ignore X-Enigmail-Version:
+ignore X-Chameleon-Return-To:
+ignore X-Xfmail-Return-To:
+ignore Read-Receipt-To:
+ignore X-Provags-ID:
+ignore X-Enigmail-Supports:
+ignore X-UiO-Spam-info:
+ignore X-Smtpserver:
+ignore Cancel-Lock:
+ignore X-Antivirus:
+ignore X-Antivirus-Code:
+ignore X-bounce-key:
+ignore X-HotPOP:
+ignore X-Gpgmail-State:
+ignore X-Pgp-Agent:
+ignore X-Informatics-MailScanner-Information:
+ignore X-Informatics-MailScanner:
+ignore X-Greylist:
+ignore X-linuxperu.com-MailScanner:
+ignore X-Yahoo-Newman-Property:
+ignore X-Apparently-To:
+ignore X-eGroups-Msg-Info:
+ignore X-Yahoo-Post-IP:
+ignore X-Message-ID:
+
+# -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=-
+# Now order the visable header lines
+hdr_order From: Subject: To: CC: BCC: Reply-To: Mail-Followup-To: Date: X-Hashcash: User-Agent: X-Mailer: X-Agent: X-Operating-System: X-Info: X-uri: X-Message-Flag: X-Spam-Level: X-Spam-Status: X-Spam-Report: X-Mailfolder:
+
+# -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=-
+# Our Default Headers (junk we add)
+my_hdr User-Agent: `mutt -v | grep "based on Mutt"`
+my_hdr X-Operating-System: ArchLinux GNU/Linux Kernel `uname -r` (`uname -m`)
+my_hdr X-Message-Flag: This email should be digitally signed.
+
+# Last Modified: Wed 19 Oct 2005 09:16:21 PM PDT
+# EOF

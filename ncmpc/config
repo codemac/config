@@ -1,0 +1,65 @@
+#
+## Configuration file for ncmpc (~/.ncmpc/config)
+## 
+
+## wrapped cursor movement
+#wrap-around = no
+
+## list-format
+list-format = "%name%|[%artist% - ][%album% #| ]%title%|%file%"
+
+## status-format
+status-format = "[%artist% - ][%album% #| ]%title%|%shortfile%"
+
+## sound audible bell on alerts
+audible-bell = no
+
+## enable visible bell on alerts
+visible-bell = yes
+
+## change the xterm title 
+set-xterm-title = yes
+
+## xterm title format
+#xterm-title-format = "ncmpc: [ %name%|[%artist% - ]%title%|%file%]"
+
+##
+## Color configuration
+##
+## colors: black,red,green,yellow,blue,magenta,cyan,white 
+##
+
+## enable/disable colors
+enable-colors = yes
+
+## background colors: black,red,green,yellow,blue,magenta,cyan,white, none 
+color background = none
+
+## text colors: black, red, green, yellow, blue, magenta, cyan, white,
+##              brightblack, brightred, brightgreen, brightyellow, brightblue,
+##              brightmagenta, brightcyan, brightwhite
+
+
+# Redefine colors (softer colors needed for TV-out)
+#colordef    red = 600, 200, 200
+#colordef  green = 200, 600, 200
+#colordef yellow = 700, 600, 200
+
+# white => gray
+#colordef  white = 400, 400, 400
+
+# cyan => orange
+#colordef  cyan = 600, 400, 200
+
+# colors for a the NewLinux framebuffer theme
+color title = white
+color title-bold = brightcyan
+color line = brightred
+color line-flags = brightblue
+color list = white
+color list-bold = brightyellow
+color progressbar = brightred
+color status-state = brightmagenta
+color status-song  = brightcyan
+color status-time  = brightyellow
+color alert = red

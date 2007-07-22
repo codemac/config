@@ -1,0 +1,154 @@
+#!/usr/bin/perl -Tw
+
+#     mutt.vcard.filter - vcard filter for use with the mutt autoview facility
+#     Copyright (C) 1997,1998,1999 David A Pearson
+#   
+#     This program is free software; you can redistribute it and/or modify
+#     it under the terms of the GNU General Public License as published by
+#     the Free Software Foundation; either version 2 of the license, or 
+#     (at your option) any later version.
+#     
+#     This program is distributed in the hope that it will be useful,
+#     but WITHOUT ANY WARRANTY; without even the implied warranty of
+#     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#     GNU General Public License for more details.
+#    
+#     You should have received a copy of the GNU General Public License
+#     along with this program; if not, write to the Free Software
+#     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+# This little perl script is a simple filter for text/x-vcard
+# attachments. I'm pretty sure I've *not* included everything
+# possible in here, but it "works for me". Feel free to improve
+# in any way you see fit.
+#
+# Here is how I use it. In my ~/.mutt_mailcap (use your filename of
+# choice) I have the following entry:
+#
+# text/x-vcard; mutt.vcard.filter; copiousoutput
+#
+# All you then need to do is add a line like:
+#
+# auto_view text/x-vcard
+#
+# to your ~/.muttrc (use your filename of choice).
+#
+# All comments/flames/feedback can be directed to:
+#
+#               davep@davep.org
+#
+# http://www.davep.org/mutt/
+#
+
+use strict;
+
+my $in_card    = 0;
+my @address    = ();
+my @contacts   = ();
+my @additional = ();
+my @notes      = ();
+my $name       = "";
+my $title      = "";
+my $org        = "";
+my $found_note = 0;
+my $len;
+my $i;
+my $addr_line;
+my $contact_line;
+
+while ( <> )
+{
+    if ( $in_card )
+    {
+        if ( /^fn:\s*(.*)$/i )
+        {
+            $name = $1;
+        }
+        elsif ( /^n:\s*(.*);\s*(.*)$/i )
+        {
+            @additional = ( "", "Additional information:", "" ) if $#additional == -1;
+
+            @additional = ( @additional, "Last Name:\t$1", "First Name:\t$2" );
+        }
+        elsif ( /^title:\s*(.*)$/i )
+        {
+            $title = $1;
+        }
+        elsif ( /^org:\s*(.*)$/i )
+        {
+            $org = $1;
+        }
+        elsif ( /^adr:\s*(.*)$/i )
+        {
+            my $addr = $1;
+            
+            $addr =~ s/;+/;/g;
+                
+            @address = split( /;/, $addr );
+        }
+        elsif ( /^email;\s*(.*?):\s*(.*)$/i || /^tel;\s*(.*?):\s*(.*)$/i )
+        {
+            my $type  = $1;
+            my $value = $2;
+
+            @contacts = ( @contacts, uc( substr( $type, 0, 1 ) ) .
+                         substr( $type, 1 ) . ": $value" );
+        }
+        elsif ( /^note:\s*(.*)$/i )
+        {
+            @notes = ( "" ) if $#notes == -1;
+            @notes = ( @notes, $1 );
+            
+            $found_note = 1;
+        }
+        elsif ( /^=.{2}=$/ && $found_note )
+        {
+            my $line = <>;
+
+            chomp( $line );
+            
+            @notes = ( "" ) if $#notes == -1;
+            @notes = ( @notes, $line );
+        }
+        elsif ( /^end:\s*vcard$/i )
+        {
+            $in_card = 0;
+        }
+    }
+    else
+    {
+        $in_card = /^begin:\s*vcard\s*$/i;
+    }
+}
+
+@address = ( $org,   @address ) if $org;
+@address = ( $title, @address ) if $title;
+@address = ( $name,  @address ) if $name;
+
+format STDOUT =
+@<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< @<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+$addr_line, $contact_line
+.
+
+$len = $#address > $#contacts ? $#address : $#contacts;
+
+print "" . ( "=" x 76 ) . "\n";
+
+for ( $i = 0; $i <= $len; $i++ )
+{
+    $addr_line    = $i <= $#address  ? $address[ $i ]  : "";
+    $contact_line = $i <= $#contacts ? $contacts[ $i ] : "";
+    write;
+}
+
+for ( $i = 0; $i <= $#notes; $i++ )
+{
+    print "$notes[ $i ]\n";
+}
+
+for ( $i = 0; $i <= $#additional; $i++ )
+{
+    print "$additional[ $i ]\n";
+}
+
+print "" . ( "=" x 76 ) . "\n";

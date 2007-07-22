@@ -1,0 +1,1725 @@
+#!/usr/bin/perl
+
+my $RCS = '$Id: hashcash-sendmail,v 1.18 2004/08/07 18:36:16 kyle Exp $';
+
+#
+# hashcash-sendmail -- queues messages for later delivery after adding hashcash
+# This is meant to be a program called AS sendmail from a MUA.
+#
+# An up-to-date version is normally here:
+# http://www.toehold.com/~kyle/hashcash/
+#
+
+# Consider this ALPHA software.  It works for me, but it has not been through
+# much real testing.
+
+#
+# Copyright (C) 2004  Kyle Hasselbacher <kyle@toehold.com>
+#
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+# Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+#
+
+#
+# This script is supposed to be a stand-in for sendmail.  It records the
+# arguments its given and the standard input it receives, and those are
+# eventually passed on to sendmail.  Typically the arguments are passed
+# faithfully to sendmail, but we meddle with them if there's a Bcc.  The
+# message is always modified by adding X-Hashcash to the end of the headers.
+#
+
+use strict;
+use Data::Dumper;
+use File::Copy;
+use Fcntl qw(:DEFAULT :flock);
+use POSIX qw( setsid );
+use IO::File;
+use vars qw( @rcpt @args );
+use IPC::Open3;
+
+my $home = $ENV{'HOME'} || $ENV{'LOGDIR'} || (getpwid($<))[7];
+
+#
+# The workdir is expected to have a queue directory and a tmp directory.
+# hashcash-sendmail looks for bitconf there later.
+# All messages that I haven't seen yet are in queue/*.msg files, and they
+# each have a corresponding *.dat file with instructions.  The .msg file
+# is exactly the standard input for sendmail.  The *.dat file is a Perl
+# parsable file which contains two arrays.  One is the exact argument list
+# for sendmail.  The other is instructions for what hashcash to add to the
+# message.  The .dat files never move from the queue, but the .msg files
+# move to tmp/ when they're being worked on.
+#
+my $workdir = "$home/.mail/hashcash";
+
+END {
+    cleanup();
+}
+
+# When I get a signal, cleanup() is called twice.  I use this flag to avoid
+# doing anything the second time.  It also serves to keep from doing cleanup
+# if I die before even entering the queue.
+my $need_cleanup = 0;
+
+# Where to write log messages.
+my $logfile = "$workdir/hashcash-log";
+
+# Where to find the recipients file. See read_bitconf() comments for format.
+my $conffile = "$workdir/bitconf";
+
+# Create my directories if they're not there already.
+foreach my $dir ( $workdir, "$workdir/queue", "$workdir/tmp" ) {
+    if ( ! -d $dir && ! mkdir( $dir ) ) {
+	die "Can't make nonexistant workdir '$dir': $!\n";
+    }
+}
+
+my @bitconf = read_bitconf();
+
+# This is the number of bits we use if nothing else is specified.
+my $bits_to_compute = 20;
+
+# Part of the filename used for output.
+my $filebase = time() . ".$$";
+
+my $extra_expense = 0; # Whether this message is extra expensive (low priority)
+my $confirmed = 0;     # Whether this is a confirmed message (needing no cash)
+
+# This is used for the Received: line I add to messages, and it gets logged
+# by the daemon when it starts.
+my $hostname = `hostname -f 2> /dev/null`;
+$hostname =~ s/\s//g;
+
+# If there are no args, read a request and queue that.
+# hashcash-request just opens a pipe to hashcash-sendmail and ships
+# in a Data::Dumper file.
+
+if ( ! @ARGV ) {
+    my $rcptcode = join( '', <STDIN> );
+    eval $rcptcode;
+    if ( $@ ) {
+	fatal( "input request does not parse: $@\n" );
+    }
+    queue( $filebase, undef, \@rcpt, \@bitconf );
+}
+else {
+    my @args = @ARGV;
+
+# This will be all the sendmail arguments BEFORE the list of envelope
+# recipients (so that we can meddle with them later).
+    my @pre_args = ();
+
+# Try to figure out our envelope recipients.
+# This is probably NOT close enough to sendmail compatibility for prime time.
+    my @env_recip = ();
+
+    process_args( \@args, \@pre_args, \@env_recip );
+
+    my @to = ();           # According-to-headers message recipients.
+
+    my $msgfh = new IO::File;
+    if ( ! open( $msgfh, ">$workdir/tmp/$filebase.msg" ) ) {
+	die "Can't write $workdir/tmp/$filebase.msg: $!\n";
+    }
+    else {
+	process_msg( $msgfh, \@to );
+	close( $msgfh );
+    }
+
+    queue_messages( \@args, \@env_recip, \@to, \@pre_args );
+
+# Done with the temp file.
+    unlink( "$workdir/tmp/$filebase.msg" ) || die "Can't unlink '$workdir/tmp/$filebase.msg': $!\n";
+}
+
+####
+#### DAEMON STARTS HERE
+####
+
+#
+# At this point, the incoming message/request has been queued.  We're about
+# to fork away from the caller to work on processing the queue in the
+# background.  If there's already an earlier daemon doing this, we just
+# send it a wake-up call and die.
+#
+
+# For now, at least, the daemon code and the sendmail code are distinct.
+# They haven't needed to call the other's functions.  That having been
+# said, I haven't really marked which functions are which.  If you're
+# doing some work in here, make sure that the daemon calls fatal() and
+# complain() rather than 'die' and 'warn'.  There's nothing stopping
+# sendmail from using those (and logline), but it hasn't yet.
+
+use sigtrap qw( handler cleanup normal-signals );
+
+#
+# Ignore the USR1 signal for now.  We toggle this on and off.  When waiting
+# for a token to finish, we set a handler that will process the interrupt
+# (by rescanning the queue for a better job to do).  When working (not
+# waiting), we ignore the hangup.
+#
+$SIG{ USR1 } = 'IGNORE';
+
+# Separate myself from the shell.
+# It's important to do this before doing the pidfile stuff
+# because daemonize() forks, and we want to get the right PID in the pidfile.
+daemonize();
+
+# $pidfile is where we store the daemon's process ID.
+my $pidfile = "$workdir/daemon.pid";
+handle_pidfile( $pidfile );
+
+# Check for leftover queue items.
+recover_dead_queue();
+
+if ( $hostname =~ /\S/ ) {
+    logline( "daemon started on $hostname; computing $bits_to_compute bits" );
+}
+else {
+    logline( "daemon started; computing $bits_to_compute bits" );
+}
+logline( $RCS );
+
+#
+# This is our stack of tasks.  Whatever we're working on right now is always
+# at the end of this list.  When we see something more important, we SIGSTOP
+# the process and start a new one, adding the new task to the stack.
+# Each element of the stack is a reference to a hash of stuff we need to
+# retain.  Its elements are:
+#
+# 'msg'          -- the name of the file that has the message
+# 'dat'          -- the name of the job's .dat file
+# 'sendmailfh'   -- where I write the message
+# 'sendmailpid'  -- the sendmail PID
+# 'msgfh'        -- whence I read the message
+# 'hashcashfh'   -- whence I read a token
+# 'hashcashpid'  -- what to signal with STOP and CONT
+# 'blankline'    -- the line between the headers and the body
+# 'cashinfo'     -- a string describing the hashcash we're making
+#                   It looks like 12:3456:x@example.com where the fields
+#                   are bits:expiry:resource
+#
+my @stack = ();
+
+# At this point we'll need to do a cleanup if we die.
+$need_cleanup = 1;
+
+# How many seconds to sleep when waiting.
+my $sleep_time = 60 * 60;
+
+# If this is true, we'll just process what's in the queue and then go away.
+# The daemon won't wait around polling for something else to show up.
+my $run_queue_and_die = 1;
+
+while ( 1 ) {
+    # This looks for messages in the queue that we haven't processed yet.
+    opendir( QUEUE, "$workdir/queue" ) || fatal( "Can't opendir queue: $!\n" );
+    my @messages = sort prioritize grep( /\.(msg|req)$/, readdir( QUEUE ) );
+    closedir( QUEUE );
+
+    # Nothing to do.  Look again in a while, or after an interrupt.
+    if ( ! @messages && ! @stack ) {
+	if ( $run_queue_and_die ) {
+	    logline( "queue is empty; exiting." );
+	    exit 0;
+	}
+	$SIG{ USR1 } = sub { logline( "awoke on $_[0]" ); die; };
+	eval {
+	    sleep( $sleep_time );
+	};
+	$SIG{ USR1 } = 'IGNORE';
+	next;
+    }
+
+    if ( @messages ) {
+	# This is the most important message that's not being worked on.
+	my $msg = $messages[ 0 ];
+
+	if ( ! @stack ) {
+	    # If there's nothing on the stack, we don't have to worry about
+	    # priorities or stopping any current process.  Just go to work.
+	    begin_delivery( $msg, \@stack );
+	}
+	else {
+	    my $topstate = $stack[ -1 ];
+
+	    # First we check if the new message we found is more important
+	    # than what we're working on right now.
+	    my @check = ( $msg, $$topstate{ 'msg' } );
+	    @check = sort prioritize @check;
+
+	    if ( $check[ 0 ] eq $msg ) {
+		# The new best message is better than the previous.
+		# Stop the current job and push a new one on the stack.
+		interrupt_with( $msg, \@stack );
+	    }
+	}
+    }
+
+    # The only way the stack is empty at this point is if we had nothing
+    # to work on and found a message with no recipients.  In that case,
+    # it's already been delivered.
+    if ( @stack ) {
+	my $topstate = $stack[ -1 ];
+
+	# I'm doing this here because there's probably time.  We're waiting
+	# on some token to mint.  I'd do this when I'm about to exit, but I
+	# don't want to fool some baby daemon into thinking that I'm on the
+	# job when I'm not.
+	expire_premade();
+
+	# We're going to wait for a short time for the hascash process
+	# to be ready to read (i.e., it gave us our token).  Once it
+	# does, we continue delivery.  If it turns out delivery is
+	# finished, we pop the task off the stack and try to continue
+	# anything that's left.
+	my $rin = fhbits( $$topstate{ 'hashcashfh' } );
+	my $finished_token = 0; # If this stays zero, no token was finished.
+
+	$SIG{ USR1 } = sub { logline( "awoke on $_[0]" ); die; };
+	eval {
+	    $finished_token = select( $rin, undef, undef, $sleep_time );
+	};
+	$SIG{ USR1 } = 'IGNORE';
+
+	if ( $finished_token && ! continue_delivery( $topstate ) ) {
+	    # Delivery finished.  Throw away the state
+	    pop( @stack );
+
+	    while ( @stack ) {
+		$topstate = $stack[ -1 ];
+		my $restart = $$topstate{ 'hashcashpid' };
+		logline( "continuing $$topstate{ 'msg' }" );
+
+		last if kill( 'CONT', $restart );
+
+		logline( "failed to restart $$topstate{ 'msg' } (pid $restart)" );
+		pop( @stack );
+	    }
+	}
+    }
+}
+
+####
+#### SUBROUTINES START HERE
+####
+
+#
+# This converts a resource name to something that's appropriate to a filename.
+# It's basically URL encoding with '-' instead of '%'.  You can decode what
+# the original resource was, but we never actually need to do that.  This is
+# just so I can find files that contain tokens for the resource I want.
+#
+sub res2file {
+    my ( $resource ) = @_;
+
+    my $filename = $resource;
+
+    $filename =~ s/(\W)/uc sprintf( "-%02x", ord( $1 ) )/eg;
+
+    return $filename;
+}
+
+#
+# We know the addresses for the envelope (@env_recip),
+# and the addresses listed in the headers (@to).
+# For which do we compute hashcash?  (@hash_to)
+#
+# This figures out what messages to queue and does the queueing.  Though
+# only one message was given, we may queue several, depending on Bccs.
+#
+sub queue_messages {
+    my ( $args, $env_recip, $to, $pre_args ) = @_;
+
+    my @hash_to = ();
+    if ( scalar @$env_recip == 1 ) {
+	# There's only one envelope recipient.  That's who gets hashcash!
+	@hash_to = @$env_recip;
+    }
+    else {
+	# This looks for the intersection of envelope recipients and header
+	# recipients.  An envelope recipient who's not listed in headers is
+	# a Bcc, and we don't want to leak that otherwise private info.
+	# A recipient in the headers who's not on the envelope isn't really
+	# getting the message, so there's no point wasting our time.
+	my %envelope_map = ();
+	foreach my $arg ( @$env_recip ) {
+	    $arg =~ tr/A-Z/a-z/;
+	    $envelope_map{ $arg }++;
+	}
+	foreach my $addr ( @$to ) {
+	    my $flat = $addr;
+	    $flat =~ tr/A-Z/a-z/;
+	    if ( $envelope_map{ $flat } ) {
+		delete( $envelope_map{ $flat } );
+		push( @hash_to, $addr );
+	    }
+	}
+	# Anything left here is a Bcc.
+	# We need to strip them out of the arguments list that we're about to
+	# write, and we need to queue separate messages for each of them.
+	# This is the only case where we change the argument list from what we
+	# got to something else.
+	if ( %envelope_map ) {
+	    foreach my $bcc ( keys %envelope_map ) {
+		my $shortarg = [ @$pre_args, $bcc ];
+		queue( $filebase, $shortarg, [ msgrcpt( [ $bcc ] ) ], \@bitconf );
+	    }
+	    @$args = ( @$pre_args, @hash_to );
+	}
+    }
+
+# This queues the "main" message.
+# It's possible to send a message of all Bcc and no header recipients,
+# in which case, everything's been queued already.
+    if ( @hash_to ) {
+	queue( $filebase, $args, [ msgrcpt( \@hash_to ) ], \@bitconf );
+    }
+}
+
+# Try to figure out my time zone.
+sub time_zone {
+    my @lt = localtime();
+    my @gt = gmtime();
+
+    my $tz = $lt[ 2 ] - $gt[ 2 ];
+
+    if ( $gt[ 7 ] > $lt[ 7 ] || $gt[ 5 ] > $lt[ 5 ] ) {
+	$tz -= 24;
+    }
+    if ( $gt[ 7 ] < $lt[ 7 ] || $gt[ 5 ] < $lt[ 5 ] ) {
+	$tz += 24;
+    }
+
+    $tz .= "00";
+    $tz =~ s/^(-)?(\d)00$/${1}0${2}00/;
+    $tz =~ s/^(\d)/+$1/;
+
+    return $tz;
+}
+
+# RFC2821, section 4.4
+sub add_trace_line {
+    my ( $msgfh ) = @_;
+
+    my $progname = $0;
+    $progname =~ s:^.*/([^/]+)$:$1:;
+
+    print $msgfh "Received: ";
+    print $msgfh "by $hostname " if ( $hostname =~ /\S/ );
+    print $msgfh "($progname, from uid $>);\n";
+
+    # Format this produces:
+    # Wed, 25 Feb 2004 16:37:30 -0600
+
+    print $msgfh "\t";
+    my @lt = localtime;
+    my @days = qw( Sun Mon Tue Wed Thu Fri Sat );
+    print $msgfh $days[ $lt[ 6 ] ] . ", ";
+    print $msgfh $lt[ 3 ];
+    print $msgfh " ";
+    my @months = qw( Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec );
+    print $msgfh $months[ $lt[ 4 ] ];
+    print $msgfh " ";
+    print $msgfh $lt[ 5 ] + 1900;
+    print $msgfh " ";
+    foreach my $n ( @lt[ 0, 1, 2 ] ) {
+	$n = "0$n" while ( length( $n ) < 2 );
+    }
+    print $msgfh join( ':', @lt[ 2, 1, 0 ] );
+    print $msgfh " ";
+    print $msgfh time_zone();
+
+    print $msgfh "\n";
+}
+
+#
+# This copies the incoming message to the filehandle given and in
+# the process picks out what addresses are referenced as recipients in
+# the headers of the message.
+#
+sub process_msg {
+    my ( $msgfh, $toref ) = @_;
+
+    add_trace_line( $msgfh );
+
+    my $in_headers = 1;    # Whether we're still in the headers of the message.
+    my $in_to = 0;         # Whether we're in a To: or Cc: line
+
+    while ( <STDIN> ) {
+	print $msgfh $_;
+
+	$in_to = 0 if ( $in_to && ! /^\s/ );
+	$in_headers = 0 if ( $in_headers && !/\S/ );
+
+	my $line = $_;
+
+	# This is a challenge sent to an unknown party.  I make it extra
+	# expensive so it's "last in line" for processing.
+	if ( $in_headers && ( $line =~ /^Reply-To: kyle-cnf-/ ) ) {
+	    $extra_expense = 1;
+	}
+	# This is a message on its way to me locally.  It needs no cash.
+	if ( $in_headers && ( $line =~ /^X-TMDA-Confirm-Done: / ) ) {
+	    $confirmed = 1;
+	}
+	# Pull addresses off Cc: and To: lines.  This is used to tell
+	# which envelope recipients are blind carbon copies.
+	if ( $in_headers && ( $in_to || $line =~ s/^(Cc|To): // ) ) {
+	    # Get rid of all whitespace
+	    $line =~ s/\s+//g;
+
+	    # Get rid of any quoted text
+	    $line =~ s/\"[^\"]*\"//g;
+
+	    foreach my $addr ( split( ',', $line ) ) {
+		next if ( $addr =~ m/undisclosed-recipients/i );
+		next if ( $addr =~ m/recipientlistsuppressed/i );
+
+		# Does it contain a route-addr?
+		if ($addr =~ m/<(.*)>/) {
+		    # Use the route-addr
+		    $addr = $1;
+		}
+
+		# Does it have single quotes around it?
+		# Microsoft Exchange sometimes does this
+		$addr =~ s/^\'//;
+		$addr =~ s/\'$//;
+
+		# Get rid of comments in ()'s
+		$addr =~ s/\(.*\)//g;
+
+		if ( defined( $addr ) && $addr =~ m/^[-_.+\w]+\@[-_.+\w]+$/ ) {
+		    push( @$toref, $addr );
+		}
+	    }
+
+	    $in_to = 1;
+	}
+    }
+}
+
+#
+# This looks at the arguments that were passed in (meant for sendmail)
+# and tries to pick out the envelope recipients and the "pre args" that
+# I should maintain if I end up meddling with the evenlope recipients.
+#
+sub process_args {
+    my ( $args, $pre_args, $env_recip ) = @_;
+
+    if ( @$env_recip = grep( /^--$/ .. undef, @$args ) ) {
+	shift( @$env_recip );
+
+	my @tmp = @$args;
+	while ( my $t = shift( @tmp ) ) {
+	    push( @$pre_args, $t );
+	    last if ( $t eq '--' );
+	}
+    }
+    else {
+	# There's no '--' argument.
+	my @a = @$args;
+	while ( my $arg = shift( @a ) ) {
+	    if ( $arg eq '-f' ) {
+		push( @$pre_args, $arg );
+		push( @$pre_args, shift( @a ) );
+		next;
+	    }
+	    if ( $arg =~ /^-/ ) {
+		push( @$pre_args, $arg );
+	    }
+	    else {
+		push( @$env_recip, $arg );
+	    }
+	}
+    }
+}
+
+#
+# Interrupt the currently running hashcash to deliver a more important message.
+# If the interruption is successful, this calls begin_delivery() for the
+# specified message and puts it on the stack.
+#
+sub interrupt_with {
+    my ( $msg, $stackr ) = @_;
+
+    # This is what's running right now.
+    my $topstate = $$stackr[ -1 ];
+
+    my $stoppid = $$topstate{ 'hashcashpid' };
+    if ( kill( 'STOP', $stoppid ) ) {
+	logline( "interrupted $$topstate{ 'msg' } for $msg" );
+
+	if ( ! begin_delivery( $msg, $stackr ) ) {
+	    # In this case, the message was delivered without any work done.
+	    # We need to restart the message we just interrupted.
+	    logline( "continuing $$topstate{ 'msg' }" );
+	    if ( ! kill( 'CONT', $stoppid ) ) {
+		fatal( "failed to restart $$topstate{ 'msg' } (pid $stoppid)" );
+	    }
+	}
+    }
+}
+
+#
+# This is used to sort the messages.  We expect two filenames of the form:
+# 1234-1234567890.1234.msg
+# The first number is the expense, the second is when it entered the queue,
+# and the third is just the PID of the queue writer.
+# Above all, a .msg comes before a .req.
+# Then we compare expenses and dates, and lower number wins for each.
+# If they're equal on all counts, we just string compare the names, which
+# probably means we're deciding based on a PID.
+#
+sub prioritize {
+    my ( $ap, $ad, $bp, $bd ) = ( undef, undef, undef, undef );
+    my ( $ae, $be ) = ( undef, undef );
+
+    if ( $a =~ /\.(\w{3})$/ ) {
+	$ae = $1;
+    }
+    if ( $b =~ /\.(\w{3})$/ ) {
+	$be = $1;
+    }
+
+    if ( defined( $ae ) && defined( $be ) && $ae ne $be ) {
+	# It just so happens that ( 'msg' cmp 'req' ) comes out "right".
+	# If not, I'd have to be explicit about which I wanted first.
+	return $ae cmp $be;
+    }
+
+    if ( $a =~ /^(\d+)-(\d+)\./ ) {
+	$ap = $1; #priority (expense)
+	$ad = $2; #date
+    }
+    if ( $b =~ /^(\d+)-(\d+)\./ ) {
+	$bp = $1;
+	$bd = $2;
+    }
+    if ( defined( $bp ) && defined( $ap ) && $bp != $ap ) {
+	return ( $ap <=> $bp );
+    }
+    if ( defined( $bd ) && defined( $ad ) && $bd != $ad ) {
+	return ( $ad <=> $bd );
+    }
+
+    return ( $a cmp $b );
+}
+
+
+#
+# Call begin_delivery with a message to deliver.
+# From there, everything spawns and runs.
+# When hashcashfh is ready, call continue_delivery( $state )
+# Delivery is finished when *_delivery() returns zero.
+#
+
+#
+# begin_delivery takes a filename (of a message to work on) and returns
+# a $state hash reference.  It returns zero if the message is already
+# delivered (i.e., when it had no hashcash to compute).
+#
+# Its job is basically to set up the process.  It does everything up to
+# where we need to invoke the hashcash executable, and then it calls
+# continue_delivery() which does that invocation.
+#
+# This pushes a state onto the stack and it expects it to stay on top.
+# If it calls continue_delivery() and finds that the message is all done,
+# it pops the top item off the stack.
+# XXX Perhaps I should verify it's the same state I pushed.
+#
+sub begin_delivery {
+    my ( $msg, $stackr ) = @_;
+
+    # The state we'll eventually return.
+    my $state = { 'msg' => $msg };
+
+    logline( "found $msg\n" );
+
+    # Move the message out of the queue and into the tmp directory.
+    # If this fails, we skip it.  Maybe some other daemon got it first?
+    if ( rename( "$workdir/queue/$msg", "$workdir/tmp/$msg" ) ) {
+
+	push( @$stackr, $state );
+
+	# Get the name of the corresponding .dat file and import its data.
+	my $dat = "$workdir/tmp/$msg";
+	# If $msg is a .req, $dat isn't changed.
+	$dat =~ s:/tmp/(.*)\.msg$:/queue/$1.dat:;
+
+	# XXX It might be nice to handle errors in the dat file.
+	require "$dat";
+
+	$$state{ 'dat' } = $dat;
+	$$state{ 'recip' } = [ @rcpt ]; # This was read from .dat
+
+	# A .req doesn't need all this sendmail and stuff.
+	if ( $msg =~ /\.msg$/ ) {
+	    # Open the message for reading.
+	    my $msgfh = new IO::File;
+	    open( $msgfh, "$workdir/tmp/$msg" ) || fatal( "Can't read $workdir/tmp/$msg: $!\n" );
+	    $$state{ 'msgfh' } = $msgfh;
+
+	    # Build the sendmail command line.
+	    my $com = "|/usr/sbin/sendmail";
+	    foreach my $arg ( @args ) {
+		$com .= " \"" . shell_escape( $arg ) . "\"";
+	    }
+
+	    # Open the pipe to sendmail.
+	    spawn_sendmail( $state, $com );
+	    my $sendmailfh = $$state{ 'sendmailfh' };
+
+	    # Read the header of the message and send it to sendmail.
+	    my $line = '';
+	    while ( $line = $msgfh->getline ) {
+		last if ( $line !~ /\S/ );
+		print $sendmailfh $line;
+	    }
+	    # Remember exactly what the blank line was.
+	    $$state{ 'blankline' } = $line;
+	}
+
+	# go get some hashcash
+	my $out = continue_delivery( $state );
+	if ( ! $out ) {
+	    pop( @$stackr );
+	}
+	return $out;
+    }
+
+    return 0;
+}
+
+#
+# This starts up the sendmail process and puts the writable filehandle in
+# the given $state for later.  We also open sendmail's stdout/stderr for
+# reading, and this function forks to read what it has to say without
+# blocking.  Whatever sendmail outputs is logged.
+#
+sub spawn_sendmail {
+    my ( $state, $com ) = @_;
+
+    # Open3 knows this is a pipe; it's an error to have it there.
+    $com =~ s/^\|//;
+
+    my $smin = new IO::File;
+    my $smout = new IO::File;
+
+# XXX Doc says failures don't return; they raise an exception.  What?
+    my $smpid = open3( $smin, $smout, $smout, $com );
+
+    if ( ! $smpid ) {
+	fatal( "Can't open sendmail: $!\n" );
+    }
+
+    $$state{ 'sendmailfh' }  = $smin;
+    $$state{ 'sendmailpid' } = $smpid;
+
+    # Now, fork a reader just to get and log sendmail's error messages.
+
+    my $pid;
+    if ( $pid = fork() ) {
+	# parent
+	close( $smout ); # parent does not read
+	$$state{ 'loggerpid' } = $pid;
+
+	return;
+    }
+    elsif ( ! defined( $pid ) ) {
+	# child
+	$need_cleanup = 0;
+	fatal( "Can't fork: $!\n" );
+    }
+    # This should NOT do cleanup.  It's not THE daemon, just a little logger.
+    $need_cleanup = 0;
+
+    close( $smin ); # child does not write
+
+    while ( my $line = $smout->getline ) {
+	logline( "sendmail[$smpid] said: $line" );
+    }
+    close( $smout );
+
+    exit;
+}
+
+#
+# There's a hashcash subprocess with a token ready.  Read it, and do the
+# right thing with it.  We'll either feed it to waiting sendmail or put
+# it in a premade token file for later.  If it does not go to sendmail,
+# we return 0 so the caller knows to call finish_delivery() and clean up.
+#
+sub take_new_token {
+    my ( $state ) = @_;
+
+    my $hc = $$state{ 'hashcashfh' };
+    my $tok = join( '', $hc->getlines );
+    close( $hc );
+    waitpid( $$state{ 'hashcashpid' }, 0 );
+
+    logline( "made token $tok" );
+
+    if ( exists( $$state{ 'sendmailfh' } ) ) {
+	my $sm = $$state{ 'sendmailfh' };
+	print $sm $tok if ( $tok );
+    }
+    else {
+	# If there's no sendmailfh, this is a request, not a message.
+
+	my ( $bits, $expiry, $r ) = ( $$state{ 'cashinfo' } =~ /^(\d+):(\d*):(.*)/ );
+	# Take the expiry on the token regardless of what we thought
+	# it would be.
+	# v0 = 0:date
+	# v1 = 1:bits:date
+	if ( $tok =~ /X-Hashcash: (?:0|1:\d+):(\d+):/ ) {
+	    $expiry = $1;
+	}
+
+	# Make sure the premade directory exists
+	if ( ! -d "$workdir/premade" && ! mkdir( "$workdir/premade" ) ) {
+	    fatal( "Can't create $workdir/premade: $!\n" );
+	}
+
+	# Initial filename.  That '0' on the end gets incremented until
+	# we find one that's not taken.
+	my $prefile = "$workdir/premade/" . res2file( $r ) . ".$expiry.$bits.0";
+	my $fh = new IO::File;
+	while ( -e $prefile ||
+		! sysopen( $fh, $prefile, O_RDWR|O_CREAT ) ||
+		! flock( $fh, LOCK_EX|LOCK_NB ) )
+	{
+	    $prefile =~ s/\.(\d+)$/"." . ($1 + 1)/e;
+	}
+	logline( "saving to $prefile" );
+
+	if ( ! truncate( $fh, 0 ) ) {
+	    fatal( "Can't truncate $prefile: $!\n" );
+	}
+	print $fh $tok if ( $tok );
+	close( $fh );
+
+	# Multiple recipients in one .req not supported.
+	return 0;
+    }
+}
+
+#
+# continue_delivery takes a state as an argument and returns a state.  It
+# returns zero if the delivery is finished.
+#
+# What this does is invoke hashcash and then return the state information
+# used to keep track of the job.  If there's a job already in progress, it
+# pulls in the token and adds it to the outgoing message.  The caller is
+# responsible for making sure the job is ready to read.
+#
+sub continue_delivery {
+    my ( $state ) = @_;
+
+    # If there's hashcash to read, read it and add it to the outgoing
+    # message.  This won't happen the first time continue_delivery is
+    # called for a message.
+    if ( exists( $$state{ 'hashcashfh' } ) && ! take_new_token( $state ) ) {
+	return finish_delivery( $state );
+    }
+
+    # Look through the recip list to find a recipient.
+    my $recipient = undef;
+    my $expiry = undef;
+    my $bits = $bits_to_compute;
+    my $r = undef;
+    while ( @{ $$state{ 'recip' } } && ! defined( $recipient ) ) {
+	$recipient = shift( @{ $$state{ 'recip' } } );
+	if ( defined( $recipient ) ) {
+	    if ( $$recipient{ 'bits' } ) {
+		$bits = $$recipient{ 'bits' };
+	    }
+	    if ( exists( $$recipient{ 'expiry' } ) ) {
+		$expiry = $$recipient{ 'expiry' };
+	    }
+
+	    # The guess is used in places where I always want to have
+	    # something.  The $expiry is used for the command line.
+	    my $expguess = $expiry ? $expiry : expire_today();
+
+	    $$state{ 'cashinfo' } = "$bits:$expguess:$$recipient{ 'addr' }";
+
+	    if ( exists( $$state{ 'sendmailfh' } ) ) {
+		my $tok = get_premade( $bits, $expguess, $$recipient{ 'addr' },
+				       $$state{ 'sendmailfh' } );
+		if ( $tok ) {
+		    # Using this means we don't need to process this recipient
+		    # any further, so pretend we didn't find it.
+		    $recipient = undef;
+		}
+	    }
+	}
+    }
+    # If there are no more recipients, call finish_delivery(),
+    # which always returns zero.
+    if ( ! defined( $recipient ) ) {
+	return finish_delivery( $state );
+    }
+
+    # Figure out the command line for hashcash.
+    if ( defined( $$recipient{ 'reso' } ) ) {
+	$r = shell_escape( $$recipient{ 'reso' } );
+    }
+    else {
+	$r = shell_escape( $$recipient{ 'addr' } );
+    }
+    my $nice = ( $$recipient{ 'nice' } > 0 ) ? "nice -$$recipient{ 'nice' }" : '';
+    my $ex = defined( $expiry ) ? "-t $expiry" : '';
+
+    logline( "making token for $r ($bits bits)" );
+
+    # Spawn the hashcash executable to do the grunt work.
+    # We retain the PID and filehandle for later communication.
+    my $rdfh = new IO::File;
+    my $pid = open( $rdfh, "$nice hashcash -qm $ex -b $bits -r \"$r\" -X|" );
+    if ( ! $pid ) {
+	complain( "failed to execute hashcash: $!\n" );
+	# Go on to next recipient.
+	return continue_delivery( $state );
+    }
+
+    # Search the stack for another message that's making the same stamp
+    my $steal = undef;
+    foreach my $s ( @stack ) {
+	next if ( $s == $state );
+
+	if ( $$state{ 'cashinfo' } eq $$s{ 'cashinfo' } ) {
+	    $steal = $s;
+	    last;
+	}
+    }
+
+    if ( ! $steal ) {
+	# We're not stealing an existing process.  Just store the
+	# PID and filehandle and go.
+	$$state{ 'hashcashpid' } = $pid;
+	$$state{ 'hashcashfh' } = $rdfh;
+    }
+    else {
+	# This can most easily happen if the daemon is processing a .req
+	# but hasn't finished.  We'll steal the request's work-so-far
+	# and have it start over.
+	# This can also happen if there's one message with many recipients,
+	# and the recipient being computed right now gets another message
+	# addressed just to that one recipient.  The new message will be
+	# lower cost than the old, and it'll take its work.
+	# Otherwise this only happens if you edit the bitconf between
+	# messages, which is how I tested (meddle with the nice value).
+	# NOTE that in the first and third case, the 'nice' level of the
+	# process we steal is not necessarily what we want.
+	logline( "using PID $$steal{ 'hashcashpid' } in progress for $r" );
+
+	# Stop the new one.
+#	logline( "stopping $pid" );
+	if ( ! kill( 'STOP', $pid ) ) {
+	    fatal( "Can't stop hashcash (pid $pid): $!\n" );
+	}
+
+	# Take the PID and filehandle of the (stopped) one already in progress.
+	$$state{ 'hashcashpid' } = $$steal{ 'hashcashpid' };
+	$$state{ 'hashcashfh' } = $$steal{ 'hashcashfh' };
+
+	# The one in progress becomes the one we just started.
+	$$steal{ 'hashcashpid' } = $pid;
+	$$steal{ 'hashcashfh' } = $rdfh;
+
+	# Restart the old one.
+#	logline( "starting $$state{ 'hashcashpid' }" );
+	if ( ! kill( 'CONT', $$state{ 'hashcashpid' } ) ) {
+	    fatal( "Can't restart hashcash: $!\n" );
+	}
+    }
+
+    return $state;
+}
+
+# What the 'expire' part of a token will look like for something made now.
+sub expire_today {
+    my ( $sec,$min,$hour, $mday,$mon,$year, $wday,$yday, $isdst ) = gmtime;
+
+    $year =~ s/^\d*(\d\d)$/$1/;
+    $mon++;
+
+    $year = "0$year" while ( length( $year ) < 2 );
+    $mon  = "0$mon"  while ( length( $mon )  < 2 );
+    $mday = "0$mday" while ( length( $mday ) < 2 );
+
+    return "$year$mon$mday";
+}
+
+sub get_recipient_premade {
+    my ( $recipient, $outfh ) = @_;
+
+    return unless ( $recipient );
+    return unless ( $outfh );
+
+    my $bits = $bits_to_compute;
+    if ( $$recipient{ 'bits' } ) {
+	$bits = $$recipient{ 'bits' };
+    }
+
+    my $expiry = undef;
+    if ( exists( $$recipient{ 'expiry' } ) ) {
+	$expiry = $$recipient{ 'expiry' };
+    }
+
+    # The guess is used in places where I always want to have
+    # something.  The $expiry is used for the command line.
+    my $expguess = $expiry ? $expiry : expire_today();
+
+#    $$state{ 'cashinfo' } = "$bits:$expguess:$$recipient{ 'addr' }";
+
+    return get_premade( $bits, $expguess, $$recipient{ 'addr' }, $outfh );
+}
+
+#
+# Look through the premade tokens to find one that satisfies the given
+# requirements.  The expiry and resource must match, but we'll take any
+# token with the given bits or more.
+#
+sub get_premade {
+    my ( $bits, $expiry, $r, $outfh ) = @_;
+
+    my $out = undef;
+
+    if ( $outfh && opendir( PREMADE, "$workdir/premade" ) ) {
+	# This sorts the premade files by their cost in bits.
+	# This way I can take the cheapest token that matches.
+	my $bybits = sub {
+	    if ( $a =~ /^[\w-]*\.\d*\.(\d+)\./ ) {
+		my $abits = $1;
+		if ( $b =~ /^[\w-]*\.\d*\.(\d+)\./ ) {
+		    my $bbits = $1;
+		    return ( $abits <=> $bbits );
+		}
+	    }
+	    return ( $a cmp $b );
+	};
+
+	my $sha = res2file( $r );
+	# All premade tokens for this recipient, sorted by bits.
+	my @premade_files = sort $bybits readdir( PREMADE );
+	closedir( PREMADE );
+
+	foreach my $premade ( @premade_files ) {
+	    my ( $fsha, $fexpiry, $fbits ) = ( $premade =~ /^([\w-]*)\.(\d*)\.(\d+)\./ );
+	    next if ( $fsha    ne $sha );
+	    next if ( $fexpiry ne $expiry );
+	    next if ( $fbits   < $bits );
+
+	    my $pfh = undef;
+	    # If I'm able to rename the file, that ensures no other daemon
+	    # got a hold of it first.
+	    if ( rename( "$workdir/premade/$premade", "$workdir/tmp/$premade" ) ) {
+		if ( ! open( $pfh, "$workdir/tmp/$premade" ) ) {
+		    complain( "Can't open $workdir/tmp/$premade: $!\n" );
+		    next;
+		}
+		$out = join( '', $pfh->getlines );
+		close( $pfh );
+		if ( ! unlink( "$workdir/tmp/$premade" ) ) {
+		    complain( "Can't unlink $workdir/tmp/$premade: $!\n" );
+		}
+		# Look at no more files.
+		last;
+	    }
+	}
+    }
+
+    if ( $out ) {
+	# If we have a premade token, use it.
+	logline( "using premade token $out" );
+	print $outfh $out;
+    }
+
+    return $out;
+}
+
+#
+# finish_delivery() takes a state as an argument and returns zero.
+# This function's job is just to push the message body out to sendmail.
+#
+sub finish_delivery {
+    my ( $state ) = @_;
+
+    my $msg   = $$state{ 'msg' };
+    my $sm    = $$state{ 'sendmailfh' };
+    my $msgfh = $$state{ 'msgfh' };
+
+    if ( $sm ) {
+	if ( exists( $$state{ 'blankline' } ) ) {
+	    print $sm $$state{ 'blankline' };
+	    delete( $$state{ 'blankline' } );
+	}
+
+	if ( $msgfh ) {
+	    while ( my $line = $msgfh->getline ) {
+		print $sm $line;
+	    }
+	}
+
+	# This checks sendmail's exit status.  If something's wrong, we
+	# put the message back in the queue, whine, and abort with the same
+	# exit code that sendmail gave.
+	if ( ! close( $sm ) && ! $! ) {
+	    # Propogate the exit code.
+	    my $exit_code = $?;
+
+	    logline( "putting $msg back in queue" );
+	    rename( "$workdir/tmp/$msg", "$workdir/queue/$msg" );
+	    complain( "sendmail exited with $exit_code\n" );
+	    exit( $exit_code );
+	}
+
+	# Reap my subprocesses properly.
+	if ( $$state{ 'sendmailpid' } ) {
+	    waitpid( $$state{ 'sendmailpid' }, 0 );
+	}
+	if ( $$state{ 'loggerpid' } ) {
+	    waitpid( $$state{ 'loggerpid' }, 0 );
+	}
+    }
+    close( $msgfh ) if ( $msgfh );
+
+    # Delete the message and the dat file.
+    if ( ! unlink( "$workdir/tmp/$msg", $$state{ 'dat' } ) ) {
+	fatal( "Can't unlink: $!\n" );
+    }
+
+    if ( $msg =~ /^\d+-(\d+)\.\d+\.msg/ ) {
+	my $intime = $1;
+	my $qtime = time() - $intime;
+	logline( "delivered $msg about $qtime seconds since it was queued" );
+    }
+    else {
+	logline( "delivered $msg" );
+    }
+
+    %{ $state } = ();
+
+    return 0;
+}
+
+# It's a 'warn' that logs as well.
+sub complain {
+    my ( $line ) = @_;
+
+    logline( $line );
+    warn $line;
+}
+
+# It's a 'die' that logs as well.
+sub fatal {
+    my ( $line ) = @_;
+
+    logline( "FATAL: $line" );
+    die $line;
+}
+
+# Writes a line to the log.  It does nice stuff like add a datestamp
+# and the program name and such.
+sub logline {
+    my ( $line ) = @_;
+
+    if ( $line =~ /\S/ ) {
+	my $out = scalar localtime();
+
+	my $name = $0;
+	$name =~ s:^/.*/([^/]+)$:$1:;
+
+	$out .= " $name\[$$]: ";
+	
+	$line =~ tr/\r\n/ /;
+	$line =~ s/^\s+//;
+	$line =~ s/\s+$//;
+
+	$out .= "$line\n";
+
+	lograw( $out );
+    }
+}
+
+# Logs stuff.  It does locking on the log file, but it does no formatting.
+sub lograw {
+    my @logstuff = @_;
+
+    my $fh = new IO::File;
+    sysopen( $fh, $logfile, O_RDWR|O_CREAT ) || die "Can't write $logfile: $!\n";
+    flock( $fh, LOCK_EX ) || die "Can't LOCK_EX $logfile: $!\n";
+    seek( $fh, 0, SEEK_END ) || die "Can't seek on $logfile: $!\n";
+
+    print $fh @logstuff;
+
+    close( $fh );
+}
+
+# Camel book, 3rd ed, page 782
+sub fhbits {
+    my @fhlist = @_;
+    my $bits;
+    for ( @fhlist ) {
+	vec( $bits, fileno( $_ ), 1 ) = 1;
+    }
+    return $bits;
+}
+
+# This is called any time we're about to die.  Its job is to put .msg
+# files back in the queue and kill lingering hashcash jobs.
+sub cleanup {
+    my ( $sig ) = @_;
+
+    my $sigmess = ( $sig ) ? " on signal $sig" : '';
+
+    if ( ! $need_cleanup ) {
+	logline( "exit$sigmess" ) if ( $sigmess );
+    }
+    else {
+	$need_cleanup = 0;
+
+	logline( "cleanup$sigmess" );
+	foreach my $state ( @stack ) {
+	    my $pid = $$state{ 'sendmailpid' };
+	    if ( $pid ) {
+		logline( "TERM sendmail PID $pid" );
+		kill( 'TERM', $pid );
+	    }
+	    # This was 'TERM', but that didn't get it.
+	    $pid = $$state{ 'hashcashpid' };
+	    logline( "KILL hashcash PID $pid" );
+	    kill( 'KILL', $pid );
+
+	    my $msg = $$state{ 'msg' };
+	    logline( "putting $msg back in queue" );
+	    rename( "$workdir/tmp/$msg", "$workdir/queue/$msg" );
+	}
+	# It's tempting to unlink $pidfile here, but it's possible
+	# someone has it open for reading.  If I unlink it, they'll
+	# write to a file that disappears when they close it.
+    }
+    exit;
+}
+
+# This looks through premade tokens looking for things that are expired.
+sub expire_premade {
+    if ( opendir( PREMADE, "$workdir/premade" ) ) {
+	my $now = expire_today();
+	while ( my $premade = readdir( PREMADE ) ) {
+	    if ( $premade =~ /^[\w-]*\.(\d+)\./ ) {
+		my $e = $1;
+		if ( $e < $now ) {
+		    logline( "discarding expired premade token in $premade" );
+		    if ( ! unlink( "$workdir/premade/$premade" ) ) {
+			complain( "Can't unlink $premade: $!\n" );
+		    }
+		}
+	    }
+	}
+	closedir( PREMADE );
+    }
+}
+
+#
+# Look for a .msg or .req in tmp/ and return it to the queue/
+# This is called after we've determined that this is to be the one and only
+# daemon but before we start processing messages, so we know tmp/ SHOULD
+# be empty.  Messages might be left in tmp/ if hashcash-sendmail was running
+# during a power failure, for instance.
+#
+sub recover_dead_queue {
+    if ( ! opendir( TMP, "$workdir/tmp" ) ) {
+	complain( "Can't opendir( $workdir/tmp ): $!\n" );
+	return;
+    }
+    my @replace = grep( !/^\./ && /\.(req|msg)$/, readdir( TMP ) );
+    closedir( TMP );
+
+    if ( @replace ) {
+	complain( "Earlier hashcash daemon must have died; replacing lost queue items." );
+	foreach my $file ( @replace ) {
+	    if ( -f "$workdir/queue/$file" ) {
+		complain( "'$file' exists in both tmp and queue!" );
+		next;
+	    }
+	    rename( "$workdir/tmp/$file", "$workdir/queue/$file" ) || complain( "Can't rename tmp/$file to queue: $!\n" );
+	}
+    }
+}
+
+#
+# This checks if another daemon is running and exits if there is.
+# If not, we write our PID to the pidfile.
+#
+sub handle_pidfile {
+    my ( $pidfile ) = @_;
+
+# Open for read and write, create if not there.
+    my $pidfh = new IO::File;
+    if ( ! sysopen( $pidfh, "$pidfile", O_RDWR|O_CREAT ) ) {
+	fatal( "Can't write $pidfile: $!\n" );
+    }
+
+# Locking avoids race conditions.  I can share a lock with someone else
+# who's also trying to read, but I can't share with a writer.
+    flock( $pidfh, LOCK_SH ) || fatal( "Can't LOCK_SH $pidfile: $!\n" );
+    my $oldpid = $pidfh->getline;
+
+# Check if the old daemon is still alive.
+    if ( $oldpid && kill( 0, $oldpid ) ) {
+	# There's already a daemon running.
+	logline( "waking PID $oldpid" );
+	kill( 'USR1', $oldpid );
+	exit 0;
+    }
+
+# Truncate the file and write my own PID there.
+    flock( $pidfh, LOCK_EX|LOCK_NB ) || fatal( "Can't lock $pidfile: $!\n" );
+    seek( $pidfh, 0, SEEK_SET )      || fatal( "Can't seek on $pidfile: $!\n" );
+    truncate( $pidfh, 0 )            || fatal( "Can't truncate $pidfile: $!\n" );
+    print $pidfh "$$\n";
+    close( $pidfh );
+}
+
+# This is to disconnect from the shell that ran me.
+sub daemonize {
+    my $pid;
+
+    # Doing this instead of just closing them makes some oddball case work.
+    # I wish I knew why.
+    open( STDIN,   "/dev/null" ) || fatal( "Can't reopen STDIN: $!\n" );
+    open( STDOUT, ">/dev/null" ) || fatal( "Can't reopen STDOUT: $!\n" );
+    open( STDERR, ">/dev/null" ) || fatal( "Can't reopen STDERR: $!\n" );
+
+    # Ignore the fact that the parent dies.
+    $SIG{ HUP } = sub { logline( "ignored $_[0]" ); };
+
+    if ( $pid = fork() ) {
+	# Parent exits immediately.
+	exit 0;
+    }
+    elsif ( ! defined( $pid ) ) {
+	complain( "Can't fork: $!\n" );
+    }
+
+    setpgrp( 0, $$ );
+    setsid();
+}
+
+# Escapes shell meta characters, so I can safely use it on the command line.
+# This does NOT escape spaces.  What you get from this is meant to be put in
+# double quotes on the command line.
+sub shell_escape {
+    my ( $string ) = @_;
+
+    $string =~ s/\\/\\\\/g;
+    $string =~ s/\"/\\\"/g;
+    $string =~ s/\$/\\\$/g;
+    $string =~ s/\`/\\\`/g;
+
+    return $string;
+}
+
+#
+# Given a reference to a list of hashcash recipients, this will construct a
+# simple @rcpt list, which is just a bunch of references to hashes.  Each
+# hash this produces will have JUST the recipient set, but other things will
+# be added to those hashes later.
+#
+sub msgrcpt {
+    my ( $hashref ) = @_;
+
+    my @rcpt = ();
+    if ( ! $confirmed ) {
+	foreach my $addr ( @$hashref ) {
+	    my $add = { 'addr' => $addr };
+	    push( @rcpt, $add );
+	}
+    }
+
+    return @rcpt;
+}
+
+#
+# Given a reference to a @rcpt list, and a reference to a @bitconf, this
+# will add missing information to the @rcpt list.  For each thing in the
+# @rcpt list, we add 'bits' and 'nice' if they're not there.
+#
+sub heed_bitconf {
+    my ( $rcptref, $confref ) = @_;
+
+    foreach my $add ( @$rcptref ) {
+	next unless ( defined( $$add{ 'addr' } ) );
+
+	my $addr = $$add{ 'addr' };
+	my $need_bitconf = 0;
+
+	$need_bitconf = 1 if ( ! defined( $$add{ 'bits' } ) );
+	$need_bitconf = 1 if ( ! defined( $$add{ 'nice' } ) );
+	$need_bitconf = 1 if ( ! defined( $$add{ 'reso' } ) );
+
+	next unless ( $need_bitconf );
+
+	foreach my $pair ( @$confref ) {
+	    # These are the fields in the bitconf, separated by colons.
+	    # $pat  -- a regular expression
+	    # $bits -- how many bits to compute
+	    # $nice -- what nice value to run at.
+	    # $reso -- non-standard resource (optional)
+	    my ( $pat, $bits, $nice, $reso ) = split( /:/, $pair );
+
+	    # If this address matches the pattern, we treat it as the
+	    # config says.
+	    if ( $addr =~ /$pat/i ) {
+		if ( ! defined( $$add{ 'bits' } ) ) {
+		    $$add{ 'bits' } = $bits;
+		}
+		if ( ! defined( $$add{ 'nice' } ) ) {
+		    $$add{ 'nice' } = $nice;
+		}
+		if ( ! defined( $$add{ 'reso' } ) && defined( $reso ) ) {
+		    $$add{ 'reso' } = $reso;
+		}
+		last;
+	    }
+	}
+
+	# It's possible that $addr does not match any pattern.
+	# I'd still like to have some defaults in that case.
+	$$add{ 'bits' } = $bits_to_compute if ( ! defined( $$add{ 'bits' } ) );
+#	$$add{ 'nice' } = 19               if ( ! defined( $$add{ 'nice' } ) );
+    }
+}
+
+#
+# Given a reference to a @rcpt list, this computes the expense of the message.
+# Assumes that heed_bitconf was called, so there's 'nice' and 'bits' for all.
+#
+sub message_expense {
+    my ( $rcptref ) = @_;
+
+    # For each recipient, we take log-base-2 of the number of bits we need
+    # and multiply by 100.  Without the multiplier, lots of values for
+    # $bits would be indistinguishable.  Then we multiply by the nice value
+    # assigned because I figure the less we want to hog the CPU, the less
+    # we care about this recipient, and the more "expensive" we should
+    # consider it.  The cost of all the recipients are summed.
+
+    my $expense = 0;
+
+    foreach my $add ( @$rcptref ) {
+	next if ( ! defined( $add ) );
+
+	my $bits = $$add{ 'bits' } || $bits_to_compute;
+
+	my $exp = int( 100 * log( $bits ) / log( 2 ) );
+	$exp *= $$add{ 'nice' } if ( $$add{ 'nice' } );
+
+	$expense += $exp;
+    }
+
+    $expense *= 10 if ( $extra_expense );
+
+    return $expense;
+}
+
+#
+# This queues one message.
+# $filebase -- the name of the temp file that has the message text.
+# $argsref  -- (ref to) the arguments that'll be passed to sendmail.
+# $rcptref  -- list of refs to hashes with recipient info.
+# $confref  -- the config file we read in
+#
+# $filebase will be COPIED, so the caller is responsible for unlinking it.
+# This function computes the expense of the message and writes out
+# everything that will go to the queue.
+#
+# If $argsref is false or points to an empty list, queue() thinks this is
+# a request for a premade token.  In that case, $filebase doesn't exist,
+# and we do things a little differently to queue the .req
+#
+sub queue {
+    my ( $filebase, $argsref, $rcptref, $confref ) = @_;
+
+    # Add bitconf info to the recipients.
+    heed_bitconf( $rcptref, $confref );
+
+    my $is_req = ( $argsref && @$argsref ) ? 0 : 1;
+    my $ext = $is_req ? 'req' : 'msg';
+
+    my $tmpfile = "$workdir/tmp/msgcopy$$";
+    if ( ! $is_req ) {
+	if ( ! copy_with_premade( "$workdir/tmp/$filebase.msg", "$tmpfile",
+				  $rcptref ) )
+	{
+	    unlink( "$workdir/tmp/$filebase.msg" );
+	    die "Can't copy $filebase.msg: $!\n";
+	}
+    }
+
+    # Compute expense based on the recipients who need hashcash.
+    my $expense = message_expense( $rcptref );
+
+    # Make sure we're not about to overwrite something.  If so, we
+    # increment $expense until we find a place to write.
+    my $outbase = "$workdir/queue/$expense-$filebase";
+    while ( -e "$outbase.$ext" ) {
+	$expense++;
+	$outbase = "$workdir/queue/$expense-$filebase";
+    }
+
+    # This is where we'll write the metadata for the message.
+    # For requests, this is the only thing we'll write.
+    my $dat = ( $is_req ) ? "$workdir/tmp/$expense-$filebase.req" : "$outbase.dat";
+
+
+# Now we write our .dat file with the stuff the daemon will need.
+# If this is a request, we're writing the final .req file that will go in the
+# queue.  We write it to tmp so we can do a nice atomic rename() later.
+    if ( ! open( META, ">$dat" ) ) {
+	die "Can't write $dat: $!\n";
+    }
+
+    $Data::Dumper::Useqq = 1;
+    my $dump;
+    if ( $argsref && @$argsref ) {
+	$dump = Data::Dumper->Dump( [ $argsref, $rcptref ],
+				    [ qw( *args *rcpt ) ] );
+    }
+    else {
+	$dump = Data::Dumper->Dump( [ $rcptref ],
+				    [ qw( *rcpt ) ] );
+    }
+    $dump .= "\n1;\n";
+
+    print META $dump;
+    close( META );
+
+# Put the message in the queue.
+# This is the point at which it's "live" and ready for processing.
+# Make no more modifications to the message after this!  The daemon may
+# already be working on it.
+
+    if ( $is_req ) {
+	$tmpfile = $dat;
+    }
+
+    # I use a temp file to avoid a race condition where the daemon starts
+    # reading the message before copy() is done writing it.
+    if ( rename( $tmpfile, "$outbase.$ext" ) ) {
+	my $rpt = "$outbase.$ext";
+	$rpt =~ s:^.*/([^/]+)$:$1:;
+	logline( "queued $rpt" );
+    }
+    else {
+	unlink( $tmpfile );
+	if ( ! $is_req ) {
+	    unlink( $dat, "$workdir/tmp/$filebase.msg" );
+	}
+	die "Can't rename $tmpfile: $!\n";
+    }
+
+    return;
+}
+
+#
+# This makes a copy of a message (for queueing) and also adds any premade
+# hashcash that is available.  Pass in a recipient list reference so it
+# knows what recipients need hashcash.  It will remove from that list
+# any recipients it was able to find premade tokens for.  Returns 1 for
+# success and undef for failure.
+#
+sub copy_with_premade {
+    my ( $msgfile, $outfile, $rcptref ) = @_;
+
+    # Open the input message for reading.
+    my $msgfh = new IO::File;
+    if ( ! open( $msgfh, $msgfile ) ) {
+	complain( "Can't read $msgfile: $!\n" );
+	return undef;
+    }
+
+    # Open the output file for writing.
+    my $outfh = new IO::File;
+    if ( ! open( $outfh, ">$outfile" ) ) {
+	complain( "Can't write $outfile: $!\n" );
+	close( $msgfh );
+	return undef;
+    }
+
+    # Copy the headers (everything up to a line that does not contain
+    # any non-whitespace characters).
+    my $line;
+    while ( $line = $msgfh->getline ) {
+	last if ( $line !~ /\S/ );
+	print $outfh $line;
+    }
+
+    # Finished copying headers.  Now loop through recipients and add what
+    # hashcash we can.
+    my @leftover = ();
+    foreach my $r ( @$rcptref ) {
+	if ( ! $r || ! get_recipient_premade( $r, $outfh ) ) {
+	    push( @leftover, $r );
+	}
+    }
+
+    # @leftover is just the ones for which we didn't have a premade token.
+    # So @$rcptref is now smaller if we found premade tokens for things in it.
+    @$rcptref = @leftover;
+
+    print $outfh $line;  # The blank line we read at the end of headers.
+
+    # Copy the rest of the message.
+    while ( $line = $msgfh->getline ) {
+	print $outfh $line;
+    }
+
+    close( $outfh );
+    close( $msgfh );
+
+    return 1;
+}
+
+#
+# Read in the config file.
+#
+# Example line:
+# kyle\@(.+\.)*toehold\.com:20:0:kyleha
+#
+# It's three or four fields separated by colons.
+#
+# The first field is a Perl regular expression to match.
+# The second is how many bits to compute for that recipient.
+# The third is the nice level to run at for that recipient.
+# The fourth is a resource value to use instead of the email address.
+#
+# The fourth field is optional.  Such an entry looks like this:
+#
+# kyle\@(.+\.)*toehold\.com:20:0
+#
+# Comments start with a "#".
+# Any line that doesn't match the format is ignored.
+#
+# First match wins.  It's probably good to have a "default" at the end of the
+# file like this:
+#
+# ^:26:19
+#
+# ...which means anyone not listed gets 26 bits running at nice -19 (lowest
+# priority).
+#
+sub read_bitconf {
+    my @bitconf = ();
+    if ( open( BITCONF, $conffile ) ) {
+	while ( <BITCONF> ) {
+	    next if /^#/;
+	    next unless /^[^:]+:\d+:\d+(:[^:]*)?$/;
+	    chomp;
+	    push( @bitconf, $_ );
+	}
+	close( BITCONF );
+    }
+
+    return @bitconf;
+}
+
+# $Log: hashcash-sendmail,v $
+# Revision 1.18  2004/08/07 18:36:16  kyle
+# Check for queue items in tmp in case of crash.
+# Read multi-line tokens.
+#
+# Revision 1.17  2004/06/24 16:13:39  kyle
+# Check for and complaint about not disconnecting from parent doesn't work
+# and isn't needed.
+#
+# Revision 1.16  2004/06/11 15:27:25  kyle
+# Daemonize better.
+# Use SIGUSR1 for IPC instead of SIGHUP.
+#
+# Revision 1.15  2004/06/02 17:18:56  kyle
+# Bitconf can specify an arbitrary resource for any address.
+# If hashcash gave us a v1 stamp, hashcash-sendmail finds the date correctly.
+#
+# Revision 1.14  2004/04/13 18:58:02  kyle
+# Make sure time zone always has either a + or a - before the digits.
+#
+# Revision 1.13  2004/04/12 20:27:19  kyle
+# Fix a bug related to the new Recieved: headers I'm inserting (thanks to
+# Jason Mastaler for finding it).
+#
+# Revision 1.12  2004/04/06 16:59:15  kyle
+# Avoid crashing via log( $bits = 0 ).
+# Create the premade token directory if it doesn't exist.
+# Use premade tokens at queue time to speed up delivery.
+#
+# Revision 1.11  2004/04/02 20:55:45  kyle
+# Add a Received: line on the way through.
+# Properly reap a couple of child processes.
+# Log my hostname and RCS ID when the daemon starts.
+#
+# Revision 1.10  2004/04/02 18:57:45  kyle
+# Fixed a bug where premade tokens would clobber each other.
+# Better error reporting when sendmail complains.
+# Fixed a bug where the daemon would hang (I think).
+#
+# Revision 1.9  2004/03/31 05:14:59  kyle
+# hashcash-daemon has been incorporated into hashcash-sendmail now.  After
+# messages are queued, it disconnects from the caller and tries to process
+# the queue.  All the code from hashcash-daemon has been basically pasted in
+# and adapted slightly.
+# If hashcash-sendmail is invoked with no arguments, it expects a token
+# request on standard input.  There's been lots of reorganization to support
+# the new dual purpose.
+# This also fixes a bug where the daemon wouldn't die properly if it had a
+# hashcash-in-progress when it received the kill signal.
+#
+# Revision 1.8  2004/03/19 20:36:46  kyle
+# Fix a possible race condition when copying the message to the queue.
+# Invoke the daemon right before exit.
+#
+# Revision 1.7  2004/03/16 01:47:58  kyle
+# Make sure not to overwrite a message I just queued in the case where I'm
+# handling a Bcc by making multiple copies.  Thanks to Gerhard A. Blab for
+# pointing this out.
+# Also fix a bug where a failed queue() call would stop future queue() calls
+# from working.
+#
+# Revision 1.6  2004/03/09 06:01:59  kyle
+# Correctly handle the case where we have ALL Bcc and NO visible header
+# recipients.  Also did some comment maintenance.
+#
+# Revision 1.5  2004/03/08 21:38:49  kyle
+# Queue separate messages for Bcc recipients so they still get hashcash but
+# don't get revealed to other recipients.  Thanks to Adam Back for the
+# suggestion.
+#
+# Revision 1.4  2004/03/08 17:40:10  kyle
+# Fix the env_recip grep line (thanks Adam Back for figuring out the problem)
+# so that it works on other versions of Perl.
+# Add my email address and URL to the comments.
+#
+# Revision 1.3  2004/03/08 02:03:32  kyle
+# Create the working directories if they don't exist.
+#
+# Revision 1.2  2004/03/07 22:20:14  kyle
+# Make the working directory less hardcoded.
+#
+# Revision 1.1  2004/03/07 22:14:24  kyle
+# Initial revision
+#

@@ -1,0 +1,46 @@
+# $Id$
+#
+# Author: Charles Mauch (charles@mauch.name)
+# Description: mutt mailbox defintions
+# Legal: (c) 2005 Charles Mauch, released under the terms of the GPLv2
+
+mailboxes !
+
+#mailboxes = /home/codemac/.mail/default
+#mailboxes = /home/codemac/.mail/duplicates
+#mailboxes = /home/codemac/.mail/family
+#mailboxes = /home/codemac/.mail/friends
+#mailboxes = /home/codemac/.mail/fun
+#mailboxes = /home/codemac/.mail/keep
+#mailboxes = /home/codemac/.mail/kyologic
+#mailboxes = /home/codemac/.mail/linux
+#mailboxes = /home/codemac/.mail/postponed
+#mailboxes = /home/codemac/.mail/results
+#mailboxes = /home/codemac/.mail/sent
+#mailboxes = /home/codemac/.mail/spam
+#mailboxes = /home/codemac/.mail/unsorted
+#mailboxes = /home/codemac/.mail/vt
+#mailboxes = /home/codemac/.mail/lists/arch
+#mailboxes = /home/codemac/.mail/lists/arch-dev
+#mailboxes = /home/codemac/.mail/lists/arch-tur
+#mailboxes = /home/codemac/.mail/lists/pacman-dev
+#mailboxes = /home/codemac/.mail/lists/gtd
+#mailboxes = /home/codemac/.mail/lists/gtd-ana
+#mailboxes = /home/codemac/.mail/lists/gtd_palm
+#mailboxes = /home/codemac/.mail/lists/ion
+#mailboxes = /home/codemac/.mail/lists/mc
+#mailboxes = /home/codemac/.mail/lists/uvc
+#mailboxes = /home/codemac/.mail/lists/vim-dev
+#mailboxes = /home/codemac/.mail/lists/zsh
+
+#mailboxes = `find ~/.mail/* -type f -exec echo -n " {}"  \; | sed -e 's/\/home\/codemac\/\.mail\//\+/g'`
+# 
+#mailboxes `find ~/.mail/personal/* -type f -exec echo -n " {}"  \; | sed -e 's/\/home\/cmauch\/\.mail\//\+/g'`
+#mailboxes `find ~/.mail/lists/* -type f -exec echo -n " {}"  \; | sed -e 's/\/home\/codemac\/\.mail\//\+/g'`
+#mailboxes `find ~/.mail/admin/* -type f -exec echo -n " {}"  \; | sed -e 's/\/home\/cmauch\/\.mail\//\+/g'`
+
+mailboxes `find ~/.mail -type d | egrep -v '(/new|/tmp|/cur)' | egrep -v '^/home/codemac/.mail$|/home/codemac/.mail/lists' | sort | xargs`
+mailboxes `find ~/.mail/lists -type d | egrep -v '(/new|/tmp|/cur)' | egrep -v '^/home/codemac/.mail/lists$' | sort | xargs`
+
+# Last Modified: Sun 23 Oct 2005 08:33:08 PM PDT
+# EOF

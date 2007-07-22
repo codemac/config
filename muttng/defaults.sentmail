@@ -1,0 +1,32 @@
+# $Id$
+#
+# Author: Charles Mauch (charles@mauch.name)
+# Description: Defaults for viewing mail in sent
+# Legal: (c) 2005 Charles Mauch, released under the terms of the GPLv2
+
+# Null out any folder specific keys.
+bind index @ noop
+
+# Set default signature
+set attribution='* On %{%A, %B %d %Y}, %n wrote:\n'
+
+# This is the index format.
+set index_format="[%3C] %Z %{%b %d %Y} %-15.15t %s"
+
+
+# Reset any headers that may have been set in other folder-hooks
+unmy_hdr Reply-To:
+unmy_hdr Fcc:
+unmy_hdr Return-Receipt-To:
+nmy_hdr Organization:
+unmy_hdr X-URL:
+
+# Remove spam-specific header flags
+source ~/.mutt/headers
+
+# Set PGP Options
+set crypt_autosign=yes
+source ~/.mutt/gpg
+
+# Last Modified: Wed 19 Oct 2005 09:11:43 PM PDT
+# EOF

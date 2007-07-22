@@ -1,0 +1,101 @@
+MAILDIR=$HOME/.mail
+LOGFILE=$HOME/.procmaillog
+LOGABSTRACT=no
+#VERBOSE=on...is only used for debugging
+VERBOSE=off
+FORMAIL=/usr/bin/formail
+NL="
+"
+##recipe lines begin with :0
+##dont put comments on recipe lines
+##disable a recipe with the false condition !
+##condition lines begin with * and regex is your friend
+##conditions are anded and everything after * is fed straight into egrep
+##one action line follows the conditions, in this case it is a mailbox name
+
+#spam
+#:0 fw
+#| /usr/bin/spamc -f
+
+:0
+* X-Spam-Status: Yes
+$MAILDIR/spam/
+
+:0
+* X-Junkmail: UCE
+$MAILDIR/spam/
+
+#catch duplicates using formail
+:0 Whc: .msgid.lock
+| $FORMAIL -D 16384 .msgid.cache
+
+:0 a
+$MAILDIR/duplicates/
+
+:0
+* ^.*:.*(\[Getting_Things_Done\]|\[GTD\])
+$MAILDIR/lists/gtd/
+
+:0
+* ^.*:.*(\[AnalogGTD\])
+$MAILDIR/lists/gtd-ana/
+
+:0
+* ^.*:.*\[GtD_Palm\]
+$MAILDIR/lists/gtd_palm/
+
+:0
+* ^.*:.*arch\@archlinux.org
+$MAILDIR/lists/arch/
+
+:0
+* ^.*:.*tur-users@archlinux.org
+$MAILDIR/lists/arch-tur/
+
+:0
+* ^.*:.*arch-dev@archlinux.org
+$MAILDIR/lists/arch-dev/
+
+:0
+* ^.*:.*pacman-dev@archlinux.org
+$MAILDIR/lists/pacman-dev/
+
+:0
+* ^.*:.*mc\@gnome.org
+$MAILDIR/lists/mc/
+
+:0
+* ^To:.*ion-general
+$MAILDIR/lists/ion/
+
+:0
+* ^.*:.*vim.org
+$MAILDIR/lists/vim-dev/
+
+:0
+* ^.*:.*linux-uvc-devel
+$MAILDIR/lists/uvc/
+
+:0
+* ^.*:.*zsh-(workers|users)@sunsite\.dk
+$MAILDIR/lists/zsh/
+
+
+#:0
+#* ^.*:.*vt.edu
+#$MAILDIR/vt/
+
+#now put my mail lists into mailboxes
+#:0 
+#* ^List-Id:.*gentoo-user
+#gentoo-user
+
+################################
+# Last rule: mail that gets    #
+# this far goes in default box #  
+################################
+:0 
+* .*
+$MAILDIR/default/
+
+# End of file

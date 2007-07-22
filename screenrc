@@ -1,0 +1,52 @@
+deflogin on
+autodetach on
+
+startup_message off
+shell -$SHELL
+activity "active: %n (%t) [%w:%s]"
+bell "bell: %n (%t) [%w:%s]^G"
+vbell off
+vbell_msg "[[[ ding ]]]"
+termcapinfo xterm|xterms|xterm-color|screen|xs|rxvt ti@:te@
+
+term screen
+defscrollback 10000
+nonblock on
+defutf8 on
+msgwait 2
+
+bind k
+bind ^k
+bind K kill
+bind v digraph
+bind ^v version
+
+#caption splitonly
+#caption always "%{+b bw}[%n:%t] %{-b kw} %= %?%-Lw%?%{+b kb}[%n:%t]%?(%u)%?%{-b kw}%?%+Lw%?"
+caption always "%{= kb}[ %{G}%H::$USER %{b}][ %=%{w}%?%-Lw%?%{b}(%{W}%n*%f %t%?(%u)%?%{b})%{w}%?%+Lw%?%= %{b}][%{kB} %Y.%m.%d %{kW}%0c %{kb}]"
+#backtick 1 5 5 $HOME/bin/wifinfo
+#backtick 2 0 0 $HOME/bin/net_txrx
+#backtick 3 0 0 $HOME/bin/batinfo
+#backtick 4 5 5 $HOME/bin/cpuinfo
+#backtick 4 300 300 $HOME/bin/weatherinfo
+#hardstatus alwayslastline "%{+b kr}%H::$USER%{kg} | %m/%d/%y %0C:%s%a | %3` | %4` | %{kc}%1` %2`%{-}"
+#hardstatus alwayslastline "%{+b kr}%H::$USER%{kg}|%m/%d/%y %0C:%s%a|%3`|%{kc}%1` %2`%{-i} |%{kg}%4`%{-} "
+#hardstatus alwayslastline "%{+b kr}%H:$USER%{kg}|%Y.%m.%d %0c|%3`|%{kc}%1` %2`%{-i} "
+#hardstatus alwayslastline "%{b}[ %{B}%H %{b}][ %{w}%?%-Lw%?%{b}(%{W}%n*%f %t%?(%u)%?%{b})%{w}%?%+Lw%?%?%= %{b}][%{B} %Y.%m.%d %{W}%0c %{b}]"
+#caption always "%{=b dw}:%{-b dw}:%{=b dk}[ %{-b dw}%{-b dc}screen on $USER%{-b dw}@%{-b dc}%H %{=b dk}] [ %= %?%{-b dc}%-Lw%?%{+b dk}(%{+b dw}%n:%t%{+b dk})%?(%u)%?%{-b dw}%?%{-b dc}%+Lw%? %{=b dk}]%{-b dw}:%{+b dw}:"
+#hardstatus	alwayslastline "%{= kb}[ %{G}%H::$USER %{b}][ %=%{b}.%{w} %4` %{b}.%{w} %1` %2`%= %{b}][%{kB} %Y.%m.%d %{kW}%0c %{kb}]"
+sorendition +b kG
+
+##############################
+# Default apps
+screen -t root su
+screen zsh
+screen -t mail mutt
+screen -t irc ssh `/home/codemac/bin/naiaip`
+
+select 1
+
+#blankerprg cmatrix -b -s
+#idle 3 blanker
+#bindkey "^[Oc" next
+#bindkey "^[Od" prev

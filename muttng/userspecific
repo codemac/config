@@ -1,0 +1,3 @@
+# User specific hooks
+# Format:
+# send-hook '~t person@server.com' set signature=~/.signatureForPerson

@@ -1,0 +1,19 @@
+# $Id$
+#
+# Author: Charles Mauch (charles@mauch.name)
+# Description: mutt settings for inbox folder
+# Legal: (c) 2005 Charles Mauch, released under the terms of the GPLv2
+
+#set crypt_autosign=yes
+
+# Use the normal defaults first.
+source ~/.mutt/defaults
+
+# Use the "@" key as a quick save and synx button.
+macro index @ "<save-message>=history<enter><sync-mailbox><enter>"
+
+set realname = "codemac"
+set from = "j@codemac.net"
+
+# Last Modified: Sun 06 Nov 2005 08:56:43 PM PST
+# EOF

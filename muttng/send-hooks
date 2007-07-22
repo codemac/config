@@ -1,0 +1,16 @@
+# $Id$
+#
+# Author: Charles Mauch (charles@mauch.name)
+# Description: mutt send-hooks
+# Legal: (c) 2005 Charles Mauch, released under the terms of the GPLv2
+
+# -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=-
+# Some Catch All List Rules
+send-hook '~t .@archlinux.org'	source ~/.mutt/defaults.arch
+
+# -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=-
+# Specifics
+send-hook '~t vt.edu'				source ~/.mutt/defaults.vt
+
+# Last Modified: Wed 19 Oct 2005 09:22:12 PM PDT
+# EOF

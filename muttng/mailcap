@@ -1,0 +1,501 @@
+#
+# Enhanced mailcap file for the use with.mutt/scripts and other mailreaders which
+# support MIME as good as.mutt/scripts...
+# Based on Bell's mailcap file, which can be found in the metamail
+# distribution, but heavily extended and changed
+#
+# by Roland Rosenfeld <roland@spinnaker.de> 1997-2002
+#
+# You will find the most recent version of this file at
+# http://www.spinnaker.de.mutt/scripts/mailcap
+#
+# Copyright (c) 1991 Bell Communications Research, Inc. (Bellcore)
+# 
+# Permission to use, copy, modify, and distribute this material 
+# for any purpose and without fee is hereby granted, provided 
+# that the above copyright notice and this permission notice 
+# appear in all copies, and that the name of Bellcore not be 
+# used in advertising or publicity pertaining to this 
+# material without the specific, prior written permission 
+# of an authorized representative of Bellcore.  BELLCORE 
+# MAKES NO REPRESENTATIONS ABOUT THE ACCURACY OR SUITABILITY 
+# OF THIS MATERIAL FOR ANY PURPOSE.  IT IS PROVIDED "AS IS", 
+# WITHOUT ANY EXPRESS OR IMPLIED WARRANTIES.
+#
+# $ Id: mailcap,v 1.21 2002/05/30 17:18:28 roland Exp roland $
+#
+
+
+#
+# Audio
+#
+
+
+# Note that the effect of the following is to send ALL audio subtypes to the 
+# showaudio program, but to compose audio (e.g. in the mailto program) 
+# using "audio/basic" as the type.
+
+#audio/basic; showaudio %s; compose=audiocompose %s;\
+#	edit=audiocompose %s; description="An audio fragment"
+audio/basic; compose=audiocompose %s;\
+	edit=audiocompose %s; description="An audio fragment"
+#audio/basic; cat > /dev/audio
+#audio/ulaw; cat > /dev/audio
+#audio/adpcm4; /usr/local/lib/vbox/vboxplay %s 200
+#audio/x-wav; vplay %s
+#audio/x-aiff; playaiff %s; compose=recordaiff -t 60 %s;	\
+#	description="AIFF Audio"; x11-bitmap="/usr/lib/Zmail/bitmaps/sound.xbm"
+#audio/mod; /usr/bin/tracker %s
+
+audio/x-vbox; vboxplay %s
+
+audio/x-pn-realaudio; 	realplayer %s; test=test "$DISPLAY" != ""
+audio/vnd.rn-realaudio; realplayer %s; test=test "$DISPLAY" != ""
+audio/x-pn-mp3; 	realplayer %s; test=test "$DISPLAY" != ""
+
+audio/mpeg;    xmms %s; test=test "$DISPLAY" != "" 
+audio/mpegurl; xmms %s; test=test "$DISPLAY" != "" 
+audio/mpeg;    mpg123 -q %s
+
+audio/midi;   timidity -im %s; test=test -n "$DISPLAY"
+audio/mid;    timidity -im %s; test=test -n "$DISPLAY"
+audio/x-midi; timidity -im %s; test=test -n "$DISPLAY"
+audio/mid;    timidity %s
+audio/midi;   timidity %s
+audio/x-midi; timidity %s
+
+#audio/*; showaudio %s
+#audio/*; xrplay %s; test=test -n "$DISPLAY"
+audio/*; rplay %s\; exit 1
+
+
+
+#
+# Image
+#
+
+# The following line is for sites where xv understands jpeg but xloadimage 
+# is preferred. 
+#image/jpeg; showpicture -viewer xv %s; test=test -n "$DISPLAY"
+
+#image/x-fits; saoimage -fits %s 2> /dev/null
+image/x-xwindowdump; xwud -in %s 2> /dev/null
+image/x-xbitmap; xwud -in %s 2> /dev/null
+
+image/x-fax-g3; viewfax -geometry +5+23 %s; test=test -n "$DISPLAY"
+image/x-fax-g3;; print=printfax %s
+#image/tiff; viewfax -geometry +5+23 %s; test=test -n "$DISPLAY"
+image/tiff; qiv %s; test=test -n "$DISPLAY"
+image/x-tiff; xv %s; test=test -n "$DISPLAY"
+
+# For receiving X11 window image dumps from older versions of Andrew messages
+image/x-xwd; showpicture %s; \
+	description="An X11 window image dump in X-XWD format"
+
+#image/x-sgi; ipaste %s; compose=imgworks %s; description="SGI image"; \
+#	x11-bitmap="/usr/lib/Zmail/bitmaps/image.xbm"
+#image/x-bitmap; bitmap %s; description="X11 bitmap"; \
+#	x11-bitmap="/usr/lib/Zmail/bitmaps/bitmap.xbm"
+#image/x-xpm1; olpixmap %s; description="OL pixmap"; \
+#	x11-bitmap="/usr/lib/Zmail/bitmaps/bitmap.xbm"
+
+# The following sends all other image subtypes to showpicture.
+#image/*; showpicture -viewer xli %s; test=test -n "$DISPLAY"
+
+# The following sends all other image subtypes to xloadimage
+image/*; feh -Zd %s; test=test -n "$DISPLAY"
+
+# If you have only a text console:
+image/*; ~/.mutt/scripts/image2ascii %s; copiousoutput
+
+# The following all appear AFTER the corresponding READING entries, and 
+# are for use in messages composition, e.g. in the "mailto" program
+# In the following lines, the exit 0 junk is necessary because xwd 
+# does not always exit with a valid exit status!
+# For sites with current (X11R5) pbm utilities
+#image/gif; showpicture %s; \
+#	compose="xwd -frame | xwdtopnm | ppmtogif > %s\; exit 0"; \
+#	description="An X11 window image dump in GIF format"
+image/tiff; edit=xpaint %s; test=test -n "$DISPLAY"
+image/x-portable-pixmap; edit=xpaint %s; test=test -n "$DISPLAY"
+image/gif; edit=xpaint %s; test=test -n "$DISPLAY"
+image/x-bitmap; edit=xpaint %s; test=test -n "$DISPLAY"
+image/x-pixmap; edit=xpaint %s; test=test -n "$DISPLAY"
+image/x-windowdump; edit=xpaint %s; test=test -n "$DISPLAY"
+
+
+
+#
+# Message
+#
+
+message/partial; showpartial %s %{id} %{number} %{total} | less; \
+	needsterminal
+message/partial; showpartial %s %{id} %{number} %{total}; copiousoutput
+
+message/external-body; showexternal %s %{access-type} %{name} %{site} \
+	%{directory} %{mode} %{server}; \
+	needsterminal; composetyped = extcompose %s; \
+	description="A reference to data stored in an external location"
+message/external-body; ncftp %{site}:%{directory}/%{name}; \
+	test=test %{access-type} = anon-ftp
+
+# You can alter the above entry to only use certain access-types by 
+# adding a clause like the following before the "description=" line:
+#	test=test %{access-type}  = mail-server;  \
+
+# Von Norbert:
+#message/rfc822; xterm -e metamail %s
+
+
+
+#
+# Text
+#
+
+# The following gives rudimentary capability for receiving 
+# text mail in the ISO-8859-1 character set, which covers many European 
+# languages, and the ISO-8859-8 character set, which includes Hebrew
+# Note that the pipe to tr ensures that the "ISO" is case-insensitive.
+text/richtext; shownonascii iso-8859-8 -e richtext -p %s; \
+	test=test "`echo %{charset} | tr '[A-Z]' '[a-z]'`"  = iso-8859-8; \
+	copiousoutput
+text/richtext; shownonascii iso-8859-1 -e richtext -p %s; \
+	test=test "`echo %{charset} | tr '[A-Z]' '[a-z]'`"  = iso-8859-1; \
+	copiousoutput
+text/richtext; richtext %s; copiousoutput
+text/enriched; shownonascii iso-8859-8 -e richtext -e -p %s; \
+	test=test "`echo %{charset} | tr '[A-Z]' '[a-z]'`"  = iso-8859-8; \
+	copiousoutput
+text/enriched; shownonascii iso-8859-1 -e richtext -e -p %s; \
+	test=test "`echo %{charset} | tr '[A-Z]' '[a-z]'`"  = iso-8859-1; \
+	copiousoutput
+# If you have Andrew at your site, you MIGHT prefer to replace the
+# above line with the following one, but probably would not because
+# ez takes so long to start up.
+# text/richtext; richtoatk < %s | ezview - ; copiousoutput
+text/enriched; richtext -e %s; copiousoutput
+#text/plain; shownonascii iso-8859-8 %s; \
+#	test=test "`echo %{charset} | tr '[A-Z]' '[a-z]'`" = iso-8859-8; \
+#	copiousoutput
+#text/plain; shownonascii iso-8859-1 %s; \
+#	test=test "`echo %{charset} | tr '[A-Z]' '[a-z]'`" = iso-8859-1; \
+#	copiousoutput
+text/plain; shownonascii iso-8859-8 %s; \
+	test=test "`echo %{charset} | tr '[A-Z]' '[a-z]'`" \
+	= iso-8859-8 -a -n "$DISPLAY" ; \
+	copiousoutput
+text/plain; shownonascii iso-8859-8 %s | more ; \
+	test=test "`echo %{charset} | tr '[A-Z]' '[a-z]'`" = iso-8859-8; \
+	needsterminal
+#text/plain; shownonascii iso-8859-1 %s; \
+#	test=test "`echo %{charset} | tr '[A-Z]' '[a-z]'`" = \
+#	iso-8859-1 -a -n "$DISPLAY" ; \
+#	copiousoutput
+#text/plain; shownonascii iso-8859-1 %s | more ; \
+#	test=test "`echo %{charset} | tr '[A-Z]' '[a-z]'`" = iso-8859-1 ; \
+#	needsterminal
+text/plain; cat %s; \
+	test=test "`echo %{charset} | tr '[A-Z]' '[a-z]'`" = iso-8859-1 ; \
+	copiousoutput
+
+# The following displays Japanese text at sites where the "kterm" program 
+# is installed:
+text/plain; kterm -geometry +0+0  -e more %s /dev/null; \
+	test=test "`echo %{charset} | tr '[A-Z]' '[a-z]'`" = iso-2022-jp
+
+# Interactive viewer:
+#text/html; (netscape -remote 'openURL(%s)' || netscape %s)\;exit 1; \
+#	test=test -n "$DISPLAY"
+# "exit 1" is needed to get a "Press key" prompt in.mutt/scripts, otherwise the 
+# tempfile is removed before Netscape could read it.
+#text/html; (netscape -noraise -remote 'openFile(%s,new-window)' \
+#	|| netscape %s)\;exit 1; test=test -n "$DISPLAY"
+# The following uses Debians special mozilla wrapper:
+text/html; firefox-new-tab "%s""\;exit 1; nametemplate=%s.html; test=test -n "$DISPLAY"
+text/html; lynx -force_html %s; needsterminal
+
+# non-interactive, basically text converter:
+text/html; lynx -force_html -dump %s; copiousoutput
+#text/html; w3m -dump -T text/html; copiousoutput
+#text/html; html2text %s; copiousoutput
+
+text/x-sgml; cat %s; copiousoutput
+text/x-chdr; cat %s; copiousoutput
+text/x-csrc; cat %s; copiousoutput
+text/x-tex; cat %s; copiousoutput
+text/tex; cat %s; copiousoutput
+text/x-sh; cat %s; copiousoutput
+text/english; cat %s; copiousoutput
+
+text/x-vcard; ~/.mutt/scripts/vcard-filter; copiousoutput
+
+text/comma-separated-values; gnumeric %s; test=test -n "$DISPLAY"; \
+	nametemplate=%s.csv
+
+
+#
+# Video
+#
+
+# This maps MPEG video data to the viewer 'mpeg_play'.
+# (Mpeg_play is part of the MPEG distribution from The Berkeley Plateau
+# Research Group and is available via anonymous ftp from toe.cs.berkeley.edu.)
+#video/mpeg; mpeg_play %s 2>/dev/null ; test=test -n "$DISPLAY"
+video/mpeg; gtv %s; test=test -n "$DISPLAY"
+
+video/x-msvideo; /usr/bin/aviplay '%s'; test=test "$DISPLAY" != ""
+
+# This maps all other types of video to the xanim viewer.  (Xanim is written
+# by Mark Podlipec, podlipec@wellfleet.com.)
+video/*; xanim +Av70 +Sr +Zpe %s >/dev/null; test=test -n "$DISPLAY"
+
+
+
+#
+# Application
+#
+
+# If you have an interactive Postscript interpreter, you should think 
+# carefully before replacing lpr with it in the following line, because 
+# PostScript can be an enormous security hole.  It is RELATIVELY harmless
+# when sent to the printer...
+application/postscript; gv %s; test=test -n "$DISPLAY"
+#application/postscript; lpr %s \; echo SENT FILE TO PRINTER;\
+#	description="A Postscript File"
+#application/postscript; ps2ascii %s | par 72; copiousoutput
+application/postscript; pstotext %s; copiousoutput
+application/postscript;; print=lpr %s
+
+#application/pdf; xpdf -q %s; test=test -n "$DISPLAY"
+application/pdf; acroread %s; test=test -n "$DISPLAY"
+#application/pdf; pdftotext-filter; copiousoutput
+
+application/x-tex; cat %s; copiousoutput
+
+application/x-dvi; xdvi %s; test=test -n "$DISPLAY"
+application/x-dvi; dvi2tty -w 132 %s; nametemplate=%s.dvi; copiousoutput
+application/x-dvi;; print=dvips %s
+
+application/x-gzip-dvi; zxdvi %s; test=test -n "$DISPLAY"
+application/x-gzip-dvi; zcat | dvi2tty-filter -w 132; copiousoutput
+
+application/x-gzip-postscript; gv %s; test=test -n "$DISPLAY"
+
+#application/x-gzip; zcat | less; needsterminal
+#b
+#b
+#application/x-gunzip; zcat | less; needsterminal
+#application/x-gzip; zcat; copiousoutput
+#application/x-gunzip; zcat; copiousoutput
+
+application/x-gzip; octet-filter %s; copiousoutput
+application/x-gunzip; octet-filter %s; copiousoutput
+application/x-diff-gzip; zcat %s; copiousoutput
+application/x-bzip2; octet-filter %s; copiousoutput
+
+application/x-cpio; cpio -tvF --quiet %s; copiousoutput
+application/x-gtar; tar tvf %s; copiousoutput
+application/x-tar; tar tvf %s; copiousoutput
+application/x-tar-gz; tar tvfz %s; copiousoutput
+application/x-rar-compressed; rar v %s; copiousoutput
+application/x-zip-compressed; unzip -v %s; copiousoutput
+application/zip; unzip -v %s; copiousoutput
+
+application/x-csh; cat %s; copiousoutput
+application/x-sh; cat %s; copiousoutput
+application/x-script; cat %s; copiousoutput
+application/x-shellscript; cat %s; copiousoutput
+application/x-latex; cat %s; copiousoutput
+application/x-tex; cat %s; copiousoutput
+application/x-shar; cat %s; copiousoutput
+application/x-perl; cat %s; copiousoutput
+
+application/x-troff; groff -Tlatin1 %s; copiousoutput
+application/x-troff-man; man -l %s 2>/dev/null; copiousoutput
+application/x-troff-me; groff -me -Tlatin1 %s; copiousoutput
+
+application/x-lotus-notes; lotusview %s; needsterminal
+application/x-lotus-notes; lotusview -B %s; copiousoutput
+
+application/pgp; pgp -f < %s | metamail; needsterminal; \
+	test=test %{encapsulation}=entity 
+application/pgp; pgp %s; needsterminal
+application/pgp; pgp +verbose=0 %s; \
+	test=test %{format} = keys-only; needsterminal
+#application/pgp; pgp +verbose=0 -f; copiousoutput; needsterminal
+application/pgp-keys; pgp -f 2>/dev/null; copiousoutput
+application/x-pgp-public-key; pgp +verbose=0 %s; needsterminal
+application/x-pgp-message; pgp +verbose=0 -f; needsterminal; copiousoutput
+#application/pgp-signature; cat %s; copiousoutput
+#application/pgp; pgp +verbose=0 %s -o %s.plain && \
+#	metamail -z %s.plain || rm -f %s.plain; \
+#	test=test %{format} = mime; needsterminal; copiousoutput
+application/pkcs7-signature; strings %s; copiousoutput
+application/x-pkcs7-signature; strings %s; copiousoutput
+
+application/msword; wv-ns %s; test=test -n "$DISPLAY"
+#application/msword; kantiword a4 %s; test=test -n "$DISPLAY"
+#application/msword; strings | fmt; copiousoutput
+#application/msword; strings-locale; copiousoutput
+#application/msword; strings %s; copiousoutput
+#application/msword; lhalw --column 80 --to_stdout %s 2>/dev/null; \
+#	copiousoutput
+#application/msword; word2x-filter; copiousoutput
+application/msword; catdoc %s; copiousoutput
+#application/msword; antiword %s; copiousoutput
+application/ms-tnef; tnef2txt %s; copiousoutput
+
+application/excel; gnumeric %s; test=test -n "$DISPLAY"; \
+	nametemplate=%s.xls
+application/vnd.ms-excel; gnumeric %s; test=test -n "$DISPLAY"; \
+	nametemplate=%s.xls
+#application/excel; xlsview %s; test=test -n "$DISPLAY"
+#application/vnd.ms-excel; xlsview %s; test=test -n "$DISPLAY"
+application/excel; xls2csv %s | column -s, -t; copiousoutput
+application/vnd.ms-excel; xls2csv %s | column -s, -t; copiousoutput
+#application/excel; xlHtml %s | w3m -dump -T text/html; copiousoutput
+#application/vnd.ms-excel; xlHtml %s | w3m -dump -T text/html; copiousoutput
+
+application/rtf; rtfreader %s; copiousoutput
+
+# Type octet-stream (binary) data can be displayed as a hex dump before
+# you decide whether or not you want to save it to a file.  (Hd is just
+# a standard hex dump program.  You could use "od" if you do not have an
+# "hd".  Naive users may find the output from this entry confusing.)
+#application/octet-stream; hexdump; copiousoutput; \
+#	description="Hex dump of data"
+application/octet-stream; octet-filter %s; copiousoutput
+
+# The following should be commented out if you do NOT have safe-tcl
+# and should be uncommented if you DO have safe-tcl
+#application/safe-tcl; swish -safe -messaging -f %s
+
+application/x-tcl; cat %s; copiousoutput
+
+# The following should be commented out if you do NOT have atomicmail
+# and should be uncommented if you DO have ATOMICMAIL
+#application/atomicmail; atomicmail %s; compose=surveyor.am -p %s; \
+#	description="An interactive ATOMICMAIL survey"
+# The following should be used instead if you have atomicmail but not TK.
+#application/atomicmail; atomicmail %s ; needsterminal
+#application/atomicmail; atomicmail %s; compose=surveyor.am -p %s; \
+#	description="An interactive ATOMICMAIL survey"; needsterminal
+
+# The following give rudimentary capabilities to read old andrew format
+# even to non-Andrew sites, since "ezview" comes with metamail.
+application/andrew-inset; ezview %s ; copiousoutput; edit=ez -d %s; \
+	compose="ez -d %s"; description="An Andrew inset/document"
+
+# The following is used for distributing metamail patches
+# It should probably be used only by those administering metamail at a site.
+# You will need to replace "source-tree-root" with the real root of your 
+# actual metamail source tree.
+# You can also modify this line to get metamail patches from some trusted
+# server other than thumper, if there is one -- man patch-metamail for help.
+application/x-metamail-patch; \
+	cat > /dev/null \;patch-metamail source-tree-root %{patchnumber};\
+	needsterminal
+
+application/x-debian-package; dpkg --info %s\; dpkg --contents %s; \
+	copiousoutput
+
+# The following is for support of MacMIME, especially those
+# the Columbia AppleTalk package (CAP) installed.
+# For more info about MacMIME, send email to paf@nada.kth.se
+#
+# If you don not have CAP, and have not changed rcvAppleSingle
+# or sndAppleSingle, you should comment out this line.
+application/applefile; rcvAppleSingle %s; compose="sndAppleSingle %s";\
+	description="An Apple Macintosh file in AppleSingle format"
+
+#
+# The following is for interoperability with Z-Mail version 3.0 and beyond.
+# To enable this compatibility, uncomment all of the following lines.
+#
+# For more info about Z-Mail, send email to info@z-code.com
+#
+#application/x-movie; movieplayer %s; compose=moviemaker %s; \
+#	description="Movie"; \
+#	x11-bitmap="/usr/lib/Zmail/bitmaps/movie.xbm"
+#application/x-inventor; examine %s; description="Inventor file"; \
+#	x11-bitmap="/usr/lib/Zmail/bitmaps/inventor.xbm"
+#application/x-zm-fax; zfax %s; description="Z-Fax document"; \
+#	x11-bitmap="/usr/lib/Zmail/bitmaps/fax.xbm"
+#application/x-showcase; showcase %s; compose=showcase %s; \
+#	description="Showcase document"; \
+#	x11-bitmap="/usr/lib/Zmail/bitmaps/showcase.xbm"
+#application/x-jot; jot %s; compose=jot %s; description="Jot document"; \
+#	x11-bitmap="/usr/lib/Zmail/bitmaps/jot.xbm"
+#application/x-island-write; IslandWrite %s; compose=IslandWrite %s; \
+#	description="IslandWrite document"; \
+#	x11-bitmap="/usr/lib/Zmail/bitmaps/islwrite.xbm"
+#application/x-island-draw; IslandDraw %s; compose=IslandDraw %s; \
+#	description="IslandDraw document"; \
+#	x11-bitmap="/usr/lib/Zmail/bitmaps/isldraw.xbm"
+#application/x-island-paint; IslandPaint %s; compose=IslandPaint %s; \
+#	description="IslandPaint document"; \
+#	x11-bitmap="/usr/lib/Zmail/bitmaps/islpaint.xbm"
+#application/x-wingz; Wingz %s; compose=Wingz %s; \
+#	description="Wingz document"; \
+#	x11-bitmap="/usr/lib/Zmail/bitmaps/wingz.xbm"
+#application/x-framemaker; maker -f %s; compose=maker -f %s; \
+#	description="FrameMaker document"; \
+#	x11-bitmap="/usr/lib/Zmail/bitmaps/frame.xbm"
+#Another suggested way to use FrameMaker
+# application/x-framemaker; clclient -f %s \; sleep 60 ; \
+#	compose="getfilename FrameMaker %s" 
+
+
+
+#
+# multipart:
+#
+
+# Definitions for MIME security with PGP (RFC 2015):
+multipart/encrypted; showencrypted %{boundary} %s; \
+	test=test %{protocol} = application/pgp-encrypted; needsterminal
+multipart/signed; showsigned %{boundary} %s; \
+	test=test %{protocol} = application/pgp-signature; needsterminal
+
+
+#
+# VRML:
+#
+x-world/x-vrml; vrweb -URL '%u' -remote '%s'; test=test -n "$DISPLAY"
+model/vrml; vrweb -URL '%u' -remote '%s'; test=test -n "$DISPLAY"
+
+
+#
+# Schrott:
+#
+
+# The following is a VERY rough cut at showing mail from Sun's openwindows 
+# mailtool
+# Old version
+# x-sun-attachment; sun-to-mime %s
+x-sun-attachment; sun2mime %s
+audio-file; sun-audio-file %s
+default; sun-message.csh %s %{encoding}; needsterminal
+mail-file; sun-message.csh %s %{encoding}; needsterminal
+sun-deskset-message; sun-message.csh %s %{encoding}; needsterminal
+x-be2;     ezview %s ; copiousoutput
+# Old Z-mail format
+#x-zm-multipart: sun-to-mime %s
+#multipart/enabled-mail; show-enabled %F
+
+
+
+
+# A common problem with the mailcap mechanism is getting differential 
+# behavior from different programs.  This problem is compounded by the fact 
+# that some programs, notably Mosaic, do not implement the "test" clause in 
+# mailcap files.  The following two mailcap entries should give you a model 
+# for a hack that will allow you to get differential behavior from Mosaic and 
+# metamail in spite of this fact.  It exploits the fact that metamail always 
+# sets the MM_MAILER variable (if only to "unknown") while Mosaic does not.
+#
+# foo/bar; echo mosaic; test=test "$MM_MAILER" = ""
+# foo/bar; echo not mosaic
+# Java Web Start
+application/x-java-jnlp-file; /tmp/make-jpkg.XXXXN5Z4tp/extract/jre1.5.0_05/bin/javaws %s

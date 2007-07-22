@@ -1,0 +1,31 @@
+# Author: Charles Mauch (charles@mauch.name)
+# Description: Defaults for system, resource regularly
+# Legal: (c) 2005 Charles Mauch, released under the terms of the GPLv2
+
+set attribution='* On %{%A, %B %d %Y}, %n wrote:\n'
+set index_format="[%3C] %1N %Z %{%b %d} %-15.15n (%4l) %s"
+
+#	the folder hooks handle this
+#set record=+default
+
+bind index "l"     list-reply
+bind pager "l"     list-reply
+
+# Set the From Line
+set realname = "codemac"
+set from = "j@codemac.net"
+
+alternates = (i|jm|jmickey|codemac)@vt.edu|jeff@archlinux.org|codemac@gmail.com|j@codemac.net
+
+set sort=threads
+
+source ~/.mutt/gpg
+# Always verify signatures by default.
+set crypt_verify_sig=yes
+set crypt_autosign=yes
+#unset smime_is_default
+#set pgp_autoinline=no
+#set pgp_replyinline=no
+
+# Last Modified: Sun 23 Oct 2005 08:05:55 PM PDT
+# EOF

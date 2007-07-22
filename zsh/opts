@@ -1,0 +1,54 @@
+#!/bin/zsh
+#
+# zsh specifics
+
+# autoload
+autoload -U compinit
+compinit
+
+autoload zmv				#	for renaming better than your mother named you
+
+autoload -U zfinit			#	For initializing zftp
+zfinit
+
+autoload -U zcalc			#	for mathhhh
+
+
+# history
+HISTFILE=~/.zsh/history
+HISTSIZE=3000
+SAVEHIST=3000
+
+# type a dir's name to cd into it
+compctl -/ cd
+
+# Some options..
+setopt autopushd pushdminus pushdsilent pushdtohome
+setopt autocd
+setopt cdablevars
+setopt globdots
+setopt ignoreeof
+setopt interactivecomments
+setopt nobanghist
+setopt noclobber
+setopt hist_reduce_blanks
+setopt hist_ignore_space
+setopt SH_WORD_SPLIT
+setopt nohup
+setopt nobeep                  # i hate beeps
+setopt automenu
+setopt autopushd               # automatically append dirs to the push/pop list
+setopt pushdignoredups         # and don't duplicate them
+setopt cdablevars              # avoid the need for an explicit $
+setopt nohup                   # and don't kill them, either
+#setopt listpacked              # compact completion lists
+setopt nolisttypes             # show types in completion
+setopt dvorak                  # with spelling correction, assume dvorak kb
+setopt extendedglob            # weird & wacky pattern matching - yay zsh!
+setopt completeinword          # not just at the end
+setopt alwaystoend             # when complete from middle, move cursor
+#setopt correct                 # spelling correction
+setopt nopromptcr              # don't add \n which overwrites cmds with no \n
+setopt histverify              # when using ! cmds, confirm first
+setopt interactivecomments     # escape commands so i can use them later
+#setopt printexitvalue          # alert me if something's failed

@@ -1,0 +1,6 @@
+zsh/history
+muttng/cached_headers
+.DS_Store
+*.swp
+elinks/*hist
+elinks/cookies

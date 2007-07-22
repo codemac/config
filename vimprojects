@@ -1,0 +1,239 @@
+intrexon="/Users/99/Documents/intrexon" CD=. filter="*" {
+ gmms=GMMS filter="**" {
+ }
+}
+codemac="/Users/99/Documents/ror/codemac" CD=. filter="*" {
+ README
+ Rakefile
+ app=app {
+  controllers=controllers filter="**" {
+   account_controller.rb
+   application.rb
+   main_controller.rb
+   posts_controller.rb
+   tags_controller.rb
+  }
+  helpers=helpers filter="**" {
+   account_helper.rb
+   application_helper.rb
+   main_helper.rb
+   posts_helper.rb
+   tags_helper.rb
+  }
+  models=models filter="**" {
+   post.rb
+   tag.rb
+   user.rb
+  }
+  views=views filter="**" {
+   account/index.rhtml
+   account/login.rhtml
+   account/signup.rhtml
+   layouts/posts.rhtml
+   layouts/tags.rhtml
+   posts/edit.rhtml
+   posts/index.rhtml
+   posts/new.rhtml
+   posts/show.rhtml
+   tags/edit.rhtml
+   tags/index.rhtml
+   tags/new.rhtml
+   tags/show.rhtml
+  }
+ }
+ config=config {
+  boot.rb
+  database.yml
+  environment.rb
+  routes.rb
+  environments=environments {
+   development.rb
+   production.rb
+   test.rb
+  }
+ }
+ db=db {
+  schema.rb
+  migrate=migrate {
+   001_create_users.rb
+   002_create_posts.rb
+   003_create_tags.rb
+   004_add_open_id.rb
+  }
+ }
+ lib=lib {
+  authenticated_system.rb
+  authenticated_test_helper.rb
+  tasks=tasks {
+  }
+ }
+ public=public {
+  404.html
+  500.html
+  dispatch.cgi
+  dispatch.fcgi
+  dispatch.rb
+  favicon.ico
+  robots.txt
+  images=images {
+   rails.png
+  }
+  javascripts=javascripts {
+   application.js
+   controls.js
+   dragdrop.js
+   effects.js
+   prototype.js
+  }
+  stylesheets=stylesheets {
+   scaffold.css
+  }
+ }
+ test=test {
+  test_helper.rb
+  fixtures=fixtures filter="**" {
+   posts.yml
+   tags.yml
+   users.yml
+  }
+  functional=functional filter="**" {
+   account_controller_test.rb
+   main_controller_test.rb
+   posts_controller_test.rb
+   tags_controller_test.rb
+  }
+  integration=integration filter="**" {
+  }
+  mocks=mocks filter="**" {
+  }
+  unit=unit filter="**" {
+   post_test.rb
+   tag_test.rb
+   user_test.rb
+  }
+ }
+}
+
+remix="/home/codemac/remix" CD=. filter="*" {
+ README
+ Rakefile
+ app=app {
+  controllers=controllers filter="**" {
+   application.rb
+   articles_controller.rb
+   authors_controller.rb
+   comments_controller.rb
+   tags_controller.rb
+  }
+  helpers=helpers filter="**" {
+   application_helper.rb
+   articles_helper.rb
+   authors_helper.rb
+   comments_helper.rb
+   tags_helper.rb
+  }
+  models=models filter="**" {
+   article.rb
+   author.rb
+   comment.rb
+   tag.rb
+  }
+  views=views filter="**" {
+   articles/edit.rhtml
+   articles/index.rhtml
+   articles/new.rhtml
+   articles/show.rhtml
+   authors/edit.rhtml
+   authors/index.rhtml
+   authors/new.rhtml
+   authors/show.rhtml
+   comments/edit.rhtml
+   comments/index.rhtml
+   comments/new.rhtml
+   comments/show.rhtml
+   layouts/articles.rhtml
+   layouts/authors.rhtml
+   layouts/comments.rhtml
+   layouts/tags.rhtml
+   tags/edit.rhtml
+   tags/index.rhtml
+   tags/new.rhtml
+   tags/show.rhtml
+  }
+ }
+ config=config {
+  boot.rb
+  database.yml
+  environment.rb
+  routes.rb
+  environments=environments {
+   development.rb
+   production.rb
+   test.rb
+  }
+ }
+ db=db {
+  schema.rb
+  migrate=migrate {
+   001_create_authors.rb
+   002_create_articles.rb
+   003_create_comments.rb
+   004_create_tags.rb
+   005_add_habtm_accounts_tags.rb
+   006_add_id_fields.rb
+  }
+ }
+ lib=lib {
+  tasks=tasks {
+  }
+ }
+ public=public {
+  404.html
+  500.html
+  blank.html
+  dispatch.cgi
+  dispatch.fcgi
+  dispatch.rb
+  favicon.ico
+  index.html.example
+  robots.txt
+  images=images {
+   rails.png
+  }
+  javascripts=javascripts {
+   application.js
+   controls.js
+   dragdrop.js
+   effects.js
+   prototype.js
+  }
+  stylesheets=stylesheets {
+   scaffold.css
+  }
+ }
+ test=test {
+  test_helper.rb
+  fixtures=fixtures filter="**" {
+   articles.yml
+   authors.yml
+   comments.yml
+   tags.yml
+  }
+  functional=functional filter="**" {
+   articles_controller_test.rb
+   authors_controller_test.rb
+   comments_controller_test.rb
+   tags_controller_test.rb
+  }
+  integration=integration filter="**" {
+  }
+  mocks=mocks filter="**" {
+  }
+  unit=unit filter="**" {
+   article_test.rb
+   author_test.rb
+   comment_test.rb
+   tag_test.rb
+  }
+ }
+}
