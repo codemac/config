@@ -2,12 +2,25 @@
 # Jeff Mickey's irbrc
 # Lot's of fun stuff !
 
+# get some gem action!
+require 'rubygems'
 # Class completion
 require 'irb/completion'
 # Save what I run
 require 'irb/ext/save-history'
 # Give me some pp love
 require 'pp'
+# colorize output!
+require 'wirble'
+Wirble.init
+Wirble.colorize
+
+# NOT WORKING.  Haven't figured out why yet.
+# fix bad method names!
+#require 'guessmethod'
+#class Object
+#  include GuessMethod
+#end
 
 IRB.conf[:USE_READLINE] = true							# readline doesn't suck
 IRB.conf[:EVAL_HISTORY] = 1000							# Enable the _ variable
@@ -96,12 +109,4 @@ begin # My custom prompt!
 	}
 	IRB.conf[:PROMPT_MODE] = :CODEMAC
   end
-end
-
-false and begin # colorize results
-  require 'rubygems'
-  require 'wirble'
-  Wirble.init
-  Wirble.colorize
-rescue
 end
