@@ -1,0 +1,83 @@
+# $Id$
+#
+# Author: Charles Mauch (charles@mauch.name)
+# Description: mutt macros 
+# Legal: (c) 2005 Charles Mauch, released under the terms of the GPLv2
+
+# -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=-
+# Macros for use in the index.
+
+macro index "\Cx\Cb" "<change-folder>?"                                   # Folder list.
+macro index "\Cx\Cs" "<pipe-message>cat > ~/"                             # Save message
+macro index "\'"     "<clear-flag>r"                                      # Mark as un-replied
+#macro index "y"      "<sync-mailbox><change-folder>?<toggle-mailboxes>"   # "-y" screen
+macro index "<esc>i"    "<change-folder>=inbox<enter>"                    # Go Home
+macro index "\ev"    "<pipe-message>less<enter>"                          # View the message in less.
+macro index F	     "C=followups<enter>"				  # Move message to followup inbox
+
+
+# -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=-
+# Macros for use in the pager.
+
+macro pager "F"	     "C=followups<enter>"				  # Move message to followup inbox
+macro pager "w"      "<enter-command>set invsmart_wrap invmarkers<enter>" # Toggle wrap stuff
+#macro pager "y"      "<sync-mailbox><change-folder>?<toggle-mailboxes>"   # "-y" screen
+macro pager "\e1"    "<enter-command>set pager_index_lines=1<enter>"      # Change PIL size
+macro pager "\e2"    "<enter-command>set pager_index_lines=2<enter>"      # Change PIL size
+macro pager "\e3"    "<enter-command>set pager_index_lines=3<enter>"      # Change PIL size
+macro pager "\e4"    "<enter-command>set pager_index_lines=4<enter>"      # Change PIL size
+macro pager "\e5"    "<enter-command>set pager_index_lines=5<enter>"      # Change PIL size
+macro pager "\e6"    "<enter-command>set pager_index_lines=6<enter>"      # Change PIL size
+macro pager "\e7"    "<enter-command>set pager_index_lines=7<enter>"      # Change PIL size
+macro pager "\e8"    "<enter-command>set pager_index_lines=8<enter>"      # Change PIL size
+macro pager "\e9"    "<enter-command>set pager_index_lines=9<enter>"      # Change PIL size
+macro pager "\e0"    "<enter-command>set pager_index_lines=0<enter>"      # Change PIL size
+macro pager "\Cx\Cb" "<change-folder>?"                                   # Folder list.
+macro pager "\Cx\Cs" "<pipe-message>cat > ~/"                             # Save message
+macro pager "\ev"    "<pipe-message>less<enter>"                          # View the message in less.
+macro pager "\el"    "<enter-command>set invpipe_decode<enter>"
+macro index "<esc>i" "<change-folder>=inbox<enter>"         	          # Go Home
+# macro pager "q"     "<esc>x-"					   	  # Reset threads
+
+# -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=-
+# Provide some "on-line" help.
+
+macro generic "\e?" "<shell-escape>lynx /usr/share/doc/mutt/html/manual.html\n<enter>"
+macro index   "\e?" "<shell-escape>lynx /usr/share/doc/mutt/html/manual.html\n<enter>"
+macro pager   "\e?" "<shell-escape>lynx /usr/share/doc/mutt/html/manual.html\n<enter>"
+
+# -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=-
+# And Spam Training commands
+
+macro index \eD "<enter-command>set wait_key\n<pipe-entry>formail -I X-CRM114-Status -I X-CRM114-Action -I X-CRM114-Version | /home/users/cmauch/.crm114/mailfilter.crm -u /home/users/cmauch/.crm114/ --learnspam --force\n<enter-command>set wait_key\n><save-message>=spam/learned\n" "Learns tagged message as SPAM"
+macro pager \eD "<enter-command>set wait_key\n<pipe-entry>formail -I X-CRM114-Status -I X-CRM114-Action -I X-CRM114-Version | /home/users/cmauch/.crm114/mailfilter.crm -u /home/users/cmauch/.crm114/ --learnspam --force\n<enter-command>set wait_key\n><save-message>=spam/learned\n" "Learns tagged message as SPAM"
+macro index \eu "<pipe-entry>formail -I X-CRM114-Status -I X-CRM114-Action -I X-CRM114-Version | /home/users/cmauch/.crm114/mailfilter.crm -u /home/users/cmauch/.crm114/ --learnnonspam | /home/users/cmauch/src/mailfilter/trunk/audit.pl\n" "Learns tagged message as HAM"
+macro pager \eu "<pipe-entry>formail -I X-CRM114-Status -I X-CRM114-Action -I X-CRM114-Version | /home/users/cmauch/.crm114/mailfilter.crm -u /home/users/cmauch/.crm114/ --learnnonspam | /home/users/cmauch/src/mailfilter/trunk/audit.pl\n" "Learns tagged message as HAM"
+
+# -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=-
+# Trace Emails by showing lagtime and route
+macro	pager	\er	"|~/.mutt/scripts/mailhops|less -c\n" "Show trace of mail routing"
+
+# -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=-
+# Fire up Abook
+macro index a "<shell-escape>abook\n"		"Fire up Abook"
+macro index A |'abook --add-email-quiet'\n	"Add email to Abook"
+macro pager a "<shell-escape>abook\n"		"Fire up Abook"
+macro pager A |'abook --add-email-quiet'\n	"Add email to Abook"
+
+# -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=-
+# View X-Face's
+macro	pager	\ef	"<enter-command>unset wait_key\n<pipe-entry>~/.mutt/scripts/view-x-face.sh\n" "View an X-Face image"
+
+# -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=-
+# Let q not totally quit
+macro   index   q       '<change-folder>?<toggle-mailboxes>'
+macro   browser q       '<exit><quit>'
+
+# Mairix bindings
+macro browser \Cx "<shell-escape>mailplex\n<change-folder>=results\n"
+macro index \Cx "<shell-escape>mailplex\n<change-folder>=results\n"
+macro pager  \Cx "<shell-escape>mailplex\n<change-folder>=results\n"
+
+# Last Modified: Sun 23 Oct 2005 07:59:26 PM PDT
+# EOF

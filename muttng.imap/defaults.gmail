@@ -1,0 +1,4 @@
+source ~/.mutt/defaults
+
+set realname = "codemac"
+set from = "codemac@gmail.com"

@@ -29,7 +29,7 @@ setopt cdablevars
 setopt globdots
 setopt ignoreeof
 setopt interactivecomments
-setopt nobanghist
+setopt banghist
 setopt noclobber
 setopt hist_reduce_blanks
 setopt hist_ignore_space

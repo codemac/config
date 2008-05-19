@@ -1,5 +1,6 @@
 #!/bin/zsh
 
+. ~/.zsh/env
 . ~/.zsh/function
 . ~/.zsh/zle
 . ~/.zsh/style

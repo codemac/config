@@ -6,7 +6,8 @@ export EDITOR=vim
 #export MANPAGER="col -b | vim -c 'set ft=man nonu nomod nolist' -"
 export MANPAGER=most
 export MAIL=/home/codemac/.mail/default
-export PACKAGER="codemac <j@codemac.net>"
+export PACKAGER="Jeff Mickey <jeff@archlinux.org>"
+export CHROOT_SHELL="/home/codemac/archlinux/chroot"
 export CVS_RSH="ssh"
 
 # watch for people

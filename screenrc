@@ -41,8 +41,8 @@ sorendition +b kG
 # Default apps
 screen -t root su
 screen zsh
-screen -t mail mutt
-screen -t irc ssh `/home/codemac/bin/naiaip`
+screen zsh
+#screen -t irc /home/codemac/bin/whichweechat
 
 select 1
 

@@ -1,0 +1,5 @@
+# Jeff Mickey save hooks
+
+save-hook '~f vt\\.edu' +vt
+save-hook '~f dmickey@cas\\.org' +family
+save-hook '~f lmickey@gmail\\.com' +family

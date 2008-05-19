@@ -39,8 +39,8 @@ mailboxes !
 #mailboxes `find ~/.mail/lists/* -type f -exec echo -n " {}"  \; | sed -e 's/\/home\/codemac\/\.mail\//\+/g'`
 #mailboxes `find ~/.mail/admin/* -type f -exec echo -n " {}"  \; | sed -e 's/\/home\/cmauch\/\.mail\//\+/g'`
 
-mailboxes `find ~/.mail -type d | egrep -v '(/new|/tmp|/cur)' | egrep -v '^/home/codemac/.mail$|/home/codemac/.mail/lists' | sort | xargs`
-mailboxes `find ~/.mail/lists -type d | egrep -v '(/new|/tmp|/cur)' | egrep -v '^/home/codemac/.mail/lists$' | sort | xargs`
+mailboxes `find ~/.mail.imap -type d | egrep -v '(/new|/tmp|/cur)' | sort | xargs`
+#mailboxes `find ~/.mail/lists -type d | egrep -v '(/new|/tmp|/cur)' | egrep -v '^/home/codemac/.mail/lists$' | sort | xargs`
 
 # Last Modified: Sun 23 Oct 2005 08:33:08 PM PDT
 # EOF

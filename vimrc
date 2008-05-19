@@ -1,4 +1,4 @@
-" Most recent update: Sat 19 May 2007 02:38:30 PM EDT
+" Most recent update: Sun 16 Mar 2008 11:12:30 PM EDT
 
 """"""""""""""""""""""""""""""""""""""""""
 " GUI options, and colorscheme selection "
@@ -75,7 +75,7 @@ set nobackup
 
 " Indent, tab, and wrap settings
 set noexpandtab
-set shiftwidth=4
+"set shiftwidth=4
 set softtabstop=4
 set tabstop=4
 set shiftround
@@ -183,6 +183,7 @@ au BufNewFile,BufRead .torsmorc* set filetype=rc
 au BufNewFile,BufRead *.inc set filetype=php
 au BufNewFile,BufRead *.sys set filetype=php
 au BufNewFile,BufRead grub.conf set filetype=grub
+au BufNewFile,BufRead *.dentry set filetype=dentry
 au BufNewFile,BufRead *.blog set filetype=blog
 
 " C file specific options
@@ -263,9 +264,9 @@ map \ <C-^><CR>
 " Convert to html
 nnoremap <C-L> :runtime<Space>syntax/2html.vim<CR>
 
-" Fast quit
-map q :q<CR>
-map Q :qa<CR>
+" Fast quit -- removed so I can use macros!
+"map q :q<CR>
+"map Q :qa<CR>
 
 " Cursor keys suck. Use ctrl with home keys to move in insert mode.
 imap <C-h> <Left>
@@ -308,3 +309,13 @@ noremap ^Wt ^Wk
 noremap ^Wn ^Wl
 inoremap ^] ^[A
 inoremap ð ^N 
+
+""" No arrow keys, you know how to use dhtn
+"nmap <right> <nop>
+"nmap <left> <nop>
+"nmap <up> <nop>
+"nmap <down> <nop>
+"imap <right> <nop>
+"imap <left> <nop>
+"imap <up> <nop>
+"imap <down> <nop>

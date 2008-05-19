@@ -27,6 +27,7 @@ zstyle ':completion::complete:*:tar:directories' file-patterns '*~.*(-/)'
 
 # Don't complete backup files as executables
 zstyle ':completion:*:complete:-command-::commands' ignored-patterns '*\~'
+zstyle ':completion:*:-command-:*:'    verbose false
 
 # Separate matches into groups
 zstyle ':completion:*:matches' group 'yes'
@@ -41,6 +42,10 @@ zstyle ':completion:*:warnings' format '%B%U---- no match for: %d%u%b'
 # Describe options in full
 zstyle ':completion:*:options' description 'yes'
 zstyle ':completion:*:options' auto-description '%d'
+
+# complete manual by their section
+zstyle ':completion:*:manuals'    separate-sections true
+zstyle ':completion:*:manuals.*'  insert-sections   true
 
 # }}}
 # {{{ Simulate my old dabbrev-expand 3.0.5 patch 
@@ -58,4 +63,10 @@ zstyle -e ':completion:*:(ssh|scp):*' hosts 'reply=(
           ${${${(M)${(s:# :)${(zj:# :)${(Lf)"$([[ -f ~/.ssh/config ]] && <~/.ssh/config)"}%%\#*}}##host(|name) *}#host(|name) }/\*}
           )'
 
-zstyle ':completion:*-case' menu select=5
+# Enable menus!
+
+zstyle ':completion:*:correct:*'       insert-unambiguous true             # start menu completion only if it could find no unambiguous initial string
+zstyle ':completion:*:man:*'      menu yes select
+zstyle ':completion:*:history-words'   menu yes                            # activate menu
+zstyle ':completion:*:*:cd:*:directory-stack' menu yes select              # complete 'cd -<tab>' with menu
+zstyle ':completion:*' menu select=5

@@ -1,0 +1,57 @@
+# $Id$
+#
+# Author: Charles Mauch (charles@mauch.name)
+# Description: mutt NNTP generic configuration
+# Legal: (c) 2005 Charles Mauch, released under the terms of the GPLv2
+
+# -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=-
+# Settings for NNTP Newsgroups with MuttNG
+#
+
+set nntp_host="newsgroups.comcast.net"          # NNTP Server
+set nntp_user="wmauch@comcast.net"              # NNTP Username
+#set nntp_pass="password"                        # NNTP Password
+set nntp_mail_check="600"                       # How Often to Poll
+set nntp_load_description=yes                   # Load Descriptions?
+set nntp_reconnect=ask-no                       # Reconnet on Disconnect?
+set nntp_save_unsubscribed=yes                  # Save subscription info?
+set nntp_x_comment_to=yes                       # Add X-Comment Flag?
+set nntp_followup_to_poster=yes                 # If set, mail author
+set nntp_catchup=ask-yes                        # Mark all read when leaving
+set nntp_context=200                            # How many Articles to Cache
+set nntp_cache_dir="~/.email/nntp"              # Header Caches Storage
+set nntp_newsrc="~/.email/nntp/newsgroups"      # Location of Newsrc
+
+set nntp_group_index_format="%4C N %5s %-45.45f %d"  # NNTP Index Format
+
+# -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=-
+# the bbs documentary bbs
+mailboxes nntp://bbs.bbsdocumentary.com/bbs.ads
+mailboxes nntp://bbs.bbsdocumentary.com/bbs.lost-connections
+mailboxes nntp://bbs.bbsdocumentary.com/bbs.warboard
+mailboxes nntp://bbs.bbsdocumentary.com/documentary.director-rant
+mailboxes nntp://bbs.bbsdocumentary.com/documentary.discussion
+mailboxes nntp://bbs.bbsdocumentary.com/documentary.others
+
+
+# -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=-
+# linux newsgroups
+mailboxes nntp://newsgroups.comcast.net/sci.crypt
+mailboxes nntp://newsgroups.comcast.net/talk.politics.crypto
+mailboxes nntp://newsgroups.comcast.net/alt.comp.linux
+mailboxes nntp://newsgroups.comcast.net/alt.comp.os.linux
+mailboxes nntp://newsgroups.comcast.net/alt.linux
+mailboxes nntp://newsgroups.comcast.net/alt.os.linux.debian
+mailboxes nntp://newsgroups.comcast.net/comp.os.linux.advocacy
+mailboxes nntp://newsgroups.comcast.net/comp.os.linux.networking
+mailboxes nntp://newsgroups.comcast.net/comp.os.linux.security
+mailboxes nntp://newsgroups.comcast.net/comp.mail.mutt
+
+# -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=-
+# local newsgroups
+mailboxes nntp://newsgroups.comcast.net/tacoma.general
+mailboxes nntp://newsgroups.comcast.net/tacoma.politics
+mailboxes nntp://newsgroups.comcast.net/tacoma.events
+
+# Last Modified: Wed 19 Oct 2005 09:24:00 PM PDT
+# EOF

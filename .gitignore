@@ -1,6 +1,15 @@
 zsh/history
-muttng/cached_headers
+zsh/cache
+*/cached_headers
 .DS_Store
 *.swp
+*~
 elinks/*hist
 elinks/cookies
+xmonad/xmonad
+xmonad/xmonad.hi
+xmonad/xmonad.o
+xmonad/xmonad.errors
+.hg
+.hgignore
+*.elc

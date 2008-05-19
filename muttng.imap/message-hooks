@@ -1,0 +1,28 @@
+# $Id$
+#
+# Author: Charles Mauch (charles@mauch.name)
+# Description: mutt essage hooks
+# Legal: (c) 2005 Charles Mauch, released under the terms of the GPLv2
+
+# -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=-
+# Set the defaults for our email addresses
+
+message-hook .					'source ~/.mutt/defaults'
+message-hook '~t archlinux.org'	'source ~/.mutt/defaults.arch'
+message-hook '~t codemac.net'	'source ~/.mutt/defaults'
+message-hook '~t gmail.com'		'source ~/.mutt/defaults.gmail'
+message-hook '~f vt.edu'		'source ~/.mutt/defaults.vt'
+
+# -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=-
+# Sort out silly characters from Microsoft MUAs or MUAs that 
+# suffer the same problems.
+message-hook "~h \"X-Mailer: (Microsoft Outlook IMO|Experian ContactMail)\"" "set display_filter='tr \\\\200\\\\202\\\\221\\\\222\\\\223\\\\224\\\\225\\\\226\\\\227 \\\\244\\\\054\\\\140\\\\047\\\\042\\\\042\\\\052\\\\055\\\\055'"
+
+# -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=-
+# Show Spam Flag if message has been reported as spam.  If it has, we should
+# simply train locally using "esc-d".  Otherwise, report it as spam to Razor
+# using "esc-D".  See Macros file.
+message-hook "~h SPAM"			'unignore X-CRM114-Status'
+
+# Last Modified: Sun 06 Nov 2005 08:58:52 PM PST
+# EOF

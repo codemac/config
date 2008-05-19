@@ -1,6 +1,25 @@
 #!/bin/zsh
 #
 # change default behaviors for the basics
+
+. ~/.zsh/vars
+
+# Host specific aliases
+case $HOSTNAME in
+	stryder)
+		alias outside="weatherget -s USVA0068 -m"
+	;;
+	naia)
+		alias outside="weatherget -s USVA0068 -m"
+	;;
+	theg4)
+		alias outside="weatherget -s USOH0269 -S"
+	;;
+	*)
+		alias outside="weatherget -s USVA0068 -m"
+	;;
+esac
+
 alias mv="mv -v --backup=existing"
 alias mmv="noglob zmv -W"
 alias rm="rm -v"
@@ -15,20 +34,23 @@ alias grep="grep --color=auto"
 alias ex=extract_archive
 
 # abreviations
+
+# todos!
+alias t="/home/codemac/todo/todo.py"
+alias tl="t ls"
+alias ta="t add"
+
+# basics
 alias c="clear"
 alias l="cd ."
 alias ll='ls -ahl --color | more; echo "\e[1;32m --[\e[1;34m Dirs:\e[1;36m `ls -al | egrep \"^drw\" | wc -l` \e[1;32m|\e[1;35m Files: \e[1;31m`ls -al | egrep -v \"^drw\" | grep -v total | wc -l` \e[1;32m]--"'
-alias e="emacs -nw"
+#alias e="emacs -nw"
 alias v="vim"
 alias wh="when ci --past=0 --future=3"
 alias cdc="cd; clear"
 alias ciq="centericq"
 
 # more interesting aliases :D
-# For when I'm at school
-alias outside="weatherget -s USVA0068 -m"
-# For when I'm home
-#alias outside="weatherget -s USOH0269 -S"
 alias nowifi="sudo ifconfig eth0 down; sudo route add default gw 192.168.1.1"
 alias themini="ssh 192.168.1.2"
 alias nsl='netstat -alnp --protocol=inet | grep -v CLOSE_WAIT'
@@ -39,35 +61,16 @@ alias boggle='echo "No no no, Mr. Brian Braun-Duin"'
 
 
 # auto open images
-alias -s jpg="feh -FZd"
-alias -s JPG="feh -FZd"
-alias -s jpeg="feh -FZd"
-alias -s JPEG="feh -FZd"
-alias -s png="feh -FZd"
-alias -s gif="feh -FZd"
+alias -s {jpg,JPG,jpeg,JPEG,png,PNG,gif,GIF}="feh -FZd"
 
 # auto open movies
-alias -s mpg="mplayer -idx"
-alias -s mpeg="mplayer -idx"
-alias -s avi="mplayer -idx"
-alias -s ogm="mplayer -idx"
-alias -s wmv="mplayer -idx"
-alias -s m4v="mplayer -idx"
-alias -s mp4="mplayer -idx"
-alias -s mov="mplayer -idx"
+alias -s {mpg,mpeg,avi,ogm,wmv,m4v,mp4,mov}="mplayer -idx"
 
 # auto open audio
-alias -s mp3="cplay"
-alias -s ogg="cplay"
-alias -s wav="cplay"
+alias -s {mp3,ogg,wav,flac}="cplay"
 
 # auto open web addresses
-alias -s html="firefox"
-alias -s php="firefox"
-alias -s com="firefox"
-alias -s net="firefox"
-alias -s org="firefox"
-alias -s gov="firefox"
+alias -s {html,php,com,net,org,gov}="firefox"
 
 # auto open regular files
 alias -s txt="vim"
@@ -78,3 +81,4 @@ alias -g M="| most" #	<< most is the best pager evar.
 alias -g G="| grep"
 alias -g E="| egrep"
 alias -g S="| sed -r -e"
+alias -g X="| xclip" 

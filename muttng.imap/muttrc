@@ -1,0 +1,143 @@
+# Most recent update: Mon 31 Mar 2008 10:13:08 AM EDT
+# -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=-
+# Locations Locations Locations!
+set imap_user = 'codemac@gmail.com'
+set imap_pass = 'SOMEPASS'
+
+set spoolfile = "imaps://imap.gmail.com/INBOX"
+set folder = "imaps://imap.gmail.com/"
+set record="imaps://imap.gmail.com/[Gmail]/Sent Mail"
+set postponed="imaps://imap.gmail.com/[Gmail]/Drafts"
+
+set mbox="imaps://imap.gmail.com/[Gmail]/All Mail"
+
+# -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=-
+# External Programs to use
+#set print_command="/bin/false"	# how to print things (muttprint rocks)
+set query_command="mutt_vc_query '%s'"	# Use The Little Brother Database
+
+# -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=-
+# Generic Settings
+unset arrow_cursor		# highlight whole line or use -> 
+set autoedit=no			# go to the editor right away when composing
+set noconfirmappend		# don't ask me if i want to append 
+set confirmcreate		# prompt when creating new filesd
+set copy=yes			# always save a copy of outgoing messages
+set delete=yes			# purge deleted messages without asking
+set edit_headers=yes		# let me edit the message header when composing
+set use_from=yes		# Allow mutt to generate from headers
+set fast_reply=no		# skip initial prompts when replying
+set hdrs			# include `my_hdr' lines in outgoing messages
+set followup_to=yes		# Generate Mail-Follow-To on group/lists
+set nohelp			# Do not show the help lines
+set include			# always include messages when replying
+set nomark_old			# i don't care about whether a message is old
+set mail_check=5		# how often to poll for new mail
+set metoo			# remove my address when replying
+set write_bcc=no		# Remove Bcc Header (unused)
+set mime_forward		# use message/rfc822 type to forward messages
+set move=no			# don't ask about moving messages, just do it
+set pager_index_lines=10	# how many index lines to show in the pager
+set pager_stop			# don't move to the next message on next-page
+set noprompt_after		# ask me for a command after the external pager exits
+set read_inc=25			# show progress when reading a mailbox
+set reply_to=yes		# always use reply-to if present
+set ignore_list_reply_to=yes	# Ignore Mailing List replyto, use "L" instead
+set reverse_alias		# attempt to look up my names for people
+set reverse_name		# use my address as it appears in the message
+set save_empty			# remove files when no messages are left
+set use_envelope_from=yes		# Set sendmail sender -f flag
+set sort=threads		# primary sorting method
+set sort_browser=reverse-date	# how to sort files in the dir browser
+set status_on_top		# some people prefer the status bar on top
+set tilde			# virtual lines to pad blank lines in the pager
+set nouse_domain		# don't qualify local addresses with $domain
+set crypt_verify_sig=yes	# don't automatically verify message signatures
+set write_inc=25		# show progress while writing mailboxes
+set timeout=15			# How often to check for new email
+set use_from=yes		# Allow muttng to generate From headers
+#set charset=iso-8869-1		# Enable Display of 8 Bit Characters
+set charset=utf-8		# Enable Display of UTF-8 Characters
+set implicit_autoview=yes	# Always use the mime-types defined in .mailcap
+set index_format="%4C %Z %{%m/%d} %-15.15F (%4c) %s" # format of the index
+set indent_string=">"		# Quote with User Initials in quotestring
+#set ascii_chars=yes		# Lose fancy threading chars
+set markers=no			# Do not display a + on wrapped lines
+# set up the sidebar, default not visible
+# The width of the mailbox list pane (left sidebar like in GUIs).
+   set sidebar_width=25
+# This specifies whether or not to show the mailbox list panel.
+  set sidebar_visible=yes
+# which mailboxes to list in the sidebar
+# color of folders with new mail
+  color sidebar_new yellow default 
+# ctrl-n, ctrl-p to select next, prev folder ctrl-o to open selected folder
+  bind index \CP sidebar-prev
+  bind index \CN sidebar-next
+  bind index \CO sidebar-open
+  bind pager \CP sidebar-prev
+  bind pager \CN sidebar-next
+  bind pager \CO sidebar-open
+# I don't need these.  just for documentation purposes.  See below. 
+  # sidebar-scroll-up
+  # sidebar-scroll-down
+# b toggles sidebar visibility
+  macro index b ':toggle sidebar_visible^M'
+  macro pager b ':toggle sidebar_visible^M'
+
+#utf8 love
+set charset = utf-8
+set config_charset = utf-8
+set send_charset = "us-ascii:utf-8"
+
+
+# -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=-
+# We like cool Eterm titles! (but only in an Eterm)
+#`if [ $TERM = "Eterm" ]; then ~/.mutt/scripts/etermtitle.sh; else echo "source /dev/null"; fi`
+
+# -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=-
+# The editor I use is vim.  Prefs stored in .vim/ftplugin/mail and .vimrc
+set editor="/usr/bin/vim"
+
+# -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=-
+# Mixmaster Anonymous Remailer Settings
+#set mix_entry_format="%4n %c %-16s %a"		# Format of pixmaster list
+#set mixmaster="mix"		# Mixmaster Path
+#set sendmail='/usr/bin/postfix' 	# Enable Premail Stuff
+
+# -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=-
+# Deliver our outbound email using esmtp
+set sendmail="/usr/bin/esmtp"
+
+# -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=-
+# Use header cache
+set header_cache="~/.mutt/cached_headers"
+
+# -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=-
+# Start including other mutt configuration files.
+source ~/.mutt/auto_views                 # Define auto_views.
+source ~/.mutt/subscriptions              # Define the list of subscribed mailing lists.
+source ~/.mutt/mailboxes                  # Define the list of folders that receive mail.
+source ~/.mutt/headers                    # Configure header display.
+source ~/.mutt/folder-hooks               # Define folder-hooks.
+source ~/.mutt/message-hooks              # Define message-hooks.
+source ~/.mutt/send-hooks                 # Define send-hooks.
+source ~/.mutt/fcc-hooks                  # Define fcc-hooks.
+source ~/.mutt/save-hooks				  # Define save-hooks
+source ~/.mutt/mbox-hooks                 # Define mbox-hooks
+source ~/.mutt/bindings                   # Define key bindings.
+source ~/.mutt/macros                     # Define macros.
+source ~/.mutt/scoring                    # Define message scoring
+#source ~/.mutt/userspecific               # User by user Overrides.
+source ~/.mutt/crypto                     # Define GnuPG Encryption support.
+#source ~/.mutt/colors.`if [ -e "$HOME/.mutt/colors.$TERM" ]; then echo "$TERM"; else echo default; fi`
+source ~/.mutt/colors.default
+
+# Some people think that HTML is good for email <sigh>
+alternative_order text/enriched text/plain text/html
+
+# Last, but not least, get mutt to display its version on startup.
+push <show-version>
+
+# Last Modified: Sun 06 Nov 2005 10:12:06 PM PST
+# EOF

@@ -1,0 +1,44 @@
+# $Id$
+#
+# Author: Charles Mauch (charles@mauch.name)
+# Description: mutt crypto settings
+# Legal: (c) 2005 Charles Mauch, released under the terms of the GPLv2
+
+# -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=-
+# PGP Settings
+
+unset fcc_clear				# encrypt Fcc of PGP encrypted messages?
+unset crypt_autosign			# pgp/smime sign every outgoing mail. (send-hook?)
+unset crypt_autoencrypt			# pgp/smime encrypt every outgoing mail. (send-hook?)
+set crypt_autopgp			# pgp encryption/sign of messages
+set crypt_autosmime			# S/MIME encrypt/sign of messages
+set crypt_replyencrypt			# Encrypt replies on encrypted mail
+set crypt_replysign			# Sign replies on signed mail
+set crypt_replysignencrypted		# Sign replies on encrypted mail
+set crypt_timestamp			# include timestamp in pgp/smime output (antispoof)
+set crypt_verify_sig=yes		# ask whether I want to check a pgp signature
+set pgp_sign_as=0xF33B7EBA	# Sign PGP Emails As
+#set pgp_long_ids=yes			# Use 64 bit PGP Key IDs
+# No more mime procmail wierdness!
+message-hook '!(~g|~G) ~b"^-----BEGIN\ PGP\ (SIGNED\ )?MESSAGE"' "exec check-traditional-pgp"
+
+# -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=-
+# S/MIME Settings
+
+#set smime_ca_location="~/.smime/ca-root.crt"
+#set smime_certificates="~/.smime/certificates"
+#set smime_keys="~/.smime/keys"
+#set smime_timeout=7200 		        # forget SMIME passphrase after 2 hours
+#set smime_ask_cert_label      		# ask me for a label to a cert
+#set smime_default_key="25656114.0"      # my KeyID
+#set smime_decrypt_use_default_key       # Use default key for decrypting
+#set smime_encrypt_with="rc2-128"        # rc2-40, rc2-64, rc2-128, des, des3
+
+# -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=-
+# Use crypto-specific stuff
+
+source ~/.mutt/gpg
+#source ~/.mutt/smime
+
+# Last Modified: Wed 19 Oct 2005 09:02:20 PM PDT
+# EOF

@@ -1,0 +1,26 @@
+# $Id$
+#
+# Author: Charles Mauch (charles@mauch.name)
+# Description: mutt file carbon copies, where to save sent mail
+# Legal: (c) 2005 Charles Mauch, released under the terms of the GPLv2
+
+# -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=-
+# Fcc hooks, everything else goes to +sent/personal
+
+#fcc-save-hook "~t taclug-*"				+sent/lists	
+#fcc-save-hook "~t gslug-*"				+sent/lists
+#fcc-save-hook "~t ubuntu-*@lists\.ubuntu\.com"		+sent/lists
+#fcc-save-hook "~t seahorse-devel"			+sent/lists
+#fcc-save-hook "~t gnupg-users"				+sent/lists
+#fcc-save-hook "~t mutt-users"				+sent/lists
+#fcc-save-hook "~t pnwh"					+sent/lists
+#fcc-save-hook "~t spug"					+sent/lists
+
+# Setup a cronjob to parse personal/sent and drop into archive folders
+# just like audit.pl does.  But only for personal emails.
+#fcc-hook .*						+sent/personal
+
+# Easier to just set record depending on default.* config called
+
+# Last Modified: Wed 19 Oct 2005 09:13:53 PM PDT
+# EOF

@@ -1,11 +1,11 @@
-# Most recent update: Tue 06 Mar 2007 09:02:25 PM EST
+# Most recent update: Fri 02 May 2008 02:48:40 PM EDT
 # -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=-
 # Locations Locations Locations!
-set folder=~/.mail		# where i keep my mailboxes
-set spoolfile='~/.mail/default'	# where my new mail is located
+set folder=~/.mail.imap		# where i keep my mailboxes
+set spoolfile=+/INBOX	# where my new mail is located
 set mbox=+unsorted              # where to store read messages
-set postponed=+postponed	# mailbox to store postponed messages in
-set record=+sent
+set postponed="+[Gmail].Drafts"	# mailbox to store postponed messages in
+set record="+[Gmail].Sent Mail"
 
 # -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=- -=-
 # External Programs to use

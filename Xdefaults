@@ -1,6 +1,54 @@
-# Most recent update: Sat 21 Jul 2007 03:31:49 PM EDT
+!# Most recent update: Sun 27 Apr 2008 07:13:50 PM EDT
 xterm*toolBar:	false
 xterm*utf8: 2
+
+! amazing xcalc from pig0
+xcalc*geometry: 210x275
+xcalc.ti.bevel.background: #111111
+xcalc.ti.bevel.screen.background: #000000
+xcalc.ti.bevel.screen.DEG.background: #000000
+xcalc.ti.bevel.screen.DEG.foreground: LightSeaGreen
+xcalc.ti.bevel.screen.GRAD.background: #000000
+xcalc.ti.bevel.screen.GRAD.foreground: LightSeaGreen
+xcalc.ti.bevel.screen.RAD.background: #000000
+xcalc.ti.bevel.screen.RAD.foreground: LightSeaGreen
+xcalc.ti.bevel.screen.INV.background: #000000
+xcalc.ti.bevel.screen.INV.foreground: Red
+xcalc.ti.bevel.screen.LCD.background: #000000
+xcalc.ti.bevel.screen.LCD.foreground: LightSeaGreen
+xcalc.ti.bevel.screen.LCD.shadowWidth: 0
+xcalc.ti.bevel.screen.M.background: #000000
+xcalc.ti.bevel.screen.M.foreground: LightSeaGreen
+xcalc.ti.bevel.screen.P.background: #000000
+xcalc.ti.bevel.screen.P.foreground: Yellow
+xcalc.ti.Command.foreground: White
+xcalc.ti.Command.background: #777777
+xcalc.ti.button3.label: SQRT
+XCalc*ti.button3.font: -*-verdana-medium-r-normal--11-*-*-*-*-*-*-*
+xcalc.ti.button5.background: Orange3
+xcalc.ti.button19.background: #611161
+xcalc.ti.button18.background: #611161
+xcalc.ti.button20.background: #611111
+xcalc.ti.button25.background: #722222
+xcalc.ti.button30.background: #833333
+xcalc.ti.button35.background: #944444
+xcalc.ti.button40.background: #a55555
+xcalc.ti.button22.background: #222262
+xcalc.ti.button23.background: #222262
+xcalc.ti.button24.background: #222272
+xcalc.ti.button27.background: #333373
+xcalc.ti.button28.background: #333373
+xcalc.ti.button29.background: #333373
+xcalc.ti.button32.background: #444484
+xcalc.ti.button33.background: #444484
+xcalc.ti.button34.background: #444484
+xcalc.ti.button37.background: #555595
+xcalc.ti.button38.background: #555595
+xcalc.ti.button39.background: #555595
+XCalc*Cursor:                 hand2
+XCalc*ShapeStyle:             rectangle
+XCalc*Font: -*-verdana-medium-r-normal--11-*-*-*-*-*-*-*
+XCalc*bevel.screen.LCD.Font: -*-verdana-bold-r-normal--12-*-*-*-*-*-*-*
 
 xclock*hourColor:		blue
 xclock*minuteColor:		blue
@@ -15,16 +63,20 @@ urxvt*scrollBar:        false
 urxvt*loginShell:       true
 urxvt*internalBorder:   0
 urxvt*termName:         rxvt-unicode
-urxvt*backgroundPixmap: /home/codemac/.background.xpm
+urxvt*inheritPixmap:	true
+urxvt*tintColor:		#FFFFFF
+urxvt*shading:			30
+!urxvt*backgroundPixmap: /home/codemac/.background.xpm
 !urxvt*font:				-jis-fixed-medium-r-normal-*-12-110-100-100-c-160-jisx0208.1983-0
 !urxvt*font:				-bitstream-bitstream vera sans mono-*-r-normal-*-12-120-75-75-m-0-iso8859-1
 !urxvt*font:				-*-terminus-medium-r-normal--12-120-72-72-c-0-iso8859-1
 !urxvt*boldFont:			-*-terminus-bold-r-normal--12-120-72-72-c-0-iso8859-1
-urxvt*boldFont:			xft:Terminus:pixelsize=12
+!urxvt*boldFont:			xft:Terminus:pixelsize=12
 !urxvt*italicFont:		-*-terminus-medium-i-normal--12-120-72-72-c-0-iso8859-1
-urxvt*font:				xft:Terminus:pixelsize=12
+!urxvt*font:				xft:Terminus:pixelsize=12
+urxvt*font:					-windows-dina-medium-r-normal--13-80-96-96-c-70-iso8859-1
 !rxvt*font:				xft:smoothansi:pixelsize=12
-!urxvt*font:				xft:Bitstream Vera Sans Mono:pixelsize=10
+!urxvt*font:				xft:Bitstream Vera Sans Mono:pixelsize=11
 !urxvt*font:				-bitstream-bitstream vera sans mono-*-r-normal-*-12-120-75-75-m-0-iso8859-1
 !urxvt*font:				-xos4-terminus-medium-r-normal--12-120-72-72-c-60-iso8859-1
 !urxvt*boldFont:			-xos4-terminus-medium-r-normal--12-120-72-72-c-60-iso8859-1
@@ -188,25 +240,25 @@ aterm*boldFont:         -bitstream-bitstream vera sans mono-bold-r-normal-*-12-1
 !}}}
 
 ! ---| Rasterman? |--- {{{
-rasterman*background:  black
-rasterman*foreground:  #cccccc
-rasterman*cursorColor: yellow
-rasterman*color0:      black
-rasterman*color1:      #af1828
-rasterman*color2:      #aece92
-rasterman*color3:      #968a38
-rasterman*color4:      #414171
-rasterman*color5:      #a74d6a
-rasterman*color6:      #418179
-rasterman*color7:      gray
-rasterman*color8:      gray40
-rasterman*color9:      #df6171
-rasterman*color10:     #c5f779
-rasterman*color11:     #fff796
-rasterman*color12:     #4186be
-rasterman*color13:     #dfafcf
-rasterman*color14:     #71bebe
-rasterman*color15:     white
+!urxvt*background:  black
+!urxvt*foreground:  #cccccc
+!urxvt*cursorColor: yellow
+!urxvt*color0:      black
+!urxvt*color1:      #af1828
+!urxvt*color2:      #aece92
+!urxvt*color3:      #968a38
+!urxvt*color4:      #414171
+!urxvt*color5:      #a74d6a
+!urxvt*color6:      #418179
+!urxvt*color7:      gray
+!urxvt*color8:      gray40
+!urxvt*color9:      #df6171
+!urxvt*color10:     #c5f779
+!urxvt*color11:     #fff796
+!urxvt*color12:     #4186be
+!urxvt*color13:     #dfafcf
+!urxvt*color14:     #71bebe
+!urxvt*color15:     white
 !}}}
 
 ! ---| jsolomon |--- {{{
@@ -271,37 +323,23 @@ m3g*cursorColor:      white
 m3g*font:             bleed2
 m3g*reverseVideo:     true
 
-!black
-m3g*color0:           rgb:00/00/00
-m3g*color8:           rgb:60/60/60
-
-!red
-m3g*color1:           rgb:b0/70/50
-m3g*color9:           rgb:b0/70/50
-
-!greenA
-m3g*color2:           rgb:12/91/4e
-m3g*color10:          rgb:12/91/4e
-
-!yellow
-m3g*color3:           rgb:a0/a0/70
-m3g*color11:          rgb:c0/c0/90
-
-!blue
-m3g*color4:           rgb:3e/45/81
-m3g*color12:          rgb:3e/45/81
-
-!magenta
-m3g*color5:           rgb:a0/70/a0
-m3g*color13:          rgb:c0/90/c0
-
-!cyan
-m3g*color6:           rgb:70/a0/a0
-m3g*color14:          rgb:90/c0/c0
-
-!white
-m3g*color7:           rgb:a0/a0/a0
-m3g*color15:          white
+!!black
+!urxvt*color0:           rgb:00/00/00
+!urxvt*color8:           rgb:60/60/60
+!urxvt*color1:           rgb:b0/70/50
+!urxvt*color9:           rgb:b0/70/50
+!urxvt*color2:           rgb:12/91/4e
+!urxvt*color10:          rgb:12/91/4e
+!urxvt*color3:           rgb:a0/a0/70
+!urxvt*color11:          rgb:c0/c0/90
+!urxvt*color4:           rgb:3e/45/81
+!urxvt*color12:          rgb:3e/45/81
+!urxvt*color5:           rgb:a0/70/a0
+!urxvt*color13:          rgb:c0/90/c0
+!urxvt*color6:           rgb:70/a0/a0
+!urxvt*color14:          rgb:90/c0/c0
+!urxvt*color7:           rgb:a0/a0/a0
+!urxvt*color15:          white
 
 m3g*colorBDMode:      on
 m3g*colorBD:          white
@@ -309,71 +347,112 @@ m3g*colorULMode:      on
 m3g*colorUL:          white
 ! }}}
 #! ---| xterminus |--- {{{
-!black
-urxvt*color0:           #000000
-urxvt*color8:           #505450
-!red
-urxvt*color1:           #bf7979
-urxvt*color9:           #f4a45f
-!green
-urxvt*color2:           #97b26b
-urxvt*color10:          #c5f779
-!yellow
-urxvt*color3:           #cdcda1
-urxvt*color11:          #ffffaf
-!blue
-urxvt*color4:		   #4a54A3
-urxvt*color12:		   #7d87A4
-!magenta
-urxvt*color5:	   #9c3885
-urxvt*color13:	   #e628ba
-!cyan
-urxvt*color6:           #88aadd
-urxvt*color14:          #99ccff
-!white
-urxvt*color7:           #ffffff
-urxvt*color15:          #dedede
+!!black
+!urxvt*color0:           #000000
+!urxvt*color8:           #505450
+!!red
+!urxvt*color1:           #bf7979
+!urxvt*color9:           #f4a45f
+!!green
+!urxvt*color2:           #97b26b
+!urxvt*color10:          #c5f779
+!!yellow
+!urxvt*color3:           #cdcda1
+!urxvt*color11:          #ffffaf
+!!blue
+!urxvt*color4:		   #4a54A3
+!urxvt*color12:		   #7d87A4
+!!magenta
+!urxvt*color5:	   #9c3885
+!urxvt*color13:	   #e628ba
+!!cyan
+!urxvt*color6:           #88aadd
+!urxvt*color14:          #99ccff
+!!white
+!urxvt*color7:           #ffffff
+!urxvt*color15:          #dedede
 
+#! ---| Colorful Obsolescence |--- {{{
+!Black	0,0,0	#000000	Preview
+!Black Bold	85,85,85	#555555	Preview
+!Red	238,60,60	#ee3c3c	Preview
+!Red Bold	255,85,85	#ff5555	Preview
+!Green	0,187,0	#00bb00	Preview
+!Green Bold	85,255,85	#55ff55	Preview
+!Yellow*	255,217,85	#ffd955	Preview
+!Yellow Bold	255,255,85	#ffff55	Preview
+!Blue	85,85,255	#5555ff	Preview
+!Blue Bold	0,142,209	#008ed1	Preview
+!Magenta	72,72,72	#484848	Preview
+!Magenta Bold	255,85,255	#ff55ff	Preview
+!Cyan	91,91,91	#5b5b5b	Preview
+!Cyan Bold*	0,255,255	#00ffff	Preview
+!White	187,187,187	#bbbbbb	Preview
+!White Bold	255,255,255	#ffffff	Preview
+!Default Foreground	187,187,187	#bbbbbb	Preview
+!Default Bold Foreground	255,255,255	#ffffff	Preview
+!Default Background	0,0,0	#000000	Preview
+!Default Bold Background	85,85,85	#555555	Preview
+!Cursor Text	0,0,0	#000000	Preview
+!Cursor Colour	255,255,255	#ffffff	Preview
+*color0:				#000000
+*color8:				#555555
+*color1:				#EE3C3C
+*color9:				#FF5555
+*color2:				#00BB00
+*color10:				#55FF55
+*color3:				#FFD955
+*color11:				#FFFF55
+*color4:				#5555FF
+*color12:				#008ED1
+*color5:				#992299
+*color13:				#FF55FF
+*color6:				#009999
+*color14:				#00FFFF
+*color7:				#BBBBBB
+*color15:				#FFFFFF
+!}}}
 
-xterm*color0:           #000000
-xterm*color8:           #505450
-xterm*color1:           #bf7979
-xterm*color9:           #f4a45f
-xterm*color2:           #97b26b
-xterm*color10:          #c5f779
-xterm*color3:           #cdcda1
-xterm*color11:          #ffffaf
-xterm*color4:		   #4a54A3
-xterm*color12:		   #7d87A4
-xterm*color5:	   #9c3885
-xterm*color13:	   #e628ba
-xterm*color6:           #88aadd
-xterm*color14:          #99ccff
-xterm*color7:           #ffffff
-xterm*color15:          #dedede
-xterm*foreground: #DDDDDD
-xterm*background: #000000
-xterm*cursorColor: yellow
-xterm*cursorColor2: white
-xterm*pointerColor: yellow
-xterm*term:		xterm-color	  
+!xterm*color0:           #000000
+!xterm*color8:           #505450
+!xterm*color1:           #bf7979
+!xterm*color9:           #f4a45f
+!xterm*color2:           #97b26b
+!xterm*color10:          #c5f779
+!xterm*color3:           #cdcda1
+!xterm*color11:          #ffffaf
+!xterm*color4:		   #4a54A3
+!xterm*color12:		   #7d87A4
+!xterm*color5:	   #9c3885
+!xterm*color13:	   #e628ba
+!xterm*color6:           #88aadd
+!xterm*color14:          #99ccff
+!xterm*color7:           #ffffff
+!xterm*color15:          #dedede
+!xterm*foreground: #DDDDDD
+!xterm*background: #000000
+!xterm*cursorColor: yellow
+!xterm*cursorColor2: white
+!xterm*pointerColor: yellow
+!xterm*font:				xft:Terminus:pixelsize=12
+#xterm*term:		xterm-color	  
 #! ---| hisham |--- {{{
-hisham*color0:	#303430
-hisham*color8:	#CDB5CD
-hisham*color1:	#bf7979
-hisham*color9:	#f4a45f
-hisham*color2:	#97b22b
-hisham*color10:	#c5f779
-hisham*color3:	#b6aa58
-hisham*color11:	#fff796
-hisham*color4:	#86a2be
-hisham*color12:	#98afd9
-hisham*color5:	#d9b798
-hisham*color13:	#d7d998
-hisham*color6:	#a1d5cd
-hisham*color14:	#a1d5cd
-hisham*color7:	#ffffff
-hisham*color15:	#dedede
+!urxvt*color0:	#303430
+!urxvt*color8:	#CDB5CD
+!urxvt*color1:	#bf7979
+!urxvt*color9:	#f4a45f
+!urxvt*color2:	#97b22b
+!urxvt*color10:	#c5f779
+!urxvt*color3:	#b6aa58
+!urxvt*color11:	#fff796
+!urxvt*color4:	#86a2be
+!urxvt*color12:	#98afd9
+!urxvt*color5:	#d9b798
+!urxvt*color13:	#d7d998
+!urxvt*color6:	#a1d5cd
+!urxvt*color14:	#a1d5cd
+!urxvt*color7:	#ffffff
+!urxvt*color15:	#dedede
 !}}}
 
 #!	---| cursor fun! |--- {{{

@@ -1,0 +1,63 @@
+2008-01-28  Michael Olson  <mwolson@gnu.org>
+
+	* Release Emacs Muse 3.12.
+
+	* NEWS: Update.
+
+	* Update copyright years.
+
+	* examples/mwolson: Update init file, stylesheets, and templates.
+
+	* etc/muse.rnc: Add support for the <br> tag.  Don't allow <cite>
+	tags inside of format elements.
+
+	* lisp/muse-groff.el (muse-groff-markup-strings)
+	* lisp/muse-html.el (muse-html-markup-strings)
+	(muse-xhtml-markup-strings):
+	* lisp/muse-latex.el (muse-latex-markup-strings)
+	* lisp/muse-texinfo.el (muse-texinfo-markup-strings)
+	* lisp/muse-xml.el (muse-xml-markup-strings): Add markup string
+	for line-break.
+
+	* lisp/muse-project.el (muse-project-of-file): Fix bug where
+	directory names without slashes in projects were not being
+	recognized.  Thanks to Mirko Vukovic and ktneely for the report.
+
+2008-01-23  Michael Olson  <mwolson@gnu.org>
+
+	* lisp/muse-latex.el (muse-latex-header)
+	(muse-latex-slides-header, muse-latex-lecture-notes-header):
+	Default to using UTF-8, rather than latin1.
+
+	* lisp/muse-publish.el (muse-publish-url): Add comments.  Move
+	target detection higher.  Use unescaped description for image
+	links, so that they don't get erroneously escaped.  Thanks to Suno
+	Ano for the report.
+
+2008-01-15  Michael Olson  <mwolson@gnu.org>
+
+	* Makefile.defs.default (DESTDIR): New variable which allows the
+	destination directory to be easily set.  Thanks to gour for the
+	suggestion.
+	(ELISPDIR, INFODIR): Use it.
+
+	* README (Compilation): Don't mention PREFIX, ELISPDIR, and
+	INFODIR here.
+	(Installation): Mention DESTDIR and PREFIX.
+
+	* texi/muse.texi: Update copyright year.
+	(Installation): Don't mention PREFIX, ELISPDIR, and INFODIR in the
+	compilation step.  Do mention DESTDIR and PREFIX in the
+	installation step.
+
+2008-01-06  Michael Olson  <mwolson@gnu.org>
+
+	* lisp/muse.el (muse-with-temp-buffer): Don't keep track of undo
+	information.  Update documentation.
+
+
+See ChangeLog.4 for earlier changes.
+
+;; Local Variables:
+;; coding: utf-8
+;; End:

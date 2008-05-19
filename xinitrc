@@ -5,7 +5,7 @@
 ##
 ## Executed by startx (run your window manager from here)
 ##
-##exec /usr/bin/fluxbox 
+
 xmodmap ~/.Xmodmap
 xset m 4 5
 xset dpms 60
@@ -14,11 +14,19 @@ xset dpms 60
 exec `cat ~/.fehbg` &
 #start apps here
 
+# show reminders as needed!
+#
+#remind -z1 -k'notify-send --urgency=low --expire-time=0 "remind says" \"%s\"' ~/.reminders &
+
 #gkrellm &
 #xclock &
 #aoss firefox &
 #urxvt & #-e screen &
+#ruby ~/hacks/dwm.rb | dzen2 -fn "-xos4-terminus-medium-r-normal--12-120-72-72-c-60-iso8859-1" -bg "#aecf96" -fg "#2c2c32" -p 2 -e '' -y 786 -ta r &
+#zsh ~/hacks/mon.zsh | dzen2 -fn '-*-terminus-*-*-*-*-12-*-*-*-*-*-iso8859' -bg '#2c2c32' -fg '#aecf96' -p 2 -e '' -ta c -y 786 &
 
+# get mocp running so it's not a child of the status blah
+mocp -S
 
 #wm's
 #exec openbox
@@ -27,6 +35,7 @@ exec `cat ~/.fehbg` &
 #exec /usr/bin/wmii
 #exec /usr/bin/ion3
 #exec /usr/bin/fvwm
+#exec /home/codemac/.xmonad/xmonad
 #exec startkde
 #exec icewm
 #exec blackbox
@@ -40,7 +49,7 @@ exec `cat ~/.fehbg` &
 #	sleep 1
 #done | /usr/bin/dwm
 ruby /home/codemac/hacks/dwm.rb | /usr/bin/dwm
-
+#exec awesome
 ############ For Beryl!
 #. /etc/profile
 #

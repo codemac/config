@@ -4,11 +4,15 @@
 function chpwd
 {
 	integer ls_lines="$(ls -C | wc -l)"
-	if [ $ls_lines -eq 0 ]; then
+	if [[ $ls_lines -eq 0 ]]; then
 		echo No files found: Empty Directory 
 	else
 		ls -hl --color | more
 		echo "\e[1;32m --[\e[1;34m Dirs:\e[1;36m `ls -l | egrep \"^drw\" | wc -l` \e[1;32m|\e[1;35m Files: \e[1;31m`ls -l | egrep -v \"^drw\" | grep -v total | wc -l` \e[1;32m]--"
+	fi
+# source and create project environment
+	if [[ -f $PWD/.projectenv ]]; then
+		. $PWD/.projectenv
 	fi
 }
 
@@ -16,11 +20,15 @@ function chpwd
 function src()
 {
         autoload -U zrecompile
-                [ -f ~/.zshrc ] && zrecompile -p ~/.zshrc
-                [ -f ~/.zcompdump ] && zrecompile -p ~/.zcompdump
-                [ -f ~/.zcompdump ] && zrecompile -p ~/.zcompdump
-                [ -f ~/.zshrc.zwc.old ] && rm -f ~/.zshrc.zwc.old
-                [ -f ~/.zcompdump.zwc.old ] && rm -f ~/.zcompdump.zwc.old
+                [[ -f ~/.zshrc ]] && zrecompile -p ~/.zshrc
+				for i in "$(find ~/.zsh/ -type f)"; do
+					[[ -f $i ]] && zrecompile -p $i
+					[[ -f $i.zwc.old ]] && rm -f $i.zwc.old
+				done
+                [[ -f ~/.zcompdump ]] && zrecompile -p ~/.zcompdump
+                [[ -f ~/.zcompdump ]] && zrecompile -p ~/.zcompdump
+                [[ -f ~/.zshrc.zwc.old ]] && rm -f ~/.zshrc.zwc.old
+                [[ -f ~/.zcompdump.zwc.old ]] && rm -f ~/.zcompdump.zwc.old
                 source ~/.zshrc
 }
 
@@ -30,6 +38,27 @@ function hgl() { hg log $* }
 function hgc() { hg commit -m "$*" }
 function hgp() { hg push $* }
 function hga() { hg add $* }
+
+
+# To be used like foldl latex *.tex
+function mapL {
+    emulate -L zsh
+    for i in ${~argv[2,-1]} ; do
+        $argv[1] $i
+    done
+}
+alias map="noglob mapL"
+
+
+
+# To be used like foldr /etc/init.d/{foo,bar,baz} restart
+function mapR {
+    emulate -L zsh
+    for i in ${~argv[1,-2]} ; do
+        $i ${argv[-1]}
+    done
+}
+alias mapr="noglob mapR"
 
 # Found in the mailinglistarchive from Zsh (IIRC ~1996)
 # MISC: Search in the $HISTFILE and select result to execute
