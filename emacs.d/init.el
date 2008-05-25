@@ -475,9 +475,18 @@ This can be 0 for immediate, or a floating point value.")
 		  (sacha/org-agenda-clock)
 		  (tags "PROJECT-WAITING")
 		  (tags-todo "WAITING")
-		  (tags-todo "-MAYBE")))))
+		  (tags-todo "-MAYBE")))
+		("X" agenda ""
+		 ((ps-number-of-columns 3)
+		  (ps-landscape-mode t)
+		  (org-agenda-prefix-format " [ ] ")
+		  (org-agenda-with-colors t)
+		  (org-agenda-remove-tags nil))
+		 ("theagenda.ps")
+		 )
+		))
 
-(setq org-suck-projects
+(setq org-stuck-projects
 	  '("-MAYBE-DONE" "TODO"))
 
 (add-to-list 'auto-mode-alist '("\\.org$" . org-mode))
@@ -547,7 +556,79 @@ This can be 0 for immediate, or a floating point value.")
 
 ;; set up channels and server passwords (sorry folks)
 (load-file "~/.rcirc-cfg.el")
+;;;
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; erc
+;;
+(autoload 'erc "erc" "" t)
+;; some stuff stolen from pmade
+;; <http://pmade.com/svn/oss/rc/trunk/emacs/emacs.d/pmade/erc.el>
+;; Basic IRC Settings
+(setq erc-user-full-name "codemac")
+(setq erc-email-userid "j@codemac.net")
+(setq erc-nick "codemac")
+
+;; ERC Time stamps
+(setq erc-timestamp-only-if-changed-flag nil)
+(setq erc-timestamp-format "[%H:%M:%S] ")
+(setq erc-insert-timestamp-function 'erc-insert-timestamp-left)
+
+;; Auto-fill (static size so log files look decent)
+(setq erc-fill-column 78)
+(setq erc-fill-function 'erc-fill-static)
+(setq erc-fill-static-center 15)
+
+;; Ignore messages from the server that are not channel activity
+;(setq erc-track-exclude-types '("JOIN" "NICK" "PART" "QUIT" "MODE"
+;                                "324" "329" "332" "333" "353" "477"))
+;(setq erc-track-exclude '("&bitlbee" "#emacs" "#ruby" "#applescript"))
+
+;; Auto join the given channels
+(setq erc-autojoin-channels-alist
+      '(("freenode"  "#applescript" "#rubyists" "#emacs")
+        ("macrumors" "#macrumors")))
+
+;; Some other settings
+(setq erc-prompt 'my-erc-prompt)
+(setq erc-max-buffer-size 20000)
+(setq erc-track-showcount t)
+(setq erc-auto-query 'bury)             ; Private messages go to a hidden buffer
+(setq erc-query-display 'buffer)        ; Reuse current buffer when sending private messages
+(setq erc-keywords '("codemac" "jeff"))
+
+;; Identify with IRC servers
+(defun my-erc-after-connect (server nick)
+  (cond
+   ((string-match "localhost" server) (erc-message "PRIVMSG" (concat "&bitlbee identify " bitlbee-password)))
+   ((string-match "freenode"  server) (erc-message "PRIVMSG" (concat "NickServ identify " freenode-password)))
+   ((string-match "pmade"     server) (erc-message "PRIVMSG" (concat "userserv login pjones " pmade-irc-pjones-password)))))
+  
+;; Setup ERC buffers
+(defun my-erc-hook ()
+  "Correctly configure ERC buffers"
+  (auto-fill-mode 0)                    ; disable auto fill
+  (setq truncate-lines nil))            ; wrap lines
+
+;; Better Prompt
+(defun my-erc-prompt ()
+  (if (and (boundp 'erc-default-recipients) (erc-default-target))
+      (erc-propertize (concat "[ " (erc-default-target) " ]") 'read-only t 'rear-nonsticky t 'front-nonsticky t)
+    (erc-propertize (concat "[ ERC ]") 'read-only t 'rear-nonsticky t 'front-nonsticky t)))
+
+;; Load in some ERC extra modules (you must download these separately)
+(require 'erc-highlight-nicknames)
+
+;; Add some modules
+(add-to-list 'erc-modules 'spelling)
+(add-to-list 'erc-modules 'scrolltobottom)
+(add-to-list 'erc-modules 'truncate)
+;(add-to-list 'erc-modules 'log)
+(add-to-list 'erc-modules 'highlight-nicknames)
+(erc-update-modules)
+
+;; Hook in
+(add-hook 'erc-mode-hook 'my-erc-hook)
+(add-hook 'erc-after-connect 'my-erc-after-connect)
 
 ;;;
 
@@ -694,6 +775,9 @@ This can be 0 for immediate, or a floating point value.")
   ;; If you edit it by hand, you could mess it up, so be careful.
   ;; Your init file should contain only one such instance.
   ;; If there is more than one, they won't work right.
+ '(auto-image-file-mode t)
+ '(browse-url-firefox-new-window-is-tab t)
+ '(browse-url-firefox-program "firefox3")
  '(ecb-options-version "2.32")
  '(jabber-account-list (quote (("j@xmpp.us") ("codemac@gmail.com" (:network-server . "talk.google.com") (:port . 5222)))))
  '(jabber-roster-line-format " %c %-25n %u %-8s  %S"))
@@ -705,6 +789,7 @@ This can be 0 for immediate, or a floating point value.")
   (interactive)
   (setq color-theme-is-global t)
   (setq color-theme-load-all-themes nil)
+  (color-theme-initialize)
   (color-theme-colorful-obsolescence))
 (set-up-colors)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; last line?

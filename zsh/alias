@@ -81,4 +81,4 @@ alias -g M="| most" #	<< most is the best pager evar.
 alias -g G="| grep"
 alias -g E="| egrep"
 alias -g S="| sed -r -e"
-alias -g X="| xclip" 
+alias -g XC="| xclip" 
