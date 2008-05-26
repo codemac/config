@@ -4,7 +4,7 @@
 ;; Author: David O'Toole <dto@gnu.org>
 ;; Maintainer: Bastien Guerry <bzg AT altern DOT org>
 ;; Keywords: hypermedia, outlines, wp
-;; Version: 6.03
+;; Version: 6.04b
 
 ;; This file is part of GNU Emacs.
 ;;
@@ -196,7 +196,7 @@ file names you don't want to be published.
 
 The :include property may be used to include extra files. Its
 value may be a list of filenames to include. The filenames are
-considered relative to the publishing directory.
+considered relative to the base directory.
 
 When both :include and :exclude properties are given values, the
 exclusion step happens first.
@@ -512,6 +512,8 @@ See `org-publish-org-to' to the list of arguments."
     (require 'eshell)
     (require 'esh-maint)
     (require 'em-unix))
+  (unless (file-directory-p pub-dir)
+    (make-directory pub-dir t))
   (eshell/cp filename pub-dir))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -584,6 +586,8 @@ Default for INDEX-FILENAME is 'index.org'."
 	 (exclude-regexp (plist-get project-plist :exclude))
 	 (files (org-publish-get-base-files project exclude-regexp))
 	 (index-filename (concat dir (or index-filename "index.org")))
+ 	 (index-title (or (plist-get project-plist :index-title)
+ 			  (concat "Index for project " (car project))))
 	 (index-buffer (find-buffer-visiting index-filename))
 	 (ifn (file-name-nondirectory index-filename))
 	 file)
@@ -591,6 +595,7 @@ Default for INDEX-FILENAME is 'index.org'."
     (if index-buffer
 	(kill-buffer index-buffer))
     (with-temp-buffer
+      (insert (concat index-title "\n\n"))
       (while (setq file (pop files))
 	(let ((fn (file-name-nondirectory file)))
 	  ;; index shouldn't index itself

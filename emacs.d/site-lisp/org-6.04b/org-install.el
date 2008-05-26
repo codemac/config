@@ -3,7 +3,7 @@
 ;;;;;;  org-open-at-point-global org-insert-link-global org-store-link
 ;;;;;;  org-run-like-in-org-mode turn-on-orgstruct++ turn-on-orgstruct
 ;;;;;;  orgstruct-mode org-global-cycle org-cycle org-mode) "org"
-;;;;;;  "lisp/org.el" (18475 41709))
+;;;;;;  "lisp/org.el" (18488 62361))
 ;;; Generated autoloads from lisp/org.el
 
 (autoload 'org-mode "org" "\
@@ -163,7 +163,7 @@ If the current buffer does not, find the first agenda file.
 ;;;;;;  org-agenda-list-stuck-projects org-tags-view org-todo-list
 ;;;;;;  org-search-view org-agenda-list org-batch-store-agenda-views
 ;;;;;;  org-store-agenda-views org-batch-agenda-csv org-batch-agenda
-;;;;;;  org-agenda) "org-agenda" "lisp/org-agenda.el" (18475 41709))
+;;;;;;  org-agenda) "org-agenda" "lisp/org-agenda.el" (18488 31723))
 ;;; Generated autoloads from lisp/org-agenda.el
 
 (autoload 'org-agenda "org-agenda" "\
@@ -402,7 +402,7 @@ belonging to the \"Work\" category.
 ;;;***
 
 ;;;### (autoloads (org-bbdb-anniversaries) "org-bbdb" "lisp/org-bbdb.el"
-;;;;;;  (18475 41709))
+;;;;;;  (18488 31723))
 ;;; Generated autoloads from lisp/org-bbdb.el
 
 (autoload 'org-bbdb-anniversaries "org-bbdb" "\
@@ -413,7 +413,7 @@ Extract anniversaries from BBDB for display in the agenda.
 ;;;***
 
 ;;;### (autoloads (org-get-clocktable) "org-clock" "lisp/org-clock.el"
-;;;;;;  (18475 41709))
+;;;;;;  (18488 31723))
 ;;; Generated autoloads from lisp/org-clock.el
 
 (autoload 'org-get-clocktable "org-clock" "\
@@ -431,7 +431,7 @@ fontified, and then returned.
 ;;;;;;  org-replace-region-by-html org-export-as-html-to-buffer org-export-as-html-batch
 ;;;;;;  org-export-as-html-and-open org-insert-export-options-template
 ;;;;;;  org-export-visible org-export-as-ascii org-export) "org-exp"
-;;;;;;  "lisp/org-exp.el" (18475 41709))
+;;;;;;  "lisp/org-exp.el" (18488 31723))
 ;;; Generated autoloads from lisp/org-exp.el
 
 (autoload 'org-export "org-exp" "\
@@ -582,7 +582,7 @@ The XOXO buffer is named *xoxo-<source buffer name>*
 ;;;### (autoloads (org-export-as-latex org-export-region-as-latex
 ;;;;;;  org-replace-region-by-latex org-export-as-latex-to-buffer
 ;;;;;;  org-export-as-latex-batch) "org-export-latex" "lisp/org-export-latex.el"
-;;;;;;  (18475 41709))
+;;;;;;  (18488 31723))
 ;;; Generated autoloads from lisp/org-export-latex.el
 
 (autoload 'org-export-as-latex-batch "org-export-latex" "\
@@ -648,8 +648,68 @@ when PUB-DIR is set, use this as the publishing directory.
 
 ;;;***
 
+;;;### (autoloads (org-id-find org-id-goto org-id-get-with-outline-drilling
+;;;;;;  org-id-get-with-outline-path-completion org-id-get org-id-copy
+;;;;;;  org-id-get-create) "org-id" "lisp/org-id.el" (18488 31723))
+;;; Generated autoloads from lisp/org-id.el
+
+(autoload 'org-id-get-create "org-id" "\
+Create an ID for the current entry and return it.
+If the entry already has an ID, just return it.
+With optional argument FORCE, force the creation of a new ID.
+
+\(fn &optional FORCE)" t nil)
+
+(autoload 'org-id-copy "org-id" "\
+Copy the ID of the entry at point to the kill ring.
+Create an ID if necessary.
+
+\(fn)" t nil)
+
+(autoload 'org-id-get "org-id" "\
+Get the ID property of the entry at point-or-marker POM.
+If POM is nil, refer to the entry at point.
+If the entry does not have an ID, the function returns nil.
+However, when CREATE is non nil, create an ID if none is present already.
+PREFIX will be passed through to `org-id-new'.
+In any case, the ID of the entry is returned.
+
+\(fn &optional POM CREATE PREFIX)" nil nil)
+
+(autoload 'org-id-get-with-outline-path-completion "org-id" "\
+Use outline-path-completion to retrieve the ID of an entry.
+TARGETS may be a setting for `org-refile-targets' to define the eligible
+headlines.  When omitted, all headlines in all agenda files are
+eligible.
+It returns the ID of the entry.  If necessary, the ID is created.
+
+\(fn &optional TARGETS)" nil nil)
+
+(autoload 'org-id-get-with-outline-drilling "org-id" "\
+Use an outline-cycling interface to retrieve the ID of an entry.
+This only finds entries in the current buffer, using `org-get-location'.
+It returns the ID of the entry.  If necessary, the ID is created.
+
+\(fn &optional TARGETS)" nil nil)
+
+(autoload 'org-id-goto "org-id" "\
+Switch to the buffer containing the entry with id ID.
+Move the cursor to that entry in that buffer.
+
+\(fn ID)" t nil)
+
+(autoload 'org-id-find "org-id" "\
+Return the location of the entry with the id ID.
+The return value is a cons cell (file-name . position), or nil
+if there is no entry with that ID.
+With optional argument MARKERP, return the position as a new marker.
+
+\(fn ID &optional MARKERP)" nil nil)
+
+;;;***
+
 ;;;### (autoloads (org-irc-store-link) "org-irc" "lisp/org-irc.el"
-;;;;;;  (18475 41709))
+;;;;;;  (18488 31723))
 ;;; Generated autoloads from lisp/org-irc.el
 
 (autoload 'org-irc-store-link "org-irc" "\
@@ -661,7 +721,7 @@ Dispatch to the appropriate function to store a link to an IRC session.
 
 ;;;### (autoloads (org-publish-current-project org-publish-current-file
 ;;;;;;  org-publish-all org-publish) "org-publish" "lisp/org-publish.el"
-;;;;;;  (18475 41709))
+;;;;;;  (18488 31723))
 ;;; Generated autoloads from lisp/org-publish.el
 
 (autoload 'org-publish "org-publish" "\
@@ -692,7 +752,7 @@ the project.
 
 ;;;### (autoloads (org-remember-handler org-remember org-remember-apply-template
 ;;;;;;  org-remember-annotation org-remember-insinuate) "org-remember"
-;;;;;;  "lisp/org-remember.el" (18475 41709))
+;;;;;;  "lisp/org-remember.el" (18488 31723))
 ;;; Generated autoloads from lisp/org-remember.el
 
 (autoload 'org-remember-insinuate "org-remember" "\
@@ -771,7 +831,7 @@ See also the variable `org-reverse-note-order'.
 ;;;***
 
 ;;;### (autoloads (orgtbl-mode turn-on-orgtbl) "org-table" "lisp/org-table.el"
-;;;;;;  (18475 41709))
+;;;;;;  (18488 31723))
 ;;; Generated autoloads from lisp/org-table.el
 
 (autoload 'turn-on-orgtbl "org-table" "\

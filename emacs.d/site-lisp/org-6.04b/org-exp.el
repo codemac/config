@@ -5,7 +5,7 @@
 ;; Author: Carsten Dominik <carsten at orgmode dot org>
 ;; Keywords: outlines, hypermedia, calendar, wp
 ;; Homepage: http://orgmode.org
-;; Version: 6.03
+;; Version: 6.04b
 ;;
 ;; This file is part of GNU Emacs.
 ;;
@@ -88,7 +88,9 @@ This option can also be set with the +OPTIONS line, e.g. \"-:nil\"."
     ("fr"  "Auteur"          "Date"  "Table des mati\xe8res")
     ("it"  "Autore"          "Data"  "Indice")
     ("nl"  "Auteur"          "Datum" "Inhoudsopgave")
-    ("nn"  "Forfattar"       "Dato"  "Innhold")  ;; nn = Norsk (nynorsk)
+    ("no"  "Forfatter"       "Dato"  "Innhold")
+    ("nb"  "Forfatter"       "Dato"  "Innhold")  ;; nb = Norsk (bokm.l)
+    ("nn"  "Forfattar"       "Dato"  "Innhald")  ;; nn = Norsk (nynorsk)
     ("sv"  "F\xf6rfattarens" "Datum" "Inneh\xe5ll"))
   "Terms used in export text, translated to different languages.
 Use the variable `org-export-default-language' to set the language,
@@ -632,6 +634,20 @@ The text will be inserted into the DESCRIPTION field."
   :group 'org-export-icalendar
   :type 'string)
 
+(defcustom org-icalendar-store-UID nil
+  "Non-nil means, store any created UIDs in properties.
+The iCalendar standard requires that all entries have a unique identifyer.
+Org will create these identifiers as needed.  When this variable is non-nil,
+the created UIDs will be stored in the ID property of the entry.  Then the
+next time this entry is exported, it will be exported with the same UID,
+superceeding the previous form of it.  This is essential for
+synchronization services.
+This variable is not turned on by default because we want to avoid creating
+a property drawer in every entry if people are only playing with this feature,
+or if they are only using it locally."
+  :group 'org-export-icalendar
+  :type 'boolean)
+
 ;;;; Exporting
 
 ;;; Variables, constants, and parameter plists
@@ -766,33 +782,55 @@ modified) list.")
 			    (substring ext-setup-or-nil start)))))))
 	(setq p (plist-put p :text text))
 	(when options
-	  (let ((op '(("H"     . :headline-levels)
-		      ("num"   . :section-numbers)
-		      ("toc"   . :table-of-contents)
-		      ("\\n"   . :preserve-breaks)
-		      ("@"     . :expand-quoted-html)
-		      (":"     . :fixed-width)
-		      ("|"     . :tables)
-		      ("^"     . :sub-superscript)
-		      ("-"     . :special-strings)
-		      ("f"     . :footnotes)
-		      ("d"     . :drawers)
-		      ("tags"  . :tags)
-		      ("*"     . :emphasize)
-		      ("TeX"   . :TeX-macros)
-		      ("LaTeX" . :LaTeX-fragments)
-		      ("skip"  . :skip-before-1st-heading)
-		      ("author" . :author-info)
-		      ("timestamp" . :time-stamp-file)))
-		o)
-	    (while (setq o (pop op))
-	      (if (string-match (concat (regexp-quote (car o))
-					":\\([^ \t\n\r;,.]*\\)")
-				options)
-		  (setq p (plist-put p (cdr o)
-				     (car (read-from-string
-					   (match-string 1 options)))))))))
+	  (setq p (org-export-add-options-to-plist p options)))
 	p))))
+
+(defun org-export-add-options-to-plist (p options)
+  "Parse an OPTONS line and set values in the property list P."
+  (let (o)
+    (when options
+      (let ((op '(("H"     . :headline-levels)
+		  ("num"   . :section-numbers)
+		  ("toc"   . :table-of-contents)
+		  ("\\n"   . :preserve-breaks)
+		  ("@"     . :expand-quoted-html)
+		  (":"     . :fixed-width)
+		  ("|"     . :tables)
+		  ("^"     . :sub-superscript)
+		  ("-"     . :special-strings)
+		  ("f"     . :footnotes)
+		  ("d"     . :drawers)
+		  ("tags"  . :tags)
+		  ("*"     . :emphasize)
+		  ("TeX"   . :TeX-macros)
+		  ("LaTeX" . :LaTeX-fragments)
+		  ("skip"  . :skip-before-1st-heading)
+		  ("author" . :author-info)
+		  ("timestamp" . :time-stamp-file)))
+	    o)
+	(while (setq o (pop op))
+	  (if (string-match (concat (regexp-quote (car o))
+				    ":\\([^ \t\n\r;,.]*\\)")
+			    options)
+	      (setq p (plist-put p (cdr o)
+				 (car (read-from-string
+				       (match-string 1 options))))))))))
+  p)
+  
+(defun org-export-add-subtree-options (p pos)
+  "Add options in subtree at position POS to property list P."
+  (save-excursion
+    (goto-char pos)
+    (when (org-at-heading-p)
+      (let (a)
+	;; This is actually read in `org-export-get-title-from-subtree'
+	;; (when (setq a (org-entry-get pos "EXPORT_TITLE"))
+	;;   (setq p (plist-put p :title a)))
+	(when (setq a (org-entry-get pos "EXPORT_TEXT"))
+	  (setq p (plist-put p :text a)))
+	(when (setq a (org-entry-get pos "EXPORT_OPTIONS"))
+	  (setq p (org-export-add-options-to-plist p a)))))
+    p))
 
 (defun org-export-directory (type plist)
   (let* ((val (plist-get plist :publishing-directory))
@@ -1421,11 +1459,16 @@ on this string to produce the exported version."
       ;; Remove or replace comments
       (goto-char (point-min))
       (while (re-search-forward "^#\\(.*\n?\\)" nil t)
+	(setq pos (match-beginning 0))
 	(if commentsp
 	    (progn (add-text-properties
 		    (match-beginning 0) (match-end 0) '(org-protected t))
 		   (replace-match (format commentsp (match-string 1)) t t))
-	  (replace-match "")))
+	  (goto-char (1+ pos))
+	  (org-if-unprotected
+	   (replace-match "")
+	   (goto-char (max (point-min) (1- pos))))
+	  (end-of-line 1)))
 
       ;; Find matches for radio targets and turn them into internal links
       (goto-char (point-min))
@@ -1542,18 +1585,19 @@ on this string to produce the exported version."
 
 (defun org-export-get-title-from-subtree ()
   "Return subtree title and exclude it from export."
-  (let (title (m (mark)))
+  (let (title (m (mark)) (rbeg (region-beginning)) (rend (region-end)))
     (save-excursion
-      (goto-char (region-beginning))
+      (goto-char rbeg)
       (when (and (org-at-heading-p)
-		 (>= (org-end-of-subtree t t) (region-end)))
+		 (>= (org-end-of-subtree t t) rend))
 	;; This is a subtree, we take the title from the first heading
-	(goto-char (region-beginning))
+	(goto-char rbeg)
 	(looking-at org-todo-line-regexp)
 	(setq title (match-string 3))
 	(org-unmodified
 	 (add-text-properties (point) (1+ (point-at-eol))
-			      (list :org-license-to-kill t)))))
+			      (list :org-license-to-kill t)))
+	(setq title (or (org-entry-get nil "EXPORT_TITLE") title))))
     title))
 
 (defun org-solidify-link-text (s &optional alist)
@@ -1697,7 +1741,8 @@ backends, it converts the segment into an EXAMPLE segment."
 		  ;; Free up the protected stuff
 		  (goto-char (point-min))
 		  (while (re-search-forward "^," nil t)
-		    (replace-match ""))
+		    (replace-match "")
+		    (end-of-line 1))
 		  (if (functionp mode)
 		      (funcall mode)
 		    (fundamental-mode))
@@ -1732,12 +1777,17 @@ underlined headlines.  The default is 3."
   (let* ((opt-plist (org-combine-plists (org-default-export-plist)
 					(org-infile-export-plist)))
 	 (region-p (org-region-active-p))
+	 (rbeg (and region-p (region-beginning)))
+	 (rend (and region-p (region-end)))
 	 (subtree-p
 	  (when region-p
 	    (save-excursion
-	      (goto-char (region-beginning))
+	      (goto-char rbeg)
 	      (and (org-at-heading-p)
-		   (>= (org-end-of-subtree t t) (region-end))))))
+		   (>= (org-end-of-subtree t t) rend)))))
+	 (opt-plist (if subtree-p 
+			(org-export-add-subtree-options opt-plist rbeg)
+		      opt-plist))
 	 (custom-times org-display-custom-times)
 	 (org-ascii-current-indentation '(0 . 0))
 	 (level 0) line txt
@@ -2343,12 +2393,17 @@ PUB-DIR is set, use this as the publishing directory."
 	 valid thetoc have-headings first-heading-pos
 	 (odd org-odd-levels-only)
 	 (region-p (org-region-active-p))
+	 (rbeg (and region-p (region-beginning)))
+	 (rend (and region-p (region-end)))
 	 (subtree-p
 	  (when region-p
 	    (save-excursion
-	      (goto-char (region-beginning))
+	      (goto-char rbeg)
 	      (and (org-at-heading-p)
-		   (>= (org-end-of-subtree t t) (region-end))))))
+		   (>= (org-end-of-subtree t t) rend)))))
+	 (opt-plist (if subtree-p 
+			(org-export-add-subtree-options opt-plist rbeg)
+		      opt-plist))
 	 ;; The following two are dynamically scoped into other
 	 ;; routines below.
 	 (org-current-export-dir
@@ -2916,7 +2971,8 @@ lang=\"%s\" xml:lang=\"%s\">
 		(org-close-par-maybe)
 		(let ((n (match-string 1 line)))
 		  (setq line (replace-match
-			      (format "<p class=\"footnote\"><sup><a class=\"footnum\" name=\"fn.%s\" href=\"#fnr.%s\">%s</a></sup>" n n n) t t line)))))
+			      (format "<p class=\"footnote\"><sup><a class=\"footnum\" name=\"fn.%s\" href=\"#fnr.%s\">%s</a></sup>" n n n) t t line))
+		  (setq line (concat line "</p>")))))
 
 	    ;; Check if the line break needs to be conserved
 	    (cond
@@ -3688,7 +3744,8 @@ When COMBINE is non nil, add the category to each line."
 	      (format-time-string (cdr org-time-stamp-formats) (current-time))
 	      "DTSTART"))
 	hd ts ts2 state status (inc t) pos b sexp rrule
-	scheduledp deadlinep tmp pri category entry location summary desc
+	scheduledp deadlinep prefix
+	tmp pri category entry location summary desc uid
 	(sexp-buffer (get-buffer-create "*ical-tmp*")))
     (org-refresh-category-properties)
     (save-excursion
@@ -3716,7 +3773,11 @@ When COMBINE is non nil, add the category to each line."
 		      t org-icalendar-include-body)
 		location (org-icalendar-cleanup-string
 			  (org-entry-get nil "LOCATION"))
-		category (org-get-category))
+		uid (if org-icalendar-store-UID
+			(org-id-get-create)
+		      (or (org-id-get) (org-id-new)))
+		category (org-get-category)
+		deadlinep nil scheduledp nil)
 	  (if (looking-at re2)
 	      (progn
 		(goto-char (match-end 0))
@@ -3734,6 +3795,7 @@ When COMBINE is non nil, add the category to each line."
 		  scheduledp (string-match org-scheduled-regexp tmp)
 		  ;; donep (org-entry-is-done-p)
 		  ))
+	  (setq prefix (if deadlinep "DL-" (if scheduledp "SC-" "TS-")))
 	  (if (or (string-match org-tr-regexp hd)
 		  (string-match org-ts-regexp hd))
 	      (setq hd (replace-match "" t t hd)))
@@ -3751,19 +3813,21 @@ When COMBINE is non nil, add the category to each line."
 	      (setq summary
 		    (replace-match (if (match-end 3)
 				       (match-string 3 summary)
-					(match-string 1 summary))
-				      t t summary)))
+				     (match-string 1 summary))
+				   t t summary)))
 	  (if deadlinep (setq summary (concat "DL: " summary)))
 	  (if scheduledp (setq summary (concat "S: " summary)))
 	  (if (string-match "\\`<%%" ts)
 	      (with-current-buffer sexp-buffer
 		(insert (substring ts 1 -1) " " summary "\n"))
 	    (princ (format "BEGIN:VEVENT
+UID: %s
 %s
 %s%s
 SUMMARY:%s%s%s
 CATEGORIES:%s
 END:VEVENT\n"
+			   (concat prefix uid)
 			   (org-ical-ts-to-string ts "DTSTART")
 			   (org-ical-ts-to-string ts2 "DTEND" inc)
 			   rrule summary
@@ -3772,7 +3836,6 @@ END:VEVENT\n"
 			   (if (and location (string-match "\\S-" location))
 			       (concat "\nLOCATION: " location) "")
 			   category)))))
-
       (when (and org-icalendar-include-sexps
 		 (condition-case nil (require 'icalendar) (error nil))
 		 (fboundp 'icalendar-export-region))
@@ -3789,8 +3852,9 @@ END:VEVENT\n"
 	    (with-current-buffer sexp-buffer
 	      (insert sexp "\n"))
 	    (princ (org-diary-to-ical-string sexp-buffer)))))
-
+      
       (when org-icalendar-include-todo
+	(setq prefix "TODO-")
 	(goto-char (point-min))
 	(while (re-search-forward org-todo-line-regexp nil t)
 	  (catch :skip
@@ -3816,7 +3880,10 @@ END:VEVENT\n"
 			      (and org-icalendar-include-body (org-get-entry)))
 			  t org-icalendar-include-body)
 		    location (org-icalendar-cleanup-string
-			      (org-entry-get nil "LOCATION")))
+			      (org-entry-get nil "LOCATION"))
+		    uid (if org-icalendar-store-UID
+			    (org-id-get-create)
+			  (or (org-id-get) (org-id-new))))
 	      (if (string-match org-bracket-link-regexp hd)
 		  (setq hd (replace-match (if (match-end 3) (match-string 3 hd)
 					    (match-string 1 hd))
@@ -3830,6 +3897,7 @@ END:VEVENT\n"
 					    (- org-lowest-priority org-highest-priority))))))
 
 	      (princ (format "BEGIN:VTODO
+UID: %s
 %s
 SUMMARY:%s%s%s
 CATEGORIES:%s
@@ -3837,13 +3905,15 @@ SEQUENCE:1
 PRIORITY:%d
 STATUS:%s
 END:VTODO\n"
+			     (concat prefix uid)
 			     dts
 			     (or summary hd)
 			     (if (and location (string-match "\\S-" location))
 				 (concat "\nLOCATION: " location) "")
 			     (if (and desc (string-match "\\S-" desc))
 				 (concat "\nDESCRIPTION: " desc) "")
-			     category pri status)))))))))
+			     category
+			     pri status)))))))))
 
 (defun org-icalendar-cleanup-string (s &optional is-body maxlength)
   "Take out stuff and quote what needs to be quoted.
@@ -4010,5 +4080,4 @@ The XOXO buffer is named *xoxo-<source buffer name>*"
 ;; arch-tag: 65985fe9-095c-49c7-a7b6-cb4ee15c0a95
 
 ;;; org-exp.el ends here
-
 

@@ -5,7 +5,7 @@
 ;; Author: Carsten Dominik <carsten at orgmode dot org>
 ;; Keywords: outlines, hypermedia, calendar, wp
 ;; Homepage: http://orgmode.org
-;; Version: 6.03
+;; Version: 6.04b
 ;;
 ;; This file is part of GNU Emacs.
 ;;
@@ -197,7 +197,7 @@ of a different task.")
 	 (h (floor delta 3600))
 	 (m (floor (- delta (* 3600 h)) 60)))
     (setq org-mode-line-string
-	  (propertize (format "-[%d:%02d (%s)]" h m org-clock-heading)
+	  (propertize (format (concat "-[" org-time-clocksum-format " (%s)]") h m org-clock-heading)
 		      'help-echo "Org-mode clock is running"))
     (force-mode-line-update)))
 
@@ -375,7 +375,7 @@ If there is no running clock, throw an error, unless FAIL-QUIETLY is set."
 	(setq global-mode-string
 	      (delq 'org-mode-line-string global-mode-string))
 	(force-mode-line-update)
-	(message "Clock stopped at %s after HH:MM = %d:%02d%s" te h m
+	(message (concat "Clock stopped at %s after HH:MM = " org-time-clocksum-format "%s") te h m
 		 (if remove " => LINE REMOVED" "")))))))
 
 (defun org-clock-cancel ()
@@ -487,7 +487,7 @@ in the echo area."
 	(when org-remove-highlights-with-change
 	  (org-add-hook 'before-change-functions 'org-remove-clock-overlays
 			nil 'local))))
-    (message "Total file time: %d:%02d (%d hours and %d minutes)" h m h m)))
+    (message (concat "Total file time: " org-time-clocksum-format " (%d hours and %d minutes)") h m h m)))
 
 (defvar org-clock-overlays nil)
 (make-variable-buffer-local 'org-clock-overlays)
@@ -499,6 +499,7 @@ This creates a new overlay and stores it in `org-clock-overlays', so that it
 will be easy to remove."
   (let* ((c 60) (h (floor (/ time 60))) (m (- time (* 60 h)))
 	 (l (if level (org-get-valid-level level 0) 0))
+	 (fmt (concat "%s " org-time-clocksum-format "%s"))
 	 (off 0)
 	 ov tx)
     (org-move-to-column c)
@@ -507,7 +508,7 @@ will be easy to remove."
     (setq ov (org-make-overlay (1- (point)) (point-at-eol))
 	  tx (concat (buffer-substring (1- (point)) (point))
 		     (make-string (+ off (max 0 (- c (current-column)))) ?.)
-		     (org-add-props (format "%s %2d:%02d%s"
+		     (org-add-props (format fmt
 					    (make-string l ?*) h m
 					    (make-string (- 16 l) ?\ ))
 			 '(face secondary-selection))

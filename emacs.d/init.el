@@ -98,6 +98,29 @@
 (global-set-key "\C-x\C-k" 'kill-region)
 ;;
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; private settings
+;; Here I list my "private" varables so you know what
+;; things are.
+
+;; irc
+(defvar cm-freenode-pass "nope"
+  "The nickserv password for freenode.")
+(defvar cm-oftc-pass "nope"
+  "The nickserv password for oftc.")
+(defvar cm-what-pass "nope"
+  "The nickserv password for what.")
+(defvar cm-rizon-pass "nope"
+  "The nickserv password for rizon.")
+(defvar cm-bitlbee-pass "nope"
+  "The password for bitlbee!")
+(defvar cm-irc-channel-alist
+  '(("freenode" "#archlinux" "#emacs")
+    ("oftc" "#ikiwiki"))
+  "The channel list..")
+
+(load-file "~/.emacs-priv.el")
+;;
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; server
 ;;;
@@ -500,7 +523,13 @@ This can be 0 for immediate, or a floating point value.")
 (setq org-return-follows-link t)
 (setq org-agenda-include-all-todo t)
 (setq org-agenda-include-diary t)
+(setq org-agenda-skip-deadline-if-done t)
+(setq org-agenda-skip-scheduled-if-done t)
+(setq org-agenda-show-all-dates t)
+(setq org-reverse-note-order t)
+(setq org-fontify-done-headline t)
 (setq org-special-ctrl-k t)
+(setq org-special-ctrl-a/e t)
 
 (defun gtd ()
   (interactive)
@@ -554,8 +583,11 @@ This can be 0 for immediate, or a floating point value.")
 (setq rcirc-default-user-name "codemac")
 (setq rcirc-default-user-full-name "codemac")
 
-;; set up channels and server passwords (sorry folks)
-(load-file "~/.rcirc-cfg.el")
+(setq rcirc-authinfo '(("freenode" nickserv "codemac" cm-freenode-pass)))
+(setq rcirc-startup-channels-alist '(("\\.freenode\\.net$" "#emacs")))
+
+;; set up passwords and such!
+
 ;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; erc
@@ -584,9 +616,7 @@ This can be 0 for immediate, or a floating point value.")
 ;(setq erc-track-exclude '("&bitlbee" "#emacs" "#ruby" "#applescript"))
 
 ;; Auto join the given channels
-(setq erc-autojoin-channels-alist
-      '(("freenode"  "#applescript" "#rubyists" "#emacs")
-        ("macrumors" "#macrumors")))
+(setq erc-autojoin-channels-alist cm-irc-channel-alist)
 
 ;; Some other settings
 (setq erc-prompt 'my-erc-prompt)
@@ -596,18 +626,20 @@ This can be 0 for immediate, or a floating point value.")
 (setq erc-query-display 'buffer)        ; Reuse current buffer when sending private messages
 (setq erc-keywords '("codemac" "jeff"))
 
-;; Identify with IRC servers
-(defun my-erc-after-connect (server nick)
-  (cond
-   ((string-match "localhost" server) (erc-message "PRIVMSG" (concat "&bitlbee identify " bitlbee-password)))
-   ((string-match "freenode"  server) (erc-message "PRIVMSG" (concat "NickServ identify " freenode-password)))
-   ((string-match "pmade"     server) (erc-message "PRIVMSG" (concat "userserv login pjones " pmade-irc-pjones-password)))))
-  
 ;; Setup ERC buffers
 (defun my-erc-hook ()
   "Correctly configure ERC buffers"
   (auto-fill-mode 0)                    ; disable auto fill
   (setq truncate-lines nil))            ; wrap lines
+
+(defun my-erc-after-connect (server nick)
+  (cond
+   ((string-match "localhost" server) (erc-message "PRIVMSG" (concat "&bitlbee identify " cm-bitlbee-pass)))
+   ((string-match "freenode"  server) (erc-message "PRIVMSG" (concat "NickServ identify " cm-freenode-pass)))
+   ((string-match "oftc"      server) (erc-message "PRIVMSG" (concat "nickserv identify " cm-oftc-pass)))
+   ((string-match "what"      server) (erc-message "PRIVMSG" (concat "Drone enter #what.cd codemac " cm-what-pass)))
+))
+
 
 ;; Better Prompt
 (defun my-erc-prompt ()
@@ -617,6 +649,9 @@ This can be 0 for immediate, or a floating point value.")
 
 ;; Load in some ERC extra modules (you must download these separately)
 (require 'erc-highlight-nicknames)
+(require 'erc-nicklist)
+(setq erc-nicklist-use-icons nil)
+(setq erc-nicklist-voiced-position 'top)
 
 ;; Add some modules
 (add-to-list 'erc-modules 'spelling)
@@ -630,6 +665,21 @@ This can be 0 for immediate, or a floating point value.")
 (add-hook 'erc-mode-hook 'my-erc-hook)
 (add-hook 'erc-after-connect 'my-erc-after-connect)
 
+;; Start a local bitlbee server
+(require 'bitlbee)
+(setq bitlbee-user-directory "~/.bitlbee")
+(setq bitlbee-executable "/usr/sbin/bitlbee")
+(bitlbee-start)
+
+;; Give bitlbee a chance to bind to the local port
+(sleep-for 1)
+
+;; Define my ultracool erc-startup
+(defun erc-startup ()
+  (erc-ssl :server "irc.freenode.net" :port "6697")
+  (erc :server "localhost" :port "6667")
+  (erc-ssl :server "irc.oftc.net" :port "6697")
+)
 ;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; gnus lock file

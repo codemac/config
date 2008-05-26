@@ -5,7 +5,7 @@
 ;; Author: Thomas Baumann <thomas dot baumann at ch dot tum dot de>
 ;; Keywords: outlines, hypermedia, calendar, wp
 ;; Homepage: http://orgmode.org
-;; Version: 6.03
+;; Version: 6.04b
 ;;
 ;; This file is part of GNU Emacs.
 ;;
@@ -71,6 +71,7 @@ supported by MH-E."
 (defvar mh-show-folder-buffer)
 (defvar mh-index-folder)
 (defvar mh-searcher)
+(defvar mh-search-regexp-builder)
 
 ;; Install the link type
 (org-add-link-type "mhe" 'org-mhe-open)
@@ -194,16 +195,19 @@ folders."
   (mh-find-path)
   (if (not article)
       (mh-visit-folder (mh-normalize-folder-name folder))
-    (setq article (org-add-angle-brackets article))
     (mh-search-choose)
     (if (equal mh-searcher 'pick)
         (progn
+	  (setq article (org-add-angle-brackets article))
           (mh-search folder (list "--message-id" article))
           (when (and org-mhe-search-all-folders
                      (not (org-mhe-get-message-real-folder)))
             (kill-this-buffer)
             (mh-search "+" (list "--message-id" article))))
-      (mh-search "+" article))
+      (if mh-search-regexp-builder
+          (mh-search "+" (funcall mh-search-regexp-builder
+				  (list (cons 'message-id article))))
+        (mh-search "+" article)))
     (if (org-mhe-get-message-real-folder)
         (mh-show-msg 1)
       (kill-this-buffer)
