@@ -32,7 +32,8 @@
 ;(add-to-list 'default-frame-alist '(font . "-xos4-terminus-medium-r-normal--14-140-72-72-c-80-iso8859-1"))
 ;(add-to-list 'default-frame-alist '(font . "smoothansi"))
 ;(add-to-list 'default-frame-alist '(font . "DejaVu Sans Mono-9"))
-(add-to-list 'default-frame-alist '(font . "-windows-dina-medium-r-normal--13-80-96-96-c-70-iso8859-1"))
+;(add-to-list 'default-frame-alist '(font . "-windows-dina-medium-r-normal--13-80-96-96-c-70-iso8859-1"))
+(add-to-list 'default-frame-alist '(font . "Consolas-10"))
 
 ;;	Get rid of the annoying bell
 (setq visible-bell 1)
@@ -63,6 +64,10 @@
 (add-to-list 'auto-mode-alist '("\\.mdwn$" . markdown-mode))
 (add-to-list 'auto-mode-alist '("\\.org$" . org-mode))
 (add-to-list 'auto-mode-alist '("\\.rb$" . ruby-mode))
+(add-to-list 'auto-mode-alist '("\\.yml$" . yaml-mode))
+(add-to-list 'auto-mode-alist '("\\.yaml$" . yaml-mode))
+(add-to-list 'auto-mode-alist '("\\.haml$" . haml-mode))
+(add-to-list 'auto-mode-alist '("\\.sass$" . sass-mode))
 (add-to-list 'interpreter-mode-alist '("ruby" . ruby-mode))
 ;;
 
@@ -206,6 +211,17 @@
 ;(require 'bbdb)
 ;(bbdb-initialize 'gnus 'message 'sc 'w3)
 ;;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; compile me
+;; Install mode-compile to give friendlier compiling support!
+(autoload 'mode-compile "mode-compile"
+   "Command to compile current buffer file based on the major mode" t)
+(global-set-key "\C-cc" 'mode-compile)
+(autoload 'mode-compile-kill "mode-compile"
+ "Command to kill a compilation launched by `mode-compile'" t)
+(global-set-key "\C-ck" 'mode-compile-kill)
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; git
 (require 'vc-git)
 (when (featurep 'vc-git) (add-to-list 'vc-handled-backends 'git))
@@ -239,6 +255,17 @@
 (autoload 'rubydb "rubydb3x" "Ruby debugger" t)
  ;; uncomment the next line if you want syntax highlighting                     
 (add-hook 'ruby-mode-hook 'turn-on-font-lock)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; yaml-mode
+;;
+(autoload 'yaml-mode "yaml-mode" "Yaml editing mode" t)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; haml and such
+;;
+(autoload 'haml-mode "haml-mode" "" t)
+(add-hook 'haml-mode-hook '(lambda ()
+							(setq indent-tabs-mode nil)
+							))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; journal/diary entry
@@ -287,6 +314,17 @@
   (insert "\n")
 )
 
+(defun blog-last ()
+  (interactive)
+  (let ((wiki-dir "~/www/wiki/blog/"))
+    (find-file
+     (concat wiki-dir
+	     (number-to-string (apply 'max (mapcar 'string-to-number
+	     (mapcar '(lambda (a) (substring a 0 -5))
+		     (directory-files wiki-dir nil "[0-9]*\\.mdwn" t )))))
+	     ".mdwn")))
+)
+
 (defun blog-find-next ()
   (interactive)
   (let ((wiki-dir "~/www/wiki/blog/"))
@@ -310,6 +348,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; org mode
 (require 'org)
+(require 'org-mouse)
 
 (defun sacha/org-agenda-load (match)
   "Can be included in `org-agenda-custom-commands'."
@@ -516,15 +555,29 @@ This can be 0 for immediate, or a floating point value.")
 (setq org-return-follows-link t)
 (global-set-key (kbd "C-c l") 'org-store-link)
 (global-set-key (kbd "C-c a") 'org-agenda)
+
+;; remember keystuff
+(require 'remember)
+(add-hook 'remember-mode-hook 'org-remember-apply-template)
+(define-key global-map [(control meta ?r)] 'remember)
+(setq org-remeber-store-without-prompt t)
+(setq org-remember-templates '((116 "* TODO %?\n  %u" "~/org/gtd.org")
+			       (110 "* %u %?" "~/org/notes.org")))
+(setq remember-annotation-functions '(org-remember-annotation))
+(setq remember-handler-functions '(org-remember-handler))
+
+(setq org-default-notes-files '("~/org/notes.org"))
 (setq org-agenda-files (file-expand-wildcards "~/org/*.org"))
 (setq org-log-done t)
 (setq org-hide-leading-stars t)
 (setq org-fontify-done-headline t)
 (setq org-return-follows-link t)
 (setq org-agenda-include-all-todo t)
+(setq org-agenda-ndays 7)
 (setq org-agenda-include-diary t)
 (setq org-agenda-skip-deadline-if-done t)
 (setq org-agenda-skip-scheduled-if-done t)
+(setq org-start-on-weekday nil)
 (setq org-agenda-show-all-dates t)
 (setq org-reverse-note-order t)
 (setq org-fontify-done-headline t)
@@ -835,12 +888,17 @@ This can be 0 for immediate, or a floating point value.")
 ;; COLORS PLZ
 (require 'color-theme)
 (load-library "color-theme-colorful-obsolescence")
+(load-library "manoj-colors")
+(load-library "zenburn")
 (defun set-up-colors()
   (interactive)
   (setq color-theme-is-global t)
   (setq color-theme-load-all-themes nil)
   (color-theme-initialize)
-  (color-theme-colorful-obsolescence))
+;  (color-theme-manoj-dark))
+;  (color-theme-colorful-obsolescence)
+  (color-theme-zenburn)
+  )
 (set-up-colors)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; last line?
 (message "My .emacs loaded in %ds" (destructuring-bind (hi lo ms) (current-time)
