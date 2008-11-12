@@ -22,12 +22,12 @@ else
      start_agent;
 fi
 
-# mairix database updater!
-if [[ -f "$HOME/.mairix_update.lock" ]]; then
-	echo "1" > /dev/null
-else
-	rm $HOME/.mairix_update.pid
-	$HOME/hacks/mairix_update.py > /dev/null &
-	PID=`pidof -x -o %PPID 'mairix_update.py'`
-	echo $PID > $HOME/.mairix_update.pid
-fi
+## mairix database updater!
+#if [[ -f "$HOME/.mairix_update.lock" ]]; then
+#	echo "1" > /dev/null
+#else
+#	rm $HOME/.mairix_update.pid
+#	$HOME/hacks/mairix_update.py > /dev/null &
+#	PID=`pidof -x -o %PPID 'mairix_update.py'`
+#	echo $PID > $HOME/.mairix_update.pid
+#fi

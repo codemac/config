@@ -10,30 +10,32 @@
 (setq gnus-novice-user nil) ;; Why the hell is this defaulting to t?  Fuck you RMS.
 
 ;; Set up getting mail
-(setq user-mail-address "codemac@gmail.com")
+(setq user-mail-address "jmickey@netapp.com")
 (setq user-full-name "Jeff Mickey")
 (load-library "smtpmail")
 (load-library "nnimap")
 (load-library "starttls")
 (require 'nnir)
-(setq gnus-select-method '(nnimap "imap.gmail.com"
-           (nnimap-address "imap.gmail.com")
+(setq gnus-select-method '(nnimap "RTPMVEXC-PRD.hq.netapp.com"
+           (nnimap-address "RTPMVEXC-PRD.hq.netapp.com")
            (nnimap-server-port 993)
 		   (nnimap-nov-is-evil t)
 		   (nnir-search-engine imap)
            (nnimap-authinfo-file "~/.imap-authinfo")
            (nnimap-stream ssl)))
 
+
+
 ;; Set up sending mail
-(setq smtpmail-starttls-credentials '(("smtp.gmail.com" 587 nil nil))
-      smtpmail-smtp-server "smtp.gmail.com"
-      smtpmail-default-smtp-server "smtp.gmail.com"
+(setq smtpmail-starttls-credentials '(("smtp.netapp.com" 465 nil nil))
+      smtpmail-smtp-server "smtp.netapp.com"
+      smtpmail-default-smtp-server "smtp.netapp.com"
       send-mail-function 'smtpmail-send-it
       message-send-mail-function 'smtpmail-send-it
       smtpmail-smtp-service 587
-      smtpmail-auth-credentials '(("smtp.gmail.com"
-       587
-       "codemac@gmail.com"
+      smtpmail-auth-credentials '(("smtp.netapp.com"
+       465
+       "jmickey"
        nil)))
 (add-hook 'gnus-topic-mode-hook 'gnus-topic-mode)
 
@@ -117,14 +119,15 @@
 		 "jmickey@vt.edu"
 		 "jm@vt.edu"
 		 "i@vt.edu"
-		 "jeff@archlinux.org")
+		 "jeff@archlinux.org"
+		 "jmickey@netapp.com")
        "\\|"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; set up my posting styles
 (setq gnus-posting-styles
   '((".*"
 	 (name "Jeff Mickey")
-	 (address "j@codemac.net"))
+	 (address "jmickey@netapp.com"))
 	("list.arch*"
 	 (name "Jeff 'codemac' Mickey")
 	 (address "jeff@archlinux.org"))

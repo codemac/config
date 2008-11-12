@@ -1,18 +1,15 @@
-" Most recent update: Sun 16 Mar 2008 11:12:30 PM EDT
+" Most recent update: Thu 07 Aug 2008 02:15:07 PM EDT
 
 """"""""""""""""""""""""""""""""""""""""""
 " GUI options, and colorscheme selection "
 """"""""""""""""""""""""""""""""""""""""""
 
-set guioptions-=L
-set guioptions-=l
-set guioptions-=r
-set guioptions-=R
+set guioptions=aegit
 set mouse=a
 set ttymouse=xterm
 map <F12> :browse confirm e<CR>
-color darktango
-
+"color darktango
+color zenburn
 
 """""""""""""
 " Functions "
@@ -95,8 +92,8 @@ set showmatch
 " Set a toggle for pasting input
 set pastetoggle=<F10>
 " graphical options
-set guioptions-=mT
-set guifont=Bitstream\ Vera\ Sans\ Mono\ 10
+";set guifont=Bitstream\ Vera\ Sans\ Mono\ 10
+set guifont=Consolas\ 10
 
 " Set bracket matching and comment formats
 set matchpairs+=<:>

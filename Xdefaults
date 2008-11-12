@@ -1,6 +1,33 @@
-!# Most recent update: Wed 21 May 2008 02:24:03 PM EDT
+!# Most recent update: Mon 25 Aug 2008 03:24:41 PM EDT
 xterm*toolBar:	false
 xterm*utf8: 2
+! yeah!console
+yeahconsole*restart: 0
+yeahconsole*term: urxvt
+yeahconsole*screenWidth: 1440
+yeahconsole*consoleHeight: 40
+yeahconsole*aniDelay: 1
+yeahconsole*stepSize: 0
+yeahconsole*toggleKey: None+F2
+
+yeahconsole*background: black
+yeahconsole*foreground: white
+yeahconsole*font: -windows-dina-medium-r-normal--13-80-96-96-c-70-iso8859-1
+yeahconsole*saveLines:        32767
+yeahconsole*scrollBar:        false
+yeahconsole*loginShell:       true
+yeahconsole*internalBorder:   0
+yeahconsole*termName:         rxvt-unicode
+yeahconsole*inheritPixmap:	true
+yeahconsole*tintColor:		#FFFFFF
+yeahconsole*shading:			10
+yeahconsole*perl-lib:         /usr/lib/urxvt/perl
+yeahconsole*perl-ext-common:  selection,option-popup,selection-popup,readline,matcher
+yeahconsole*matcher.button:	1
+yeahconsole*urlLauncher:      firefox
+
+
+emacs*font: -windows-dina-medium-r-normal--13-80-96-96-c-70-iso8859-1
 
 ! amazing xcalc from pig0
 xcalc*geometry: 210x275

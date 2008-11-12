@@ -62,6 +62,6 @@ This function is obsolete.  Please use mime-parse-mailcap-file instead."
 ;;; @ end
 ;;;
 
-(provide 'mailcap)
+(provide 'mailcapp)
 
 ;;; mailcap.el ends here

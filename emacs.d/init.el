@@ -33,6 +33,7 @@
 ;(add-to-list 'default-frame-alist '(font . "smoothansi"))
 ;(add-to-list 'default-frame-alist '(font . "DejaVu Sans Mono-9"))
 (add-to-list 'default-frame-alist '(font . "-windows-dina-medium-r-normal--13-80-96-96-c-70-iso8859-1"))
+;(add-to-list 'default-frame-alist '(font . "Consolas-13"))
 
 ;;	Get rid of the annoying bell
 (setq visible-bell 1)
@@ -124,12 +125,12 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; server
 ;;;
-;(unless (string-equal "root" (getenv "USER"))
+(unless (string-equal "root" (getenv "USER"))
 ;; Only start server mode if it isn't started already
-;  (when (or (not (boundp 'server-process))
-;  (not (eq (process-status server-process)
-;  'listen)))
-;  (server-start)))
+  (when (or (not (boundp 'server-process))
+  (not (eq (process-status server-process)
+  'listen)))
+  (server-start)))
 ;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; markdown
@@ -140,6 +141,15 @@
 								 (flyspell-mode 1)
 								 (auto-fill-mode 1)
 								 ))
+;;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; wiki modes
+(autoload 'wikipedia-mode "wikipedia-mode.el"
+  "Major mode for editing documents in Wikipedia markup." t)
+
+
+(add-to-list 'auto-mode-alist '("\\.wikipedia\\.org.*\\.txt\\'" . wikipedia-mode))
+(add-to-list 'auto-mode-alist '("wikid\\.netapp\\.com.*\\.txt\\'" . wikipedia-mode))
 ;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; elscreen
@@ -504,10 +514,8 @@ This can be 0 for immediate, or a floating point value.")
 		  (ps-landscape-mode t)
 		  (org-agenda-prefix-format " [ ] ")
 		  (org-agenda-with-colors t)
-		  (org-agenda-remove-tags nil))
 		 ("theagenda.ps")
-		 )
-		))
+		 ))))
 
 (setq org-stuck-projects
 	  '("-MAYBE-DONE" "TODO"))
@@ -530,6 +538,19 @@ This can be 0 for immediate, or a floating point value.")
 (setq org-fontify-done-headline t)
 (setq org-special-ctrl-k t)
 (setq org-special-ctrl-a/e t)
+
+(require 'remember)
+(setq remember-annotation-functions '(org-remember-annotation))
+(setq remember-handler-functions '(org-remember-handler))
+(add-hook 'remember-mode-hook 'org-remember-apply-template)
+(setq org-remember-templates
+      '(("Todo" ?t "* TODO %?\n  %i\n  %a" "~/org/gtd.org" "Inbox")
+	("Future Todo" ?f "* TODO %?\n  %i\n  %^T\n  %a" "~/org/gtd.org" "Inbox")
+	("Music" ?m "* TODO %?\n  %U" "~/org/music.org" "To Get")
+        ("Journal" ?j "* %U %?\n\n  %i\n  %a" "~/org/JOURNAL.org")
+        ("Idea" ?i "* %^{Title}\n  %i\n  %a" "~/org/JOURNAL.org" "New Ideas")))
+
+(global-set-key (kbd "C-c r") 'org-remember)
 
 (defun gtd ()
   (interactive)
@@ -827,7 +848,7 @@ This can be 0 for immediate, or a floating point value.")
   ;; If there is more than one, they won't work right.
  '(auto-image-file-mode t)
  '(browse-url-firefox-new-window-is-tab t)
- '(browse-url-firefox-program "firefox3")
+ '(browse-url-firefox-program "firefox")
  '(ecb-options-version "2.32")
  '(jabber-account-list (quote (("j@xmpp.us") ("codemac@gmail.com" (:network-server . "talk.google.com") (:port . 5222)))))
  '(jabber-roster-line-format " %c %-25n %u %-8s  %S"))
@@ -835,13 +856,29 @@ This can be 0 for immediate, or a floating point value.")
 ;; COLORS PLZ
 (require 'color-theme)
 (load-library "color-theme-colorful-obsolescence")
+(load-library "zenburn")
 (defun set-up-colors()
   (interactive)
   (setq color-theme-is-global t)
   (setq color-theme-load-all-themes nil)
   (color-theme-initialize)
-  (color-theme-colorful-obsolescence))
+;  (color-theme-colorful-obsolescence)
+	(color-theme-zenburn)
+)
 (set-up-colors)
+
+;;;;;;;;;;;;;;;;;;;;;;;;; sj coding standards
+(add-hook 'c-mode-hook
+	  '(lambda ()
+	     (setq tab-width 4)
+	     (setq indent-tabs-mode 1)
+	     (setq tab-stop-list 
+		   '(4 8 12 16 20 24 28 32 36 40 44 48 52 56 60 64 68 72 76 80))
+	     (setq fill-column 80)
+	     (setq c-basic-offset 8)
+	     (setq c-tab-always-indent t)
+	     (setq comment-multi-line t)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; last line?
 (message "My .emacs loaded in %ds" (destructuring-bind (hi lo ms) (current-time)
                              (- (+ hi lo) (+ (first *emacs-load-start*) (second *emacs-load-start*)))))

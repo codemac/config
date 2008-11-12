@@ -1,13 +1,13 @@
 #!/bin/zsh
 #
-export PATH=$PATH:/sbin:/usr/sbin:/home/codemac:/home/codemac/bin:/home/codemac/hacks:/opt/java/jre/bin:/opt/mozilla/bin:.
+export PATH=$PATH:/sbin:/usr/sbin:$HOME/bin:.
 export MOZILLA_FIVE_HOME=/opt/mozilla/bin/mozilla
 export EDITOR=vim
 #export MANPAGER="col -b | vim -c 'set ft=man nonu nomod nolist' -"
 export MANPAGER=most
-export MAIL=/home/codemac/.mail/default
-export PACKAGER="Jeff Mickey <jeff@archlinux.org>"
-export CHROOT_SHELL="/home/codemac/archlinux/chroot"
+export MAIL=/home/jeff/mail/default
+export PACKAGER="Jeff Mickey <jmickey@netapp.com>"
+export CHROOT_SHELL="/home/jeff/archlinux/chroot"
 export CVS_RSH="ssh"
 
 # watch for people

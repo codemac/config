@@ -201,29 +201,29 @@ bindkey -M viins "" vi-cmd-mode
 
 bindkey -M vicmd "g~" vi-oper-swap-case
 
-bracket_automatcher()
-{
-zle self-insert ;  zle vi-backward-char; zle vi-match-bracket; zle -R ; sleep 0.2 ; zle vi-match-bracket ; zle forward-char ;
-} ; zle -N bracket_automatcher ; bindkey ']' bracket_automatcher ; bindkey '}' bracket_automatcher ; bindkey ')' bracket_automatcher
+#bracket_automatcher()
+#{
+#zle self-insert ;  zle vi-backward-char; zle vi-match-bracket; zle -R ; sleep 0.2 ; zle vi-match-bracket ; zle forward-char ;
+#} ; zle -N bracket_automatcher ; bindkey ']' bracket_automatcher ; bindkey '}' bracket_automatcher ; bindkey ')' bracket_automatcher
  
-balanced()
-{
-  zle self-insert
-  input=${LBUFFER[-1]}
-  case $input  in
-    ('[')
-    LBUFFER[-1]='[]'
-    ;;
-    ('(')
-    LBUFFER[-1]='()'
-    ;;
-    ('{')
-    LBUFFER[-1]='{}'
-    ;;
-  esac
-  zle backward-char
-}
-zle -N balanced; bindkey '[' balanced; bindkey '(' balanced; bindkey '{' balanced
+#balanced()
+#{
+#  zle self-insert
+#  input=${LBUFFER[-1]}
+#  case $input  in
+#    ('[')
+#    LBUFFER[-1]='[]'
+#    ;;
+#    ('(')
+#    LBUFFER[-1]='()'
+#    ;;
+#    ('{')
+#    LBUFFER[-1]='{}'
+#    ;;
+#  esac
+#  zle backward-char
+#}
+#zle -N balanced; bindkey '[' balanced; bindkey '(' balanced; bindkey '{' balanced
 
 bindkey -M viins '^r' history-incremental-search-backward
 bindkey -M vicmd '^r' history-incremental-search-backward

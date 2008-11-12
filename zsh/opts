@@ -12,6 +12,7 @@ autoload -U zfinit			#	For initializing zftp
 zfinit
 
 autoload -U zcalc			#	for mathhhh
+autoload -U zargs			# Arggggggggghs
 
 
 # history
