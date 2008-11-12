@@ -38,7 +38,7 @@ function precmd {
 #
 	PR_REPO=''
 	PR_REPO_RESULT=''
-	if [ -d $PWD/.hg ]; then
+	if [ -d "$PWD/.hg" ]; then
 		#PR_REPO_RESULT=`hg status | wc -l`
 		#if [ $PR_REPO_RESULT -lt 1 ]; then
 			PR_REPO_RESULT=''
@@ -46,19 +46,19 @@ function precmd {
 		#	PR_REPO_RESULT=":$PR_REPO_RESULT"
 		#fi
 		PR_REPO=":hg"
-	elif [ -d $PWD/_darcs ]; then
+	elif [ -d "$PWD/_darcs" ]; then
 		PR_REPO_RESULT=''
 		PR_REPO=":darcs"
-	elif [ -d $PWD/.git ]; then
+	elif [ -d "$PWD/.git" ]; then
 		PR_REPO_RESULT=''
 		PR_REPO=":git"
-	elif [ -d $PWD/CVS ]; then
+	elif [ -d "$PWD/CVS" ]; then
 		PR_REPO_RESULT=''
 		PR_REPO=":cvs"
-	elif [ -d $PWD/_MTN ]; then
+	elif [ -d "$PWD/_MTN" ]; then
 		PR_REPO_RESULT=''
 		PR_REPO=":mtn"
-	elif [ -d $PWD/.svn ]; then
+	elif [ -d "$PWD/.svn" ]; then
 		#PR_REPOS_RESULT=`svn status | wc -l`
 		#if [ $PR_REPO_RESULT -lt 1 ]; then
 			PR_REPO_RESULT=''

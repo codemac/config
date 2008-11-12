@@ -1,4 +1,4 @@
-!# Most recent update: Mon 25 Aug 2008 03:24:41 PM EDT
+!# Most recent update: Wed 12 Nov 2008 04:32:09 PM EST
 xterm*toolBar:	false
 xterm*utf8: 2
 ! yeah!console
@@ -101,8 +101,8 @@ urxvt*shading:			30
 !urxvt*boldFont:			xft:Terminus:pixelsize=12
 !urxvt*italicFont:		-*-terminus-medium-i-normal--12-120-72-72-c-0-iso8859-1
 !urxvt*font:				xft:Terminus:pixelsize=12
-urxvt*font:					-windows-dina-medium-r-normal--13-80-96-96-c-70-iso8859-1
-!rxvt*font:				xft:smoothansi:pixelsize=12
+!urxvt*font:					-windows-dina-medium-r-normal--13-80-96-96-c-70-iso8859-1
+urxvt*font:				xft:Consolas:pixelsize=14
 !urxvt*font:				xft:Bitstream Vera Sans Mono:pixelsize=11
 !urxvt*font:				-bitstream-bitstream vera sans mono-*-r-normal-*-12-120-75-75-m-0-iso8859-1
 !urxvt*font:				-xos4-terminus-medium-r-normal--12-120-72-72-c-60-iso8859-1

@@ -48,6 +48,8 @@ mocp -S
 #	echo "`date +'%A %B %d, %Y'` `uptime`"
 #	sleep 1
 #done | /usr/bin/dwm
+#amazing &
+#exec awesome
 ruby /home/codemac/hacks/dwm.rb | /usr/bin/dwm
 #exec awesome
 ############ For Beryl!
