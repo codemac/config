@@ -13,3 +13,4 @@ xmonad/xmonad.errors
 .hg
 .hgignore
 *.elc
+emacs.d/emms

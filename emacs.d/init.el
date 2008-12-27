@@ -201,6 +201,7 @@
 ;; Fast buffer switching ftw!
 (require 'ido)
 (ido-mode t)
+(setq ido-enable-flex-matching t)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; setnu
 ;(require 'setnu)
 ;(require 'setnu+)
@@ -275,6 +276,19 @@
 (add-hook 'haml-mode-hook '(lambda ()
 							(setq indent-tabs-mode nil)
 							))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; EMMS
+;;
+(require 'emms-setup)
+(emms-devel)
+(setq emms-player-list
+      '(emms-player-mpg321
+	emms-player-ogg123))
+(setq emms-info-asynchronosly t)
+(add-hook 'emms-player-started-hook 'emms-show)
+(setq emms-show-format "NP: %s")
+(setq emms-player-mpg321-parameters '("-o" "alsa"))
+(setq emms-source-list '((emms-directory-tree "~/muse/")))
+
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; journal/diary entry
