@@ -26,7 +26,7 @@ exec `cat ~/.fehbg` &
 #zsh ~/hacks/mon.zsh | dzen2 -fn '-*-terminus-*-*-*-*-12-*-*-*-*-*-iso8859' -bg '#2c2c32' -fg '#aecf96' -p 2 -e '' -ta c -y 786 &
 
 # get mocp running so it's not a child of the status blah
-mocp -S
+#mocp -S
 
 #wm's
 #exec openbox
@@ -35,7 +35,7 @@ mocp -S
 #exec /usr/bin/wmii
 #exec /usr/bin/ion3
 #exec /usr/bin/fvwm
-#exec /home/codemac/.xmonad/xmonad
+exec xmonad
 #exec startkde
 #exec icewm
 #exec blackbox
@@ -50,7 +50,7 @@ mocp -S
 #done | /usr/bin/dwm
 #amazing &
 #exec awesome
-ruby /home/codemac/hacks/dwm.rb | /usr/bin/dwm
+#ruby /home/codemac/hacks/dwm.rb | /usr/bin/dwm
 #exec awesome
 ############ For Beryl!
 #. /etc/profile

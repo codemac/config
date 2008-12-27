@@ -8,14 +8,3 @@ keysym Caps_Lock = Control_L
 
 add Lock = Caps_Lock
 add Control = Control_L
-
-keycode 111 =
-keycode 94 = Alt_L
-keycode 116 = Super_L
-keycode  34 = bracketleft braceleft bracketleft braceleft minus underscore
-keycode  35 = bracketright braceright bracketright braceright dead_tilde NoSymbol dead_tilde NoSymbol equal plus
-keycode  51 = slash question semicolon colon bracketleft braceleft
-keycode  20 = equal plus equal plus bracketright braceright
-keycode  94 = backslash bar
-keycode  21 = grave asciitilde grave asciitilde dead_grave dead_tilde dead_grave dead_tilde grave asciitilde
-keycode  49 = Escape
