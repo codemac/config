@@ -1,4 +1,4 @@
-" Most recent update: Thu 07 Aug 2008 02:15:07 PM EDT
+" Most recent update: Wed 28 Jan 2009 11:59:44 PM PST
 
 """"""""""""""""""""""""""""""""""""""""""
 " GUI options, and colorscheme selection "
@@ -283,7 +283,7 @@ imap <M-c> <ESC>:call ToggleCommentify()<CR>j
 " anger.
 " let &t_SI = "\<Esc>]12;yellow\x7"
 " let &t_EI = "\<Esc>]12;grey\x7"
-" let &t_Co = 256
+let &t_Co = 256
 
 
 """"""""""""""""""""""""""""

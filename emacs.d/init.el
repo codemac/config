@@ -62,6 +62,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; auto modes
 ;;;
 (add-to-list 'auto-mode-alist '("\\.mdwn$" . markdown-mode))
+(add-to-list 'auto-mode-alist '("\\.hs$" . haskell-mode))
 (add-to-list 'auto-mode-alist '("\\.org$" . org-mode))
 (add-to-list 'auto-mode-alist '("\\.rb$" . ruby-mode))
 (add-to-list 'auto-mode-alist '("\\.yml$" . yaml-mode))
@@ -69,6 +70,7 @@
 (add-to-list 'auto-mode-alist '("\\.haml$" . haml-mode))
 (add-to-list 'auto-mode-alist '("\\.sass$" . sass-mode))
 (add-to-list 'interpreter-mode-alist '("ruby" . ruby-mode))
+(add-to-list 'auto-mode-alist '("\\.gp$" . gnuplot-mode))
 ;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; backup files
@@ -213,6 +215,14 @@
 (add-to-list 'load-path "/usr/share/emacs/site-lisp/ecb")
 (require 'ecb-autoloads)
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; haskell
+;;
+(autoload 'haskell-mode "haskell-mode.el" "" t)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; egg
+;;
+(require 'egg)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; anything
 ;(require 'anything)
 (autoload 'anything "anything" "" t)
@@ -231,6 +241,11 @@
  "Command to kill a compilation launched by `mode-compile'" t)
 (global-set-key "\C-ck" 'mode-compile-kill)
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; gnuplot
+;;
+(autoload 'gnuplot-mode "gnuplot" "gnuplot major mode" t)
+(autoload 'gnuplot-make-buffer "gnuplot" "open a buffer in gnuplot mode" t)
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; git
 (require 'vc-git)
@@ -248,6 +263,11 @@
 (setq muse-project-alist
 	'(("Personal Miki" ("~/miki/src" :default "index")
 		(:base "html" :path "~/miki/html"))))
+;;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; yasnippet
+;;
+(require 'yasnippet-bundle)
 ;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; ruby-mode
@@ -553,6 +573,14 @@ This can be 0 for immediate, or a floating point value.")
 
 (defalias 'archive-done-tasks 'org-my-archive-done-tasks)
 
+(defun org-receipt-agenda (match)
+  (setq org-agenda-include-all-todo nil
+		org-agenda-ndays 7
+		org-agenda-show-all-dates t
+		)
+  (org-agenda-list)
+  )
+
 (setq org-agenda-custom-commands
 	  '(("a" "Defined Agenda"
 		 ((org-agenda-list nil nil 1)
@@ -561,6 +589,10 @@ This can be 0 for immediate, or a floating point value.")
 		  (tags "PROJECT-WAITING")
 		  (tags-todo "WAITING")
 		  (tags-todo "-MAYBE")))
+		("Z" "Receipt Agenda"
+		 ((org-receipt-agenda)
+		  )
+		 )
 		("X" agenda ""
 		 ((ps-number-of-columns 3)
 		  (ps-landscape-mode t)

@@ -10,6 +10,8 @@
 import XMonad
 import XMonad.Hooks.DynamicLog
 import XMonad.Hooks.ManageDocks
+import XMonad.Hooks.DynamicHooks
+import XMonad.Hooks.UrgencyHook
 import XMonad.Actions.CycleWS
 import XMonad.Util.Scratchpad
 import System.Exit
@@ -94,8 +96,20 @@ myKeys conf@(XConfig {XMonad.modMask = modMask}) = M.fromList $
 
     -- Resize viewed windows to the correct size
     , ((modMask,               xK_n     ), refresh)
-    , ((modMask,               xK_Up     ), spawn "aumix -v+3")
-    , ((modMask,               xK_Down     ), spawn "aumix -v-3")
+    , ((modMask,               xK_Up     ), spawn "amixer set Front 2dB+")
+    , ((modMask,               xK_Down     ), spawn "amixer set Front 2dB-")
+	, ((0,					0x1008ff14	),	spawn "mpc toggle") -- XF86AudioPlay
+	, ((0,					0x1008ff15	),	spawn "mpc stop") -- XF86AudioStop
+	, ((0,					0x1008ff12	),	spawn "amixer -q set Front toggle") -- XF86AudioMute
+	, ((0,					0x1008ff11	),	spawn "amixer set Front 2dB-") -- XF86AudioLowerVolume
+	, ((0,					0x1008ff13	),	spawn "amixer set Front 2dB+") -- XF86AudioRaiseVolume
+	, ((0,					0x1008ff16	),	spawn "mpc prev") -- XF86AudioPrev
+	, ((0,					0x1008ff17	),	spawn "mpc next") -- XF86AudioNext
+	, ((0,					0x1008ff81	),	spawn "urxvt -e ncmpc") -- XF86Tools
+	, ((0,					0x1008ff18	),	spawn "") -- XF86Home
+	, ((0,					0x1008ff19	),	spawn "") -- XF86Mail
+	, ((0,					0x1008ff5d	),	spawn "") -- XF86Explorer
+	, ((0,					0x1008ff1d	),	spawn "xcalc") -- XF86Calc
 
     -- Move focus to the next in use workspace
     , ((modMask,               xK_Tab   ), moveTo Next HiddenNonEmptyWS)
@@ -262,7 +276,11 @@ myStartupHook = return ()
 
 -- Run xmonad with the settings you specify. No need to modify this.
 --
-main = xmonad defaults
+main = xmonad $ myUrgencyHook $ defaults
+
+
+myUrgencyHook = withUrgencyHook dzenUrgencyHook 
+	{ args = ["-ta", "r", "-expand", "l", "-fg", "#0099ff", "-bg", "#0f0f0f", "-fn", "-windows-dina-medium-r-normal--13-80-96-96-c-70-iso8859-1"] }
 
 -- A structure containing your configuration settings, overriding
 -- fields in the default config. Any you don't override, will 

@@ -7,11 +7,20 @@
 ##
 
 xmodmap ~/.Xmodmap
-xset m 4 5
-xset dpms 60
+xset m 3 5
+xset dpms 360
+xset fp+ /usr/share/fonts/local
+xset fp+ /usr/share/fonts/artwiz-fonts
+xset fp+ /usr/share/fonts/cyrillic
+xset fp+ /usr/share/fonts/speedo
+xset fp+ /usr/share/fonts/util
+xset fp+ /usr/share/fonts/encodings
+
 # background
 #display -window root ~/bin/background.png
-exec `cat ~/.fehbg` &
+#exec `cat ~/.fehbg` &
+xsetroot -cursor_name left_ptr &
+xsetroot -solid '#80a0af' &
 #start apps here
 
 # show reminders as needed!
@@ -35,7 +44,8 @@ exec `cat ~/.fehbg` &
 #exec /usr/bin/wmii
 #exec /usr/bin/ion3
 #exec /usr/bin/fvwm
-exec xmonad
+#dzen.zsh | dzen2 -ta r -w 800 -fn '-windows-dina-medium-r-normal--13-80-96-96-c-70-iso8859-' -bg '#2c2c32' -fg 'grey70' -p -e '' &
+xmonad | dzen2 -ta l -w 1680 -fn '-windows-dina-medium-r-normal--13-80-96-96-c-70-iso8859-' -bg '#2c2c32' -fg 'grey70' -p -e ''
 #exec startkde
 #exec icewm
 #exec blackbox
