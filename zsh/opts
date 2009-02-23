@@ -51,5 +51,6 @@ setopt alwaystoend             # when complete from middle, move cursor
 #setopt correct                 # spelling correction
 setopt nopromptcr              # don't add \n which overwrites cmds with no \n
 setopt histverify              # when using ! cmds, confirm first
+setopt appendhistory	    # append!
 setopt interactivecomments     # escape commands so i can use them later
 #setopt printexitvalue          # alert me if something's failed

@@ -1,4 +1,4 @@
-" Most recent update: Thu 07 Aug 2008 02:15:07 PM EDT
+" Most recent update: Mon 02 Feb 2009 11:50:07 PM EST
 
 """"""""""""""""""""""""""""""""""""""""""
 " GUI options, and colorscheme selection "
@@ -61,7 +61,7 @@ set encoding=utf-8
 
 " Basic options
 set nocompatible
-set history=50
+set history=500
 set viminfo='1000,f1,:1000,/1000
 set shortmess+=aI
 set showmode
@@ -72,9 +72,9 @@ set nobackup
 
 " Indent, tab, and wrap settings
 set noexpandtab
-"set shiftwidth=4
+set shiftwidth=4
 set softtabstop=4
-set tabstop=4
+set tabstop=8
 set shiftround
 set autoindent
 set smartindent
@@ -283,7 +283,7 @@ imap <M-c> <ESC>:call ToggleCommentify()<CR>j
 " anger.
 " let &t_SI = "\<Esc>]12;yellow\x7"
 " let &t_EI = "\<Esc>]12;grey\x7"
-" let &t_Co = 256
+let &t_Co = 256
 
 
 """"""""""""""""""""""""""""
@@ -316,3 +316,10 @@ inoremap ð ^N
 "imap <left> <nop>
 "imap <up> <nop>
 "imap <down> <nop>
+
+""""""""""""""""""""""""""
+"     NETAPP
+""""""""""""""""""""""""""
+
+cab co :!rcmd p4 edit %:p 
+cab unco :!rcmd p4 revert %:p 

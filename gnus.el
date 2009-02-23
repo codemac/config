@@ -14,33 +14,32 @@
 (setq user-full-name "Jeff Mickey")
 (load-library "smtpmail")
 (load-library "nnimap")
-(load-library "starttls")
 (require 'nnir)
-(setq gnus-select-method '(nnimap "RTPMVEXC-PRD.hq.netapp.com"
-           (nnimap-address "RTPMVEXC-PRD.hq.netapp.com")
-           (nnimap-server-port 993)
+(setq gnus-select-method '(nnimap "rtpmvexc1-prd.hq.netapp.com"
+           (nnimap-address "rtpmvexc1-prd.hq.netapp.com")
+           (nnimap-server-port 143)
 		   (nnimap-nov-is-evil t)
 		   (nnir-search-engine imap)
            (nnimap-authinfo-file "~/.imap-authinfo")
-           (nnimap-stream ssl)))
+           ))
 
 
 
 ;; Set up sending mail
-(setq smtpmail-starttls-credentials '(("smtp.netapp.com" 465 nil nil))
-      smtpmail-smtp-server "smtp.netapp.com"
-      smtpmail-default-smtp-server "smtp.netapp.com"
+(setq smtpmail-auth-credentials "/home/jeff/.imap-authinfo"
+      smtpmail-smtp-server "mail.netapp.com"
+      smtpmail-default-smtp-server "mail.netapp.com"
+      smtpmail-smtp-service 25
       send-mail-function 'smtpmail-send-it
       message-send-mail-function 'smtpmail-send-it
-      smtpmail-smtp-service 587
-      smtpmail-auth-credentials '(("smtp.netapp.com"
-       465
-       "jmickey"
-       nil)))
+	  smtpmail-auth-supported '(login)
+       )
 (add-hook 'gnus-topic-mode-hook 'gnus-topic-mode)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; bbdb
-(add-hook 'gnus-startup-hook 'bbdb-insinuate-gnus)
+;;
+;(autoload 'bbdb-insinuate-gnus "bbdb" "use the bbdb db" t)
+;(add-hook 'gnus-startup-hook 'bbdb-insinuate-gnus)
 
 ;;
 
@@ -72,21 +71,21 @@
 ;; |   |          |
 ;; +---+----------+
 ;; ;
-(gnus-add-configuration
-  '(article
-     (horizontal 1.0
-                 (vertical 25
-                           (group 1.0))
-                 (vertical 1.0
-                           (summary 0.25 point)
-                           (article 1.0)))))
-(gnus-add-configuration
-  '(summary
-     (horizontal 1.0
-                 (vertical 25
-                           (group 1.0))
-                 (vertical 1.0
-                           (summary 1.0 point)))))
+;(gnus-add-configuration
+;  '(article
+;     (horizontal 1.0
+;;                 (vertical 25
+;                           (group 1.0))
+;                 (vertical 1.0
+;                           (summary 0.25 point)
+;                           (article 1.0)))))
+;(gnus-add-configuration
+;  '(summary
+;     (horizontal 1.0
+;                 (vertical 25
+;                           (group 1.0))
+;                 (vertical 1.0
+;                           (summary 1.0 point)))))
 
 
 (add-hook 'gnus-summary-mode-hook 'my-setup-hl-line)
@@ -128,9 +127,6 @@
   '((".*"
 	 (name "Jeff Mickey")
 	 (address "jmickey@netapp.com"))
-	("list.arch*"
-	 (name "Jeff 'codemac' Mickey")
-	 (address "jeff@archlinux.org"))
 	))
 ;;
 
@@ -178,32 +174,32 @@
 (gnus-demon-init)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;  Encryption stuff
-(require 'pgg)
+;(require 'pgg)
 ;; verify/decrypt only if mml knows about the protocol used
-(setq mm-verify-option 'known)
-(setq mm-decrypt-option 'known)
+;(setq mm-verify-option 'known)
+;(setq mm-decrypt-option 'known)
 
 ;; Automcatically sign when sending mails
-(add-hook 'message-send-hook 'mml-secure-message-sign-pgpmime)
+;(add-hook 'message-send-hook 'mml-secure-message-sign-pgpmime)
 
 ;; Enough explicit settings
-(setq pgg-passphrase-cache-expiry 300)
+;; (setq pgg-passphrase-cache-expiry 300)
 ;(setq pgg-default-user-id jmh::primary-id)
 ;(setq gnus-buttonized-mime-types (append (list "multipart/signed"
 ;	    				       "multipart/encrypted")
 ;		    			 gnus-buttonized-mime-types))
 
-(setq gnus-buttonized-mime-types '("multipart/encrypted" "multipart/signed"))
+;(setq gnus-buttonized-mime-types '("multipart/encrypted" "multipart/signed"))
 ;; end encryption
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; nicer thread lines
 (unless standard-display-table
       (setq standard-display-table (make-display-table)))
 
-;(let ((val 129))
-;   (while (< val 160)
-;     (aset standard-display-table val (vector (create-glyph val)))
-;     (setq val (1+ val))))
+(let ((val 129))
+   (while (< val 160)
+     (aset standard-display-table val (vector (create-glyph val)))
+     (setq val (1+ val))))
 
 ;    (setq gnus-sum-thread-tree-vertical "\232"
 ;          gnus-sum-thread-tree-root ""

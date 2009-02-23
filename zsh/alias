@@ -48,6 +48,7 @@ alias ll='ls -ahl --color | more; echo "\e[1;32m --[\e[1;34m Dirs:\e[1;36m `ls -
 alias v="vim"
 alias wh="when ci --past=0 --future=3"
 alias cdc="cd; clear"
+alias cdp="cd /u/jmickey/p4"
 alias ciq="centericq"
 
 # more interesting aliases :D
