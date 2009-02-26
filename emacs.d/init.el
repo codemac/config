@@ -109,6 +109,21 @@
 (load-file "~/.emacs-priv.el")
 ;;
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; netapp!
+;;
+
+(defun na-p4-edit ()
+  (interactive)
+  (if (and 
+       (not (eq buffer-file-name nil))
+       (not (file-writable-p buffer-file-name)))
+      (shell-command (concat "rcmd p4 edit " (file-truename buffer-file-name)))
+      (find-file buffer-file-name)
+      )
+)
+
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; printing!
 ;; This requires xpp
 ;(require 'lpr)
@@ -151,6 +166,9 @@
 (require 'cm-wanderlust)
 (require 'cm-jabber)
 (require 'cm-c)
+(require 'cm-tramp)
+(require 'cm-xcscope)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; CUSTOM!
 (custom-set-faces
   ;; custom-set-faces was added by Custom.
