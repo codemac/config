@@ -86,6 +86,18 @@
 (global-set-key "\C-x\C-k" 'kill-region)
 ;;
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; occur in isearch!
+;; taken from http://www.emacswiki.org/emacs/OccurFromIsearch
+(defun isearch-occur ()
+      "Invoke `occur' from within isearch."
+      (interactive)
+      (let ((case-fold-search isearch-case-fold-search))
+        (occur (if isearch-regexp isearch-string (regexp-quote isearch-string)))))
+
+(define-key isearch-mode-map (kbd "C-o") 'isearch-occur)
+
+
+;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; private settings
 ;; Here I list my "private" varables so you know what
 ;; things are.
@@ -118,7 +130,7 @@
        (not (eq buffer-file-name nil))
        (not (file-writable-p buffer-file-name)))
       (shell-command (concat "rcmd p4 edit " (file-truename buffer-file-name)))
-      (find-file buffer-file-name)
+      (find-alternate-file buffer-file-name)
       )
 )
 
@@ -162,12 +174,14 @@
 (require 'cm-org)
 (require 'cm-w3m)
 (require 'cm-rcirc)
+(require 'cm-blog)
 (require 'cm-erc)
 (require 'cm-wanderlust)
 (require 'cm-jabber)
 (require 'cm-c)
 (require 'cm-tramp)
 (require 'cm-xcscope)
+(require 'cm-yasnippet)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; CUSTOM!
 (custom-set-faces
