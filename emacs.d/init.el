@@ -180,6 +180,7 @@
 (require 'cm-jabber)
 (require 'cm-c)
 (require 'cm-tramp)
+(require 'cm-uniquify)
 (require 'cm-xcscope)
 (require 'cm-yasnippet)
 
