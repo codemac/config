@@ -96,8 +96,14 @@
 
 (define-key isearch-mode-map (kbd "C-o") 'isearch-occur)
 
-
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; ediff
 ;;
+(setq ediff-split-window-function (lambda (&optional arg)
+                                        (if (> (frame-width) 150)
+                                            (split-window-horizontally arg)
+                                          (split-window-vertically arg))))
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; private settings
 ;; Here I list my "private" varables so you know what
 ;; things are.
@@ -139,7 +145,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; printing!
 ;; This requires xpp
 ;(require 'lpr)
-(setq lpr-command "xpp")
+(setq lpr-command "gtklp")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; server
 ;;;
@@ -200,14 +206,14 @@
  '(auto-image-file-mode t)
  '(browse-url-firefox-new-window-is-tab t)
  '(browse-url-firefox-program "firefox")
- '(ecb-options-version "2.32")
+ '(ecb-options-version "2.40")
  '(jabber-account-list (quote (("j@xmpp.us") ("codemac@gmail.com" (:network-server . "talk.google.com") (:port . 5222)))))
  '(jabber-roster-line-format " %c %-25n %u %-8s  %S"))
 
 ;; COLORS PLZ
 (require 'color-theme)
 (load-library "color-theme-colorful-obsolescence")
-(load-library "manoj-colors")
+;(load-library "manoj-colors")
 (load-library "zenburn")
 (defun set-up-colors()
   (interactive)
