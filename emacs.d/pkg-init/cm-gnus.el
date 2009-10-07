@@ -6,10 +6,10 @@
 (defun gf-touch (file)
   "Touches file"
   (save-excursion
-(unless (file-exists-p file)
-  (find-file file)
-  (write-file file)
-  (kill-buffer (current-buffer)))))
+    (unless (file-exists-p file)
+      (find-file file)
+      (write-file file)
+      (kill-buffer (current-buffer)))))
 
 (defun gnusu (&rest args)
   (interactive "P")

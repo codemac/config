@@ -1,0 +1,9 @@
+! Esperanto!
+keysym Control_R = Mode_switch
+
+keycode 54 = c C ccircumflex Ccircumflex
+keycode 42 = g G gcircumflex Gcircumflex
+keycode 43 = h H hcircumflex Hcircumflex
+keycode 44 = j J jcircumflex Jcircumflex
+keycode 39 = s S scircumflex Scircumflex
+keycode 30 = u U ubreve Ubreve

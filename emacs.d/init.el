@@ -135,12 +135,26 @@
   (if (and 
        (not (eq buffer-file-name nil))
        (not (file-writable-p buffer-file-name)))
-      (shell-command (concat "rcmd p4 edit " (file-truename buffer-file-name)))
-      (find-alternate-file buffer-file-name)
-      )
-)
+      (shell-command (concat "rcmd p4 edit " buffer-file-truename)))
+      (find-alternate-file buffer-file-name))
 
-
+(defun na-br-make (variant)
+  (interactive "sBedrock Variant: ")
+  (if (not (eq buffer-file-name nil))
+      (save-excursion
+	(let* ((currpwd (file-name-directory buffer-file-truename))
+	       (brbuffer "*bedrock*"))
+	(set-buffer (get-buffer-create brbuffer))
+	(erase-buffer)
+	(compilation-minor-mode 1)
+	(shell-command
+	 (concat
+	  "(PWD=" currpwd
+	  " rcmd br make " variant
+	  " && "
+	  "PWD=" currpwd
+	  " rcmd br log -e ) &")
+	 brbuffer)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; printing!
 ;; This requires xpp
@@ -162,8 +176,8 @@
 (require 'cm-package)
 (require 'cm-markdown)
 (require 'cm-wikipedia)
-(require 'cm-elscreen)
 (require 'cm-ido)
+(require 'cm-identica)
 (require 'cm-ecb)
 (require 'cm-haskell)
 (require 'cm-egg)
@@ -180,6 +194,7 @@
 (require 'cm-org)
 (require 'cm-w3m)
 (require 'cm-rcirc)
+(require 'cm-command-frequency)
 (require 'cm-blog)
 (require 'cm-erc)
 (require 'cm-wanderlust)
@@ -187,8 +202,10 @@
 (require 'cm-c)
 (require 'cm-tramp)
 (require 'cm-uniquify)
+(require 'cm-tabbar)
 (require 'cm-xcscope)
 (require 'cm-yasnippet)
+(require 'cm-gnus)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; CUSTOM!
 (custom-set-faces
@@ -203,10 +220,11 @@
   ;; If you edit it by hand, you could mess it up, so be careful.
   ;; Your init file should contain only one such instance.
   ;; If there is more than one, they won't work right.
- '(auto-image-file-mode t)
- '(browse-url-firefox-new-window-is-tab t)
- '(browse-url-firefox-program "firefox")
  '(ecb-options-version "2.40")
+ '(auto-image-file-mode t)
+ '(browse-url-firefox-program "firefox")
+ '(browse-url-firefox-new-window-is-tab t)
+ '(w3m-use-cookies t)
  '(jabber-account-list (quote (("j@xmpp.us") ("codemac@gmail.com" (:network-server . "talk.google.com") (:port . 5222)))))
  '(jabber-roster-line-format " %c %-25n %u %-8s  %S"))
 
@@ -221,7 +239,8 @@
   (setq color-theme-load-all-themes nil)
   (color-theme-initialize)
 ;  (color-theme-colorful-obsolescence)
-	(color-theme-zenburn)
+;	(color-theme-zenburn)
+    (color-theme-rlx)
   )
 (set-up-colors)
 

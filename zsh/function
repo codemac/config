@@ -39,6 +39,12 @@ function hgc() { hg commit -m "$*" }
 function hgp() { hg push $* }
 function hga() { hg add $* }
 
+# burn m3u
+function burnm3u()
+{
+   dos2unix "$1"
+   sed '/^#/d' "$1" | tr '\n' '\0' | xargs -0 k3b --datacd 
+}
 
 # To be used like foldl latex *.tex
 function mapL {

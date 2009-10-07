@@ -1,0 +1,19 @@
+Config { font = "-windows-dina-medium-r-normal--13-80-96-96-c-70-iso8859-1" 
+       , bgColor = "black"
+       , fgColor = "grey"
+       , position = TopW L 100
+       , lowerOnStart = True
+       , commands = [ Run Weather "KRDU" ["-t","KRDU: <fc=lightblue><skyCondition></fc>, <tempC>C <rh>% (<hour>)","-L","17","-H","27","--normal","green","--high","red","--low","lightblue"] 18000
+		    , Run Network "eth0" ["-t","<dev>: <rx>/<tx>" ] 10
+		    , Run Battery [] 50
+                    , Run Cpu ["-L","4","-H","50","--normal","green","--high","red"] 10
+                    , Run Memory ["-t","Mem: <usedratio>%"] 10
+                    , Run Swap ["-t","<usedratio>"] 10
+		    , Run CpuFreq ["-t","<cpu0>|<cpu1>Ghz","-L","0","-H","1","-l","lightblue","-n","white","-h","red"] 10
+                    , Run Date "%a %b %_d %H:%M" "date" 20
+                    , Run StdinReader
+                    ]
+       , sepChar = "%"
+       , alignSep = "}{"
+       , template = "%StdinReader% }{ %cpu% @ %cpufreq% | %memory% %swap% | %eth0% | %battery%    %KRDU% | <fc=#ee9a00>%date%</fc>"
+    }
