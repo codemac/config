@@ -16,3 +16,4 @@ xmonad/xmonad-x86_64-linux
 *.elc
 emacs.d/emms
 emacs.d/tramp
+emacs.d/games/tetris-scores

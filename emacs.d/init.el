@@ -206,6 +206,9 @@
 (require 'cm-xcscope)
 (require 'cm-yasnippet)
 (require 'cm-gnus)
+(require 'cm-dired)
+(require 'cm-word-count)
+(require 'cm-ibuffer)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; CUSTOM!
 (custom-set-faces
@@ -239,8 +242,8 @@
   (setq color-theme-load-all-themes nil)
   (color-theme-initialize)
 ;  (color-theme-colorful-obsolescence)
-;	(color-theme-zenburn)
-    (color-theme-rlx)
+	(color-theme-zenburn)
+;    (color-theme-rlx)
   )
 (set-up-colors)
 
