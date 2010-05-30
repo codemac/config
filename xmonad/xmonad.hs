@@ -10,10 +10,14 @@
 import XMonad
 import XMonad.Hooks.DynamicLog
 import XMonad.Hooks.ManageDocks
-import XMonad.Hooks.DynamicHooks
-import XMonad.Hooks.UrgencyHook
 import XMonad.Actions.CycleWS
+import XMonad.Layout.Tabbed
+import XMonad.Layout.IM
+import XMonad.Actions.WindowBringer
+import Data.Ratio ((%))
+import XMonad.Util.Run(spawnPipe)
 import XMonad.Util.Scratchpad
+import System.IO
 import System.Exit
 
 import qualified XMonad.StackSet as W
@@ -49,7 +53,7 @@ myModMask       = mod4Mask
 -- Set numlockMask = 0 if you don't have a numlock key, or want to treat
 -- numlock status separately.
 --
-myNumlockMask   = mod2Mask
+-- myNumlockMask   = mod2Mask
 
 -- The default number of workspaces (virtual screens) and their names.
 -- By default we use numeric strings, but any string may be used as a
@@ -65,6 +69,11 @@ myWorkspaces    = ["dev", "web", "el", "im", "out" ] ++ map show [6..9]
 
 -- default gaps
 myDefaultGaps = [(15,0,0,0),(15,0,0,0)]
+
+-- statusbar
+myBar = "xmobar"
+
+myPP = xmobarPP { ppCurrent = xmobarColor "#429942" "" . wrap "<" ">" }
 
 -- Border colors for unfocused and focused windows, respectively.
 --
@@ -92,25 +101,24 @@ myKeys conf@(XConfig {XMonad.modMask = modMask}) = M.fromList $
     , ((modMask .|. shiftMask,               xK_space ), sendMessage NextLayout)
 	
 	-- open the emacs scratchpad
-    , ((modMask, xK_space ), scratchpadSpawnActionTerminal "emacsclient -c" )
+--    , ((modMask, xK_space ), scratchpadSpawnActionTerminal "emacsclient -c" )
 
     -- Resize viewed windows to the correct size
     , ((modMask,               xK_n     ), refresh)
-    , ((modMask,               xK_Up     ), spawn "amixer set Front 2dB+")
-    , ((modMask,               xK_Down     ), spawn "amixer set Front 2dB-")
-	, ((0,					0x1008ff14	),	spawn "mpc toggle") -- XF86AudioPlay
-	, ((0,					0x1008ff15	),	spawn "mpc stop") -- XF86AudioStop
-	, ((0,					0x1008ff12	),	spawn "amixer -q set Front toggle") -- XF86AudioMute
-	, ((0,					0x1008ff11	),	spawn "amixer set Front 2dB-") -- XF86AudioLowerVolume
-	, ((0,					0x1008ff13	),	spawn "amixer set Front 2dB+") -- XF86AudioRaiseVolume
-	, ((0,					0x1008ff16	),	spawn "mpc prev") -- XF86AudioPrev
-	, ((0,					0x1008ff17	),	spawn "mpc next") -- XF86AudioNext
-	, ((0,					0x1008ff81	),	spawn "urxvt -e ncmpc") -- XF86Tools
-	, ((0,					0x1008ff18	),	spawn "") -- XF86Home
-	, ((0,					0x1008ff19	),	spawn "") -- XF86Mail
-	, ((0,					0x1008ff5d	),	spawn "") -- XF86Explorer
-	, ((0,					0x1008ff1d	),	spawn "xcalc") -- XF86Calc
+    , ((modMask,               xK_Up     ), spawn "aumix -v+3")
+    , ((modMask,               xK_Down     ), spawn "aumix -v-3")
 
+    -- songbird control
+    , ((modMask,	       xK_space	), spawn "nyxmms2 toggle")
+    , ((modMask,	       xK_Left ), spawn "nyxmms2 prev")
+    , ((modMask,	       xK_Right ), spawn "nyxmms2 next")
+
+    -- goto or bring window
+    , ((modMask, xK_g	), gotoMenu)
+    , ((modMask, xK_b	), bringMenu)
+
+    -- Lock screen (thanks area52)
+    , ((modMask,	       xK_x	), spawn "xscreensaver-command -lock")
     -- Move focus to the next in use workspace
     , ((modMask,               xK_Tab   ), moveTo Next HiddenNonEmptyWS)
 
@@ -207,7 +215,7 @@ myMouseBindings (XConfig {XMonad.modMask = modMask}) = M.fromList $
 -- The available layouts.  Note that each layout is separated by |||,
 -- which denotes layout choice.
 --
-myLayout = avoidStruts (tiled ||| Mirror tiled ||| Full)
+myLayout = avoidStruts (tabbed shrinkText defaultTheme ||| tiled ||| Mirror tiled ||| withIM (1%7) (ClassName "Pidgin") tiled ||| Full)
   where
      -- default tiling algorithm partitions the screen into two panes
      tiled   = Tall nmaster delta ratio
@@ -250,18 +258,6 @@ myFocusFollowsMouse = True
 
 
 ------------------------------------------------------------------------
--- Status bars and logging
-
--- Perform an arbitrary action on each internal state change or X event.
--- See the 'DynamicLog' extension for examples.
---
--- To emulate dwm's status bar
---
--- > logHook = dynamicLogDzen
---
-myLogHook = dynamicLogDzen
-
-------------------------------------------------------------------------
 -- Startup hook
 
 -- Perform an arbitrary action each time xmonad starts or is restarted
@@ -276,36 +272,28 @@ myStartupHook = return ()
 
 -- Run xmonad with the settings you specify. No need to modify this.
 --
-main = xmonad $ myUrgencyHook $ defaults
-
-
-myUrgencyHook = withUrgencyHook dzenUrgencyHook 
-	{ args = ["-ta", "r", "-expand", "l", "-fg", "#0099ff", "-bg", "#0f0f0f", "-fn", "-windows-dina-medium-r-normal--13-80-96-96-c-70-iso8859-1"] }
-
--- A structure containing your configuration settings, overriding
--- fields in the default config. Any you don't override, will 
--- use the defaults defined in xmonad/XMonad/Config.hs
--- 
--- No need to modify this.
---
-defaults = defaultConfig {
+main = do 
+    xmproc <- spawnPipe "xmobar ~/.xmobarrc"
+    xmonad $ defaultConfig
       -- simple stuff
-        terminal           = myTerminal,
-        focusFollowsMouse  = myFocusFollowsMouse,
-        borderWidth        = myBorderWidth,
-        modMask            = myModMask,
-        numlockMask        = myNumlockMask,
-        workspaces         = myWorkspaces,
-        normalBorderColor  = myNormalBorderColor,
-        focusedBorderColor = myFocusedBorderColor,
+        { terminal           = myTerminal
+        , focusFollowsMouse  = myFocusFollowsMouse
+        , borderWidth        = myBorderWidth
+        , modMask            = myModMask
+        , workspaces         = myWorkspaces
+        , normalBorderColor  = myNormalBorderColor
+        , focusedBorderColor = myFocusedBorderColor
 
       -- key bindings
-        keys               = myKeys,
-        mouseBindings      = myMouseBindings,
+        , keys               = myKeys
+        , mouseBindings      = myMouseBindings
 
       -- hooks, layouts
-        layoutHook         = myLayout,
-        manageHook         = myManageHook,
-        logHook            = myLogHook,
-        startupHook        = myStartupHook
-    }
+        , layoutHook         = myLayout
+        , manageHook         = myManageHook
+        , logHook            = dynamicLogWithPP $ xmobarPP
+				    { ppOutput = hPutStrLn xmproc
+				    , ppTitle = xmobarColor "green" "" . shorten 50
+				    }
+        , startupHook        = myStartupHook
+        }

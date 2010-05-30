@@ -33,7 +33,7 @@
 ;(add-to-list 'default-frame-alist '(font . "-xos4-terminus-medium-r-normal--14-140-72-72-c-80-iso8859-1"))
 ;(add-to-list 'default-frame-alist '(font . "smoothansi"))
 ;(add-to-list 'default-frame-alist '(font . "DejaVu Sans Mono-9"))
-(add-to-list 'default-frame-alist '(font . "-windows-dina-medium-r-normal--13-80-96-96-c-70-iso8859-1"))
+(add-to-list 'default-frame-alist '(font . "Dina-11"))
 ;(add-to-list 'default-frame-alist '(font . "Consolas-13"))
 
 ;;	Get rid of the annoying bell
@@ -79,11 +79,21 @@
 (defvar backup-dir (concat "/tmp/emacs_backups/" (user-login-name) "/"))
 (setq backup-directory-alist (list (cons "." backup-dir)))
 ;; http://snarfed.org/space/gnu%20emacs%20backup%20files
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; yes or no
+;;; stfu and take my freaking answer
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; backwards kill word
+(fset 'yes-or-no-p 'y-or-n-p)
+
+;;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; some global keys!
 ;;
 (global-set-key "\C-w" 'backward-kill-word)
 (global-set-key "\C-x\C-k" 'kill-region)
+
+(global-set-key [f5] 'bookmark-bmenu-list)
+(global-set-key [f6] 'bookmark-set)
+(global-set-key [f7] 'bookmark-jump)
 ;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; occur in isearch!
@@ -127,39 +137,25 @@
 (load-file "~/.emacs-priv.el")
 ;;
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; netapp!
-;;
-
-(defun na-p4-edit ()
-  (interactive)
-  (if (and 
-       (not (eq buffer-file-name nil))
-       (not (file-writable-p buffer-file-name)))
-      (shell-command (concat "rcmd p4 edit " buffer-file-truename)))
-      (find-alternate-file buffer-file-name))
-
-(defun na-br-make (variant)
-  (interactive "sBedrock Variant: ")
-  (if (not (eq buffer-file-name nil))
-      (save-excursion
-	(let* ((currpwd (file-name-directory buffer-file-truename))
-	       (brbuffer "*bedrock*"))
-	(set-buffer (get-buffer-create brbuffer))
-	(erase-buffer)
-	(compilation-minor-mode 1)
-	(shell-command
-	 (concat
-	  "(PWD=" currpwd
-	  " rcmd br make " variant
-	  " && "
-	  "PWD=" currpwd
-	  " rcmd br log -e ) &")
-	 brbuffer)))))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; printing!
 ;; This requires xpp
 ;(require 'lpr)
 (setq lpr-command "gtklp")
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; revert buffer
+;;;
+
+(defun cm-revert-buffer ()
+    "save the current position to tmp, revert buffer, go back to tmp"
+    (interactive)
+    (let ((tmp (point))
+	  )
+	(revert-buffer t)
+	(goto-char tmp)))
+
+(global-set-key [f8] 'cm-revert-buffer)
+
+;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; server
 ;;;
@@ -209,6 +205,8 @@
 (require 'cm-dired)
 (require 'cm-word-count)
 (require 'cm-ibuffer)
+(require 'cm-netapp)
+(require 'cm-minimap)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; CUSTOM!
 (custom-set-faces

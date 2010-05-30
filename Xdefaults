@@ -1,4 +1,4 @@
-!# Most recent update: Mon 04 Jan 2010 05:53:09 PM EST
+!# Most recent update: Sat 27 Feb 2010 09:59:17 AM EST
 xterm*toolBar:	false
 xterm*utf8: 2
 ! yeah!console
@@ -12,7 +12,7 @@ yeahconsole*toggleKey: None+F2
 
 yeahconsole*background: black
 yeahconsole*foreground: white
-yeahconsole*font: -windows-dina-medium-r-normal--13-80-96-96-c-70-iso8859-1
+yeahconsole*font: -windows-dina-medium-r-normal--13-80-96-96-c-70-*-*
 yeahconsole*saveLines:        32767
 yeahconsole*scrollBar:        false
 yeahconsole*loginShell:       true
@@ -27,7 +27,7 @@ yeahconsole*matcher.button:	1
 yeahconsole*urlLauncher:      chromium
 
 
-emacs*font: -windows-dina-medium-r-normal--13-80-96-96-c-70-iso8859-1
+emacs*font: Dina-11
 
 ! amazing xcalc from pig0
 xcalc*geometry: 210x275
@@ -101,7 +101,7 @@ urxvt*shading:			30
 !urxvt*boldFont:			xft:Terminus:pixelsize=12
 !urxvt*italicFont:		-*-terminus-medium-i-normal--12-120-72-72-c-0-iso8859-1
 !urxvt*font:				xft:Terminus:pixelsize=12
-urxvt*font:					-windows-dina-medium-r-normal--13-80-96-96-c-70-iso8859-1
+urxvt*font:					-windows-dina-medium-r-normal--13-80-96-96-c-70-*-*
 !urxvt*font:				xft:Consolas:pixelsize=14
 !urxvt*font:				xft:Bitstream Vera Sans Mono:pixelsize=11
 !urxvt*font:				-bitstream-bitstream vera sans mono-*-r-normal-*-12-120-75-75-m-0-iso8859-1
@@ -541,3 +541,29 @@ urxvt*background: #000000
 urxvt*cursorColor: yellow
 urxvt*cursorColor2: white
 urxvt*pointerColor: yellow
+!# Most recent update: Tue 02 Feb 2010 03:06:52 PM EST
+xterm*toolBar:	false
+xterm*utf8: 2
+xterm*color0:				#000000
+xterm*color8:				#555555
+xterm*color1:				#EE3C3C
+xterm*color9:				#FF5555
+xterm*color2:				#00BB00
+xterm*color10:				#55FF55
+xterm*color3:				#FFD955
+xterm*color11:				#FFFF55
+xterm*color4:				#5555FF
+xterm*color12:				#008ED1
+xterm*color5:				#992299
+xterm*color13:				#FF55FF
+xterm*color6:				#009999
+xterm*color14:				#00FFFF
+xterm*color7:				#BBBBBB
+xterm*color15:				#FFFFFF
+xterm*font:					-windows-dina-medium-r-normal--13-80-96-96-c-70-*-*
+xterm*foreground: #DDDDDD
+xterm*background: #000000
+xterm*cursorColor: yellow
+xterm*cursorColor2: white
+xterm*pointerColor: yellow
+xterm*savelines: 1000

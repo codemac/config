@@ -1,4 +1,4 @@
-" Most recent update: Mon 23 Feb 2009 01:35:10 PM EST
+" Most recent update: Wed 07 Apr 2010 01:38:26 PM EDT
 
 """"""""""""""""""""""""""""""""""""""""""
 " GUI options, and colorscheme selection "
@@ -9,6 +9,7 @@ set mouse=a
 set ttymouse=xterm
 map <F12> :browse confirm e<CR>
 "color darktango
+"color darkerdesert
 color zenburn
 
 """""""""""""

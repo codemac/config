@@ -32,6 +32,10 @@ function src()
                 source ~/.zshrc
 }
 
+function pic2gif {
+    
+}
+
 # hg rcs functions
 function hgs() { hg status $* }
 function hgl() { hg log $* }
@@ -145,6 +149,8 @@ extract_archive () {
         gunzip $1
     elif [[ $lower == *.tar.bz2 || $lower == *.tbz ]]; then
         tar xvjf $1
+    elif [[ $lower == *.tar.xz || $lower == *.txz ]]; then
+	tar xvJf $1
     elif [[ $lower == *.bz2 ]]; then
         bunzip2 $1
     elif [[ $lower == *.zip ]]; then

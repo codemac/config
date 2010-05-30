@@ -1,4 +1,4 @@
-Config { font = "-windows-dina-medium-r-normal--13-80-96-96-c-70-iso8859-1" 
+Config { font = "DinaMedium9" 
        , bgColor = "black"
        , fgColor = "grey"
        , position = TopW L 100

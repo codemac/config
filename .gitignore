@@ -17,3 +17,5 @@ xmonad/xmonad-x86_64-linux
 emacs.d/emms
 emacs.d/tramp
 emacs.d/games/tetris-scores
+emacs.d/pkg-init/cm-netapp.el
+vim/.netrwhist

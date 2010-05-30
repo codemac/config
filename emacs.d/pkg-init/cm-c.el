@@ -8,6 +8,7 @@
 	     (setq fill-column 80)
 	     (setq c-basic-offset 4)
 	     (setq c-tab-always-indent t)
+	     (linum-mode 1)
 	     (setq comment-multi-line t)))
 
 (provide 'cm-c)
