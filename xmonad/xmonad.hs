@@ -156,7 +156,7 @@ myKeys conf@(XConfig {XMonad.modMask = modMask}) = M.fromList $
     , ((modMask              , xK_period), sendMessage (IncMasterN (-1)))
 
 	-- Display org-mode agenda for timed items
-	, ((0				, xK_F4),	spawn "/home/jeff/bin/org-agenda-display" )
+--	, ((0				, xK_F4),	spawn "/home/jeff/bin/org-agenda-display" )
 
     -- toggle the status bar gap
     -- TODO, update this binding with avoidStruts , ((modMask              , xK_b     ),

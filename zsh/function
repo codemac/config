@@ -54,7 +54,7 @@ function burnm3u()
 function mapL {
     emulate -L zsh
     for i in ${~argv[2,-1]} ; do
-        $argv[1] $i
+        eval "${argv[1]} ${i}"
     done
 }
 alias map="noglob mapL"

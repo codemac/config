@@ -156,6 +156,9 @@
 (global-set-key [f8] 'cm-revert-buffer)
 
 ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; hippie
+;(global-set-key (kbd "TAB") 'hippie-expand)
+;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; server
 ;;;
@@ -207,6 +210,8 @@
 (require 'cm-ibuffer)
 (require 'cm-netapp)
 (require 'cm-minimap)
+(require 'cm-android)
+(require 'cm-smart-tab)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; CUSTOM!
 (custom-set-faces
@@ -221,13 +226,14 @@
   ;; If you edit it by hand, you could mess it up, so be careful.
   ;; Your init file should contain only one such instance.
   ;; If there is more than one, they won't work right.
- '(ecb-options-version "2.40")
+ '(android-mode-avd "TodoDevice")
  '(auto-image-file-mode t)
- '(browse-url-firefox-program "firefox")
  '(browse-url-firefox-new-window-is-tab t)
- '(w3m-use-cookies t)
+ '(browse-url-firefox-program "firefox")
+ '(ecb-options-version "2.40")
  '(jabber-account-list (quote (("j@xmpp.us") ("codemac@gmail.com" (:network-server . "talk.google.com") (:port . 5222)))))
- '(jabber-roster-line-format " %c %-25n %u %-8s  %S"))
+ '(jabber-roster-line-format " %c %-25n %u %-8s  %S")
+ '(w3m-use-cookies t))
 
 ;; COLORS PLZ
 (require 'color-theme)

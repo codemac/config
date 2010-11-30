@@ -1,13 +1,15 @@
 #!/bin/zsh
 #
-export PATH=$PATH:/opt/java/bin:/opt/kde/bin:/sbin:/usr/sbin:$HOME/bin:$HOME/hacks:$HOME/code/depot_tools:.
+export PATH=$PATH:/opt/java/bin:/opt/kde/bin:/sbin:/usr/sbin:$HOME/bin:$HOME/hacks:$HOME/code/depot_tools:$HOME/.gem/bin:.
 export MOZILLA_FIVE_HOME=/opt/mozilla/bin/mozilla
 export EDITOR=vim
 #export MANPAGER="col -b | vim -c 'set ft=man nonu nomod nolist' -"
 export MANPAGER=most
 export MAIL=/home/jeff/mail/default
 export PACKAGER="Jeff Mickey <jmickey@netapp.com>"
-export CHROOT_SHELL="/home/jeff/archlinux/chroot"
+export CHROOT_SHELL="$HOME/archlinux/chroot"
+export GEM_HOME=$HOME/.gem
+export GEM_PATH=$HOME/.gem:/usr/lib/ruby/gems/1.9.1
 export CVS_RSH="ssh"
 
 # watch for people

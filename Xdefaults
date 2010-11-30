@@ -1,4 +1,4 @@
-!# Most recent update: Sat 27 Feb 2010 09:59:17 AM EST
+!# Most recent update: Tue 05 Oct 2010 11:17:53 PM EDT
 xterm*toolBar:	false
 xterm*utf8: 2
 ! yeah!console
@@ -24,7 +24,7 @@ yeahconsole*shading:			10
 yeahconsole*perl-lib:         /usr/lib/urxvt/perl
 yeahconsole*perl-ext-common:  selection,option-popup,selection-popup,readline,matcher
 yeahconsole*matcher.button:	1
-yeahconsole*urlLauncher:      chromium
+yeahconsole*urlLauncher:      chromium-dev
 
 
 emacs*font: Dina-11
@@ -566,4 +566,7 @@ xterm*background: #000000
 xterm*cursorColor: yellow
 xterm*cursorColor2: white
 xterm*pointerColor: yellow
-xterm*savelines: 1000
+xterm*savelines: 100000
+
+!!
+vncviewer*grabKeyboard: true
