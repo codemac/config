@@ -10,6 +10,7 @@ export PACKAGER="Jeff Mickey <jmickey@netapp.com>"
 export CHROOT_SHELL="$HOME/archlinux/chroot"
 export GEM_HOME=$HOME/.gem
 export GEM_PATH=$HOME/.gem:/usr/lib/ruby/gems/1.9.1
+export BROWSER=chromium-dev
 export CVS_RSH="ssh"
 
 # watch for people
