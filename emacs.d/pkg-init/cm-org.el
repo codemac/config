@@ -153,7 +153,6 @@ START-TIME and END-OF-DAY are the number of minutes past midnight."
 (defvar org-my-archive-expiry-days 7
   "The number of days after which a completed task should be auto-archived.
 This can be 0 for immediate, or a floating point value.")
-(setq org-done-keywords (list "DONE"))
 
 (defun org-my-archive-done-tasks ()
   (interactive)
@@ -228,6 +227,8 @@ This can be 0 for immediate, or a floating point value.")
 
 (setq org-default-notes-files '("~/org/notes.org"))
 (setq org-agenda-files (file-expand-wildcards "~/org/*.org"))
+(setq org-refile-targets '((org-agenda-files :maxlevel . 5) (nil :maxlevel 5)))
+
 (setq org-mobile-directory "~/Dropbox/MobileOrg")
 (setq org-log-done t)
 (setq org-hide-leading-stars t)
@@ -244,7 +245,22 @@ This can be 0 for immediate, or a floating point value.")
 (setq org-special-ctrl-k t)
 (setq org-special-ctrl-a/e t)
 
+;; less file local settings!
+(setq org-archive-location "_archive/%s_old::")
+(setq org-tag-alist '((:startgroup)
+		      ("HOME" . ?h)
+		      ("WORK" . ?w)
+		      ("ERRAND" . ?e)
+		      (:endgroup)
+		      ("COMPUTER" . ?c)
+		      ("INTERNET" . ?i)
+		      ("DISPATCH" . ?d)
+		      ("PROJECT" . ?p)))
+(setq org-todo-keywords
+      '((sequence "TODO(t)" "STARTED(s)" "WAITING(w)" "|" "DONE(d)" "NVM(n)" "MAYBE(m)")))
 (setq org-tags-exclude-from-inheritance '("PROJECT"))
+(setq org-global-properties '(("Effort_ALL" . "0 0:10 0:20 0:30 0:40 0:50 1:00 2:00 3:00 4:00 5:00 6:00 7:00 8:00 9:00 10:00 11:00 12:00")))
+(setq org-columns-default-format "%TODO %50ITEM(Task) %17Effort(Estimated Effort){:} %CLOCKSUM")
 
 (require 'remember)
 (setq org-remeber-store-without-prompt t)
@@ -253,11 +269,11 @@ This can be 0 for immediate, or a floating point value.")
 (setq remember-handler-functions '(org-remember-handler))
 (add-hook 'remember-mode-hook 'org-remember-apply-template)
 (setq org-remember-templates
-      '(("Todo" ?t "* TODO %?\n  %i\n  %a" "~/org/gtd.org" "Inbox")
-	("Future Todo" ?f "* TODO %?\n  %i\n  %^T\n  %a" "~/org/gtd.org" "Inbox")
+      '(("Todo" ?t "* TODO %?\n  %i\n  %a" "~/org/inbox.org" "Inbox")
+	("Future Todo" ?f "* TODO %?\n  %i\n  %^T\n  %a" "~/org/inbox.org" "Inbox")
 	("Music" ?m "* TODO %?\n  %U" "~/org/music.org" "To Get")
-        ("Journal" ?j "* %U %?\n\n  %i\n  %a" "~/org/journal.org")
-        ("Idea" ?i "* %^{Title}\n  %i\n  %a" "~/org/journal.org" "New Ideas")))
+        ("Journal" ?j "* %U %?\n\n  %i\n  %a" "~/org/notes.org")
+        ("Idea" ?i "* %^{Title}\n  %i\n  %a" "~/org/notes.org" "New Ideas")))
 
 (global-set-key (kbd "C-c r") 'org-remember)
 

@@ -193,7 +193,7 @@
 (require 'cm-org)
 (require 'cm-w3m)
 (require 'cm-rcirc)
-(require 'cm-command-frequency)
+;(require 'cm-command-frequency) ; not using this anymore...
 (require 'cm-blog)
 (require 'cm-erc)
 (require 'cm-wanderlust)
