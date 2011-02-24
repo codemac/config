@@ -1,6 +1,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; woo identica
-(require 'identica-mode)
+(autoload 'identica-mode "identica-mode" "" t)
 (setq identica-username cm-identica-username
       identica-password cm-identica-password)
 

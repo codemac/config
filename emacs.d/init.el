@@ -10,6 +10,17 @@
 (tool-bar-mode nil)
 (scroll-bar-mode nil)
 
+;; Operating system hacks
+(when (eq system-type 'darwin)
+  (let ((mac-paths '("/home/codemac/bin"
+		     "/usr/local/bin"
+		     "/usr/bin"
+		     "/bin")))
+    (setq warning-suppress-types nil)
+    (setenv "PATH" (concat (getenv "PATH") ":"
+			   (mapconcat 'identity mac-paths ":")))
+    (setq exec-path (append exec-path mac-paths))))
+
 ;; add my site-lisp dir as a place to load things
 (add-to-list 'load-path "~/.emacs.d/site-lisp")
 (add-to-list 'load-path "~/.emacs.d/pkg-init")
@@ -177,7 +188,7 @@
 (require 'cm-wikipedia)
 (require 'cm-ido)
 (require 'cm-identica)
-(require 'cm-ecb)
+;(require 'cm-ecb)
 (require 'cm-haskell)
 (require 'cm-egg)
 (require 'cm-anything)
@@ -188,7 +199,7 @@
 (require 'cm-ruby)
 (require 'cm-yaml)
 (require 'cm-haml)
-(require 'cm-emms)
+;(require cm-emms)
 (require 'cm-journal)
 (require 'cm-org)
 (require 'cm-w3m)
@@ -208,11 +219,15 @@
 (require 'cm-dired)
 (require 'cm-word-count)
 (require 'cm-ibuffer)
-(require 'cm-netapp)
 (require 'cm-minimap)
 (require 'cm-android)
 (require 'cm-smart-tab)
 
+;; things that I don't want on the mac
+(unless (eq system-type 'darwin)
+  (require 'cm-ecb)
+  (require 'cm-netapp)
+  (require 'cm-emms))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; CUSTOM!
 (custom-set-faces
   ;; custom-set-faces was added by Custom.

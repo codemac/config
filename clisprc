@@ -1,0 +1,2 @@
+#-:asdf (load "~/site-lisp/asdf/asdf.lisp")
+(pushnew "/Users/codemac/site-lisp/asdf-pkg/" asdf:*central-registry* :test #'equal)

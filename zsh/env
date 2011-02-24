@@ -50,3 +50,18 @@ unfunction zkbd_file; unset keyfile ret
 [[ -n "${key[Down]}"    ]]  && bindkey  "${key[Down]}"    down-line-or-history
 [[ -n "${key[Left]}"    ]]  && bindkey  "${key[Left]}"    backward-char
 [[ -n "${key[Right]}"   ]]  && bindkey  "${key[Right]}"   forward-char
+
+case ${OSTYPE} in
+	darwin*)
+	    export CM_CONF_LS_COLOR_OPT="-G"
+	    export CM_CONF_MORE_COLOR="-r"
+	;;
+	linux*)
+	    export CM_CONF_LS_COLOR_OPT="--color"
+	    export CM_CONF_MORE_COLOR="-r"
+	;;
+	*)
+	    export CM_CONF_LS_COLOR_OPT=""
+	    export CM_CONF_MORE_COLOR="-r"
+	;;
+esac

@@ -2,7 +2,7 @@ deflogin on
 autodetach on
 
 startup_message off
-shell -$SHELL
+shell -zsh
 activity "active: %n (%t) [%w:%s]"
 bell "bell: %n (%t) [%w:%s]^G"
 vbell off

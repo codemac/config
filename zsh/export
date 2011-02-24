@@ -1,12 +1,45 @@
 #!/bin/zsh
 #
-export PATH=$PATH:/opt/java/bin:/opt/kde/bin:/sbin:/usr/sbin:$HOME/bin:$HOME/hacks:$HOME/code/depot_tools:$HOME/.gem/bin:.
+export PYTHONBIN=""
+
+if [[ -f /usr/local/bin/python ]]; then
+    export PYTHONBIN=$(/usr/local/bin/python -V 2>&1 | sed "s#^Python \(.*\)\$#/usr/local/Cellar/python/\1/bin#g")
+    # virtualenv
+    export WORKON_HOME=$HOME/.virtualenvs
+    export VIRTUALENVWRAPPER_PYTHON=/usr/local/bin/python
+    . $PYTHONBIN/virtualenvwrapper.sh
+    alias ve='workon'
+    alias ve.deactivate='deactivate'
+    alias ve.mk='mkvirtualenv --no-site-packages'
+    alias ve.mk_withsitepackages='mkvirtualenv'
+    alias ve.rm='rmvirtualenv'
+    alias ve.switch='workon'
+    alias ve.add2virtualenv='add2virtualenv'
+    alias ve.cdsitepackages='cdsitepackages'
+    alias ve.cd='cdvirtualenv'
+    alias ve.lssitepackages='lssitepackages'
+fi
+
+export PATH=/opt/java/bin:/opt/kde/bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/bin:/sbin:/usr/sbin:$PYTHONBIN:$HOME/bin:$HOME/hacks:$HOME/code/depot_tools:$HOME/.cabal/bin:.:$PATH
 export MOZILLA_FIVE_HOME=/opt/mozilla/bin/mozilla
-export EDITOR=vim
+case ${OSTYPE} in
+    darwin*)
+	export EDITOR=mvim
+	export GIT_EDITOR=gitvim
+	;;
+    linux*)
+	export EDITOR=vim
+	export GIT_EDITOR=vim
+	;;
+    *)
+	export EDITOR=vim
+	export GIT_EDITOR=vim
+	;;
+esac
 #export MANPAGER="col -b | vim -c 'set ft=man nonu nomod nolist' -"
 export MANPAGER=most
-export MAIL=/home/jeff/mail/default
-export PACKAGER="Jeff Mickey <jmickey@netapp.com>"
+export MAIL=$HOME/mail/default
+export PACKAGER="Jeff Mickey <j@codemac.net>"
 export CHROOT_SHELL="$HOME/archlinux/chroot"
 export GEM_HOME=$HOME/.gem
 export GEM_PATH=$HOME/.gem:/usr/lib/ruby/gems/1.9.1
