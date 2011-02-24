@@ -194,24 +194,37 @@ This can be 0 for immediate, or a floating point value.")
   )
 
 (setq org-agenda-custom-commands
-	  '(("a" "Defined Agenda"
-		 ((org-agenda-list nil nil 1)
-		  (sacha/org-agenda-load)
-		  (sacha/org-agenda-clock)
-		  (tags "PROJECT-WAITING")
-		  (tags-todo "WAITING")
-		  (tags-todo "-MAYBE")))
-		("Z" "Receipt Agenda"
-		 ((org-receipt-agenda)
-		  )
-		 )
-;		("X" agenda ""
-;		 ((ps-number-of-columns 3)
-;		  (ps-landscape-mode t)
-;		  (org-agenda-prefix-format " [ ] ")
-;		  (org-agenda-with-colors t)
-;		 ("theagenda.ps")
-		 ))
+	  '(("A" "All Agenda"
+	     ((agenda)
+	      (tags "PROJECT/!WAITING")
+	      (todo "WAITING")
+	      (tags-todo "-MAYBE")))
+	    ("n" "Next agenda"
+	     ((agenda)
+	      (tags-todo "WORK/!+NEXT")
+	      (tags-todo "HOME/!+NEXT")
+	      (todo "NEXT")))
+	    ("w" "Work Agenda"
+	     ((agenda)
+	      (tags-todo "WORK/!-WAITING")
+	      (tags-todo "WORK/!+WAITING")
+	      (tags "WORK+PROJECT")
+	      (tags "WORK")))
+	    ("h" "Home Agenda"
+	     ((agenda)
+	      (tags-todo "HOME/!-WAITING")
+	      (tags-todo "HOME/!+WAITING")
+	      (tags "HOME+PROJECT")
+	      (tags "HOME")))
+	    ("Z" "Receipt Agenda"
+	     ((org-receipt-agenda)))
+					;		("X" agenda ""
+					;		 ((ps-number-of-columns 3)
+					;		  (ps-landscape-mode t)
+					;		  (org-agenda-prefix-format " [ ] ")
+					;		  (org-agenda-with-colors t)
+					;		 ("theagenda.ps")
+	    ))
 
 (setq org-stuck-projects
 	  '("-MAYBE-DONE" "TODO"))
@@ -227,7 +240,7 @@ This can be 0 for immediate, or a floating point value.")
 
 (setq org-default-notes-files '("~/org/notes.org"))
 (setq org-agenda-files (file-expand-wildcards "~/org/*.org"))
-(setq org-refile-targets '((org-agenda-files :maxlevel . 5) (nil :maxlevel 5)))
+(setq org-refile-targets '((nil :maxlevel . 5) (org-agenda-files :maxlevel . 5)))
 
 (setq org-mobile-directory "~/Dropbox/MobileOrg")
 (setq org-log-done t)
@@ -239,6 +252,7 @@ This can be 0 for immediate, or a floating point value.")
 (setq org-agenda-skip-deadline-if-done t)
 (setq org-agenda-skip-scheduled-if-done t)
 (setq org-start-on-weekday nil)
+(setq org-completion-use-ido t)
 (setq org-agenda-show-all-dates t)
 (setq org-reverse-note-order t)
 (setq org-fontify-done-headline t)
@@ -257,8 +271,10 @@ This can be 0 for immediate, or a floating point value.")
 		      ("DISPATCH" . ?d)
 		      ("PROJECT" . ?p)))
 (setq org-todo-keywords
-      '((sequence "TODO(t)" "STARTED(s)" "WAITING(w)" "|" "DONE(d)" "NVM(n)" "MAYBE(m)")))
+      '((sequence "TODO(t)" "NEXT(x)" "STARTED(s)" "WAITING(w)" "|" "DONE(d)" "NVM(n)" "MAYBE(m)")))
+
 (setq org-tags-exclude-from-inheritance '("PROJECT"))
+
 (setq org-global-properties '(("Effort_ALL" . "0 0:10 0:20 0:30 0:40 0:50 1:00 2:00 3:00 4:00 5:00 6:00 7:00 8:00 9:00 10:00 11:00 12:00")))
 (setq org-columns-default-format "%TODO %50ITEM(Task) %17Effort(Estimated Effort){:} %CLOCKSUM")
 
