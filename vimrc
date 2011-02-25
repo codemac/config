@@ -1,4 +1,4 @@
-" Most recent update: Sun Feb 13 01:37:44 2011
+" Most recent update: Thu 24 Feb 2011 07:35:34 PM EST
 
 """"""""""""""""""""""""""""""""""""""""""
 " GUI options, and colorscheme selection "
@@ -94,7 +94,7 @@ set showmatch
 set pastetoggle=<F10>
 " graphical options
 ";set guifont=Bitstream\ Vera\ Sans\ Mono\ 10
-set guifont=Consolas\ 10
+set guifont=Dina\ 11
 
 " Set bracket matching and comment formats
 set matchpairs+=<:>

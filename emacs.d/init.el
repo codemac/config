@@ -222,6 +222,7 @@
 (require 'cm-minimap)
 (require 'cm-android)
 (require 'cm-smart-tab)
+(require 'cm-eshell)
 
 ;; things that I don't want on the mac
 (unless (eq system-type 'darwin)

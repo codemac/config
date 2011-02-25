@@ -270,8 +270,10 @@ This can be 0 for immediate, or a floating point value.")
 		      ("INTERNET" . ?i)
 		      ("DISPATCH" . ?d)
 		      ("PROJECT" . ?p)))
+
+(setq org-log-done '(note))
 (setq org-todo-keywords
-      '((sequence "TODO(t)" "NEXT(x)" "STARTED(s)" "WAITING(w)" "|" "DONE(d)" "NVM(n)" "MAYBE(m)")))
+      '((sequence "TODO(t)" "NEXT(x@)" "STARTED(s)" "WAITING(w@)" "|" "DONE(d)" "NVM(n@)" "MAYBE(m@)")))
 
 (setq org-tags-exclude-from-inheritance '("PROJECT"))
 

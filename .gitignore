@@ -18,4 +18,5 @@ emacs.d/emms
 emacs.d/tramp
 emacs.d/games/tetris-scores
 emacs.d/pkg-init/cm-netapp.el
+emacs.d/eshell/history
 vim/.netrwhist

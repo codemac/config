@@ -1,0 +1,5 @@
+alias rm rm -v $*
+alias c recenter 0
+alias clear recenter 0
+alias emacs find-file $1
+alias l ls -l $*
