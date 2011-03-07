@@ -43,7 +43,7 @@ alias ta="t add"
 # basics
 alias c="clear"
 alias l="cd ."
-alias ll='ls -ahl $CM_CONF_LS_COLOR_OPT | more; echo "\e[1;32m --[\e[1;34m Dirs:\e[1;36m `ls -al | egrep \"^drw\" | wc -l` \e[1;32m|\e[1;35m Files: \e[1;31m`ls -al | egrep -v \"^drw\" | grep -v total | wc -l` \e[1;32m]--"'
+alias ll='ls -ahl --group-directories-first $CM_CONF_LS_COLOR_OPT | more; echo "\e[1;32m --[\e[1;34m Dirs:\e[1;36m `ls -al | egrep \"^drw\" | wc -l` \e[1;32m|\e[1;35m Files: \e[1;31m`ls -al | egrep -v \"^drw\" | grep -v total | wc -l` \e[1;32m]--"'
 #alias e="emacs -nw"
 alias v="vim"
 alias wh="when ci --past=0 --future=3"
