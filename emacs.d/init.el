@@ -6,13 +6,13 @@
 (defvar *emacs-load-start* (current-time))
 
 ;; Get rid of things.
-(menu-bar-mode nil)
-(tool-bar-mode nil)
-(scroll-bar-mode nil)
+(menu-bar-mode -1)
+(tool-bar-mode -1)
+(scroll-bar-mode -1)
 
 ;; Operating system hacks
 (when (eq system-type 'darwin)
-  (let ((mac-paths '("/home/codemac/bin"
+  (let ((mac-paths '("/Users/codemac/bin"
 		     "/usr/local/bin"
 		     "/usr/bin"
 		     "/bin")))
