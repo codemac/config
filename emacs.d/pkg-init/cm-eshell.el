@@ -23,6 +23,15 @@
 	   (split-string (abbreviate-file-name (eshell/pwd)) "/"))
 	  " % "))
 
+
+(defun eshell-new (name)
+  "Create a shell buffer named NAME."
+  (interactive "sEshell Name: ")
+  (setq name (concat "*eshell:" name "*"))
+  (eshell)
+  (rename-buffer name))
+
+
 (autoload 'ansi-color "ansi-color" t nil)
 
 (defun cm-eshell-handle-ansi-color ()
@@ -35,7 +44,6 @@
 
 (defun cm-eshell-mode-hook ()
   (add-to-list 'eshell-output-filter-functions 'cm-eshell-handle-ansi-color))
-  
 
 (add-hook 'eshell-mode-hook 'cm-eshell-mode-hook)
 

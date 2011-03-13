@@ -13,9 +13,13 @@
 ;; Operating system hacks
 (when (eq system-type 'darwin)
   (let ((mac-paths '("/Users/codemac/bin"
+		     "/Users/codemac/.cabal/bin"
 		     "/usr/local/bin"
+		     "/usr/local/sbin"
 		     "/usr/bin"
-		     "/bin")))
+		     "/usr/sbin"
+		     "/bin"
+		     "/sbin")))
     (setq warning-suppress-types nil)
     (setenv "PATH" (concat (getenv "PATH") ":"
 			   (mapconcat 'identity mac-paths ":")))
