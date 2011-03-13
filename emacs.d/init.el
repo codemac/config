@@ -10,6 +10,7 @@
 (tool-bar-mode -1)
 (scroll-bar-mode -1)
 
+(setq warning-suppress-types nil)
 ;; Operating system hacks
 (when (eq system-type 'darwin)
   (let ((mac-paths '("/Users/codemac/bin"
@@ -20,7 +21,6 @@
 		     "/usr/sbin"
 		     "/bin"
 		     "/sbin")))
-    (setq warning-suppress-types nil)
     (setenv "PATH" (concat (getenv "PATH") ":"
 			   (mapconcat 'identity mac-paths ":")))
     (setq exec-path (append exec-path mac-paths))))
@@ -218,6 +218,7 @@
 (require 'cm-uniquify)
 (require 'cm-tabbar)
 (require 'cm-xcscope)
+;(require 'cm-ascope)
 (require 'cm-yasnippet)
 (require 'cm-gnus)
 (require 'cm-dired)
@@ -253,6 +254,7 @@
  '(ecb-options-version "2.40")
  '(jabber-account-list (quote (("j@xmpp.us") ("codemac@gmail.com" (:network-server . "talk.google.com") (:port . 5222)))))
  '(jabber-roster-line-format " %c %-25n %u %-8s  %S")
+ '(org-agenda-files (quote ("~/org/fitness.org" "~/org/gtd.org" "~/org/inbox.org" "~/org/netapp.org")))
  '(w3m-use-cookies t))
 
 ;; COLORS PLZ
