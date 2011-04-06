@@ -105,8 +105,8 @@ myKeys conf@(XConfig {XMonad.modMask = modMask}) = M.fromList $
 
     -- Resize viewed windows to the correct size
     , ((modMask,               xK_n     ), refresh)
-    , ((modMask,               xK_Up     ), spawn "aumix -v+3")
-    , ((modMask,               xK_Down     ), spawn "aumix -v-3")
+    , ((modMask,               xK_Up     ), spawn "aumix -w+3")
+    , ((modMask,               xK_Down     ), spawn "aumix -w-3")
 
     -- songbird control
     , ((modMask,	       xK_space	), spawn "nyxmms2 toggle")

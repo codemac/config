@@ -20,7 +20,7 @@ if [[ -f /usr/local/bin/python ]]; then
     alias ve.lssitepackages='lssitepackages'
 fi
 
-export PATH=/opt/java/bin:/opt/kde/bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/bin:/sbin:/usr/sbin:$PYTHONBIN:$HOME/bin:$HOME/hacks:$HOME/code/depot_tools:$HOME/.cabal/bin:.:$PATH
+export PATH=.:/opt/java/bin:/opt/kde/bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/bin:/sbin:/usr/sbin:$PYTHONBIN:$HOME/bin:$HOME/hacks:$HOME/code/depot_tools:$HOME/.cabal/bin:/usr/software/bin:/usr/software/rats/bin:$PATH
 export MOZILLA_FIVE_HOME=/opt/mozilla/bin/mozilla
 case ${OSTYPE} in
     darwin*)

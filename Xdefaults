@@ -1,4 +1,4 @@
-!# Most recent update: Wed 12 Jan 2011 11:28:42 AM EST
+!# Most recent update: Mon 14 Mar 2011 03:39:20 PM EDT
 xterm*toolBar:	false
 xterm*utf8: 2
 ! yeah!console
@@ -24,7 +24,7 @@ yeahconsole*shading:			10
 yeahconsole*perl-lib:         /usr/lib/urxvt/perl
 yeahconsole*perl-ext-common:  selection,option-popup,selection-popup,readline,matcher
 yeahconsole*matcher.button:	1
-yeahconsole*urlLauncher:      chromium-dev
+yeahconsole*urlLauncher:      firefox-beta-bin
 
 
 emacs*font: Dina-11
@@ -111,7 +111,7 @@ urxvt*perl-lib:         /usr/lib/urxvt/perl
 urxvt*perl-ext-common:  selection,option-popup,selection-popup,readline,matcher,searchable-scrollback,pwsafe
 urxvt*matcher.button:	1
 URxvt.searchable-scrollback: CM-s
-urxvt*urlLauncher:      chromium-dev
+urxvt*urlLauncher:      firefox-beta-bin
 urxvt*print-pipe: cat > $(TMPDIR=$HOME mktemp urxvt-dump.XXXXXX)
 
 
