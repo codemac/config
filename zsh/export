@@ -24,7 +24,7 @@ export PATH=.:/opt/java/bin:/opt/kde/bin:/usr/local/bin:/usr/local/sbin:/usr/bin
 export MOZILLA_FIVE_HOME=/opt/mozilla/bin/mozilla
 case ${OSTYPE} in
     darwin*)
-	export EDITOR=mvim
+	export EDITOR=emacsclient
 	export GIT_EDITOR=gitvim
 	;;
     linux*)

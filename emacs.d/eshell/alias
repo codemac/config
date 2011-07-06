@@ -1,5 +1,8 @@
 alias rm rm -v $*
 alias c recenter 0
 alias clear recenter 0
-alias emacs find-file $1
+alias emacs find-file-other-window $1
 alias l ls -l $*
+alias vim find-file-other-window $1
+alias e find-file-other-window $1
+alias cd cd $*; ls -l
