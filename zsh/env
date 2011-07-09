@@ -65,3 +65,8 @@ case ${OSTYPE} in
 	    export CM_CONF_MORE_COLOR=
 	;;
 esac
+
+# source ironport specifics
+if [[ -e ~/.zsh/ironport ]]; then
+   . ~/.zsh/ironport
+fi

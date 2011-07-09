@@ -296,6 +296,31 @@ This can be 0 for immediate, or a floating point value.")
         ("Idea" ?i "* %^{Title}\n  %i\n  %a" "~/org/notes.org" "New Ideas")))
 
 (global-set-key (kbd "C-c r") 'org-remember)
+;; remember for mac os x popup
+(defun make-remember-frame ()  
+      "Create a new frame and run org-remember."  
+      (interactive)  
+      (make-frame '((name . "remember") (width . 80) (height . 10)))  
+      (select-frame-by-name "remember")  
+      (org-remember))
+
+(when (eq system-type 'darwin)
+	(progn
+    (defadvice remember-finalize (after delete-remember-frame activate)  
+      "Advise remember-finalize to close the frame if it is the remember frame"  
+      (if (equal "remember" (frame-parameter nil 'name))  
+          (delete-frame)))  
+      
+    (defadvice remember-destroy (after delete-remember-frame activate)  
+      "Advise remember-destroy to close the frame if it is the rememeber frame"  
+      (if (equal "remember" (frame-parameter nil 'name))  
+          (delete-frame)))  
+      
+    ;; make the frame contain a single window. by default org-remember  
+    ;; splits the window.  
+    (add-hook 'remember-mode-hook  
+              'delete-other-windows)))
+      
 
 (defun gtd ()
   (interactive)
