@@ -3,6 +3,7 @@ alias c recenter 0
 alias clear recenter 0
 alias emacs find-file-other-window $1
 alias l ls -l $*
-alias vim find-file-other-window $1
-alias e find-file-other-window $1
 alias cd cd $*; ls -l
+alias e find-file-other-window $1
+alias vim find-file-other-window $1
+alias xpdf open $*

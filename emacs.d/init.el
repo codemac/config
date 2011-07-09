@@ -25,6 +25,8 @@
 			   (mapconcat 'identity mac-paths ":")))
     (setq exec-path (append exec-path mac-paths))))
 
+
+
 ;; add my site-lisp dir as a place to load things
 (add-to-list 'load-path "~/.emacs.d/site-lisp")
 (add-to-list 'load-path "~/.emacs.d/pkg-init")
@@ -196,9 +198,11 @@
 (unless (string-equal "root" (getenv "USER"))
 ;; Only start server mode if it isn't started already
   (when (or (not (boundp 'server-process))
-  (not (eq (process-status server-process)
-  'listen)))
-  (server-start)))
+	    (not (eq (process-status server-process)
+		     'listen)))
+    (server-start)))
+(when (eq system-type 'darwin)
+  (add-hook 'server-visit-hook 'raise-frame))
 ;;
 
 ;;; MY REQUIREMENTS!
@@ -211,6 +215,7 @@
 ;(require 'cm-ecb)
 (require 'cm-haskell)
 (require 'cm-egg)
+(require 'cm-esperanto)
 (require 'cm-anything)
 (require 'cm-bbdb)
 (require 'cm-mode-compile)

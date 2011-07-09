@@ -2,23 +2,23 @@
 #
 export PYTHONBIN=""
 
-if [[ -f /usr/local/bin/python ]]; then
-    export PYTHONBIN=$(/usr/local/bin/python -V 2>&1 | sed "s#^Python \(.*\)\$#/usr/local/Cellar/python/\1/bin#g")
-    # virtualenv
-    export WORKON_HOME=$HOME/.virtualenvs
-    export VIRTUALENVWRAPPER_PYTHON=/usr/local/bin/python
-    . $PYTHONBIN/virtualenvwrapper.sh
-    alias ve='workon'
-    alias ve.deactivate='deactivate'
-    alias ve.mk='mkvirtualenv --no-site-packages'
-    alias ve.mk_withsitepackages='mkvirtualenv'
-    alias ve.rm='rmvirtualenv'
-    alias ve.switch='workon'
-    alias ve.add2virtualenv='add2virtualenv'
-    alias ve.cdsitepackages='cdsitepackages'
-    alias ve.cd='cdvirtualenv'
-    alias ve.lssitepackages='lssitepackages'
-fi
+##if [[ -f /usr/local/bin/python ]]; then
+#    export PYTHONBIN=$(/usr/local/bin/python -V 2>&1 | sed "s#^Python \(.*\)\$#/usr/local/Cellar/python/\1/bin#g")
+#    # virtualenv
+#    export WORKON_HOME=$HOME/.virtualenvs
+#    export VIRTUALENVWRAPPER_PYTHON=/usr/local/bin/python
+#    . $PYTHONBIN/virtualenvwrapper.sh
+#    alias ve='workon'
+#    alias ve.deactivate='deactivate'
+#    alias ve.mk='mkvirtualenv --no-site-packages'
+#    alias ve.mk_withsitepackages='mkvirtualenv'
+#    alias ve.rm='rmvirtualenv'
+#    alias ve.switch='workon'
+#    alias ve.add2virtualenv='add2virtualenv'
+#    alias ve.cdsitepackages='cdsitepackages'
+#    alias ve.cd='cdvirtualenv'
+#    alias ve.lssitepackages='lssitepackages'
+#fi
 
 export PATH=.:/opt/java/bin:/opt/kde/bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/bin:/sbin:/usr/sbin:$PYTHONBIN:$HOME/bin:$HOME/hacks:$HOME/code/depot_tools:$HOME/.cabal/bin:/usr/software/bin:/usr/software/rats/bin:$PATH
 export MOZILLA_FIVE_HOME=/opt/mozilla/bin/mozilla

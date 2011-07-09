@@ -28,41 +28,44 @@ fi
 [[ -n "${key[Left]}"    ]]  && bindkey  "${key[Left]}"    backward-char
 [[ -n "${key[Right]}"   ]]  && bindkey  "${key[Right]}"   forward-char
 
-#zkdb stuff
-autoload zkbd
-function zkbd_file() {
-    [[ -f ~/.zkbd/${TERM}-${VENDOR}-${OSTYPE} ]] && printf '%s' ~/".zkbd/${TERM}-${VENDOR}-${OSTYPE}" && return 0
-    [[ -f ~/.zkbd/${TERM}-${DISPLAY}          ]] && printf '%s' ~/".zkbd/${TERM}-${DISPLAY}"          && return 0
-    return 1
-}
-
-[[ ! -d ~/.zkbd ]] && mkdir ~/.zkbd
-keyfile=$(zkbd_file)
-ret=$?
-if [[ ${ret} -ne 0 ]]; then
-    zkbd
-    keyfile=$(zkbd_file)
-    ret=$?
-fi
-if [[ ${ret} -eq 0 ]] ; then
-    source "${keyfile}"
-else
-    printf 'Failed to setup keys using zkbd.\n'
-fi
-unfunction zkbd_file; unset keyfile ret
+##zkdb stuff
+#autoload zkbd
+#function zkbd_file() {
+#    [[ -f ~/.zkbd/${TERM}-${VENDOR}-${OSTYPE} ]] && printf '%s' ~/".zkbd/${TERM}-${VENDOR}-${OSTYPE}" && return 0
+#    [[ -f ~/.zkbd/${TERM}-${DISPLAY}          ]] && printf '%s' ~/".zkbd/${TERM}-${DISPLAY}"          && return 0
+#    return 1
+#}
+#
+#[[ ! -d ~/.zkbd ]] && mkdir ~/.zkbd
+#keyfile=$(zkbd_file)
+#ret=$?
+#if [[ ${ret} -ne 0 ]]; then
+##    zkbd
+#    keyfile=$(zkbd_file)
+#    ret=$?
+#fi
+#if [[ ${ret} -eq 0 ]] ; then
+#    source "${keyfile}"
+#else
+#    printf 'Failed to setup keys using zkbd.\n'
+#fi
+#unfunction zkbd_file; unset keyfile ret
 
 case ${OSTYPE} in
 	darwin*)
-	    export CM_CONF_LS_COLOR="-G"
+	    export CM_CONF_LS_COLOR="-GF"
 	    export CM_CONF_MORE_COLOR="-r"
+	    export CM_CONF_LS_DIRGROUP=
 	;;
 	linux*)
 	    export CM_CONF_LS_COLOR="--color"
 	    export CM_CONF_MORE_COLOR=
+	    export CM_CONF_LS_DIRGROUP="--group-directories-first"
 	;;
 	*)
 	    export CM_CONF_LS_COLOR="--color"
 	    export CM_CONF_MORE_COLOR=
+	    export CM_CONF_LS_DIRGROUP="--group-directories-first"
 	;;
 esac
 
