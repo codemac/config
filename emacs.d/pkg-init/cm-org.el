@@ -289,11 +289,12 @@ This can be 0 for immediate, or a floating point value.")
 (setq remember-handler-functions '(org-remember-handler))
 (add-hook 'remember-mode-hook 'org-remember-apply-template)
 (setq org-remember-templates
-      '(("Todo" ?t "* TODO %?\n  %i\n  %a" "~/org/inbox.org" "Inbox")
-	("Future Todo" ?f "* TODO %?\n  %i\n  %^T\n  %a" "~/org/inbox.org" "Inbox")
+      `(("Todo" ?t "* TODO %?\n  %i\n  %a" "~/org/gtd.org" "Inbox")
+	("Future Todo" ?f "* TODO %?\n  %i\n  %^T\n  %a" "~/org/gtd.org" "Inbox")
 	("Music" ?m "* TODO %?\n  %U" "~/org/music.org" "To Get")
-        ("Journal" ?j "* %U %?\n\n  %i\n  %a" "~/org/notes.org")
-        ("Idea" ?i "* %^{Title}\n  %i\n  %a" "~/org/notes.org" "New Ideas")))
+        ("Journal" ?j "* %U %?\n\n  %i\n  %a" ,(format-time-string "~/org/_editorial/%Y.%m.org"))
+        ("Idea" ?i "* %^{Title}\n  %i\n  %a" "~/org/_notes/notes.org" "New Ideas")
+	("Website" ?w "* %U %?\n\n %i\n %a" "~/org/_notes/www.org")))
 
 (global-set-key (kbd "C-c r") 'org-remember)
 ;; remember for mac os x popup

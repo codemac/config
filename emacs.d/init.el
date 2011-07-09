@@ -272,21 +272,6 @@
  '(jabber-account-list (quote (("j@xmpp.us") ("codemac@gmail.com" (:network-server . "talk.google.com") (:port . 5222)))))
  '(jabber-roster-line-format " %c %-25n %u %-8s  %S")
  '(org-agenda-files (quote ("~/org/fitness.org" "~/org/gtd.org" "~/org/inbox.org" "~/org/netapp.org")))
- '(org-remember-templates (quote (("Todo" 116 "* TODO %?
-  %i
-  %a" "~/org/inbox.org" "Inbox" nil) ("Future Todo" 102 "* TODO %?
-  %i
-  %^T
-  %a" "~/org/inbox.org" "Inbox" nil) ("Scheduled Todo" 115 "* TODO %?
-  %i
-  SCHEDULED: %^T
-  %a" nil nil nil) ("Music" 109 "* TODO %?
-  %U" "~/org/music.org" "To Get" nil) ("Journal" 106 "* %U %?
-
-  %i
-  %a" "~/org/notes.org" nil nil) ("Idea" 105 "* %^{Title}
-  %i
-  %a" "~/org/notes.org" "New Ideas" nil))))
  '(w3m-use-cookies t))
 
 ;; COLORS PLZ
