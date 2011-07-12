@@ -276,7 +276,6 @@
  '(ecb-options-version "2.40")
  '(jabber-account-list (quote (("j@xmpp.us") ("codemac@gmail.com" (:network-server . "talk.google.com") (:port . 5222)))))
  '(jabber-roster-line-format " %c %-25n %u %-8s  %S")
- '(org-agenda-files (quote ("~/org/fitness.org" "~/org/gtd.org" "~/org/inbox.org" "~/org/netapp.org")))
  '(w3m-use-cookies t))
 
 ;; COLORS PLZ

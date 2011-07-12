@@ -238,7 +238,7 @@ This can be 0 for immediate, or a floating point value.")
 (org-clock-persistence-insinuate)
 (setq org-clock-idle-time 10)
 
-(setq org-default-notes-files '("~/org/notes.org"))
+(setq org-default-notes-files '("~/org/_notes/notes.org"))
 (setq org-agenda-files (file-expand-wildcards "~/org/*.org"))
 (setq org-refile-targets '((nil :maxlevel . 5) (org-agenda-files :maxlevel . 5)))
 
