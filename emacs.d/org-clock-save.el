@@ -1,1 +1,1 @@
-;; org-persist.el - jmickey-mac at <2011-07-11 Mon 17:57>
+;; org-persist.el - penelope.local at <2011-07-10 Sun 21:30>

@@ -1,4 +1,4 @@
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; auto modes
+ ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; auto modes
 ;;;
 (add-to-list 'auto-mode-alist '("\\.org$" . org-mode))
 
@@ -282,46 +282,44 @@ This can be 0 for immediate, or a floating point value.")
 (setq org-global-properties '(("Effort_ALL" . "0 0:10 0:20 0:30 0:40 0:50 1:00 2:00 3:00 4:00 5:00 6:00 7:00 8:00 9:00 10:00 11:00 12:00")))
 (setq org-columns-default-format "%TODO %50ITEM(Task) %17Effort(Estimated Effort){:} %CLOCKSUM")
 
-(require 'remember)
-(setq org-remeber-store-without-prompt t)
-(define-key global-map [(control meta ?r)] 'remember)
-(setq remember-annotation-functions '(org-remember-annotation))
-(setq remember-handler-functions '(org-remember-handler))
-(add-hook 'remember-mode-hook 'org-remember-apply-template)
-(setq org-remember-templates
-      `(("Todo" ?t "* TODO %?\n  %i\n  %a" "~/org/gtd.org" "Inbox")
-	("Future Todo" ?f "* TODO %?\n  %i\n  %^T\n  %a" "~/org/gtd.org" "Inbox")
-	("Music" ?m "* TODO %?\n  %U" "~/org/music.org" "To Get")
-        ("Journal" ?j "* %U %?\n\n  %i\n  %a" ,(format-time-string "~/org/_editorial/%Y.%m.org"))
-        ("Idea" ?i "* %^{Title}\n  %i\n  %a" "~/org/_notes/notes.org" "New Ideas")
-	("Website" ?w "* %U %?\n\n %i\n %a" "~/org/_notes/www.org")))
+;; capture for mac os x popup
+(defun cm-org-capture-other-frame ()
+  "Create a new frame and run org-capture."
+  (interactive)
+  (make-frame '((name . "Org-Capture")
+		(width . 120)
+		(height . 20)
+		(menu-bar-lines . 0)
+		(tool-bar-lines . 0)
+		(auto-lower . nil)
+		(auto-raise . t)))
+  (select-frame-by-name "Org-Capture")
+  (if (condition-case nil
+	  (progn (org-capture) t)
+	(error nil))
+      (delete-other-windows)
+    (cm-org-capture-other-frame-cleanup)))
 
-(global-set-key (kbd "C-c r") 'org-remember)
-;; remember for mac os x popup
-(defun make-remember-frame ()  
-      "Create a new frame and run org-remember."  
-      (interactive)  
-      (make-frame '((name . "remember") (width . 80) (height . 10)))  
-      (select-frame-by-name "remember")  
-      (org-remember))
+(defun cm-org-capture-other-frame-cleanup ()
+  "Close the Org-Capture frame."
+  (if (equal "Org-Capture" (frame-parameter nil 'name))
+      (delete-frame)))
+(add-hook 'org-capture-after-finalize-hook 'cm-org-capture-other-frame-cleanup)
 
-(when (eq system-type 'darwin)
-	(progn
-    (defadvice remember-finalize (after delete-remember-frame activate)  
-      "Advise remember-finalize to close the frame if it is the remember frame"  
-      (if (equal "remember" (frame-parameter nil 'name))  
-          (delete-frame)))  
-      
-    (defadvice remember-destroy (after delete-remember-frame activate)  
-      "Advise remember-destroy to close the frame if it is the rememeber frame"  
-      (if (equal "remember" (frame-parameter nil 'name))  
-          (delete-frame)))  
-      
-    ;; make the frame contain a single window. by default org-remember  
-    ;; splits the window.  
-    (add-hook 'remember-mode-hook  
-              'delete-other-windows)))
-      
+;; org capture!
+(setq org-default-notes-file (concat org-directory "/gtd.org"))
+(define-key global-map "\C-cr" 'org-capture)
+(setq org-capture-templates
+      `(("t" "Todo" entry (file+headline "~/org/gtd.org" "Inbox") "* TODO %?\n  %i\n  %a" :prepend t)
+	("f" "Future Todo" entry (file+headline "~/org/gtd.org" "Inbox") "* TODO %?\n  %i\n  %^T\n  %a" :prepend t)
+	("m" "Music" entry (file+headline "~/org/music.org" "To Get") "* TODO %?\n  %U" :prepend t)
+	("j" "Journal" entry (file ,(format-time-string "~/org/_editorial/%Y.%m.org")) "* %U %?\n\n  %i\n  %a" :prepend t)
+	("i" "Idea" entry (file+headline "~/org/_notes/notes.org" "New Ideas") "* %^{Title}\n  %i\n  %a" :prepend t)
+	("w" "Website" entry (file "~/org/_notes/www.org") "* %U %?\n\n  %i\n  %a")
+	("x" "org-capture" entry (file+headline "~/org/_notes/www.org" "Archived Content") "* %^{Title}p: %:description\n\n  Source: %U %c\n\n  %i")))
+
+;; org protocol!
+
 
 (defun gtd ()
   (interactive)
