@@ -13,14 +13,16 @@
 (setq warning-suppress-types nil)
 ;; Operating system hacks
 (when (eq system-type 'darwin)
-  (let ((mac-paths '("/Users/codemac/bin"
-		     "/Users/codemac/.cabal/bin"
-		     "/usr/local/bin"
-		     "/usr/local/sbin"
-		     "/usr/bin"
-		     "/usr/sbin"
-		     "/bin"
-		     "/sbin")))
+  (let* ((home-dir (getenv "HOME"))
+	 (mac-paths `(,(concat home-dir "/bin")
+		      ,(concat home-dir "/.cabal/bin")
+		      "/usr/local/texlive/2010/bin/x86_64-darwin"
+		      "/usr/local/bin"
+		      "/usr/local/sbin"
+		      "/usr/bin"
+		      "/usr/sbin"
+		      "/bin"
+		      "/sbin")))
     (setenv "PATH" (concat (getenv "PATH") ":"
 			   (mapconcat 'identity mac-paths ":")))
     (setq exec-path (append exec-path mac-paths))))
