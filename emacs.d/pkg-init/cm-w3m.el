@@ -3,6 +3,7 @@
 ;(require 'mime-w3m)
 ;;;
 
+(setq w3m-use-cookies t)
 
 ;; rockin' browse-url.
 ;; Browse OWA urls in w3m, browse others in firefox
