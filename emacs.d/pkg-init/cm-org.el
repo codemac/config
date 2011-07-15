@@ -282,6 +282,45 @@ This can be 0 for immediate, or a floating point value.")
 (setq org-global-properties '(("Effort_ALL" . "0 0:10 0:20 0:30 0:40 0:50 1:00 2:00 3:00 4:00 5:00 6:00 7:00 8:00 9:00 10:00 11:00 12:00")))
 (setq org-columns-default-format "%TODO %50ITEM(Task) %17Effort(Estimated Effort){:} %CLOCKSUM")
 
+;; org links!
+(org-add-link-type "man" 'org-man-open)
+(add-hook 'org-store-link-functions 'org-man-store-link)
+
+(defcustom org-man-command 'man
+  "The Emacs command to be used to display a man page."
+  :group 'org-link
+  :type '(choice (const man) (const woman)))
+
+(defun org-man-open (path)
+  "Visit the manpage on PATH.
+     PATH should be a topic that can be thrown at the man command."
+  (funcall org-man-command path))
+
+(defun org-man-store-link ()
+  "Store a link to a manpage."
+       (when (memq major-mode '(Man-mode woman-mode))
+         ;; This is a man page, we do make this link
+         (let* ((page (org-man-get-page-name))
+                (link (concat "man:" page))
+                (description (format "Manpage for %s" page)))
+           (org-store-link-props
+            :type "man"
+            :link link
+            :description description))))
+
+(defun org-man-get-page-name ()
+  "Extract the page name from the buffer name."
+  ;; This works for both `Man-mode' and `woman-mode'.
+  (if (string-match " \\(\\S-+\\)\\*" (buffer-name))
+      (match-string 1 (buffer-name))
+    (error "Cannot create link to this man page")))
+
+;; cisco links
+(org-add-link-type "cisco" 'org-cisco-open)
+(defun org-cisco-open (path)
+  "path is the userid"
+  (shell-command (concat "open \"http://wwwin-tools.cisco.com/dir/details/" path "\"")))
+
 ;; capture for mac os x popup
 (defun cm-org-capture-other-frame ()
   "Create a new frame and run org-capture."
