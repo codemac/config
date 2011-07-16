@@ -40,7 +40,7 @@
 
 (setq eshell-directory-name "~/.emacs.d/eshell")
 (setq eshell-prompt-function 'cm-eshell-prompt)
-(setq eshell-prompt-regexp "^[^[:space:]]+? [%#] ")
+(setq eshell-prompt-regexp "^[^%#$\n]+ [%#$] ")
 (setenv "EDITOR" "emacsclient")
 
 ;; Stolen from http://www.emacswiki.org/cgi-bin/wiki.pl/EshellEnhancedLS
