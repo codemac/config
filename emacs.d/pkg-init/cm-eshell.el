@@ -31,7 +31,9 @@
   (eshell)
   (rename-buffer name))
 
+(defalias 'enew 'eshell-new)
 
+(put 'eshell 'disabled "Use eshell-new instead!\n")
 (autoload 'ansi-color "ansi-color" t nil)
 
 (defun cm-eshell-handle-ansi-color ()

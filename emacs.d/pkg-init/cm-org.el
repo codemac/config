@@ -284,21 +284,23 @@ This can be 0 for immediate, or a floating point value.")
 (setq org-columns-default-format "%TODO %50ITEM(Task) %17Effort(Estimated Effort){:} %CLOCKSUM")
 
 ;; org export
-(setq org-ditaa-ja-path "/usr/local/Cellar/ditaa/0.9/ditaa0_9.jar")
+(setq org-ditaa-jar-path "/usr/local/Cellar/ditaa/0.9/ditaa0_9.jar")
 (add-hook 'org-babel-after-execute-hook 'org-display-inline-images)
 
-(setq org-babel-load-languages `((emacs-lisp . t)
-				 (dot . t)
-				 (ditaa . t)
-				 (R . t)
-				 (python . t)
-				 (ruby . t)
-				 (gnuplot . t)
-				 (clojure . t)
-				 (sh . t)
-				 (ledger . t)
-				 (org . t)
-				 (latex . t)))
+(org-babel-do-load-languages 
+ 'org-babel-load-languages
+ `((emacs-lisp . t)
+   (dot . t)
+   (ditaa . t)
+   (R . t)
+   (python . t)
+   (ruby . t)
+   (gnuplot . t)
+   (clojure . t)
+   (sh . t)
+   (ledger . t)
+   (org . t)
+   (latex . t)))
 (setq org-confirm-babel-evaluate nil)
 
 
