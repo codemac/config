@@ -259,6 +259,7 @@
 (require 'cm-python)
 (require 'cm-ironport)
 (require 'cm-desktop)
+(require 'cm-smex)
 
 ;; things that I don't want on the mac
 (unless (eq system-type 'darwin)
