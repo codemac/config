@@ -194,6 +194,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; hippie
 ;(global-set-key (kbd "TAB") 'hippie-expand)
 ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; windmove
+(global-set-key [M-left] 'windmove-left)
+(global-set-key [M-right] 'windmove-right)
+(global-set-key [M-up] 'windmove-up)
+(global-set-key [M-down] 'windmove-down)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; server
 ;;;
@@ -251,6 +256,7 @@
 (require 'cm-android)
 (require 'cm-smart-tab)
 (require 'cm-eshell)
+(require 'cm-python)
 (require 'cm-ironport)
 
 ;; things that I don't want on the mac
