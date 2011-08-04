@@ -1,5 +1,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; smex
 
+(require 'smex)
+
 ;; load smex lazily...
 (global-set-key [(meta x)] (lambda ()
                              (interactive)
