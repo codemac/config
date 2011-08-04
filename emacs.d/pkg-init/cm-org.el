@@ -377,6 +377,7 @@ This can be 0 for immediate, or a floating point value.")
 	("j" "Journal" entry (file ,(format-time-string "~/org/_editorial/%Y.%m.org")) "* %U %?\n\n  %i\n  %a" :prepend t)
 	("i" "Idea" entry (file+headline "~/org/_notes/notes.org" "New Ideas") "* %^{Title}\n  %i\n  %a" :prepend t)
 	("w" "Website" entry (file "~/org/_notes/www.org") "* %U %?\n\n  %i\n  %a")
+	("l" "Life Fitness" table-line (file+headline "~/org/fitness.org" "Fitness") ,(concat (format-time-string "| %Y.%m.%d@%H:%M |") " %^{Weight} | | %^{RHR} |") :table-line-pos "II-1")
 	("x" "org-capture" entry (file+headline "~/org/_notes/www.org" "Archived Content") "* %^{Title}p: %:description\n\n  Source: %U %c\n\n  %i")))
 
 ;; org protocol!
