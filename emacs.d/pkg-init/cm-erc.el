@@ -74,19 +74,20 @@
 (add-hook 'erc-after-connect 'my-erc-after-connect)
 
 ;; Start a local bitlbee server
-(require 'bitlbee)
-(setq bitlbee-user-directory "~/.bitlbee")
-(setq bitlbee-executable "/usr/sbin/bitlbee")
-(bitlbee-start)
+;(require 'bitlbee)
+;(setq bitlbee-user-directory "~/.bitlbee")
+;(setq bitlbee-executable "/usr/sbin/bitlbee")
+;(bitlbee-start)
 
 ;; Give bitlbee a chance to bind to the local port
 (sleep-for 1)
 
 ;; Define my ultracool erc-startup
 (defun erc-startup ()
+  (interactive)
   (erc-ssl :server "irc.freenode.net" :port "6697")
-  (erc :server "localhost" :port "6667")
-  (erc-ssl :server "irc.oftc.net" :port "6697")
+;  (erc :server "localhost" :port "6667")
+;  (erc-ssl :server "irc.oftc.net" :port "6697")
 )
 ;;;
 

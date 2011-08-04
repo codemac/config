@@ -13,6 +13,8 @@
 (setq warning-suppress-types nil)
 ;; Operating system hacks
 (when (eq system-type 'darwin)
+  (prefer-coding-system 'utf-8)
+  (setq file-precious-flag t)
   (let* ((home-dir (getenv "HOME"))
 	 (mac-paths `(,(concat home-dir "/bin")
 		      ,(concat home-dir "/.cabal/bin")
