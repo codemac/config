@@ -28,6 +28,7 @@ alias cp="cp -v"
 alias mplayer="mplayer -idx"
 alias wget="wget --timeout 10"
 alias grep="grep --color=auto"
+alias sm="python ~/code/statmac/statmac.py"
 #alias irb="irb --simple-prompt"
 
 #function call

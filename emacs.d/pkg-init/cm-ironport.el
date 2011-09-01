@@ -33,7 +33,8 @@
 (defun ip-p4-edit ()
   "Mark file as edit in perforce, reload buffer as editable, reset pointer"
   (interactive)
-  (ip-p4-cmd "p4 edit"))
+  (save-excursion
+    (ip-p4-cmd "p4 edit")))
 
 (defun ip-p4 ()
   "Run arbitrary p4 command on current file"
