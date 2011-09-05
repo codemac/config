@@ -2,7 +2,7 @@
 ;;
 
 (require 'eshell)
-
+(load-file "~/.emacs-priv.el")
 (defun cm-eshell-prompt ()
   (concat user-login-name "@" system-name ":"
 	  ((lambda (p-lst)
@@ -44,6 +44,9 @@
 (setq eshell-prompt-function 'cm-eshell-prompt)
 (setq eshell-prompt-regexp "^[^%#$\n]+ [%#$] ")
 (setenv "EDITOR" "emacsclient")
+(setenv "P4USER" "jmickey")
+(setenv "P4PORT" cm-ironport-p4port)
+(setenv "P4CONFIG" "P4ENV")
 
 ;; Stolen from http://www.emacswiki.org/cgi-bin/wiki.pl/EshellEnhancedLS
 (eval-after-load "em-ls"

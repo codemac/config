@@ -18,6 +18,7 @@
   (let* ((home-dir (getenv "HOME"))
 	 (mac-paths `(,(concat home-dir "/bin")
 		      ,(concat home-dir "/.cabal/bin")
+		      "/opt/local/bin"
 		      "/usr/local/texlive/2010/bin/x86_64-darwin"
 		      "/usr/local/bin"
 		      "/usr/local/sbin"
@@ -119,6 +120,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; occur in isearch!
 ;; taken from http://www.emacswiki.org/emacs/OccurFromIsearch
+
+(require 'all)
+
 (defun isearch-occur ()
       "Invoke `occur' from within isearch."
       (interactive)
@@ -126,6 +130,14 @@
         (occur (if isearch-regexp isearch-string (regexp-quote isearch-string)))))
 
 (define-key isearch-mode-map (kbd "C-o") 'isearch-occur)
+
+(defun isearch-all ()
+  "Invoke `all' from within isearch."
+  (interactive)
+  (let ((case-fold-search isearch-case-fold-search))
+    (all (if isearch-regexp isearch-string (regexp-quote isearch-string)))))
+
+(define-key isearch-mode-map (kbd "C-e") 'isearch-all)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; ediff
 ;;
