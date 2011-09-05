@@ -1,1 +1,2 @@
-;; org-persist.el - jmickey-mac at <2011-08-26 Fri 17:30>
+;; org-persist.el - penelope.local at <2011-09-04 Sun 19:01>
+(setq stored-clock-history '(("/Users/codemac/org/gtd.org" . 1215)))

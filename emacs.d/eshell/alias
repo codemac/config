@@ -8,3 +8,4 @@ alias emacs find-file-other-window $1
 alias clear recenter 0
 alias c recenter 0
 alias rm rm -v $*
+alias sm python ~/code/statmac/statmac.py
