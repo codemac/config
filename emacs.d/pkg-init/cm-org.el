@@ -268,8 +268,9 @@ This can be 0 for immediate, or a floating point value.")
 		      (:endgroup)
 		      ("COMPUTER" . ?c)
 		      ("INTERNET" . ?i)
+		      ("PHONE" . ?p)
 		      ("DISPATCH" . ?d)
-		      ("PROJECT" . ?p)))
+		      ("PROJECT" . ?r)))
 
 (setq org-log-done '(note))
 (setq org-todo-keywords
