@@ -51,11 +51,14 @@
 
 
 ;; fonts yay
-;(add-to-list 'default-frame-alist '(font . "-xos4-terminus-medium-r-normal--12-120-72-72-c-60-iso8859-1"))
+(add-to-list 'default-frame-alist '(font . "-xos4-terminus-medium-r-normal--13-120-72-72-c-60-iso8859-1"))
 ;(add-to-list 'default-frame-alist '(font . "-xos4-terminus-medium-r-normal--14-140-72-72-c-80-iso8859-1"))
 ;(add-to-list 'default-frame-alist '(font . "smoothansi"))
-;(add-to-list 'default-frame-alist '(font . "DejaVu Sans Mono-9"))
-(add-to-list 'default-frame-alist '(font . "Dina-11"))
+;(add-to-list 'default-frame-alist '(font . "DejaVu Sans Mono-11"))
+;(add-to-list 'default-frame-alist '(font . "Dina-16"))
+;(add-to-list 'default-frame-alist '(font . "ProggySquare-11"))
+;(add-to-list 'default-frame-alist '(font . "Dina ttf 10px-16"))
+;(setq mac-allow-anti-aliasing nil)
 ;(add-to-list 'default-frame-alist '(font . "Consolas-13"))
 
 ;;	Get rid of the annoying bell

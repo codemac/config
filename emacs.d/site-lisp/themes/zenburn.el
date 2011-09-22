@@ -848,6 +848,10 @@ static char *gnus-pointer[] = {
      `(todoo-sub-item-header
        ((t (:foreground ,zenburn-yellow))))
 
+     ;; make that trailing whitespace locateable
+     '(trailing-whitespace
+       ((t (:inherit font-lock-warning))))
+
      '(tuareg-font-lock-governing
        ((t (:inherit zenburn-primary-2))))
      '(tuareg-font-lock-interactive-error
