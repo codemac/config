@@ -60,7 +60,9 @@ alias cslab="rdesktop -u codemac -p - -K -a 16 -g 1150x767  rlogin.cs.vt.edu"
 alias cdwav="cdrecord -v -eject -pad speed=48 dev=/dev/cdrom -dao -audio -swab"
 alias rchem="rdesktop -u jbm -p - -K -a 16 -g 1280x667 chemad1"
 alias boggle='echo "No no no, Mr. Brian Braun-Duin"'
-
+alias p4-describe-all='p4 changes -s pending -u jmickey | awk "{print $2}" | xargs p4 describe -s | grep pending'
+# borrowed from comcleod
+#alias fucking-sad-face="p4 changes -s pending -u jmickey |awk '{print \$2}' | xargs p4 describe -s | grep pending | sed -e s/comcleod@// | awk '{system( \"echo P4PORT=perforce.ironport.com:1666 > P4ENV && echo P4CLIENT=\" $4 \" >> P4ENV && p4 change -d \" $2 \" && p4 client -d \" $4 ) }'
 
 # auto open images
 alias -s {jpg,JPG,jpeg,JPEG,png,PNG,gif,GIF}="feh -FZd"
