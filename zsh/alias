@@ -51,6 +51,7 @@ alias wh="when ci --past=0 --future=3"
 alias cdc="cd; clear"
 alias cdp="cd /u/jmickey/p4"
 alias ciq="centericq"
+alias rsyncr="rsync -avzPe ssh"
 
 # more interesting aliases :D
 alias nowifi="sudo ifconfig eth0 down; sudo route add default gw 192.168.1.1"

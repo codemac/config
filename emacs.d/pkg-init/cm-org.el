@@ -198,7 +198,7 @@ This can be 0 for immediate, or a floating point value.")
 	     ((agenda)
 	      (tags "PROJECT/!WAITING")
 	      (todo "WAITING")
-	      (tags-todo "-MAYBE")))
+	      (tags-todo "-MAYBE-BLOCKED=\"t\"")))
 	    ("n" "Next agenda"
 	     ((agenda)
 	      (tags-todo "WORK/!+NEXT")
@@ -206,24 +206,30 @@ This can be 0 for immediate, or a floating point value.")
 	      (todo "NEXT")))
 	    ("w" "Work Agenda"
 	     ((agenda)
-	      (tags-todo "WORK/!-WAITING")
-	      (tags-todo "WORK/!+WAITING")
+	      (tags-todo "WORK-BLOCKED=\"t\"/!-WAITING")
+	      (tags-todo "WORK-BLOCKED=\"t\"/!+WAITING")
 	      (tags "WORK+PROJECT")
 	      (tags "WORK")))
 	    ("h" "Home Agenda"
 	     ((agenda)
-	      (tags-todo "HOME/!-WAITING")
-	      (tags-todo "HOME/!+WAITING")
+	      (tags-todo "HOME-BLOCKED=\"t\"/!-WAITING")
+	      (tags-todo "HOME-BLOCKED=\"t\"/!+WAITING")
 	      (tags "HOME+PROJECT")
 	      (tags "HOME")))
+	    ("r" "Errand Agenda"
+	     ((agenda)
+	      (tags-todo "ERRAND-BLOCKED=\"t\"/!-WAITING")
+	      (tags-todo "ERRAND-BLOCKED=\"t\"/!+WAITING")
+	      (tags "ERRAND+PROJECT")
+	      (tags "ERRAND")))
 	    ("Z" "Receipt Agenda"
 	     ((org-receipt-agenda)))
-					;		("X" agenda ""
-					;		 ((ps-number-of-columns 3)
-					;		  (ps-landscape-mode t)
-					;		  (org-agenda-prefix-format " [ ] ")
-					;		  (org-agenda-with-colors t)
-					;		 ("theagenda.ps")
+;	    ("X" agenda ""
+;	     ((ps-number-of-columns 3)
+;	      (ps-landscape-mode t)
+;	      (org-agenda-prefix-format " [ ] ")
+;	      (org-agenda-with-colors t)
+;	      ("theagenda.ps")))
 	    ))
 
 (setq org-stuck-projects
@@ -239,7 +245,7 @@ This can be 0 for immediate, or a floating point value.")
 (setq org-clock-idle-time 10)
 
 (setq org-default-notes-files '("~/org/_notes/notes.org"))
-(setq org-agenda-files (file-expand-wildcards "~/org/*.org"))
+(setq org-agenda-files (append (file-expand-wildcards "~/org/*.org") (file-expand-wildcards "~/org/_notes/*.org")))
 (setq org-refile-targets '((nil :maxlevel . 5) (org-agenda-files :maxlevel . 5)))
 
 (setq org-mobile-directory "~/Dropbox/MobileOrg")
@@ -258,7 +264,8 @@ This can be 0 for immediate, or a floating point value.")
 (setq org-fontify-done-headline t)
 (setq org-special-ctrl-k t)
 (setq org-special-ctrl-a/e t)
-
+(setq org-agenda-dim-blocked-tasks t)
+(setq org-enforce-todo-dependencies t)
 ;; less file local settings!
 (setq org-archive-location "_archive/%s_old::")
 (setq org-tag-alist '((:startgroup)
@@ -276,7 +283,7 @@ This can be 0 for immediate, or a floating point value.")
 
 (setq org-log-done '(note))
 (setq org-todo-keywords
-      '((sequence "TODO(t)" "NEXT(x@)" "STARTED(s)" "WAITING(w@)" "|" "DONE(d)" "NVM(n@)" "MAYBE(m@)")))
+      '((sequence "TODO(t)" "NEXT(x@)" "STARTED(s)" "WAITING(w@)" "|" "DONE(d@)" "NVM(n@)" "MAYBE(m@)")))
 
 
 (setq org-tags-exclude-from-inheritance '("PROJECT"))
@@ -341,10 +348,21 @@ This can be 0 for immediate, or a floating point value.")
     (error "Cannot create link to this man page")))
 
 ;; cisco links
-(org-add-link-type "cisco" 'org-cisco-open)
-(defun org-cisco-open (path)
+(defun org-link-type-cisco-open (path)
   "path is the userid"
   (shell-command (concat "open \"http://wwwin-tools.cisco.com/dir/details/" path "\"")))
+
+(org-add-link-type "cisco" 'org-link-type-cisco-open)
+
+(defun org-link-type-websec-open (path)
+  "path is the jira number"
+  (shell-command (concat "open \"https://jira.ironport.com/browse/WEBSEC-" path "\"")))
+(org-add-link-type "websec" 'org-link-type-websec-open)
+
+(defun org-link-type-sas-open (path)
+  "path is the jira number"
+  (shell-command (concat "open \"https://jira.ironport.com/browse/ENGSAS-" path "\"")))
+(org-add-link-type "engsas" 'org-link-type-sas-open)
 
 ;; capture for mac os x popup
 (defun cm-org-capture-other-frame ()
@@ -377,16 +395,15 @@ This can be 0 for immediate, or a floating point value.")
       `(("t" "Todo" entry (file+headline "~/org/gtd.org" "Inbox") "* TODO %?\n  %i\n  %a" :prepend t)
 	("f" "Future Todo" entry (file+headline "~/org/gtd.org" "Inbox") "* TODO %?\n  %i\n  %^T\n  %a" :prepend t)
 	("m" "Music" entry (file+headline "~/org/music.org" "To Get") "* TODO %?\n  %U" :prepend t)
-	("j" "Journal" entry (file ,(format-time-string "~/org/_editorial/%Y.%m.org")) "* %U %?\n\n  %i\n  %a" :prepend t)
+	("j" "Journal" entry (file ,(format-time-string "~/org/_editorial/%Y.%m.org")) "* %U %?\n\n  %i\n  %a" :prepend nil)
 	("r" "Reflect" entry (file ,(format-time-string "~/org/_editorial/%Y.%m.org")) "* Review for %U %?\n%^{Exercise}p%^{Nutrition}p%^{Positive}p%^{Habits}p%^{Grooming}p%^{Smile}p%^{Posture}p%^{Help}p%^{Relax}p%^{Sit}p\nExercise Review: -\nNutrition Review: -\nThinking Review -\nHabit Review: -\nHelp Review: -\n" :prepend nil)
+	("n" "Timed Notes" entry (file ,(format-time-string "~/org/_notes/%Y.org")) "* %U %?\n\n  %i\n  %a" :prepend nil)
 	("i" "Idea" entry (file+headline "~/org/_notes/notes.org" "New Ideas") "* %^{Title}\n  %i\n  %a" :prepend t)
 	("w" "Website" entry (file "~/org/_notes/www.org") "* %U %?\n\n  %i\n  %a")
 	("l" "Life Fitness" table-line (file+headline "~/org/fitness.org" "Fitness") ,(concat (format-time-string "| %Y.%m.%d-%H:%M |") " %^{Weight} | | %^{RHR} |") :table-line-pos "II-1")
 	("x" "org-capture" entry (file+headline "~/org/_notes/www.org" "Archived Content") "* %^{Title}p: %:description\n\n  Source: %U %c\n\n  %i")))
 
 ;; org protocol!
-
-
 (defun gtd ()
   (interactive)
   (find-file "~/org/gtd.org")

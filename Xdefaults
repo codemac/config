@@ -1,4 +1,4 @@
-!# Most recent update: Wed 06 Apr 2011 06:49:54 PM EDT
+!# Most recent update: Wed Sep 21 14:22:57 2011
 xterm*toolBar:	false
 xterm*utf8: 2
 ! yeah!console
@@ -85,7 +85,7 @@ xclock*minorColor:		blue
 xclock*buffer:			true
 xclock*background:		black
 
-urxvt*saveLines:        32767
+urxvt*saveLines:        100000
 urxvt*scrollBar:        false
 urxvt*loginShell:       true
 urxvt*internalBorder:   0

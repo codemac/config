@@ -23,3 +23,4 @@ emacs.d/pkg-init/cm-netapp.el
 emacs.d/eshell/history
 emacs.d/eshell/lastdir
 vim/.netrwhist
+xmonad/xmonad-x86_64-darwin

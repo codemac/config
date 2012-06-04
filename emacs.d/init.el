@@ -51,7 +51,8 @@
 
 
 ;; fonts yay
-(add-to-list 'default-frame-alist '(font . "-xos4-terminus-medium-r-normal--13-120-72-72-c-60-iso8859-1"))
+(add-to-list 'default-frame-alist '(font . "Dina-9"))
+;(add-to-list 'default-frame-alist '(font . "-xos4-terminus-medium-r-normal--13-120-72-72-c-60-iso8859-1"))
 ;(add-to-list 'default-frame-alist '(font . "-xos4-terminus-medium-r-normal--14-140-72-72-c-80-iso8859-1"))
 ;(add-to-list 'default-frame-alist '(font . "smoothansi"))
 ;(add-to-list 'default-frame-alist '(font . "DejaVu Sans Mono-11"))
@@ -181,17 +182,37 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; sticky buffer
 ;;; http://www.reddit.com/r/emacs/comments/gjqki/is_there_any_way_to_tell_emacs_to_not/c1o26uk
 
-(defun toggle-sticky-buffer-window ()
-  "Toggle whether this window is dedicated to this buffer."
-  (interactive)
-  (set-window-dedicated-p
-   (selected-window)
-   (not (window-dedicated-p (selected-window))))
-  (if (window-dedicated-p (selected-window))
-      (message "Window is now dedicated.")
-    (message "Window is no longer dedicated.")))
+;(defun toggle-sticky-buffer-window ()
+;  "Toggle whether this window is dedicated to this buffer."
+;  (interactive)
+;  (set-window-dedicated-p
+;   (selected-window)
+;   (not (window-dedicated-p (selected-window))))
+;  (if (window-dedicated-p (selected-window))
+;      (message "Window is now dedicated.")
+;    (message "Window is no longer dedicated.")))
+;
+;(global-set-key [(super d)] 'toggle-sticky-buffer-window)
+;; lock it up.
+(defadvice pop-to-buffer (before cancel-other-window first)
+  (ad-set-arg 1 nil))
 
-(global-set-key [(super d)] 'toggle-sticky-buffer-window)
+(ad-activate 'pop-to-buffer)
+
+;; Toggle window dedication
+(defun toggle-window-dedicated ()
+  "Toggle whether the current active window is dedicated or not"
+  (interactive)
+  (message
+   (if (let (window (get-buffer-window (current-buffer)))
+         (set-window-dedicated-p window 
+                                 (not (window-dedicated-p window))))
+       "Window '%s' is dedicated"
+     "Window '%s' is normal")
+   (current-buffer)))
+
+;; Press [pause] key in each window you want to "freeze"
+(global-set-key [f11] 'toggle-window-dedicated)
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; revert buffer
@@ -217,6 +238,26 @@
 (global-set-key [M-up] 'windmove-up)
 (global-set-key [M-down] 'windmove-down)
 
+;; lock it up.
+(defadvice pop-to-buffer (before cancel-other-window first)
+  (ad-set-arg 1 nil))
+
+(ad-activate 'pop-to-buffer)
+
+;; Toggle window dedication
+(defun toggle-window-dedicated ()
+  "Toggle whether the current active window is dedicated or not"
+  (interactive)
+  (message
+   (if (let (window (get-buffer-window (current-buffer)))
+         (set-window-dedicated-p window 
+                                 (not (window-dedicated-p window))))
+       "Window '%s' is dedicated"
+     "Window '%s' is normal")
+   (current-buffer)))
+
+;; Press [pause] key in each window you want to "freeze"
+(global-set-key [pause] 'toggle-window-dedicated)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; server
 ;;;
 (unless (string-equal "root" (getenv "USER"))
@@ -256,6 +297,7 @@
 ;(require 'cm-command-frequency) ; not using this anymore...
 (require 'cm-blog)
 (require 'cm-erc)
+(require 'cm-bitlbee)
 (require 'cm-wanderlust)
 (require 'cm-jabber)
 (require 'cm-c)
@@ -277,6 +319,9 @@
 (require 'cm-ironport)
 (require 'cm-desktop)
 (require 'cm-smex)
+(require 'cm-slime)
+(require 'cm-sql)
+(require 'cm-browse-kill-ring)
 
 ;; things that I don't want on the mac
 (unless (eq system-type 'darwin)
@@ -285,25 +330,29 @@
   (require 'cm-emms))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; CUSTOM!
 (custom-set-faces
-  ;; custom-set-faces was added by Custom.
-  ;; If you edit it by hand, you could mess it up, so be careful.
-  ;; Your init file should contain only one such instance.
-  ;; If there is more than one, they won't work right.
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
  )
 
 (custom-set-variables
-  ;; custom-set-variables was added by Custom.
-  ;; If you edit it by hand, you could mess it up, so be careful.
-  ;; Your init file should contain only one such instance.
-  ;; If there is more than one, they won't work right.
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
  '(android-mode-avd "TodoDevice")
  '(auto-image-file-mode t)
  '(browse-url-firefox-new-window-is-tab t)
  '(browse-url-firefox-program "firefox")
+ '(c-basic-offset 4)
  '(ecb-options-version "2.40")
  '(frame-background-mode (quote dark))
+ '(indent-tabs-mode nil)
  '(jabber-account-list (quote (("j@xmpp.us") ("codemac@gmail.com" (:network-server . "talk.google.com") (:port . 5222)))))
  '(jabber-roster-line-format " %c %-25n %u %-8s  %S")
+ '(jira-url "http://jira.ironport.com/rpc/xmlrpc")
+ '(org-agenda-files (quote ("~/org/fitness.org" "~/org/from-mobile.org" "~/org/gtd.org" "~/org/ironport.org" "~/org/_notes/2012.org" "~/org/_notes/gifts.org" "~/org/_notes/nanowrimo2011.org" "~/org/_notes/notes.org" "~/org/_notes/oppression-of-tech.org" "~/org/_notes/steal.org" "~/org/_notes/webmac.org")))
  '(w3m-use-cookies t))
 
 ;; COLORS PLZ

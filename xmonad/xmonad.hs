@@ -71,7 +71,7 @@ myWorkspaces    = ["dev", "web", "el", "im", "out" ] ++ map show [6..9]
 myDefaultGaps = [(15,0,0,0),(15,0,0,0)]
 
 -- statusbar
-myBar = "xmobar"
+myBar = "~/.cabal/bin/xmobar"
 
 myPP = xmobarPP { ppCurrent = xmobarColor "#429942" "" . wrap "<" ">" }
 
@@ -89,7 +89,7 @@ myKeys conf@(XConfig {XMonad.modMask = modMask}) = M.fromList $
     [ ((modMask .|. shiftMask, xK_Return), spawn $ myTerminal)
 
     -- launch dmenu
-    , ((modMask,               xK_p     ), spawn "exe=`dmenu_path | dmenu` && eval \"exec $exe\"")
+    , ((modMask,               xK_p     ), spawn "~/bin/dmenu_run")
 
     -- launch gmrun
     , ((modMask .|. shiftMask, xK_p     ), spawn "gmrun")
@@ -273,13 +273,13 @@ myStartupHook = return ()
 -- Run xmonad with the settings you specify. No need to modify this.
 --
 main = do 
-    xmproc <- spawnPipe "xmobar ~/.xmobarrc"
+    xmproc <- spawnPipe "~/.cabal/bin/xmobar ~/.xmobarrc"
     xmonad $ defaultConfig
       -- simple stuff
         { terminal           = myTerminal
         , focusFollowsMouse  = myFocusFollowsMouse
         , borderWidth        = myBorderWidth
-        , modMask            = myModMask
+        --, modMask            = myModMask
         , workspaces         = myWorkspaces
         , normalBorderColor  = myNormalBorderColor
         , focusedBorderColor = myFocusedBorderColor
