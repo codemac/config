@@ -10,6 +10,8 @@
 (tool-bar-mode -1)
 (scroll-bar-mode -1)
 
+(set-default 'indicate-empty-lines t)
+
 (setq warning-suppress-types nil)
 ;; Operating system hacks
 (when (eq system-type 'darwin)
@@ -51,11 +53,12 @@
 
 
 ;; fonts yay
-(add-to-list 'default-frame-alist '(font . "Dina-9"))
+;(add-to-list 'default-frame-alist '(font . "Dina-9"))
 ;(add-to-list 'default-frame-alist '(font . "-xos4-terminus-medium-r-normal--13-120-72-72-c-60-iso8859-1"))
 ;(add-to-list 'default-frame-alist '(font . "-xos4-terminus-medium-r-normal--14-140-72-72-c-80-iso8859-1"))
 ;(add-to-list 'default-frame-alist '(font . "smoothansi"))
-;(add-to-list 'default-frame-alist '(font . "DejaVu Sans Mono-11"))
+(add-to-list 'default-frame-alist '(font . "DejaVu Sans Mono-9:hinting=true:autohint=true"))
+;(add-to-list 'default-frame-alist '(font . "Inconsolata-10"))
 ;(add-to-list 'default-frame-alist '(font . "Dina-16"))
 ;(add-to-list 'default-frame-alist '(font . "ProggySquare-11"))
 ;(add-to-list 'default-frame-alist '(font . "Dina ttf 10px-16"))
@@ -322,6 +325,10 @@
 (require 'cm-slime)
 (require 'cm-sql)
 (require 'cm-browse-kill-ring)
+(require 'cm-info)
+(require 'cm-perspective)
+(require 'cm-expand-region)
+(require 'cm-ace-jump)
 
 ;; things that I don't want on the mac
 (unless (eq system-type 'darwin)

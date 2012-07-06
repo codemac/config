@@ -1,12 +1,13 @@
-alias vi emacsclient
-alias sm python ~/code/statmac/statmac.py
-alias rm rm -v $*
-alias c recenter 0
-alias clear recenter 0
-alias emacs find-file-other-window $1
-alias l ls -l $*
-alias cd cd $*; ls -l
-alias e find-file-other-window $1
-alias vim find-file-other-window $1
-alias xpdf open $*
+alias sudo *sudo $*
 alias wget wget --progress=dot:mega $*
+alias xpdf open $*
+alias vim find-file-other-window $1
+alias e find-file-other-window $1
+alias cd cd $*; ls -l
+alias l ls -l $*
+alias emacs find-file-other-window $1
+alias clear recenter 0
+alias c recenter 0
+alias rm rm -v $*
+alias sm python ~/code/statmac/statmac.py
+alias vi emacsclient

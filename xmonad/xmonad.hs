@@ -15,8 +15,8 @@ import XMonad.Layout.Tabbed
 import XMonad.Layout.IM
 import XMonad.Actions.WindowBringer
 import Data.Ratio ((%))
-import XMonad.Util.Run(spawnPipe)
-import XMonad.Util.Scratchpad
+--import XMonad.Util.Run(spawnPipe)
+--import XMonad.Util.Scratchpad
 import System.IO
 import System.Exit
 
@@ -273,7 +273,7 @@ myStartupHook = return ()
 -- Run xmonad with the settings you specify. No need to modify this.
 --
 main = do 
-    xmproc <- spawnPipe "~/.cabal/bin/xmobar ~/.xmobarrc"
+--    xmproc <- spawnPipe "~/.cabal/bin/xmobar ~/.xmobarrc"
     xmonad $ defaultConfig
       -- simple stuff
         { terminal           = myTerminal

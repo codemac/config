@@ -20,7 +20,9 @@ if [[ -f /opt/local/bin/python ]]; then
 #    alias ve.lssitepackages='lssitepackages'
 fi
 
-export PATH=".:/opt/local/bin:/opt/local/sbin:/opt/java/bin:/opt/kde/bin:/Applications/Racket v5.2.1/bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/bin:/sbin:/usr/sbin:$PYTHONBIN:$HOME/bin:$HOME/hacks:$HOME/code/depot_tools:$HOME/.cabal/bin:/usr/software/bin:/usr/software/rats/bin:$PATH"
+export GOROOT=/usr/local/go
+export GOPATH=$HOME/code/tellme
+export PATH=".:/opt/local/bin:/opt/local/sbin:/opt/java/bin:/opt/kde/bin:/Applications/Racket v5.2.1/bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/bin:/sbin:/usr/sbin:$PYTHONBIN:$HOME/bin:$HOME/hacks:$HOME/code/depot_tools:$HOME/.cabal/bin:/usr/software/bin:/usr/software/rats/bin:$GOROOT/bin:$PATH"
 export MOZILLA_FIVE_HOME=/opt/mozilla/bin/mozilla
 case ${OSTYPE} in
     darwin*)
