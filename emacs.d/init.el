@@ -275,7 +275,7 @@
 
 ;;; MY REQUIREMENTS!
 (require 'cm-cl)
-;(require 'cm-package)
+(require 'cm-package)
 (require 'cm-markdown)
 (require 'cm-wikipedia)
 (require 'cm-ido)
