@@ -32,8 +32,6 @@
 			   (mapconcat 'identity mac-paths ":")))
     (setq exec-path (append exec-path mac-paths))))
 
-
-
 ;; add my site-lisp dir as a place to load things
 (add-to-list 'load-path "~/.emacs.d/site-lisp")
 (add-to-list 'load-path "~/.emacs.d/pkg-init")
@@ -53,11 +51,18 @@
 
 
 ;; fonts yay
+;; handle host screensizes!
+(cond
+ ((equal system-name "phoenix-mta")
+  (add-to-list 'default-frame-alist '(font . "DejaVu Sans Mono-12:hinting=true:autohint=true")))
+ ((equal system-name "penolpe")
+  (add-to-list 'default-frame-alist '(font . "DejaVu Sans Mono-9:hinting=true:autohint=true")))
+)
 ;(add-to-list 'default-frame-alist '(font . "Dina-9"))
 ;(add-to-list 'default-frame-alist '(font . "-xos4-terminus-medium-r-normal--13-120-72-72-c-60-iso8859-1"))
 ;(add-to-list 'default-frame-alist '(font . "-xos4-terminus-medium-r-normal--14-140-72-72-c-80-iso8859-1"))
 ;(add-to-list 'default-frame-alist '(font . "smoothansi"))
-(add-to-list 'default-frame-alist '(font . "DejaVu Sans Mono-9:hinting=true:autohint=true"))
+;(add-to-list 'default-frame-alist '(font . "DejaVu Sans Mono-12:hinting=true:autohint=true"))
 ;(add-to-list 'default-frame-alist '(font . "Inconsolata-10"))
 ;(add-to-list 'default-frame-alist '(font . "Dina-16"))
 ;(add-to-list 'default-frame-alist '(font . "ProggySquare-11"))
