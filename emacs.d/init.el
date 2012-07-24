@@ -18,7 +18,8 @@
   (prefer-coding-system 'utf-8)
   (setq file-precious-flag t)
   (let* ((home-dir (getenv "HOME"))
-	 (mac-paths `(,(concat home-dir "/bin")
+	 (mac-paths `("/Applications/Emacs.app/Contents/MacOS/bin"
+                      ,(concat home-dir "/bin")
 		      ,(concat home-dir "/.cabal/bin")
 		      "/opt/local/bin"
 		      "/usr/local/texlive/2010/bin/x86_64-darwin"
@@ -28,8 +29,9 @@
 		      "/usr/sbin"
 		      "/bin"
 		      "/sbin")))
-    (setenv "PATH" (concat (getenv "PATH") ":"
-			   (mapconcat 'identity mac-paths ":")))
+    (setenv "PATH" (concat (mapconcat 'identity mac-paths ":")
+                           ":"
+                           (getenv "PATH")))
     (setq exec-path (append exec-path mac-paths))))
 
 ;; add my site-lisp dir as a place to load things
@@ -52,8 +54,12 @@
 
 ;; fonts yay
 ;; handle host screensizes!
+
+;; correct vpn'd hostname
+
 (cond
- ((equal system-name "phoenix-mta")
+ ((or (equal system-name "phoenix-mta")
+      (string-prefix-p "vpn2ntap-" system-name))
   (add-to-list 'default-frame-alist '(font . "DejaVu Sans Mono-12:hinting=true:autohint=true")))
  ((equal system-name "penolpe")
   (add-to-list 'default-frame-alist '(font . "DejaVu Sans Mono-9:hinting=true:autohint=true")))
@@ -364,7 +370,7 @@
  '(jabber-account-list (quote (("j@xmpp.us") ("codemac@gmail.com" (:network-server . "talk.google.com") (:port . 5222)))))
  '(jabber-roster-line-format " %c %-25n %u %-8s  %S")
  '(jira-url "http://jira.ironport.com/rpc/xmlrpc")
- '(org-agenda-files (quote ("~/org/fitness.org" "~/org/from-mobile.org" "~/org/gtd.org" "~/org/ironport.org" "~/org/_notes/2012.org" "~/org/_notes/gifts.org" "~/org/_notes/nanowrimo2011.org" "~/org/_notes/notes.org" "~/org/_notes/oppression-of-tech.org" "~/org/_notes/steal.org" "~/org/_notes/webmac.org")))
+ '(org-agenda-files (quote ("~/org/fitness.org" "~/org/gtd.org" "~/org/_notes/2012.org" "~/org/_notes/gifts.org" "~/org/_notes/nanowrimo2011.org" "~/org/_notes/notes.org" "~/org/_notes/oppression-of-tech.org" "~/org/_notes/steal.org" "~/org/_notes/webmac.org")))
  '(w3m-use-cookies t))
 
 ;; COLORS PLZ
