@@ -60,7 +60,6 @@
 
 (or (fboundp 'add-local-hook)
     (defun add-local-hook (hook function &optional append)
-      (make-local-hook hook)
       (add-hook hook function append t))
     )
 

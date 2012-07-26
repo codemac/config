@@ -1,5 +1,6 @@
 ;; yay magit
-(require 'magit)
+(require 'magit-autoloads)
 ; add some signage.
-(setq magit-commit-signoff t)
+(eval-after-load 'magit
+  (setq magit-commit-signoff t))
 (provide 'cm-magit)

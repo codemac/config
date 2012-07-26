@@ -1,7 +1,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; browse kill ring
 ;;;
 
-(require 'browse-kill-ring)
+(autoload 'browse-kill-ring "browse-kill-ring" "")
 
 (global-set-key (kbd "C-c n") 'browse-kill-ring)
 

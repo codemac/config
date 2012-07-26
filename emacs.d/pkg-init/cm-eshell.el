@@ -1,7 +1,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; eshell
 ;;
 
-(require 'eshell)
+(autoload 'eshell "eshell" "")
 (load-file "~/.emacs-priv.el")
 (defun cm-eshell-prompt ()
   (concat user-login-name "@" system-name ":"
