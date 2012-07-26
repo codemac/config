@@ -38,7 +38,14 @@
 (defun my-erc-hook ()
   "Correctly configure ERC buffers"
   (auto-fill-mode 0)                    ; disable auto fill
-  (setq truncate-lines nil))            ; wrap lines
+  (setq truncate-lines nil)            ; wrap lines
+  ;; Add some modules
+  (add-to-list 'erc-modules 'spelling)
+  (add-to-list 'erc-modules 'scrolltobottom)
+  (add-to-list 'erc-modules 'truncate)
+;(add-to-list 'erc-modules 'log)
+  (add-to-list 'erc-modules 'highlight-nicknames)
+  (erc-update-modules))
 
 (defun my-erc-after-connect (server nick)
   (cond
@@ -56,18 +63,14 @@
     (erc-propertize (concat "[ ERC ]") 'read-only t 'rear-nonsticky t 'front-nonsticky t)))
 
 ;; Load in some ERC extra modules (you must download these separately)
-(require 'erc-highlight-nicknames)
-(require 'erc-nicklist)
+(autoload 'erc-highlight-nicknames "erc-hightlight-nicknames")
+;(require 'erc-highlight-nicknames)
+(autoload 'erc-nicklist "erc-nicklist")
+;(require 'erc-nicklist)
 (setq erc-nicklist-use-icons nil)
 (setq erc-nicklist-voiced-position 'top)
 
-;; Add some modules
-(add-to-list 'erc-modules 'spelling)
-(add-to-list 'erc-modules 'scrolltobottom)
-(add-to-list 'erc-modules 'truncate)
-;(add-to-list 'erc-modules 'log)
-(add-to-list 'erc-modules 'highlight-nicknames)
-(erc-update-modules)
+
 
 ;; Hook in
 (add-hook 'erc-mode-hook 'my-erc-hook)
@@ -80,7 +83,7 @@
 ;(bitlbee-start)
 
 ;; Give bitlbee a chance to bind to the local port
-(sleep-for 1)
+;(sleep-for 1)
 
 ;; Define my ultracool erc-startup
 (defun erc-startup ()

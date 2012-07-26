@@ -58,8 +58,9 @@
 ;; correct vpn'd hostname
 
 (cond
- ((or (equal system-name "phoenix-mta")
-      (string-prefix-p "vpn2ntap-" system-name))
+ ((or (string-prefix-p "phoenix-mta" system-name)
+      (string-prefix-p "vpn2ntap-" system-name)
+      (string-prefix-p "moc.ppaten.qh" (string (reverse (string-to-list system-name)))))
   (add-to-list 'default-frame-alist '(font . "DejaVu Sans Mono-12:hinting=true:autohint=true")))
  ((equal system-name "penolpe")
   (add-to-list 'default-frame-alist '(font . "DejaVu Sans Mono-9:hinting=true:autohint=true")))
@@ -375,21 +376,24 @@
  '(w3m-use-cookies t))
 
 ;; COLORS PLZ
-(require 'color-theme)
-(load-library "color-theme-colorful-obsolescence")
+;(require 'color-theme)
+;(load-library "color-theme-colorful-obsolescence")
 ;(load-library "manoj-colors")
-(load-library "zenburn")
-(defun set-up-colors()
-  (interactive)
-  (setq color-theme-is-global t)
-  (setq color-theme-load-all-themes nil)
-  (color-theme-initialize)
+;(load-library "zenburn")
+;(defun set-up-colors()
+;  (interactive)
+;  (setq color-theme-is-global t)
+;  (setq color-theme-load-all-themes nil)
+;  (color-theme-initialize)
 ;  (color-theme-colorful-obsolescence)
-	(color-theme-zenburn)
+;	(color-theme-zenburn)
 ;    (color-theme-rlx)
-  )
-(set-up-colors)
+;  )
+;(set-up-colors)
+
+(load-theme 'zenburn t)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; last line?
 (message "My .emacs loaded in %ds" (destructuring-bind (hi lo ms) (current-time)
                              (- (+ hi lo) (+ (first *emacs-load-start*) (second *emacs-load-start*)))))
+(put 'narrow-to-region 'disabled nil)
