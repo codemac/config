@@ -23,6 +23,7 @@ emacs.d/pkg-init/cm-netapp.el
 emacs.d/eshell/history
 emacs.d/eshell/lastdir
 emacs.d/url/cookies
+emacs.d/bookmarks
+emacs.d/.org-id-locations
 vim/.netrwhist
 xmonad/xmonad-x86_64-darwin
-emacs.d/bookmarks
