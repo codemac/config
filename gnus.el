@@ -13,40 +13,50 @@
 (setq user-mail-address "jmickey@netapp.com")
 (setq user-full-name "Jeff Mickey")
 (load-library "smtpmail")
-(load-library "nnimap")
+(load-library "nnmaildir")
 (require 'nnir)
-(setq gnus-select-method '(nnimap "rtpmvexc1-prd.hq.netapp.com"
-           (nnimap-address "rtpmvexc1-prd.hq.netapp.com")
-           (nnimap-server-port 143)
-		   (nnimap-nov-is-evil t)
-		   (nnir-search-engine imap)
-           (nnimap-authinfo-file "~/.imap-authinfo")
-           ))
+;(setq gnus-select-method '(nnimap "rtpmvexc1-prd.hq.netapp.com"
+;           (nnimap-address "rtpmvexc1-prd.hq.netapp.com")
+;           (nnimap-server-port 143)
+;		   (nnimap-nov-is-evil t)
+;		   (nnir-search-engine imap)
+;           (nnimap-authinfo-file "~/.imap-authinfo")
+;           ))
 
-
+;(setq gnus-select-method '(nnmaildir "maildir"
+;                                     (directory "~/mail")
+;                                     (expire-age never)
+;                                     (get-new-mail nil)))
+(setq gnus-select-method '(nnimap "local-dovecot"
+                                  (nnimap-stream shell)
+                                  (nnimap-shell-program "MAIL=maildir:~/mail /opt/local/libexec/dovecot/imap")))
 
 ;; Set up sending mail
-(setq smtpmail-auth-credentials "/home/jeff/.imap-authinfo"
+(setq smtpmail-auth-credentials "~/.authinfo"
       smtpmail-smtp-server "mail.netapp.com"
       smtpmail-default-smtp-server "mail.netapp.com"
       smtpmail-smtp-service 25
       send-mail-function 'smtpmail-send-it
       message-send-mail-function 'smtpmail-send-it
-	  smtpmail-auth-supported '(login)
-       )
+      smtpmail-auth-supported '(login))
+
 (add-hook 'gnus-topic-mode-hook 'gnus-topic-mode)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; bbdb
 ;;
-;(autoload 'bbdb-insinuate-gnus "bbdb" "use the bbdb db" t)
-;(add-hook 'gnus-startup-hook 'bbdb-insinuate-gnus)
-
+(autoload 'bbdb-insinuate-gnus "bbdb" "use the bbdb db" t)
+(add-hook 'gnus-startup-hook 'bbdb-insinuate-gnus)
+(setq bbdb/news-auto-create-p t)
+(add-hook 'message-mode-hook
+                (function (lambda() 
+                           (local-set-key (kbd "<tab>") 'bbdb-complete-name)
+                         )))
 ;;
 
 ;;;; caching
 ;(require 'gnus-cache)
 (setq gnus-use-cache nil)
-(setq gnus-always-read-dribble-file t )
+(setq gnus-always-read-dribble-file t)
 (setq nnmail-treat-duplicates 'delete)
 
 ;; Gnus!  Why would you delete my headers?
@@ -71,37 +81,39 @@
 ;; |   |          |
 ;; +---+----------+
 ;; ;
-;(gnus-add-configuration
-;  '(article
-;     (horizontal 1.0
-;;                 (vertical 25
-;                           (group 1.0))
-;                 (vertical 1.0
-;                           (summary 0.25 point)
-;                           (article 1.0)))))
-;(gnus-add-configuration
-;  '(summary
-;     (horizontal 1.0
-;                 (vertical 25
-;                           (group 1.0))
-;                 (vertical 1.0
-;                           (summary 1.0 point)))))
+(gnus-add-configuration
+  '(article
+     (horizontal 1.0
+                 (vertical 25
+                           (group 1.0))
+                 (vertical 1.0
+                           (summary 0.25 point)
+                           (article 1.0)))))
+(gnus-add-configuration
+  '(summary
+     (horizontal 1.0
+                 (vertical 25
+                           (group 1.0))
+                 (vertical 1.0
+                           (summary 1.0 point)))))
 
 
-(add-hook 'gnus-summary-mode-hook 'my-setup-hl-line)
-(add-hook 'gnus-group-mode-hook 'my-setup-hl-line)
+(add-hook 'gnus-summary-mode-hook 'gnus-hl-line)
+(add-hook 'gnus-group-mode-hook 'gnus-hl-line)
 (add-hook 'gnus-group-mode-hook 'gnus-topic-mode)
-(defun my-setup-hl-line ()
+
+(defun gnus-hl-line ()
   (hl-line-mode 1)
-  (setq cursor-type nil)) ; Comment this out, if you want the cursor to stay visible.
+  (set (make-local-variable 'line-move-visual) nil)
+  (setq cursor-type nil))
 
 ;; Inline images?
-(setq mm-attachment-override-types '("image/.*"))
-(eval-after-load "gnus-sum" 
-  '(add-to-list 
-    'gnus-newsgroup-variables 
-    '(mm-discouraged-alternatives 
-      . '("text/html" "image/.*"))))
+(add-to-list 'mm-attachment-override-types "image/.*")
+;(eval-after-load "gnus-sum" 
+;  '(add-to-list 
+;    'gnus-newsgroup-variables 
+;    '(mm-discouraged-alternatives 
+;      . '("text/html" "image/.*"))))
  
 ; Display `text/html' parts in `nnrss' groups. 
 (add-to-list 
@@ -109,25 +121,24 @@
  '("\\`nnrss:" (mm-discouraged-alternatives nil)))
 
 ;; and use w3m to do so
-(setq mm-text-html-renderer 'w3m)
+;(setq mm-text-html-renderer 'w3m)
 
 (setq gnus-ignored-from-addresses
       (mapconcat 'regexp-quote
        '("codemac@gmail.com"
          "j@codemac.net"
-		 "jmickey@vt.edu"
-		 "jm@vt.edu"
-		 "i@vt.edu"
-		 "jeff@archlinux.org"
-		 "jmickey@netapp.com")
+         "jmickey@vt.edu"
+         "jm@vt.edu"
+         "i@vt.edu"
+         "jeff@archlinux.org"
+         "jmickey@netapp.com")
        "\\|"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; set up my posting styles
 (setq gnus-posting-styles
   '((".*"
-	 (name "Jeff Mickey")
-	 (address "jmickey@netapp.com"))
-	))
+     (name "Jeff Mickey")
+     (address "jmickey@netapp.com"))))
 ;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; text wrap
@@ -165,13 +176,13 @@
 (setq gnus-group-line-format "%P %-4N %(%~(pad-right 8)G%)\n"
       gnus-topic-line-format "%i[ %0{%(%n (new: %a)%)%} ]\n")
 
-(setq gnus-summary-line-format ":%U%R| %10,10&user-date; | %-20,20n | %B%s%-101=|%5,5L | %5,5k\n")
+(setq gnus-summary-line-format ":%U%R| %5,5k/%5,5L | %20,20&user-date; | %-30,30n | %B%s\n")
 
 ;; Automatically poll for news every ten minutes (after two minute idle)
-(require 'gnus-demon)
-(setq gnus-use-demon t)
-(gnus-demon-add-handler 'gnus-group-get-new-news 10 2)
-(gnus-demon-init)
+;(require 'gnus-demon)
+;(setq gnus-use-demon t)
+;(gnus-demon-add-handler 'gnus-group-get-new-news 10 2)
+;(gnus-demon-init)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;  Encryption stuff
 ;(require 'pgg)
@@ -209,15 +220,40 @@
 ;          gnus-sum-thread-tree-leaf-with-other "\226\223>"
 ;          gnus-sum-thread-tree-single-leaf "\217\223>")
 
+;; run offlineimap
+
+(defun run-offlineimap-for-gnus ()
+  (interactive)
+  (shell-command "offlineimap&" "*offlineimap*" nil))
+
+;; doesn't work.. asks about shell command not being
+;; done. Ugh. window-delete wasn't any better, doing a save-excursion
+;; etc seemed over the top.
+;(defun run-offlineimap-for-gnus-and-bury ()
+;  (interactive)
+;  (run-offlineimap-for-gnus)
+;  (bury-buffer (get-buffer "*offlineimap*")))
+
+(define-key gnus-group-mode-map (kbd "vo") 'run-offlineimap-for-gnus)
+(add-hook 'gnus-before-startup-hook 'run-offlineimap-for-gnus)
+
+(defun offlineimap-suspend-kill-buffer ()
+  (interactive)
+  (kill-buffer (get-buffer "*offlineimap*")))
+(add-hook 'gnus-suspend-gnus-hook 'offlineimap-suspend-kill-buffer)
+;(add-hook 'gnus-suspend-gnus-hook 'run-offlineimap-for-gnus)
+;(add-hook 'gnus-after-exiting-gnus-hook 'run-offlineimap-for-gnus)
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; lock file
-(add-hook 'gnus-startup-hook
-      '(lambda ()
-	 (gf-touch gnus-lock-filename)))
-(add-hook 'gnus-after-exiting-gnus-hook
-      '(lambda ()
-	 (if (file-exists-p gnus-lock-filename)
-	     (delete-file gnus-lock-filename)
-	   (message "Funky.. %S does not exist.." gnus-lock-filename))))
+;(add-hook 'gnus-startup-hook
+;      '(lambda ()
+;	 (gf-touch gnus-lock-filename)))
+;(add-hook 'gnus-after-exiting-gnus-hook
+;      '(lambda ()
+;	 (if (file-exists-p gnus-lock-filename)
+;	     (delete-file gnus-lock-filename)
+;	   (message "Funky.. %S does not exist.." gnus-lock-filename))))
 ;;
 
 ;; power speed awesomeness!

@@ -60,7 +60,7 @@
 (cond
  ((or (string-prefix-p "phoenix-mta" system-name)
       (string-prefix-p "vpn2ntap-" system-name)
-      (string-prefix-p "moc.ppaten.qh" (string (reverse (string-to-list system-name)))))
+      (string-prefix-p "moc.ppaten.qh" (apply 'string (reverse (string-to-list system-name)))))
   (add-to-list 'default-frame-alist '(font . "DejaVu Sans Mono-12:hinting=true:autohint=true")))
  ((equal system-name "penolpe")
   (add-to-list 'default-frame-alist '(font . "DejaVu Sans Mono-9:hinting=true:autohint=true")))
@@ -137,6 +137,29 @@
 (global-set-key [f7] 'bookmark-jump)
 ;;
 
+(defun my-backward-kill-word (&optional arg)
+  "Replacement for the backward-kill-word command
+If the region is active, then invoke kill-region.  Otherwise, use
+the following custom backward-kill-word procedure.
+If the previous word is on the same line, then kill the previous
+word.  Otherwise, if the previous word is on a prior line, then kill
+to the beginning of the line.  If point is already at the beginning
+of the line, then kill to the end of the previous line.
+
+With argument ARG and region inactive, do this that many times."
+  (interactive "p")
+  (if (use-region-p)
+      (kill-region (mark) (point))
+    (let (count)
+      (dotimes (count arg)
+        (if (bolp)
+            (delete-backward-char 1)
+          (kill-region (max (save-excursion (backward-word)(point))
+                            (line-beginning-position))
+                       (point)))))))
+
+(define-key (current-global-map) [remap backward-kill-word]
+  'my-backward-kill-word)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; occur in isearch!
 ;; taken from http://www.emacswiki.org/emacs/OccurFromIsearch
 
@@ -320,8 +343,9 @@
 (require 'cm-tramp)
 (require 'cm-uniquify)
 (require 'cm-tabbar)
-(require 'cm-xcscope)
+;(require 'cm-xcscope)
 ;(require 'cm-ascope)
+(require 'cm-global)
 (require 'cm-yasnippet)
 (require 'cm-gnus)
 (require 'cm-dired)
@@ -339,9 +363,12 @@
 (require 'cm-sql)
 (require 'cm-browse-kill-ring)
 (require 'cm-info)
-(require 'cm-perspective)
+;(require 'cm-perspective)
 (require 'cm-expand-region)
 (require 'cm-ace-jump)
+(require 'cm-hl-line)
+(require 'cm-flymake)
+
 
 ;; things that I don't want on the mac
 (unless (eq system-type 'darwin)
@@ -384,6 +411,31 @@
 ;(set-up-colors)
 
 (load-theme 'zenburn t)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; cursor
+;;
+;; Change cursor color according to mode; inspired by
+;; http://www.emacswiki.org/emacs/ChangingCursorDynamically
+;; valid values are t, nil, box, hollow, bar, (bar . WIDTH), hbar,
+;; (hbar. HEIGHT); see the docs for set-cursor-type
+
+;; must go after coloring stuff at bottom
+
+(defun cm-cursor ()
+  "change cursor color and type according to some minor modes."
+
+  (cond
+    (buffer-read-only
+     (setq cursor-type 'hbar))
+    (t 
+     (set-cursor-color "yellow")
+     (setq cursor-type 'box))))
+
+(set-cursor-color "yellow")
+(setq cursor-type 'box)
+;(add-hook 'post-command-hook 'cm-cursor)
+; oh god it flashes so much. Don't know how to do this better yet.
+;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; last line?
 (message "My .emacs loaded in %ds" (destructuring-bind (hi lo ms) (current-time)

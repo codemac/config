@@ -48,6 +48,20 @@
 (setenv "P4PORT" cm-ironport-p4port)
 (setenv "P4CONFIG" "P4ENV")
 
+;(defun eshell/mm (&rest args)
+;  "A better version of my mm alias"
+;  (interactive)
+;  (eshell-parse-command "ssh marsarch \"cd $PWD\; " (eshell-flatten-list (append "\"" args))))
+(defun unbind-symbol (symbol)
+  "Totally unbind SYMBOL.
+
+This includes unbinding its function binding, its variable binding and its
+property list."
+  (interactive "SSymbol: ")
+  (fmakunbound symbol)
+  (makunbound symbol)
+  (setf (symbol-plist symbol) nil))
+
 ;; Stolen from http://www.emacswiki.org/cgi-bin/wiki.pl/EshellEnhancedLS
 (eval-after-load "em-ls"
   '(progn

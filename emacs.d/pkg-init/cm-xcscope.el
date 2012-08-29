@@ -1,5 +1,7 @@
+;;;;; old school
 (require 'xcscope)
 (setq cscope-do-not-update-database t)
+
 (defun xcscope-minor-mode ()
   (interactive)
   (cscope:hook)

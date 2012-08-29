@@ -122,8 +122,8 @@ START-TIME and END-OF-DAY are the number of minutes past midnight."
 
 (defun sacha/org-clock-in-if-starting ()
   "Clock in when the task is marked STARTED."
-  (when (and (string= state "STARTED")
-             (not (string= last-state state)))
+  (when (and (string= org-state "STARTED")
+             (not (string= org-last-state org-state)))
     (org-clock-in)))
 (add-hook 'org-after-todo-state-change-hook
 	  'sacha/org-clock-in-if-starting)
@@ -134,8 +134,8 @@ START-TIME and END-OF-DAY are the number of minutes past midnight."
 
 (defun sacha/org-clock-out-if-waiting ()
   "Clock in when the task is marked STARTED."
-  (when (and (string= state "WAITING")
-             (not (string= last-state state)))
+  (when (and (string= org-state "WAITING")
+             (not (string= org-last-state org-state)))
     (org-clock-out)))
 (add-hook 'org-after-todo-state-change-hook
 	  'sacha/org-clock-out-if-waiting)
@@ -199,11 +199,10 @@ This can be 0 for immediate, or a floating point value.")
 	      (tags "PROJECT/!WAITING")
 	      (todo "WAITING")
 	      (tags-todo "-MAYBE-BLOCKED=\"t\"")))
+            ("i" "Inbox"
+             ((tags-todo "-{.*}")))
 	    ("n" "Next agenda"
-	     ((agenda)
-	      (tags-todo "WORK/!+NEXT")
-	      (tags-todo "HOME/!+NEXT")
-	      (todo "NEXT")))
+	     ((todo "NEXT")))
 	    ("w" "Work Agenda"
 	     ((agenda)
 	      (tags-todo "WORK-BLOCKED=\"t\"/!-WAITING")
@@ -266,6 +265,8 @@ This can be 0 for immediate, or a floating point value.")
 (setq org-special-ctrl-a/e t)
 (setq org-agenda-dim-blocked-tasks t)
 (setq org-enforce-todo-dependencies t)
+(setq org-outline-path-complete-in-steps nil) ;ido lol
+(setq org-refile-use-outline-path 'file)
 ;; less file local settings!
 (setq org-archive-location "_archive/%s_old::")
 (setq org-tag-alist '((:startgroup)
@@ -364,6 +365,11 @@ This can be 0 for immediate, or a floating point value.")
   (shell-command (concat "open \"https://jira.ironport.com/browse/ENGSAS-" path "\"")))
 (org-add-link-type "engsas" 'org-link-type-sas-open)
 
+(defun org-link-type-netapp-open (path)
+  "path is username"
+  (shell-command (concat "open \"http://burtweb-prd.eng.netapp.com/burt/burt-bin/profile?user=" path "\"")))
+(org-add-link-type "netapp" 'org-link-type-netapp-open)
+
 ;; capture for mac os x popup
 (defun cm-org-capture-other-frame ()
   "Create a new frame and run org-capture."
@@ -392,22 +398,17 @@ This can be 0 for immediate, or a floating point value.")
 (setq org-default-notes-file (concat org-directory "/gtd.org"))
 (define-key global-map "\C-cr" 'org-capture)
 (setq org-capture-templates
-      `(("t" "Todo" entry (file+headline "~/org/gtd.org" "Inbox") "* TODO %?\n  %i\n  %a" :prepend t)
-	("f" "Future Todo" entry (file+headline "~/org/gtd.org" "Inbox") "* TODO %?\n  %i\n  %^T\n  %a" :prepend t)
-	("m" "Music" entry (file+headline "~/org/music.org" "To Get") "* TODO %?\n  %U" :prepend t)
+      `(("t" "Todo" entry (file+headline "~/org/gtd.org" "Inbox") "* TODO %?\n  %U\n  %i\n  %a" :prepend t)
 	("j" "Journal" entry (file ,(format-time-string "~/org/_editorial/%Y.%m.org")) "* %U %?\n\n  %i\n  %a" :prepend nil)
-	("r" "Reflect" entry (file ,(format-time-string "~/org/_editorial/%Y.%m.org")) "* Review for %U %?\n%^{Exercise}p%^{Nutrition}p%^{Positive}p%^{Habits}p%^{Grooming}p%^{Smile}p%^{Posture}p%^{Help}p%^{Relax}p%^{Sit}p\nExercise Review: -\nNutrition Review: -\nThinking Review -\nHabit Review: -\nHelp Review: -\n" :prepend nil)
 	("n" "Timed Notes" entry (file ,(format-time-string "~/org/_notes/%Y.org")) "* %U %?\n\n  %i\n  %a" :prepend nil)
-	("i" "Idea" entry (file+headline "~/org/_notes/notes.org" "New Ideas") "* %^{Title}\n  %i\n  %a" :prepend t)
-	("w" "Website" entry (file "~/org/_notes/www.org") "* %U %?\n\n  %i\n  %a")
+        ("w" "Work capture" entry (file "~/org/mars.org") "* %U %?\n\n  %i\n  %a" :prepend nil)
 	("l" "Life Fitness" table-line (file+headline "~/org/fitness.org" "Fitness") ,(concat (format-time-string "| %Y.%m.%d-%H:%M |") " %^{Weight} | | %^{RHR} |") :table-line-pos "II-1")
 	("x" "org-capture" entry (file+headline "~/org/_notes/www.org" "Archived Content") "* %^{Title}p: %:description\n\n  Source: %U %c\n\n  %i")))
 
 ;; org protocol!
 (defun gtd ()
   (interactive)
-  (find-file "~/org/gtd.org")
-  )
+  (find-file "~/org/gtd.org"))
 
 ;; Set up my diary file
 (setq diary-file "~/org/diary") ;; deal with the fact that it's in the org folder

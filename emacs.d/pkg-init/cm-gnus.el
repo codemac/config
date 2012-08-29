@@ -1,8 +1,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; gnus lock file
-(defvar gnus-lock-filename)
-(setq gnus-lock-filename "~/.machine-lock-gnus-my")
+;(defvar gnus-lock-filename)
+;(setq gnus-lock-filename "~/.machine-lock-gnus-my")
 (put 'gnus 'disabled t)
-
+(add-hook 'gnus-startup-hook 'bbdb-insinuate-gnus)
 (defun gf-touch (file)
   "Touches file"
   (save-excursion
@@ -13,9 +13,9 @@
 
 (defun gnusu (&rest args)
   (interactive "P")
-  (if (file-exists-p gnus-lock-filename)
-  (error "Can't start gnus, Lock file exists %S" gnus-lock-filename)
-(call-interactively 'gnus)))
+;  (if (file-exists-p gnus-lock-filename)
+;  (error "Can't start gnus, Lock file exists %S" gnus-lock-filename)
+(call-interactively 'gnus))
 ;;;
 
 (provide 'cm-gnus)

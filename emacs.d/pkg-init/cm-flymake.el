@@ -1,4 +1,5 @@
 ;; stolen from http://www.reddit.com/r/emacs/comments/i05v3/emacs_and_pylint/c1ztm6x (user kanak on /r/emacs)
+(require 'flymake)
 
 (setq *cm-flychecker-directory* "~/.emacs.d/flycheck")
 
@@ -28,3 +29,10 @@
 
 (def-flymake-init "python" "~/.emacs.d/flycheckbin/pychecker.sh")
 (add-to-list 'flymake-allowed-file-name-masks '("\\.py\\'" flymake-python-init)) 
+
+;; flyspell
+(setq ispell-program-name "aspell")
+(setq ispell-list-command "list")
+(setq ispell-extra-args '("--sug-mode=ultra"))
+
+(provide 'cm-flymake)
