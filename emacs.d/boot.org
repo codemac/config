@@ -528,15 +528,7 @@ So useful, I think everyone should have this turned on.
     (interactive "*")
     (uniquify-all-lines-region (point-min) (point-max)))
 #+end_src
-*** Tabbar
-Nice to have going along the top sometimes. Disabled, I never used it.
-#+begin_src emacs-lisp :exports none
-  ;(require 'tabbar)
-  ;(tabbar-mode)
-  ;
-  ;(global-set-key (kbd "<C-tab>") 'tabbar-forward)
-  ;(global-set-key (kbd "<C-S-iso-lefttab>") 'tabbar-forward-group)
-#+end_src
+
 *** Minimap
 Got jealous, had to have it in emacs. Not so useful after all...
 #+begin_src emacs-lisp
@@ -613,11 +605,7 @@ Navigate visually through the entire kill ring.
   
   (global-set-key (kbd "C-c n") 'browse-kill-ring)
 #+end_src
-*** Perspective
-#+begin_src emacs-lisp :exports none
-  ;(require 'perspective)
-  ;(persp-mode)
-#+end_src
+
 *** Expand region
 If you have a region selected, typing =C-== will expand the selection
 out semantically.
@@ -867,55 +855,7 @@ No seriously, I wrote lots of Ruby.
       ;               ;; The scripts could fail, for example with huge file size.
       ;               (tramp-do-file-attributes-with-ls v localname id-format)))))))))))
 #+end_src
-*** xcscope
-Gotta love cscope. Using GNU Global now.
-#+begin_src emacs-lisp :exports none
-  ;(require 'xcscope)
-  ;(setq cscope-do-not-update-database t)
-  ;
-  ;(defun xcscope-minor-mode ()
-  ;  (interactive)
-  ;  (cscope:hook)
-  ;)
-  ;
-  ;(add-hook 'python-mode-hook (function cscope:hook))
-#+end_src
-*** acscope
-Another way of handling cscope, though I rarely built cscope db's locally, so this was rarely used.
-#+begin_src emacs-lisp :exports none
-  ;(require 'ascope)
-  ;
-  ;;; The following line corresponds to be beginning of the "Cscope" menu.
-  ;(define-key cscope:map "\C-css" 'ascope-find-this-symbol)
-  ;(define-key cscope:map "\C-csg" 'ascope-find-global-definition)
-  ;;(define-key cscope:map "\C-csG" 'cscope-find-global-definition-no-prompting)
-  ;(define-key cscope:map "\C-csc" 'ascope-find-functions-calling-this-function)
-  ;(define-key cscope:map "\C-csC" 'ascope-find-called-functions)
-  ;(define-key cscope:map "\C-cst" 'ascope-find-this-text-string)
-  ;;(define-key cscope:map "\C-cse" 'cscope-find-egrep-pattern)
-  ;;(define-key cscope:map "\C-csf" 'cscope-find-this-file)
-  ;(define-key cscope:map "\C-csi" 'ascope-find-files-including-file)
-  ;(define-key cscope:map "\C-csa" 'ascope-all-symbol-assignments)
-  ;;; --- (The '---' indicates that this line corresponds to a menu separator.)
-  ;;(define-key cscope:map "\C-csb" 'cscope-display-buffer)
-  ;;(define-key cscope:map "\C-csB" 'cscope-display-buffer-toggle)
-  ;;(define-key cscope:map "\C-csn" 'cscope-next-symbol)
-  ;;(define-key cscope:map "\C-csN" 'cscope-next-file)
-  ;;(define-key cscope:map "\C-csp" 'cscope-prev-symbol)
-  ;;(define-key cscope:map "\C-csP" 'cscope-prev-file)
-  ;;(define-key cscope:map "\C-csu" 'cscope-pop-mark)
-  ;;; ---
-  ;;(define-key cscope:map "\C-csa" 'cscope-set-initial-directory)
-  ;;(define-key cscope:map "\C-csA" 'cscope-unset-initial-directory)
-  ;;; ---
-  ;;(define-key cscope:map "\C-csL" 'cscope-create-list-of-files-to-index)
-  ;;(define-key cscope:map "\C-csI" 'cscope-index-files)
-  ;;(define-key cscope:map "\C-csE" 'cscope-edit-list-of-files-to-index)
-  ;;(define-key cscope:map "\C-csW" 'cscope-tell-user-about-directory)
-  ;;(define-key cscope:map "\C-csS" 'cscope-tell-user-about-directory)
-  ;;(define-key cscope:map "\C-csT" 'cscope-tell-user-about-directory)
-  ;;(define-key cscope:map "\C-csD" 'cscope-dired-directory))
-#+end_src
+
 *** GNU Global
 Thank you Britt.
 #+begin_src emacs-lisp
@@ -1033,10 +973,7 @@ Microblog, baby.
   (global-set-key "\C-cip" 'identica-update-status-interactive)
   (global-set-key "\C-cid" 'identica-direct-message-interactive)
 #+end_src
-*** ECB - Emacs Code Browser
-#+begin_src emacs-lisp :exports none
-  ;(require 'ecb-autoloads)
-#+end_src
+
 *** BBDB - Big Brother DataBase
 Well integrated into Gnus, eventually just had to start using it!
 Borrowed this pretty heavily from somewhere, will document once I know
@@ -1083,54 +1020,7 @@ Good for person wikis, however I pretty much exclusively use =org-blog=/=org-exp
         '(("Personal Miki" ("~/miki/src" :default "index")
            (:base "html" :path "~/miki/html"))))
 #+end_src
-*** EMMS - Emacs MultiMedia System
-This is disabled, Spotify won me over.
-#+begin_src emacs-lisp :exports none
-  ;(require 'emms-setup)
-  ;(require 'emms-mode-line-icon)
-  ;(require 'emms-info-libtag)
-  ;
-  ;(emms-devel)
-  ;(emms-default-players)
-  ;(setq emms-info-asynchronosly t)
-  ;(add-hook 'emms-player-started-hook 'emms-show)
-  ;(setq emms-show-format "NP: %s")
-  ;(setq emms-player-mpg321-parameters '("-o" "alsa"))
-  ;(setq emms-source-list '((emms-directory-tree "~/muse/")))
-  ;
-  ;(setq emms-player-mplayer-parameters (list "-slave" "-nortc" "-quiet" "-really-quiet"))
-  ;(emms-player-set emms-player-mplayer 'regex
-  ;                 "\\.ogg\\|\\.mp3\\|\\.wav\\|\\.mpg\\|\\.mpeg\\|\\.wmv\\|\\.wma\\|\\.mov\\|\\.avi\\|\\.divx\\|\\.ogm\\|\\.asf\\|\\.mkv\\|http://\\|mms://\\|\\.rm\\|\\.rmvb\\|\\.mp4\\|\\.flac\\|\\.vob\\|\\.m4a\\|\\.ape\\|\\.mpc")
-  ;
-  ;
-  ;(setq emms-mode-line-icon-before-format "["
-  ;      emms-mode-line-format " %s]"
-  ;      emms-mode-line-icon-color "lightgrey")
-  ;
-  ;;; Libtag support
-  ;(add-to-list 'emms-info-functions 'emms-info-libtag)
-  ;
-  ;;;; Stolen and adapted from TWB
-  ;;(defun my-emms-info-track-description (track)
-  ;;  "Return a description of the current track."
-  ;;  (if (and (emms-track-get track 'info-artist)
-  ;;           (emms-track-get track 'info-title))
-  ;;      (let ((pmin (emms-track-get track 'info-playing-time-min))
-  ;;            (psec (emms-track-get track 'info-playing-time-sec))
-  ;;            (ptot (emms-track-get track 'info-playing-time))
-  ;;            (art  (emms-track-get track 'info-artist))
-  ;;            (tit  (emms-track-get track 'info-title)))
-  ;;        (cond ((and pmin psec) (format "%s - %s [%02d:%02d]" art tit pmin psec))
-  ;;              (ptot (format  "%s - %s [%02d:%02d]" art tit (/ ptot 60) (% ptot 60)))
-  ;;              (t (emms-track-simple-description track))))))
-  ;
-  ;;(setq emms-track-description-function 'my-emms-info-track-description)
-  ;
-  ;;; last.fm
-  ;(setq emms-lastfm-username cm-lastfm-username
-  ;      emms-lastfm-password cm-lastfm-password)
-  ;(emms-lastfm-enable)
-#+end_src
+
 *** Org
 Holy god. Let it begin.
 #+begin_src emacs-lisp
@@ -2047,6 +1937,130 @@ A wholly owned subsidiary of Cisco.
 *** Tup
 #+begin_src emacs-lisp
   (require 'tup-mode)
+#+end_src
+* Disabled lisp
+#+begin_src emacs-lisp
+  ; have to figure out how to comment multiple lines...
+#+end_src
+** EMMS - Emacs MultiMedia System
+This is disabled, Spotify won me over.
+#+begin_src emacs-lisp :exports none
+  ;(require 'emms-setup)
+  ;(require 'emms-mode-line-icon)
+  ;(require 'emms-info-libtag)
+  ;
+  ;(emms-devel)
+  ;(emms-default-players)
+  ;(setq emms-info-asynchronosly t)
+  ;(add-hook 'emms-player-started-hook 'emms-show)
+  ;(setq emms-show-format "NP: %s")
+  ;(setq emms-player-mpg321-parameters '("-o" "alsa"))
+  ;(setq emms-source-list '((emms-directory-tree "~/muse/")))
+  ;
+  ;(setq emms-player-mplayer-parameters (list "-slave" "-nortc" "-quiet" "-really-quiet"))
+  ;(emms-player-set emms-player-mplayer 'regex
+  ;                 "\\.ogg\\|\\.mp3\\|\\.wav\\|\\.mpg\\|\\.mpeg\\|\\.wmv\\|\\.wma\\|\\.mov\\|\\.avi\\|\\.divx\\|\\.ogm\\|\\.asf\\|\\.mkv\\|http://\\|mms://\\|\\.rm\\|\\.rmvb\\|\\.mp4\\|\\.flac\\|\\.vob\\|\\.m4a\\|\\.ape\\|\\.mpc")
+  ;
+  ;
+  ;(setq emms-mode-line-icon-before-format "["
+  ;      emms-mode-line-format " %s]"
+  ;      emms-mode-line-icon-color "lightgrey")
+  ;
+  ;;; Libtag support
+  ;(add-to-list 'emms-info-functions 'emms-info-libtag)
+  ;
+  ;;;; Stolen and adapted from TWB
+  ;;(defun my-emms-info-track-description (track)
+  ;;  "Return a description of the current track."
+  ;;  (if (and (emms-track-get track 'info-artist)
+  ;;           (emms-track-get track 'info-title))
+  ;;      (let ((pmin (emms-track-get track 'info-playing-time-min))
+  ;;            (psec (emms-track-get track 'info-playing-time-sec))
+  ;;            (ptot (emms-track-get track 'info-playing-time))
+  ;;            (art  (emms-track-get track 'info-artist))
+  ;;            (tit  (emms-track-get track 'info-title)))
+  ;;        (cond ((and pmin psec) (format "%s - %s [%02d:%02d]" art tit pmin psec))
+  ;;              (ptot (format  "%s - %s [%02d:%02d]" art tit (/ ptot 60) (% ptot 60)))
+  ;;              (t (emms-track-simple-description track))))))
+  ;
+  ;;(setq emms-track-description-function 'my-emms-info-track-description)
+  ;
+  ;;; last.fm
+  ;(setq emms-lastfm-username cm-lastfm-username
+  ;      emms-lastfm-password cm-lastfm-password)
+  ;(emms-lastfm-enable)
+#+end_src
+** ECB - Emacs Code Browser
+#+begin_src emacs-lisp
+  ;(require 'ecb-autoloads)
+#+end_src
+** xcscope
+Gotta love cscope. Using GNU Global now.
+#+begin_src emacs-lisp
+  ;(require 'xcscope)
+  ;(setq cscope-do-not-update-database t)
+  ;
+  ;(defun xcscope-minor-mode ()
+  ;  (interactive)
+  ;  (cscope:hook)
+  ;)
+  ;
+  ;(add-hook 'python-mode-hook (function cscope:hook))
+#+end_src
+** acscope
+Another way of handling cscope, though I rarely built cscope db's locally, so this was rarely used.
+#+begin_src emacs-lisp
+  ;(require 'ascope)
+  ;
+  ;;; The following line corresponds to be beginning of the "Cscope" menu.
+  ;(define-key cscope:map "\C-css" 'ascope-find-this-symbol)
+  ;(define-key cscope:map "\C-csg" 'ascope-find-global-definition)
+  ;;(define-key cscope:map "\C-csG" 'cscope-find-global-definition-no-prompting)
+  ;(define-key cscope:map "\C-csc" 'ascope-find-functions-calling-this-function)
+  ;(define-key cscope:map "\C-csC" 'ascope-find-called-functions)
+  ;(define-key cscope:map "\C-cst" 'ascope-find-this-text-string)
+  ;;(define-key cscope:map "\C-cse" 'cscope-find-egrep-pattern)
+  ;;(define-key cscope:map "\C-csf" 'cscope-find-this-file)
+  ;(define-key cscope:map "\C-csi" 'ascope-find-files-including-file)
+  ;(define-key cscope:map "\C-csa" 'ascope-all-symbol-assignments)
+  ;;; --- (The '---' indicates that this line corresponds to a menu separator.)
+  ;;(define-key cscope:map "\C-csb" 'cscope-display-buffer)
+  ;;(define-key cscope:map "\C-csB" 'cscope-display-buffer-toggle)
+  ;;(define-key cscope:map "\C-csn" 'cscope-next-symbol)
+  ;;(define-key cscope:map "\C-csN" 'cscope-next-file)
+  ;;(define-key cscope:map "\C-csp" 'cscope-prev-symbol)
+  ;;(define-key cscope:map "\C-csP" 'cscope-prev-file)
+  ;;(define-key cscope:map "\C-csu" 'cscope-pop-mark)
+  ;;; ---
+  ;;(define-key cscope:map "\C-csa" 'cscope-set-initial-directory)
+  ;;(define-key cscope:map "\C-csA" 'cscope-unset-initial-directory)
+  ;;; ---
+  ;;(define-key cscope:map "\C-csL" 'cscope-create-list-of-files-to-index)
+  ;;(define-key cscope:map "\C-csI" 'cscope-index-files)
+  ;;(define-key cscope:map "\C-csE" 'cscope-edit-list-of-files-to-index)
+  ;;(define-key cscope:map "\C-csW" 'cscope-tell-user-about-directory)
+  ;;(define-key cscope:map "\C-csS" 'cscope-tell-user-about-directory)
+  ;;(define-key cscope:map "\C-csT" 'cscope-tell-user-about-directory)
+  ;;(define-key cscope:map "\C-csD" 'cscope-dired-directory))
+#+end_src
+** Perspective
+#+begin_src emacs-lisp
+  ;(require 'perspective)
+  ;(persp-mode)
+#+end_src
+** Tabbar
+Nice to have going along the top sometimes. Disabled, I never used it.
+#+begin_src emacs-lisp
+  ;(require 'tabbar)
+  ;(tabbar-mode)
+  ;
+  ;(global-set-key (kbd "<C-tab>") 'tabbar-forward)
+  ;(global-set-key (kbd "<C-S-iso-lefttab>") 'tabbar-forward-group)
+#+end_src
+
+** End diasbled code
+#+begin_src emacs-lisp
+  ; this is where the ending mark would be
 #+end_src
 * Custom variables
 #+begin_src emacs-lisp
