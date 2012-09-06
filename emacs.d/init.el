@@ -368,7 +368,8 @@ With argument ARG and region inactive, do this that many times."
 (require 'cm-ace-jump)
 (require 'cm-hl-line)
 (require 'cm-flymake)
-
+(require 'cm-tup)
+(require 'cm-pcomplete)
 
 ;; things that I don't want on the mac
 (unless (eq system-type 'darwin)

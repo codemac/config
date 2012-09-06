@@ -1,9 +1,10 @@
- ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; auto modes
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; auto modes
 ;;;
 (add-to-list 'auto-mode-alist '("\\.org$" . org-mode))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; org mode
 (require 'org)
+(require 'org-protocol)
 (require 'org-mouse)
 
 (defun sacha/org-agenda-load (match)
@@ -120,25 +121,32 @@ START-TIME and END-OF-DAY are the number of minutes past midnight."
         (setq total-gap (+ (- end-of-day last-timestamp) total-gap)))
     (list total-scheduled total-unscheduled total-gap))))
 
-(defun sacha/org-clock-in-if-starting ()
+(defun org-clock-in-if-starting ()
   "Clock in when the task is marked STARTED."
   (when (and (string= org-state "STARTED")
              (not (string= org-last-state org-state)))
     (org-clock-in)))
-(add-hook 'org-after-todo-state-change-hook
-	  'sacha/org-clock-in-if-starting)
 
 (defadvice org-clock-in (after sacha activate)
   "Set this task's status to 'STARTED'."
   (org-todo "STARTED"))
 
-(defun sacha/org-clock-out-if-waiting ()
+(defun org-clock-out-if-waiting ()
   "Clock in when the task is marked STARTED."
   (when (and (string= org-state "WAITING")
              (not (string= org-last-state org-state)))
     (org-clock-out)))
-(add-hook 'org-after-todo-state-change-hook
-	  'sacha/org-clock-out-if-waiting)
+
+(defun org-clock-out-if-started-todo ()
+  (when (and (string= org-state "TODO")
+             (string= org-last-state "STARTED"))
+    (if (org-clocking-p)
+        (org-clock-out))))
+
+(add-hook 'org-after-todo-state-change-hook 'org-clock-in-if-starting)
+(add-hook 'org-after-todo-state-change-hook 'org-clock-out-if-waiting)
+(add-hook 'org-after-todo-state-change-hook 'org-clock-out-if-started-todo)
+          
 
 (defun sacha/org-agenda-clock (match)
   ;; Find out when today is
@@ -194,15 +202,17 @@ This can be 0 for immediate, or a floating point value.")
   )
 
 (setq org-agenda-custom-commands
-	  '(("A" "All Agenda"
+	  '(("f" "Full Agenda"
 	     ((agenda)
+              (sacha/org-agenda-load)
 	      (tags "PROJECT/!WAITING")
 	      (todo "WAITING")
 	      (tags-todo "-MAYBE-BLOCKED=\"t\"")))
             ("i" "Inbox"
              ((tags-todo "-{.*}")))
 	    ("n" "Next agenda"
-	     ((todo "NEXT")))
+	     ((todo "NEXT")
+              (todo "STARTED")))
 	    ("w" "Work Agenda"
 	     ((agenda)
 	      (tags-todo "WORK-BLOCKED=\"t\"/!-WAITING")
@@ -272,19 +282,19 @@ This can be 0 for immediate, or a floating point value.")
 (setq org-tag-alist '((:startgroup)
 		      ("HOME" . ?h)
 		      ("WORK" . ?w)
-		      ("ERRAND" . ?e)
+		      ("ERRAND" . ?r)
 		      (:endgroup)
 		      ("COMPUTER" . ?c)
 		      ("INTERNET" . ?i)
 		      ("PHONE" . ?p)
 		      ("EMAIL" . ?m)
-		      ("OUTREACH" . ?o)
+		      ("OUTREACH" . ?h)
 		      ("DISPATCH" . ?d)
-		      ("PROJECT" . ?r)))
+		      ("PROJECT" . ?o)))
 
 (setq org-log-done '(note))
 (setq org-todo-keywords
-      '((sequence "TODO(t)" "NEXT(x@)" "STARTED(s)" "WAITING(w@)" "|" "DONE(d@)" "NVM(n@)" "MAYBE(m@)")))
+      '((sequence "TODO(t)" "NEXT(x)" "STARTED(s)" "WAITING(w@)" "|" "DONE(d@)" "NVM(n@)" "MAYBE(m@)")))
 
 
 (setq org-tags-exclude-from-inheritance '("PROJECT"))

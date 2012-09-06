@@ -1,1 +1,0 @@
-/Users/jmickey/code/extempore/extras/extempore.el

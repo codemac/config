@@ -5,6 +5,7 @@ zsh/ironport
 .DS_Store
 *.swp
 *~
+.\#*
 elinks/*hist
 elinks/cookies
 xmonad/xmonad

@@ -1,5 +1,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; bbdb
 (require 'bbdb)
+(require 'bbdb-gnus)
 (bbdb-initialize 'gnus 'message)
 ;;
 

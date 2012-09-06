@@ -49,8 +49,8 @@
 (setq bbdb/news-auto-create-p t)
 (add-hook 'message-mode-hook
                 (function (lambda() 
-                           (local-set-key (kbd "<tab>") 'bbdb-complete-name)
-                         )))
+                           (local-set-key (kbd "<tab>") 'bbdb-complete-name))))
+(add-hook 'gnus-startup-hook 'bbdb-insinuate-gnus)
 ;;
 
 ;;;; caching
@@ -178,11 +178,6 @@
 
 (setq gnus-summary-line-format ":%U%R| %5,5k/%5,5L | %20,20&user-date; | %-30,30n | %B%s\n")
 
-;; Automatically poll for news every ten minutes (after two minute idle)
-;(require 'gnus-demon)
-;(setq gnus-use-demon t)
-;(gnus-demon-add-handler 'gnus-group-get-new-news 10 2)
-;(gnus-demon-init)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;  Encryption stuff
 ;(require 'pgg)
@@ -229,21 +224,26 @@
 ;; doesn't work.. asks about shell command not being
 ;; done. Ugh. window-delete wasn't any better, doing a save-excursion
 ;; etc seemed over the top.
-;(defun run-offlineimap-for-gnus-and-bury ()
-;  (interactive)
-;  (run-offlineimap-for-gnus)
-;  (bury-buffer (get-buffer "*offlineimap*")))
+(defun run-offlineimap-for-gnus-and-bury ()
+  (interactive)
+  (save-window-excursion
+    (run-offlineimap-for-gnus)
+    (bury-buffer (get-buffer "*offlineimap*"))))
 
 (define-key gnus-group-mode-map (kbd "vo") 'run-offlineimap-for-gnus)
-(add-hook 'gnus-before-startup-hook 'run-offlineimap-for-gnus)
+(define-key gnus-group-mode-map (kbd "vb") 'run-offlineimap-for-gnus-and-bury)
+(add-hook 'gnus-before-startup-hook 'run-offlineimap-for-gnus-and-bury)
 
 (defun offlineimap-suspend-kill-buffer ()
   (interactive)
   (kill-buffer (get-buffer "*offlineimap*")))
-(add-hook 'gnus-suspend-gnus-hook 'offlineimap-suspend-kill-buffer)
+(add-hook 'gnus-suspend-gnus-hook 'run-offlineimap-for-gnus-and-bury)
 ;(add-hook 'gnus-suspend-gnus-hook 'run-offlineimap-for-gnus)
 ;(add-hook 'gnus-after-exiting-gnus-hook 'run-offlineimap-for-gnus)
 
+;; Automatically poll for news every ten minutes (after two minute idle)
+(gnus-demon-add-handler 'run-offlineimap-for-gnus-and-bury 10 1)
+(gnus-demon-add-handler 'gnus-group-get-new-news 10 2)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; lock file
 ;(add-hook 'gnus-startup-hook

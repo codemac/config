@@ -1,4 +1,4 @@
-;;; gtags.el --- gtags facility for Emacs
+ ;;; gtags.el --- gtags facility for Emacs
 
 ;; (setq debug-on-error t)
 ;;
