@@ -17,6 +17,7 @@ xmonad/xmonad-x86_64-linux
 .hgignore
 *.elc
 emacs.d/emms
+emacs.d/boot.el
 emacs.d/org-clock-save.el
 emacs.d/tramp
 emacs.d/games/tetris-scores

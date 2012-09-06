@@ -10,8 +10,7 @@
 
 (add-to-list 'load-path (expand-file-name
                          "lisp" (expand-file-name
-                                 "org" (expand-file-name
-                                        "src" dotfiles-dir))))
+                                 "org-src" dotfiles-dir)))
 ;; Load up Org Mode and Babel
 (require 'org-install)
 
