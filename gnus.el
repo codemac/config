@@ -122,6 +122,8 @@
 
 ;; and use w3m to do so
 ;(setq mm-text-html-renderer 'w3m)
+;; nah let's go with gnus
+(setq mm-text-html-renderer 'gnus-article-html)
 
 (setq gnus-ignored-from-addresses
       (mapconcat 'regexp-quote

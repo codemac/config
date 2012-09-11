@@ -1,0 +1,24 @@
+"hg6821
+
+loadplugins '\.(js|penta)$'
+group user
+
+" vim: set ft=pentadactyl:
+
+"dovark!
+map -builtin d h
+map -builtin D H
+map -builtin h j
+map -builtin H J
+map -builtin t k
+map -builtin T K
+map -builtin n l
+map -builtin N L
+map -builtin k d
+map -builtin K D
+map -builtin l n
+map -builtin L N
+map -builtin j t
+map -builtin J T
+
+"org-protocol

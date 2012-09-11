@@ -1,4 +1,4 @@
-#+TITLE: codemac emacs environment
+#+TITLE: codemac emacs
 
 #+begin_quote 
 Emacs outshines all other editing software in approximately the same
@@ -199,38 +199,6 @@ God I love backword-kill-word. Also some bookmarks
 #+begin_src emacs-lisp
   (put 'narrow-to-region 'disabled nil)
 #+end_src
-** Cursor color
-Change cursor color according to mode; inspired by
-http://www.emacswiki.org/emacs/ChangingCursorDynamically valid values
-are t, nil, box, hollow, bar, (bar . WIDTH), hbar, (hbar. HEIGHT); see
-the docs for set-cursor-type
-#+begin_src emacs-lisp
-  (defun cm-cursor ()
-    "change cursor color and type according to some minor modes."
-    (cond
-      (buffer-read-only
-       (setq cursor-type 'hbar))
-      (t 
-       (set-cursor-color "yellow")
-       (setq cursor-type 'box))))
-  
-  (set-cursor-color "yellow")
-  (setq cursor-type 'box)
-  ;(add-hook 'post-command-hook 'cm-cursor)
-  ; oh god it flashes so much. Don't know how to do this better yet.
-#+end_src
-** Server process
-Start a server if it's not started, and I'm not root.
-#+begin_src emacs-lisp
-  (unless (string-equal "root" (getenv "USER"))
-  ;; Only start server mode if it isn't started already
-    (when (or (not (boundp 'server-process))
-              (not (eq (process-status server-process)
-                       'listen)))
-      (server-start)))
-  
-  (when (eq system-type 'darwin) (add-hook 'server-visit-hook 'raise-frame))
-#+end_src
 * ELPA
 #+begin_src emacs-lisp
   (require 'package)
@@ -248,7 +216,7 @@ Yup, zenburn.
 #+begin_src emacs-lisp
   (load-theme 'zenburn t)
 #+end_src
-* Builtin
+* Builtina
 ** Occur, isearch, and all
 I like to launch occur from an isearch query. It's great when your
 muscle memory searches for a word, THEN you realize you want to see it
@@ -382,9 +350,9 @@ Mac fix for info installation location!
 #+end_src
 ** Eshell
 #+begin_src emacs-lisp
-  
   (autoload 'eshell "eshell" "")
   (load-file "~/.emacs-priv.el")
+  
   (defun cm-eshell-prompt ()
     (concat user-login-name "@" system-name ":"
             ((lambda (p-lst)
@@ -404,7 +372,6 @@ Mac fix for info installation location!
                             "/")))
              (split-string (abbreviate-file-name (eshell/pwd)) "/"))
             " % "))
-  
   
   (defun eshell-new (name)
     "Create a shell buffer named NAME."
@@ -444,6 +411,40 @@ Mac fix for info installation location!
     (makunbound symbol)
     (setf (symbol-plist symbol) nil))
   
+  (defun eshell/asc (cmd &rest args)
+    "Eshell async shell command, to get rid of double quotes"
+    (interactive)
+  
+    (let* ((asc-buffer-name (concat "*asc:" cmd "*"))
+           (buffer (get-buffer-create asc-buffer-name))
+           (directory default-directory))
+      ;; If will kill a process, query first.
+      (setq proc (get-buffer-process buffer))
+      (if proc
+          (if (yes-or-no-p "A command is running.  Kill it? ")
+              (kill-process proc)
+            (error "Shell command in progress")))
+      (with-current-buffer buffer
+        (setq buffer-read-only nil)
+        ;; Setting buffer-read-only to nil doesn't suffice
+        ;; if some text has a non-nil read-only property,
+        ;; which comint sometimes adds for prompts.
+        (let ((inhibit-read-only t))
+          (erase-buffer))
+        (display-buffer buffer)
+        (setq default-directory directory)
+        (setq proc (start-file-process-shell-command 
+                    asc-buffer-name 
+                    buffer cmd 
+                    (eshell-flatten-and-stringify args)))
+        (setq mode-line-process '(":%s"))
+        (require 'shell) (shell-mode)
+        (set-process-sentinel proc 'shell-command-sentinel)
+        ;; Use the comint filter for proper handling of carriage motion
+        ;; (see `comint-inhibit-carriage-motion'),.
+        (set-process-filter proc 'comint-output-filter))))
+  
+  
   ;; Stolen from http://www.emacswiki.org/cgi-bin/wiki.pl/EshellEnhancedLS
   (eval-after-load "em-ls"
     '(progn
@@ -459,7 +460,7 @@ Mac fix for info installation location!
    From Patrick Anderson via the wiki."
          (interactive "e")
          (ted-eshell-ls-find-file-at-point (posn-point (event-end event))))
-  
+       
        (let ((map (make-sparse-keymap)))
          (define-key map (kbd "RET")      'ted-eshell-ls-find-file-at-point)
          (define-key map (kbd "<return>") 'ted-eshell-ls-find-file-at-point)
@@ -482,18 +483,15 @@ Mac fix for info installation location!
 #+end_src
 * External
 ** Emacs Features
-*** Hippe tab
-I.. don't use this anymore
-#+begin_src emacs-lisp
-  ;(global-set-key (kbd "TAB") 'hippie-expand)
-#+end_src
 *** Ido
 Everyone should use Ido.
 #+begin_src emacs-lisp
-(require 'ido)
+  (require 'ido)
+  (ido-mode t)
 #+end_src
-It matches anything with those characters. It matches only for strings
-that have that sequence of characters in order.
+If the exact name isn't found, then flex matching will match against
+anything with the characters in the order you've typed. It matches
+only for strings that have that sequence of characters in order.
 #+begin_src emacs-lisp
   (setq ido-enable-flex-matching t)
 #+end_src
@@ -1023,14 +1021,24 @@ Good for person wikis, however I pretty much exclusively use =org-blog=/=org-exp
 
 *** Org
 Holy god. Let it begin.
+**** Initialize org mode
+I add a =*.org= regex to the =auto-mode-alist=, start up org-protocol
+so I can use my Firefox bookmark and emacsclient integration, and
+org-mouse in case I already have a pointing device. I imagine
+=org-mouse= will be more useful when I try and run emacs on a tablet.
 #+begin_src emacs-lisp
   (add-to-list 'auto-mode-alist '("\\.org$" . org-mode))
   
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; org mode
   (require 'org)
   (require 'org-protocol)
   (require 'org-mouse)
-  
+#+end_src
+**** Org Agenda
+These are some functions stolen from [[http://sachachua.com/][Sacha Chua]] to make some fun
+agenda stuff. The org-agenda-load is especially nice when you use lots
+of schedule events, you can figure out just how busy you've really
+decided you are.
+#+begin_src emacs-lisp  
   (defun sacha/org-agenda-load (match)
     "Can be included in `org-agenda-custom-commands'."
     (let ((inhibit-read-only t)
@@ -1089,8 +1097,8 @@ Holy god. Let it begin.
             (setq scheduled-entries
                   (cons
                    (cons
-                    (save-match-data (appt-convert-time (match-string 1 time)))
-                    (save-match-data (appt-convert-time (match-string 2 time))))
+                    (save-match-data (org-matcher-time (match-string 1 time)))
+                    (save-match-data (org-matcher-time (match-string 2 time))))
                    scheduled-entries)))
            ((and
              time
@@ -1144,7 +1152,11 @@ Holy god. Let it begin.
       (if (< last-timestamp end-of-day)
           (setq total-gap (+ (- end-of-day last-timestamp) total-gap)))
       (list total-scheduled total-unscheduled total-gap))))
-  
+#+end_src
+**** Org Clock
+This adds automatic task clocking. It's incredibly useful to figure
+out how long tasks took that you start and stop.
+#+begin_src emacs-lisp  
   (defun org-clock-in-if-starting ()
     "Clock in when the task is marked STARTED."
     (when (and (string= org-state "STARTED")
@@ -1170,8 +1182,10 @@ Holy god. Let it begin.
   (add-hook 'org-after-todo-state-change-hook 'org-clock-in-if-starting)
   (add-hook 'org-after-todo-state-change-hook 'org-clock-out-if-waiting)
   (add-hook 'org-after-todo-state-change-hook 'org-clock-out-if-started-todo)
-            
-  
+#+end_src
+
+Functions borrowed from Sacha Chua.
+#+begin_src emacs-lisp  
   (defun sacha/org-agenda-clock (match)
     ;; Find out when today is
     (let* ((inhibit-read-only t))
@@ -1212,11 +1226,16 @@ Holy god. Let it begin.
                       (org-archive-subtree)))
               (goto-char end)))))
       (save-buffer)))
-  
+#+end_src
+
+**** Run an auto archiving script after saves. *This currently does not work!*
+#+begin_src emacs-lisp  
   (setq safe-local-variable-values (quote ((after-save-hook archive-done-tasks))))
   
   (defalias 'archive-done-tasks 'org-my-archive-done-tasks)
-  
+#+end_src
+**** Receipt Agenda
+#+begin_src emacs-lisp
   (defun org-receipt-agenda (match)
     (setq org-agenda-include-all-todo nil
                   org-agenda-ndays 7
@@ -1224,9 +1243,11 @@ Holy god. Let it begin.
                   )
     (org-agenda-list)
     )
-  
+#+end_src
+**** Custom agendas
+#+begin_src emacs-lisp  
   (setq org-agenda-custom-commands
-            '(("f" "Full Agenda"
+            '(("d" "Full Day Agenda"
                ((agenda)
                 (sacha/org-agenda-load)
                 (tags "PROJECT/!WAITING")
@@ -1293,7 +1314,7 @@ Holy god. Let it begin.
   (setq org-start-on-weekday nil)
   (setq org-completion-use-ido t)
   (setq org-agenda-show-all-dates t)
-  (setq org-reverse-note-order t)
+  (setq org-reverse-note-order nil)
   (setq org-fontify-done-headline t)
   (setq org-special-ctrl-k t)
   (setq org-special-ctrl-a/e t)
@@ -1938,9 +1959,15 @@ A wholly owned subsidiary of Cisco.
 #+begin_src emacs-lisp
   (require 'tup-mode)
 #+end_src
+
 * Disabled lisp
 #+begin_src emacs-lisp
   ; have to figure out how to comment multiple lines...
+#+end_src
+** Hippe tab
+I.. don't use this anymore
+#+begin_src emacs-lisp
+  ;(global-set-key (kbd "TAB") 'hippie-expand)
 #+end_src
 ** EMMS - Emacs MultiMedia System
 This is disabled, Spotify won me over.
@@ -2083,9 +2110,45 @@ Nice to have going along the top sometimes. Disabled, I never used it.
  '(frame-background-mode (quote dark))
  '(indent-tabs-mode nil))
 #+end_src
+* Cursor color
+Change cursor color according to mode; inspired by
+http://www.emacswiki.org/emacs/ChangingCursorDynamically valid values
+are t, nil, box, hollow, bar, (bar . WIDTH), hbar, (hbar. HEIGHT); see
+the docs for set-cursor-type.
+
+This is put at the very end so that way it can override any coloring
+settings that occur above. Much easier this way.
+#+begin_src emacs-lisp
+  (defun cm-cursor ()
+    "change cursor color and type according to some minor modes."
+    (cond
+      (buffer-read-only
+       (setq cursor-type 'hbar))
+      (t 
+       (set-cursor-color "yellow")
+       (setq cursor-type 'box))))
+  
+  (set-cursor-color "yellow")
+  (setq cursor-type 'box)
+  ;(add-hook 'post-command-hook 'cm-cursor)
+  ; oh god it flashes so much. Don't know how to do this better yet.
+#+end_src
+** Server process
+Start a server if it's not started, and I'm not root.
+#+begin_src emacs-lisp
+  (unless (string-equal "root" (getenv "USER"))
+  ;; Only start server mode if it isn't started already
+    (when (or (not (boundp 'server-process))
+              (not (eq (process-status server-process)
+                       'listen)))
+      (server-start)))
+  
+  (when (eq system-type 'darwin) (add-hook 'server-visit-hook 'raise-frame))
+#+end_src
 * Finish load time
 #+begin_src emacs-lisp
   (message "My .emacs loaded in %ds"
            (destructuring-bind (hi lo ms) (current-time)
              (- (+ hi lo) (+ (first *emacs-load-start*) (second *emacs-load-start*)))))
 #+end_src
+

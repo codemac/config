@@ -6,7 +6,7 @@
 		 [(20111231 345)
 		  nil "Unfold CSS-selector-like expressions to markup [source: github]" single])
  (zenburn-theme .
-		[(20120830 1133)
+		[(20120906 2218)
 		 nil "A low contrast color theme for Emacs. [source: github]" single])
  (zen-and-art-theme .
 		    [(20120622 937)
@@ -125,7 +125,7 @@
 		   [(20120615 1149)
 		    nil "A gentle, deep blue color theme [source: github]" single])
  (ucs-utils .
-	    [(20120903 1923)
+	    [(20120906 1754)
 	     ((persistent-soft
 	       (0 8 0))
 	      (pcache
@@ -160,6 +160,9 @@
  (tidy .
        [(20111222 1756)
 	nil "Interface to the HTML Tidy program [source: wiki]" single])
+ (thingopt .
+	   [(20120615 1752)
+	    nil "Thing at Point optional utilities [source: github]" single])
  (thesaurus .
 	    [(20120408 57)
 	     nil "replace a word with a synonym looked up in a web service. [source: wiki]" single])
@@ -301,7 +304,7 @@
 	     [(20120807 1913)
 	      nil "Open a shell relative to the working directory [source: github]" single])
  (session .
-	  [(20120511)
+	  [(20120511 0)
 	   nil "use variables, registers and buffer places across sessions [source: github]" single])
  (sentence-highlight .
 		     [(20111215 1956)
@@ -559,7 +562,7 @@
 	     [(20120709 2122)
 	      nil "run powershell as an inferior shell in emacs [source: wiki]" single])
  (powerline .
-	    [(20120825 1450)
+	    [(20120906 1535)
 	     nil "Rewrite of Powerline [source: github]" single])
  (popwin .
 	 [(20120902 2159)
@@ -568,7 +571,7 @@
 	[(20120724 1053)
 	 nil "Visual Popup User Interface [source: github]" single])
  (pony-mode .
-	    [(20120903 1639)
+	    [(20120905 2224)
 	     nil "Minor mode for working with Django Projects [source: github]" tar])
  (pomodoro .
 	   [(20120824 2224)
@@ -583,7 +586,7 @@
 		  [(20120403 1455)
 		   nil "Interact with Pivotal Tracker through its API [source: github]" single])
  (php-mode .
-	   [(20120827 2312)
+	   [(20120906 1215)
 	    nil "major mode for editing PHP code [source: github]" single])
  (php+-mode .
 	    [(20120808 1327)
@@ -848,7 +851,7 @@
 	      [(20051013 1756)
 	       nil "Edit distance between two strings. [source: wiki]" single])
  (less-css-mode .
-		[(20120831 1723)
+		[(20120906 1836)
 		 nil "Major mode for editing LESS CSS files (lesscss.org) [source: github]" single])
  (legalese .
 	   [(20100119 2148)
@@ -949,7 +952,7 @@
 	    [(20120905 1302)
 	     nil "Ignore backups, build files, et al. [source: github]" single])
  (iedit .
-	[(20120831 342)
+	[(20120906 925)
 	 nil "Edit multiple regions in the same way simultaneously. [source: github]" tar])
  (ido-ubiquitous .
 		 [(20120903 1941)
@@ -965,7 +968,7 @@
 		      [(20120724 919)
 		       nil "highlight the word the point is on [source: github]" single])
  (icicles .
-	  [(20120905 2134)
+	  [(20120906 1635)
 	   nil "Minibuffer input completion and cycling. [source: wiki]" tar])
  (ibuffer-vc .
 	     [(20111221 948)
@@ -1227,7 +1230,7 @@
 	      [(20090327 1737)
 	       nil "Set tags table(s) based on current file [source: wiki]" single])
  (ess .
-      [(20120905 2046)
+      [(20120906 1549)
        nil "No description available. [source: github]" tar])
  (escreen .
 	  [(20091203 1913)
@@ -1263,7 +1266,7 @@
 	[(20120118 1537)
 	 nil "running leiningen commands from emacs [source: github]" single])
  (ein .
-      [(20120906 21)
+      [(20120906 1752)
        ((websocket
 	 (0 9)))
        "Emacs IPython Notebook [source: github]" tar])
@@ -1292,7 +1295,7 @@
 		  [(20120516 148)
 		   nil "Duplicate current line & selection [source: github]" single])
  (dummy-h-mode .
-	       [(20120303 1142)
+	       [(20120906 1018)
 		nil "switch major mode to c-/c++-/objc-mode on .h file [source: wiki]" single])
  (dsvn .
        [(20120816 1240)
@@ -1454,7 +1457,7 @@
 	   [(20081011 2126)
 	    nil "Quote text with a semi-box. [source: github]" single])
  (bookmark+ .
-	    [(20120903 2344)
+	    [(20120906 1622)
 	     nil "Bookmark+: extensions to standard library `bookmark.el'. [source: wiki]" tar])
  (bm .
      [(20120611 4)
