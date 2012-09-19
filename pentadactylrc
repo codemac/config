@@ -5,6 +5,8 @@ group user
 
 " vim: set ft=pentadactyl:
 
+color zenburn
+
 "dovark!
 map -builtin d h
 map -builtin D H
@@ -22,3 +24,8 @@ map -builtin j t
 map -builtin J T
 
 "org-protocol
+
+" get gmail not suckin'
+set passkeys+=mail.google.com:'!#*+-./<C-Down><C-s><Enter>?INU[]acefjk lmnopqrsuvxyz',*a,*n,*r,*s,*t,*u,ga,gc,gd,gi,gl,gs,gt,yo
+set strictfocus+=mail.google.com:laissez-faire
+set showtabline=never

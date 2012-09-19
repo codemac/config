@@ -114,7 +114,7 @@
 ;    'gnus-newsgroup-variables 
 ;    '(mm-discouraged-alternatives 
 ;      . '("text/html" "image/.*"))))
- 
+(setq mm-inline-large-images 'resize) 
 ; Display `text/html' parts in `nnrss' groups. 
 (add-to-list 
  'gnus-parameters 
@@ -180,6 +180,8 @@
 
 (setq gnus-summary-line-format ":%U%R| %5,5k/%5,5L | %20,20&user-date; | %-30,30n | %B%s\n")
 
+(setq message-citation-line-format "* %N <%n> [%Y.%m.%d %H:%M]:")
+(setq message-citation-line-function 'message-insert-formatted-citation-line)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;  Encryption stuff
 ;(require 'pgg)

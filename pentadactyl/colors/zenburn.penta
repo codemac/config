@@ -1,0 +1,84 @@
+" FileName: zenburn.penta
+" Author: zouyang
+"    mod: covin
+" Last Updated: Mon 14 Nov 2011 13:31 CET
+
+hi Cmd                                          background-color:#3F3F3F;
+hi -a StatusLineNormal                          color:#ccdc90; background-color:#3F3F3F !important;
+hi -a 'StatusLineBroken [dactyl|highlight*="Status"]' background-color:transparent !important;color:#313633 !important;
+hi -a 'StatusLineExtended [dactyl|highlight*="Status"]' background-color:transparent !important;color:#313633 !important;
+hi -a 'StatusLineSecure [dactyl|highlight*="Status"]' background-color:transparent !important;color:#313633 !important;
+
+hi -a String                                    color:#cc9393;
+hi -a Boolean                                   color:#dca3a3;
+hi -a Function                                  color:#efef8f;
+hi -a Number                                    color:#8cd0d3;
+hi WarningMsg                                   color:#ffffff; font-weight:bold;
+hi WarningMsg>*                                 color:#ffffff; font-weight:bold;
+hi -l WarningMsg StatusWarningMsg
+hi -l WarningMsg CmdWarningMsg
+hi ErrorMsg                                     color:#80d4aa !important; font-weight:bold;
+hi -l ErrorMsg StatusErrorMsg
+hi -l ErrorMsg CmdErrorMsg
+hi -a ModeMsg                                   color:#ffcfaf; background-color:transparent !important;
+hi -l ModeMsg StatusModeMsg
+hi -l ModeMsg CmdModeMsg
+hi -a MoreMsg                                   color:#ffffff !important; background-color:inherit !important; font-weight:bold;
+hi -l MoreMsg StatusMoreMsg
+hi -l MoreMsg CmdMoreMsg
+hi -l Cmd InfoMsg                               color:#cccccc !important;
+hi -l InfoMsg StatusInfoMsg
+hi -l InfoMsg CmdInfoMsg
+hi Question                                     color:#ffffff !important; background-color:inherit !important; font-weight:bold;
+hi -l Question StatusQuestion
+hi -l Question CmdQuestion
+hi -a Tag                                       color:#e89393; font-weight:bold;
+hi -a CmdLine                                   font-weight:normal; padding:0 3px;
+hi -a NonText                                   color:#404040; font-weight:bold;
+hi Normal                                       color:#dcdccc !important; background-color:#3F3F3F !important; font-size:11pt;
+hi -l Normal CmdNormal
+hi -l Normal StatusNormal
+hi -l Normal Indicator                          width:4px;
+hi -a Title                                     color:#efefef; background-color:inherit; font-weight:bold;
+hi -a CompItem[selected]                        background-color:#4c504d !important;
+hi -a CompMore                                  margin-bottom:0;margin-top:.5ex;
+" hi -a CompMore::after                           content:"﹀"
+hi -a CompLess                                  margin-top:.5ex;margin-bottom:1ex;
+" hi -a CompLess::after                           content:"︿"
+hi -a CompTitle                                 color:lightblue; background-color:transparent;
+hi -a CompTitleSep                              background:-moz-linear-gradient(60deg, lightblue, white); height:1px;
+hi -a CompResult                                width:46%;
+hi -a CompDesc                                  width:52%;
+hi -a Filter                                    font-style:normal; font-weight:bold;
+hi -a Keyword                                   color:#f0dfaf; font-weight:bold;
+hi -a URL                                       text-decoration:none; color:#9ECE9E; background-color:inherit;
+hi -a URL:hover                                 text-decoration:underline; cursor: pointer;
+hi -a LineNr                                    color:#9fafaf; background-color:#262626;
+
+"Hint section
+hi Hint                                         font-family: Sans; font-size: 11px !important; font-weight: bold !important; color: #9ece9c !important; background-color: rgba(41, 41, 41, 0.75) !important; border: solid 1px #000000 !important; position: absolute !important;
+hi Hint[active]                                 background-color: rgba(158, 206, 158, 0.75757575757575) !important; color: #333333 !important;
+hi Hint::after                                  content: attr(number);
+hi HintActive                                   background: #8cd0d3 !important; color: #3f3f3f !important;
+hi HintElem                                     background-color: inherit !important;
+hi HintImage                                    opacity: .5 !important;
+
+" REPL
+hi -l Normal REPL
+hi -a REPL                                      font-family:"Lucida Console","Bitstream Vera Sans Mono",Monaco,Consolas,"Courier New",serif;white-space:pre;line-height:1.4em;margin:1em 0;padding: 0.5em 0 0.3em 0;
+hi -a REPL-P                                    font-size:92%;margin:0.2em 0;border-bottom:1px dashed #999;
+hi -a REPL-R
+hi -a REPL-E
+
+" plugin styles
+hi -a BufTabSelected                            background-color:#000;color:#FFF;
+" specific
+hi -a NonText                                   color:#5b605e; font-weight:bold;
+hi -a StatusCmdLine                             -moz-box-align:center;
+" NoScript
+hi -a NoScriptAllowed                           color: #9ece9e; font-weight:bold;
+hi -a NoScriptBlocked                           color: #808080; font-style: italic;
+hi -a NoScriptTemp                              color: #dfdfdf;
+hi -a NoScriptUntrusted                         color: #e89393; font-style: italic;
+
+" vim: set ft=pentadactyl:ts=4:sw=4:tw=0:

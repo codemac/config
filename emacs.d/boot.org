@@ -216,7 +216,7 @@ Yup, zenburn.
 #+begin_src emacs-lisp
   (load-theme 'zenburn t)
 #+end_src
-* Builtina
+* Builtin
 ** Occur, isearch, and all
 I like to launch occur from an isearch query. It's great when your
 muscle memory searches for a word, THEN you realize you want to see it
@@ -484,10 +484,10 @@ Mac fix for info installation location!
 * External
 ** Emacs Features
 *** Ido
-Everyone should use Ido.
+Everyone should use Ido. (well, maybe helm)
 #+begin_src emacs-lisp
   (require 'ido)
-  (ido-mode t)
+  ;(ido-mode t)
 #+end_src
 If the exact name isn't found, then flex matching will match against
 anything with the characters in the order you've typed. It matches
@@ -495,11 +495,17 @@ only for strings that have that sequence of characters in order.
 #+begin_src emacs-lisp
   (setq ido-enable-flex-matching t)
 #+end_src
-*** Anything
-Anything? Anything! It's a different way of using emacs.. and I don't
-use it that much. We'll see if I ever start using it more.
+*** Helm
+Helm is the new Anything. Helm will help steer you in the right
+direction!
+
 #+begin_src emacs-lisp
-  (autoload 'anything "anything" "" t)
+  (require 'helm-config)
+  (global-set-key (kbd "C-c h") 'helm-mini)
+  ; bad fuzzy matching, but I can manually replace random parts with ido!
+  (helm-mode 1)
+  (setq enable-recursive-minibuffers t)
+  (add-to-list 'helm-completing-read-handlers-alist '(find-file . ido))
 #+end_src
 *** Uniquify
 So useful, I think everyone should have this turned on.
@@ -651,6 +657,10 @@ out semantically.
   ;(add-hook 'gnus-group-mode-hook 'hl-line-fancy-highlight)
 #+end_src
 ** Major Modes
+*** Paredit
+#+begin_src emacs-lisp
+  (require 'paredit)
+#+end_src
 *** Common Lisp
 Uhh, go CL?
 #+begin_src emacs-lisp
@@ -961,6 +971,13 @@ Really useful when you have a lot of code to write.
                     (smex-major-mode-commands)))
 #+end_src
 ** Programs
+*** Geiser
+Let's get our scheme on!
+#+begin_src emacs-lisp
+  (load-file "~/config/emacs.d/site-lisp/geiser/elisp/geiser.el")
+  ;; racket is great and all, but I need me some ffi, ice-9, and of course, gnu.
+  (setq geiser-active-implementations '(guile))
+#+end_src
 *** Identica
 Microblog, baby.
 #+begin_src emacs-lisp
@@ -1174,7 +1191,8 @@ out how long tasks took that you start and stop.
       (org-clock-out)))
   
   (defun org-clock-out-if-started-todo ()
-    (when (and (string= org-state "TODO")
+    (when (and (or (string= org-state "TODO")
+                   (string= org-state "NEXT"))
                (string= org-last-state "STARTED"))
       (if (org-clocking-p)
           (org-clock-out))))
@@ -1339,7 +1357,7 @@ Functions borrowed from Sacha Chua.
   
   (setq org-log-done '(note))
   (setq org-todo-keywords
-        '((sequence "TODO(t)" "NEXT(x)" "STARTED(s)" "WAITING(w@)" "|" "DONE(d@)" "NVM(n@)" "MAYBE(m@)")))
+        '((sequence "TODO(t)" "NEXT(n)" "STARTED(s)" "WAITING(w@)" "|" "DONE(d@)" "NVM(v@)" "MAYBE(m@)")))
   
   
   (setq org-tags-exclude-from-inheritance '("PROJECT"))
@@ -1533,7 +1551,7 @@ me over.
   (setq erc-insert-timestamp-function 'erc-insert-timestamp-left)
   
   ;; Auto-fill (static size so log files look decent)
-  (setq erc-fill-column 78)
+  (setq erc-fill-column 80)
   (setq erc-fill-function 'erc-fill-static)
   (setq erc-fill-static-center 15)
   
@@ -1754,6 +1772,10 @@ Uh oh, here come the big guns.
   (setq inferior-lisp-program "/opt/local/bin/sbcl")
   (require 'slime-autoloads)
   (slime-setup '(slime-fancy))
+  (setq common-lisp-hyperspec-root "file:/Users/jmickey/zip/HyperSpec/")
+  (setq common-lisp-hyperspec-symbol-table "/Users/jmickey/zip/HyperSpec/Data/Map_Sym.txt")
+  (setq browse-url-browser-function '(("hyperspec" . w3m-browse-url)
+                                      ("." . browse-url-default-browser)))
 #+end_src
 *** SQL
 Who needs a command line anyways..
@@ -2088,6 +2110,13 @@ Nice to have going along the top sometimes. Disabled, I never used it.
 ** End diasbled code
 #+begin_src emacs-lisp
   ; this is where the ending mark would be
+#+end_src
+** Anything
+*now disabled!*
+Anything? Anything! It's a different way of using emacs.. and I don't
+use it that much. We'll see if I ever start using it more.
+#+begin_src emacs-lisp
+  (autoload 'anything "anything" "" t)
 #+end_src
 * Custom variables
 #+begin_src emacs-lisp
