@@ -11,9 +11,6 @@
 (add-to-list 'load-path (expand-file-name
                          "lisp" (expand-file-name
                                  "org-src" dotfiles-dir)))
-;; Load up Org Mode and Babel
-(require 'org-install)
-
 ;; load up the main file
 (org-babel-load-file (expand-file-name "boot.org" dotfiles-dir))
 

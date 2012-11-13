@@ -82,20 +82,20 @@
 ;; +---+----------+
 ;; ;
 (gnus-add-configuration
-  '(article
-     (horizontal 1.0
-                 (vertical 25
-                           (group 1.0))
-                 (vertical 1.0
-                           (summary 0.25 point)
-                           (article 1.0)))))
+ '(article
+   (horizontal 1.0
+               (vertical 25
+                         (group 1.0))
+               (vertical 1.0
+                         (summary 0.25 point)
+                         (article 1.0)))))
 (gnus-add-configuration
-  '(summary
-     (horizontal 1.0
-                 (vertical 25
-                           (group 1.0))
-                 (vertical 1.0
-                           (summary 1.0 point)))))
+ '(summary
+   (horizontal 1.0
+               (vertical 25
+                         (group 1.0))
+               (vertical 1.0
+                         (summary 1.0 point)))))
 
 
 (add-hook 'gnus-summary-mode-hook 'gnus-hl-line)

@@ -262,6 +262,13 @@ brackets.  Return overlay specification, as a string, or nil."
 
 (org-export-define-derived-backend e-beamer e-latex
   :export-block "BEAMER"
+  :sub-menu-entry
+  (?l (?B "As TEX buffer (Beamer)" org-e-beamer-export-as-latex)
+      (?b "As TEX file (Beamer)" org-e-beamer-export-to-latex)
+      (?P "As PDF file (Beamer)" org-e-beamer-export-to-pdf)
+      (?O "As PDF file and open (Beamer)"
+	  (lambda (s v b)
+	    (org-open-file (org-e-beamer-export-to-pdf s v b)))))
   :options-alist
   ((:beamer-theme "BEAMER_THEME" nil org-e-beamer-theme)
    (:beamer-color-theme "BEAMER_COLOR_THEME" nil nil t)
@@ -718,8 +725,7 @@ used as a communication channel."
 			    path
 			    contents))))))))
      ;; Otherwise, use `e-latex' back-end.
-     (t (funcall (cdr (assq 'link org-e-latex-translate-alist))
-		 link contents info)))))
+     (t (org-export-with-backend 'e-latex link contents info)))))
 
 
 ;;;; Plain List
@@ -929,12 +935,12 @@ value."
    ((equal property "BEAMER_env")
     (save-excursion
       (org-back-to-heading t)
-      (let ((tags (org-get-tags)))
-	(setq tags (delq nil (mapcar (lambda (x)
-				       (if (string-match "^B_" x) nil x))
-				     tags)))
-	(org-set-tags-to tags))
-      (when (org-string-nw-p value) (org-toggle-tag (concat "B_" value) 'on))))
+      ;; Filter out Beamer-related tags and install environment tag.
+      (let ((tags (org-remove-if (lambda (x) (string-match "^B_" x))
+				 (org-get-tags)))
+	    (env-tag (and (org-string-nw-p value) (concat "B_" value))))
+	(org-set-tags-to (if env-tag (cons env-tag tags) tags))
+	(when env-tag (org-toggle-tag env-tag 'on)))))
    ((equal property "BEAMER_col")
     (org-toggle-tag "BMCOL" (if (org-string-nw-p value) 'on 'off)))))
 
@@ -1123,8 +1129,8 @@ aid, but the tag does not have any semantic meaning."
       (progn
 	(org-back-to-heading t)
 	(org-reveal)
-	(org-entry-put nil "LaTeX_CLASS" "beamer")
-	(org-entry-put nil "LaTeX_CLASS_OPTIONS" "[presentation]")
+	(org-entry-put nil "EXPORT_LaTeX_CLASS" "beamer")
+	(org-entry-put nil "EXPORT_LaTeX_CLASS_OPTIONS" "[presentation]")
 	(org-entry-put nil "EXPORT_FILE_NAME" "presentation.pdf")
 	(when org-e-beamer-column-view-format
 	  (org-entry-put nil "COLUMNS" org-e-beamer-column-view-format))

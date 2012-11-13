@@ -18,9 +18,12 @@ so you have to check [[file:init.el][init.el]] for more information! DRY!
 * User Interface
 ** Emacs look
 #+begin_src emacs-lisp
-  (menu-bar-mode -1)
-  (tool-bar-mode -1)
-  (scroll-bar-mode -1)
+  (if (boundp 'menu-bar-mode)
+      (menu-bar-mode -1))
+  (if (boundp 'tool-bar-mode)
+      (tool-bar-mode -1))
+  (if (boundp 'scroll-bar-mode)
+      (scroll-bar-mode -1))
 #+end_src
 I love the empty-lines notification. However, it does seem to fail on
 the very last line? I haven't solved this yet.
@@ -41,6 +44,10 @@ modeline. Fucking essential.
 #+begin_src emacs-lisp
   (line-number-mode 1)
   (column-number-mode 1)
+#+end_src
+Let's get weird.
+#+begin_src emacs-lisp
+  (setq enable-recursive-minibuffers t)
 #+end_src
 Put a clock in the modeline. Useful because I lose track of time all
 the time. It's actually kind of a problem.
@@ -385,9 +392,9 @@ Mac fix for info installation location!
   (put 'eshell 'disabled "Use eshell-new instead!\n")
   (autoload 'ansi-color "ansi-color" t nil)
   
-  (defun cm-eshell-handle-ansi-color ()
-    (ansi-color-apply-on-region eshell-last-output-start
-                                eshell-last-output-end))
+  ;(defun cm-eshell-handle-ansi-color ()
+  ;  (ansi-color-apply-on-region eshell-last-output-start
+  ;                              eshell-last-output-end))
   
   (setq eshell-directory-name "~/.emacs.d/eshell")
   (setq eshell-prompt-function 'cm-eshell-prompt)
@@ -416,7 +423,7 @@ Mac fix for info installation location!
     (interactive)
   
     (let* ((asc-buffer-name (concat "*asc:" cmd "*"))
-           (buffer (get-buffer-create asc-buffer-name))
+           (buffer (get-buffer-create (generate-new-buffer-name asc-buffer-name)))
            (directory default-directory))
       ;; If will kill a process, query first.
       (setq proc (get-buffer-process buffer))
@@ -476,24 +483,14 @@ Mac fix for info installation location!
                               ad-return-value)
          ad-return-value)))
   
-  (defun cm-eshell-mode-hook ()
-    (add-to-list 'eshell-output-filter-functions 'cm-eshell-handle-ansi-color))
+  (add-hook 'eshell-preoutput-filter-functions 'ansi-color-apply)
   
-  (add-hook 'eshell-mode-hook 'cm-eshell-mode-hook)
 #+end_src
 * External
 ** Emacs Features
-*** Ido
-Everyone should use Ido. (well, maybe helm)
+*** Pretty Mode
 #+begin_src emacs-lisp
-  (require 'ido)
-  ;(ido-mode t)
-#+end_src
-If the exact name isn't found, then flex matching will match against
-anything with the characters in the order you've typed. It matches
-only for strings that have that sequence of characters in order.
-#+begin_src emacs-lisp
-  (setq ido-enable-flex-matching t)
+  (require 'pretty-mode-autoloads)
 #+end_src
 *** Helm
 Helm is the new Anything. Helm will help steer you in the right
@@ -504,8 +501,28 @@ direction!
   (global-set-key (kbd "C-c h") 'helm-mini)
   ; bad fuzzy matching, but I can manually replace random parts with ido!
   (helm-mode 1)
-  (setq enable-recursive-minibuffers t)
-  (add-to-list 'helm-completing-read-handlers-alist '(find-file . ido))
+  ;(add-to-list 'helm-completing-read-handlers-alist '(find-file . ido))
+#+end_src
+
+Yay gtags support for helm!
+#+begin_src emacs-lisp
+  (require 'helm-gtags)
+  
+  (add-hook 'c-mode-hook (lambda () (helm-gtags-mode)))
+  
+  ;; customize
+  (setq helm-c-gtags-path-style 'absolute)
+  (setq helm-c-gtags-ignore-case t)
+  (setq helm-c-gtags-read-only nil)
+  
+  ;; key bindings
+  (add-hook 'helm-gtags-mode-hook
+            '(lambda ()
+               (local-set-key (kbd "C-c g t") 'helm-gtags-find-tag)
+               (local-set-key (kbd "C-c g r") 'helm-gtags-find-rtag)
+               (local-set-key (kbd "C-c g s") 'helm-gtags-find-symbol)
+               (local-set-key (kbd "C-c g f") 'helm-gtags-find-files)
+               (local-set-key (kbd "C-t") 'helm-gtags-pop-stack)))
 #+end_src
 *** Uniquify
 So useful, I think everyone should have this turned on.
@@ -657,6 +674,20 @@ out semantically.
   ;(add-hook 'gnus-group-mode-hook 'hl-line-fancy-highlight)
 #+end_src
 ** Major Modes
+*** PlantUML
+Get the jarfile in the correct place...
+#+begin_src emacs-lisp
+  (setq plantuml-jar-path (expand-file-name "~/bin/plantuml.jar"))
+  (setenv "GRAPHVIZ_DOT" "/opt/local/bin/dot")
+#+end_src
+*** Scheme
+#+begin_src emacs-lisp
+  (add-hook 'scheme-mode-hook
+            '(lambda ()
+               (require 'pretty-mode)
+               (paredit-mode 1)
+               (pretty-mode 1)))
+#+end_src
 *** Paredit
 #+begin_src emacs-lisp
   (require 'paredit)
@@ -709,41 +740,43 @@ Lisp seems to be the current mental debate.
 *** C
 My C settings.
 #+begin_src emacs-lisp
-  (require 'cl)
-  (require 'compile)
-  
-  (defun* get-closest-pathname (&optional (file "*akefile") (dir default-directory))
-    "Determine the pathname of the first instance of FILE starting
-  from the current directory towards root. This may not do the
-  correct thing in presence of links. If it does not find FILE,
-  then it shall return the name of FILE in the current directory,
-  suitable for creation"
-    (let ((root (expand-file-name "/")))
-      (loop 
-       for d = dir then (expand-file-name ".." d)
-       if (file-expand-wildcards (expand-file-name file d))
-       return (car (file-expand-wildcards (expand-file-name file d)))
-       if (equal d root)
-       return nil)))
-  
-  (defun my-c-hook ()
-    (interactive)
-    (setq tab-width 8)
-    (setq indent-tabs-mode t)
-    (setq tab-stop-list
-          '(4 8 12 16 20 24 28 32 36 40 44 48 52 56 60 64 68 72 76 80 84 88 92 96 100 104 108 112 116 120))
-    (setq fill-column 80)
-    (setq-default c-basic-offset 4)
-    (setq show-trailing-whitespace t)
-    (setq c-tab-always-indent t)
-    (linum-mode 1)
-    (setq comment-multi-line t)
-    (gtags-mode 1)
-    (set (make-local-variable 'compile-command)
-         (format "mm tup upd")))
-  
-  (add-hook 'cc-mode-hook 'my-c-hook)
-  (add-hook 'c-mode-hook 'my-c-hook)
+    (require 'cl)
+    (require 'compile)
+    
+    (defun* get-closest-pathname (&optional (file "*akefile") (dir default-directory))
+      "Determine the pathname of the first instance of FILE starting
+    from the current directory towards root. This may not do the
+    correct thing in presence of links. If it does not find FILE,
+    then it shall return the name of FILE in the current directory,
+    suitable for creation"
+      (let ((root (expand-file-name "/")))
+        (loop 
+         for d = dir then (expand-file-name ".." d)
+         if (file-expand-wildcards (expand-file-name file d))
+         return (car (file-expand-wildcards (expand-file-name file d)))
+         if (equal d root)
+         return nil)))
+    
+    (defun my-c-hook ()
+      (interactive)
+      (setq tab-width 8)
+      (setq indent-tabs-mode t)
+      (setq tab-stop-list
+            '(8 16 24 32 40 48 56 64 72 80 88 96 104 112 120))
+      (setq fill-column 80)
+      (setq-default c-basic-offset 8)
+      (setq show-trailing-whitespace t)
+      (setq c-tab-always-indent t)
+      (linum-mode 1)
+      (yas-mode 1)
+      (setq comment-multi-line t)
+  ;    (gtags-mode 1) ; no more! going to helm!
+      (helm-gtags-mode)
+      (set (make-local-variable 'compile-command)
+           (format "mm tup upd 2>&1 | gsed -r \"s#/.*@tupjob-[0-9]+(.*):#\\1#\" | gsed -r \"s#build_default/##\"")))
+    (add-hook 'c++-mode-hook 'my-c-hook)
+    (add-hook 'cc-mode-hook 'my-c-hook)
+    (add-hook 'c-mode-hook 'my-c-hook)
 #+end_src
 *** GNU Plot
 Get some fancy graphs going. I mostly use R, but this is nice when /other/ people use gnuplot.
@@ -771,6 +804,57 @@ Add a commit signoff to every commit message.
   (eval-after-load 'magit 
     (setq magit-commit-signoff t))
 #+end_src
+**** Custom Commit Message Formatting
+Sort files by spelling. I figure the internal ordering of each
+paragraph should be fine. I'm still working on a cm/gnu-fill-paragraph
+that works on these commit message regions.
+
+This regex finds the first line that begins with an asterix.
+#+begin_src emacs-lisp
+  (defvar cm/gnu-line-start "^\* .*$")
+#+end_src
+=sort-subr= expects two functions to help it find the boundaries of
+records. =nextrec= finds the beginning of the next record, unless
+there are no more records and then it should be pointing at the end of
+the buffer (=eobp=).
+#+begin_src emacs-lisp
+  (defun cm/gnu-line-next ()
+    (if (not (eobp))
+        (forward-line 1))
+    (while (and (not (eobp)) (not (looking-at cm/gnu-line-start)))
+      (forward-line 1))
+    (end-of-line)
+    (if (not (eobp))
+        (beginning-of-line)))
+#+end_src
+=endrec= finds the end of the *current* record. In the commit message
+case this means finding the next line that starts with an asterix,
+then going back to the previous line's end. This handles commit
+messages that have multiple functions/lines describing a file's
+changes.
+#+begin_src emacs-lisp
+  (defun cm/gnu-line-end ()
+    (if (not (eobp))
+        (forward-line 1))
+    (while (and (not (eobp)) (not (looking-at cm/gnu-line-start)))
+      (forward-line 1))
+    (if (not (eobp)) (forward-line -1))
+    (end-of-line))
+#+end_src
+Finally, we get to the part where we actually call sort-subr. Pretty
+standard implementation, and mostly lifted from =sort-paragraphs= in
+=sort.el.gz=.
+#+begin_src emacs-lisp    
+  (defun cm/sort-gnu-lines (reverse beg end)
+    (interactive "P\nr")
+    (save-excursion
+      (save-restriction
+        (narrow-to-region beg end)
+        (goto-char (point-min))
+        (sort-subr reverse 'cm/gnu-line-next 'cm/gnu-line-end))))
+#+end_src
+I don't have a good keybinding for this yet, but I will figure
+something out :P
 *** Esperanto
 This is heavily borrowed from the spanish mode, works wonders.
 #+begin_src emacs-lisp
@@ -930,7 +1014,8 @@ Thank you Britt.
 *** Yasnippet
 Really useful when you have a lot of code to write.
 #+begin_src emacs-lisp
-  (require 'yasnippet-bundle)
+  (require 'yasnippet)
+;  (yas-global-mode 1)
 #+end_src
 *** Android
 #+begin_src emacs-lisp
@@ -1303,7 +1388,9 @@ Functions borrowed from Sacha Chua.
   ;             (org-agenda-with-colors t)
   ;             ("theagenda.ps")))
               ))
-  
+#+end_src
+**** Useful setq's
+#+begin_src emacs-lisp  
   (setq org-stuck-projects
             '("-MAYBE-DONE" "TODO"))
   
@@ -1342,6 +1429,13 @@ Functions borrowed from Sacha Chua.
   (setq org-refile-use-outline-path 'file)
   ;; less file local settings!
   (setq org-archive-location "_archive/%s_old::")
+  (setq org-global-properties '(("Effort_ALL" . "0:10 0:20 0:30 0:40 0:50 1:00 2:00 3:00 4:00 5:00 6:00 7:00 8:00 9:00 10:00 11:00 12:00")))
+  (setq org-columns-default-format "%TODO %50ITEM(Task) %17Effort(Estimated Effort){:} %CLOCKSUM")
+  
+
+#+end_src
+**** Tags and todo keywords
+#+begin_src emacs-lisp
   (setq org-tag-alist '((:startgroup)
                         ("HOME" . ?h)
                         ("WORK" . ?w)
@@ -1358,34 +1452,54 @@ Functions borrowed from Sacha Chua.
   (setq org-log-done '(note))
   (setq org-todo-keywords
         '((sequence "TODO(t)" "NEXT(n)" "STARTED(s)" "WAITING(w@)" "|" "DONE(d@)" "NVM(v@)" "MAYBE(m@)")))
-  
-  
   (setq org-tags-exclude-from-inheritance '("PROJECT"))
   ;(setq org-agenda-category-icon-alist
   ;      '(("netapp" "" nil t)
+#+end_src
+**** org export
+#+begin_src emacs-lisp
+  (add-to-list 'load-path "~/config/emacs.d/org-src/contrib/lisp")
+  (require 'pandoc-mode)
+  ;; mediawiki + pandoc hack
+  (setq pandoc-binary "/Users/jmickey/bin/pandoc")
   
-  (setq org-global-properties '(("Effort_ALL" . "0 0:10 0:20 0:30 0:40 0:50 1:00 2:00 3:00 4:00 5:00 6:00 7:00 8:00 9:00 10:00 11:00 12:00")))
-  (setq org-columns-default-format "%TODO %50ITEM(Task) %17Effort(Estimated Effort){:} %CLOCKSUM")
-  
-  ;; org export
+  (defun cm/org-export-as-pandoc ()
+    (interactive)
+    (org-export-as-html 3 nil nil "*Org HTML Export*" t nil)
+    (with-current-buffer "*Org HTML Export*"
+      (pandoc-mode 1)
+      (pandoc-set-write "mediawiki")
+      (pandoc-run-pandoc nil)
+      (pandoc-view-output)))
+#+end_src
+**** org babel & export
+#+begin_src emacs-lisp  
   (setq org-ditaa-jar-path "/usr/local/Cellar/ditaa/0.9/ditaa0_9.jar")
+  (setq org-plantuml-jar-path plantuml-jar-path)
   (add-hook 'org-babel-after-execute-hook 'org-display-inline-images)
   
   (org-babel-do-load-languages 
    'org-babel-load-languages
    `((emacs-lisp . t)
-     (dot . t)
-     (ditaa . t)
+     (C . t)
      (R . t)
+     (clojure . t)
+     (ditaa . t)
+     (dot . t)
+     (gnuplot . t)
+     (haskell . t)
+     (latex . t)
+     (ledger . t)
+     (lisp . t)
+     (org . t)
+     (perl . t)
+     (plantuml . t)
      (python . t)
      (ruby . t)
-     (gnuplot . t)
-     (clojure . t)
+     (scheme . t)
      (sh . t)
-     (ledger . t)
-     (org . t)
-     (latex . t)))
-  (setq org-confirm-babel-evaluate nil)
+     (sql .t)))
+  (setq org-confirm-babel-evaluate t)  ; nah, let's be safe
   
   
   ;; org links!
@@ -1514,16 +1628,15 @@ Functions borrowed from Sacha Chua.
       (delete-region (match-beginning 0) (match-end 1))))
   
   ;; turn on spell checking
-  (add-hook 'rcirc-mode-hook (lambda ()
-                               (flyspell-mode 1)))
+  (add-hook 'rcirc-mode-hook (lambda () '()))
   ;; Turn on logging everything to a special buffer, for debugging.
-  (setq rcirc-debug-flag t)
+  ;(setq rcirc-debug-flag t)
   ;; scroll as little as possible
   (add-hook 'rcirc-mode-hook
-   (lambda ()
-    (set
-     (make-local-variable 'scroll-conservatively)
-     8192)))
+            (lambda ()
+              (set
+               (make-local-variable 'scroll-conservatively)
+               8192)))
   
   ;; Change user info
   (setq rcirc-default-nick "codemac")
@@ -1560,6 +1673,8 @@ me over.
   ;                                "324" "329" "332" "333" "353" "477"))
   ;(setq erc-track-exclude '("&bitlbee" "#emacs" "#ruby" "#applescript"))
   
+  (setq erc-header-line-format "%n on %t (%m,%l)")
+  
   ;; Auto join the given channels
   (setq erc-autojoin-channels-alist cm-irc-channel-alist)
   
@@ -1577,7 +1692,7 @@ me over.
     (auto-fill-mode 0)                    ; disable auto fill
     (setq truncate-lines nil)            ; wrap lines
     ;; Add some modules
-    (add-to-list 'erc-modules 'spelling)
+    ;(add-to-list 'erc-modules 'spelling) ; kills performance
     (add-to-list 'erc-modules 'scrolltobottom)
     (add-to-list 'erc-modules 'truncate)
   ;(add-to-list 'erc-modules 'log)
@@ -2117,6 +2232,18 @@ Anything? Anything! It's a different way of using emacs.. and I don't
 use it that much. We'll see if I ever start using it more.
 #+begin_src emacs-lisp
   (autoload 'anything "anything" "" t)
+#+end_src
+** Ido
+Everyone should use Ido. (well, maybe helm)
+#+begin_src emacs-lisp
+;  (require 'ido)
+;  (ido-mode t)
+#+end_src
+If the exact name isn't found, then flex matching will match against
+anything with the characters in the order you've typed. It matches
+only for strings that have that sequence of characters in order.
+#+begin_src emacs-lisp
+  (setq ido-enable-flex-matching t)
 #+end_src
 * Custom variables
 #+begin_src emacs-lisp

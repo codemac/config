@@ -378,6 +378,7 @@ The spreadsheet
 * Durations and time values::   How to compute durations and time values
 * Field and range formulas::    Formula for specific (ranges of) fields
 * Column formulas::             Formulas valid for an entire column
+* Lookup functions::            Lookup functions for searching tables
 * Editing and debugging formulas::  Fixing formulas
 * Updating the table::          Recomputing all dependent fields
 * Advanced features::           Field and column names, parameters and automatic recalc
@@ -480,7 +481,7 @@ Capture - Refile - Archive
 * Attachments::                 Add files to tasks
 * RSS Feeds::                   Getting input from RSS feeds
 * Protocols::                   External (e.g.@: Browser) access to Emacs and Org
-* Refiling notes::              Moving a tree from one place to another
+* Refile and copy::             Moving/copying a tree from one place to another
 * Archiving::                   What to do with finished projects
 
 Capture
@@ -855,33 +856,31 @@ Theory Ltd.}
 @cindex installation
 @cindex XEmacs
 
-@b{Important:} @i{If you are using a version of Org that is part of the Emacs
-distribution, GNU ELPA installed by the package manager or an XEmacs package,
-please skip this section and go directly to @ref{Activation}.  To see what
-version of Org (if any) is part of your Emacs distribution, type @kbd{M-x
-org-version} (if your Emacs distribution does not come with Org, this
-function will not be defined).}
+@b{Important:} @i{If you the version of Org that comes with Emacs or as a
+XEmacs package, please skip this section and go directly to @ref{Activation}.
+If you downloaded Org as an ELPA package, please read the instructions on the
+@uref{http://orgmode.org/elpa.html, Org ELPA page}.  To see what version of Org
+(if any) is part of your Emacs distribution, type @kbd{M-x org-version} (if
+your Emacs distribution does not come with Org, this function will not be
+defined).}
 
 Installation of Org mode uses a build system, which is described in more
 detail on @uref{http://orgmode.org/worg/dev/org-build-system.html, Worg}.
 
 If you have downloaded Org from the Web as a distribution @file{.zip} or
-@file{.tar.gz} archive, you must take the following steps to install it:
+@file{.tar.gz} archive, take the following steps to install it:
 
 @itemize @bullet
 @item Unpack the distribution archive.
 @item Change into (@code{cd}) the Org directory.
 @item Run @code{make help config}
 and then check and edit the file @file{local.mk} if the default configuration
-does not match your system.  You must set the name of the Emacs binary
-(likely either @file{emacs} or @file{xemacs}), and the paths to the
-directories where local Lisp and Info files will be installed.  If the Emacs
-binary is not in your path, you must give the full path to the executable.
-Avoid spaces in any path names.
+does not match your system.  Set the name of the Emacs binary (likely either
+@file{emacs} or @file{xemacs}), and the paths to the directories where local
+Lisp and Info files will be installed.  If the Emacs binary is not in your
+path, give the full path to the executable.  Avoid spaces in any path names.
 @item Run @code{make config}
 again to check the configuration.
-@item Optionally run @code{make test}
-to build Org mode and then run the full testsuite.
 @item Run @code{make install} or @code{sudo make install}
 to build and install Org mode on your system.
 @end itemize
@@ -904,6 +903,8 @@ Emacs binary is not in your path, you must give the full path to the
 executable.  Avoid spaces in any path names.
 @item Run @code{make config}
 to check the configuration.
+@item Optionally run @code{make test}
+to build Org mode and then run the full testsuite.
 @item Run @code{make update2} or @code{make up2}
 to update the Git repository and build and install Org mode.  The latter
 invocation runs the complete test suite before installation and installs only
@@ -936,7 +937,7 @@ If you plan to use code from the @file{contrib} subdirectory without
 compiling them, do a similar step for this directory:
 
 @example
-(add-to-list 'load-path "~/path/to/orgdir/contrib/lisp")
+(add-to-list 'load-path "~/path/to/orgdir/contrib/lisp" t)
 @end example
 
 If you want to include those files with the build and install, please
@@ -965,13 +966,6 @@ on your system).
 make install-info
 @end example
 
-Then add the following line to @file{.emacs}.  It is needed so that
-Emacs can autoload functions that are located in files not immediately loaded
-when Org mode starts.
-@lisp
-(require 'org-install)
-@end lisp
-
 Do not forget to activate Org as described in the following section.
 @page
 
@@ -979,6 +973,7 @@ Do not forget to activate Org as described in the following section.
 @section Activation
 @cindex activation
 @cindex autoload
+@cindex ELPA
 @cindex global key bindings
 @cindex key bindings, global
 @findex org-agenda
@@ -986,14 +981,20 @@ Do not forget to activate Org as described in the following section.
 @findex org-store-link
 @findex org-iswitchb
 
-To make sure files with extension @file{.org} use Org mode, add the following
-line to your @file{.emacs} file.
+Since Emacs 22.2, files with the @file{.org} extension use Org mode by
+default.  If you are using an earlier version of Emacs, add this line to your
+@file{.emacs} file:
+
 @lisp
 (add-to-list 'auto-mode-alist '("\\.org\\'" . org-mode))
 @end lisp
-@noindent Org mode buffers need font-lock to be turned on - this is the
-default in Emacs@footnote{If you don't use font-lock globally, turn it on in
-Org buffer with @code{(add-hook 'org-mode-hook 'turn-on-font-lock)}}.
+
+Org mode buffers need font-lock to be turned on - this is the default in
+Emacs@footnote{If you don't use font-lock globally, turn it on in Org buffer
+with @code{(add-hook 'org-mode-hook 'turn-on-font-lock)}}.
+
+There are compatibility issues between Org mode and some other Elisp
+packages, please take the time to check the list (@pxref{Conflicts}).
 
 The four Org commands @command{org-store-link}, @command{org-capture},
 @command{org-agenda}, and @command{org-iswitchb} should be accessible through
@@ -1071,8 +1072,9 @@ $ emacs -Q -l /path/to/minimal-org.el
 @end example
 
 However if you are using Org mode as distributed with Emacs, a minimal setup
-is not necessary.  In that case it is sufficient to start Emacs as @code{emacs
--Q}.  The @code{minimal-org.el} setup file can have contents as shown below.
+is not necessary.  In that case it is sufficient to start Emacs as
+@code{emacs -Q}.  The @code{minimal-org.el} setup file can have contents as
+shown below.
 
 @example
 ;;; Minimal setup to load latest `org-mode'
@@ -1084,10 +1086,7 @@ is not necessary.  In that case it is sufficient to start Emacs as @code{emacs
 
 ;; add latest org-mode to load path
 (add-to-list 'load-path (expand-file-name "/path/to/org-mode/lisp"))
-(add-to-list 'load-path (expand-file-name "/path/to/org-mode/contrib/lisp"))
-
-;; activate org
-(require 'org-install)
+(add-to-list 'load-path (expand-file-name "/path/to/org-mode/contrib/lisp" t))
 @end example
 
 If an error occurs, a backtrace can be very useful (see below on how to
@@ -1508,7 +1507,7 @@ to create a number of tasks related to a series of lectures to prepare.  For
 more details, see the docstring of the command
 @code{org-clone-subtree-with-time-shift}.
 @orgcmd{C-c C-w,org-refile}
-Refile entry or region to a different location.  @xref{Refiling notes}.
+Refile entry or region to a different location.  @xref{Refile and copy}.
 @orgcmd{C-c ^,org-sort}
 Sort same-level entries.  When there is an active region, all entries in the
 region will be sorted.  Otherwise the children of the current headline are
@@ -2312,7 +2311,7 @@ on a per-file basis with:
 
 If you would like to overrule the automatic alignment of number-rich columns
 to the right and of string-rich column to the left, you can use @samp{<r>},
-@samp{c}@footnote{Centering does not work inside Emacs, but it does have an
+@samp{<c>}@footnote{Centering does not work inside Emacs, but it does have an
 effect when exporting to HTML.} or @samp{<l>} in a similar fashion.  You may
 also combine alignment and field width like this: @samp{<l10>}.
 
@@ -2399,6 +2398,7 @@ formula, moving these references by arrow keys
 * Durations and time values::   How to compute durations and time values
 * Field and range formulas::    Formula for specific (ranges of) fields
 * Column formulas::             Formulas valid for an entire column
+* Lookup functions::            Lookup functions for searching tables
 * Editing and debugging formulas::  Fixing formulas
 * Updating the table::          Recomputing all dependent fields
 * Advanced features::           Field and column names, parameters and automatic recalc
@@ -2659,18 +2659,21 @@ if($1<20,teen,string(""))  @r{"teen" if age $1 less than 20, else empty}
 Note that you can also use two org-specific flags @code{T} and @code{t} for
 durations computations @ref{Durations and time values}.
 
+You can add your own Calc functions defined in Emacs Lisp with @code{defmath}
+and use them in formula syntax for Calc.
+
 @node Formula syntax for Lisp, Durations and time values, Formula syntax for Calc, The spreadsheet
 @subsection Emacs Lisp forms as formulas
 @cindex Lisp forms, as table formulas
 
 It is also possible to write a formula in Emacs Lisp.  This can be useful
-for string manipulation and control structures, if Calc's functionality is 
-not enough.  
+for string manipulation and control structures, if Calc's functionality is
+not enough.
 
 If a formula starts with a single-quote followed by an opening parenthesis,
 then it is evaluated as a Lisp form.  The evaluation should return either a
 string or a number.  Just as with @file{calc} formulas, you can specify modes
-and a printf format after a semicolon.  
+and a printf format after a semicolon.
 
 With Emacs Lisp forms, you need to be conscious about the way field
 references are interpolated into the form.  By default, a reference will be
@@ -2781,7 +2784,7 @@ can also be used to assign a formula to some but not all fields in a row.
 Named field, see @ref{Advanced features}.
 @end table
 
-@node Column formulas, Editing and debugging formulas, Field and range formulas, The spreadsheet
+@node Column formulas, Lookup functions, Field and range formulas, The spreadsheet
 @subsection Column formulas
 @cindex column formula
 @cindex formula, for table column
@@ -2820,7 +2823,51 @@ stores it.  With a numeric prefix argument(e.g.@: @kbd{C-5 C-c =}) the command
 will apply it to that many consecutive fields in the current column.
 @end table
 
-@node Editing and debugging formulas, Updating the table, Column formulas, The spreadsheet
+@node Lookup functions, Editing and debugging formulas, Column formulas, The spreadsheet
+@subsection Lookup functions
+@cindex lookup functions in tables
+@cindex table lookup functions
+
+Org has three predefined Emacs Lisp functions for lookups in tables.
+@table @code
+@item (org-lookup-first VAL S-LIST R-LIST &optional PREDICATE)
+@findex org-lookup-first
+Searches for the first element @code{S} in list @code{S-LIST} for which
+@lisp
+(PREDICATE VAL S)
+@end lisp
+is @code{t}; returns the value from the corresponding position in list
+@code{R-LIST}.  The default @code{PREDICATE} is @code{equal}.  Note that the
+parameters @code{VAL} and @code{S} are passed to @code{PREDICATE} in the same
+order as the correspoding parameters are in the call to
+@code{org-lookup-first}, where @code{VAL} precedes @code{S-LIST}.  If
+@code{R-LIST} is @code{nil}, the matching element @code{S} of @code{S-LIST}
+is returned.
+@item (org-lookup-last VAL S-LIST R-LIST &optional PREDICATE)
+@findex org-lookup-last
+Similar to @code{org-lookup-first} above, but searches for the @i{last}
+element for which @code{PREDICATE} is @code{t}.
+@item (org-lookup-all VAL S-LIST R-LIST &optional PREDICATE)
+@findex org-lookup-all
+Similar to @code{org-lookup-first}, but searches for @i{all} elements for
+which @code{PREDICATE} is @code{t}, and returns @i{all} corresponding
+values.  This function can not be used by itself in a formula, because it
+returns a list of values.  However, powerful lookups can be built when this
+function is combined with other Emacs Lisp functions.
+@end table
+
+If the ranges used in these functions contain empty fields, the @code{E} mode
+for the formula should usually be specified: otherwise empty fields will not be
+included in @code{S-LIST} and/or @code{R-LIST} which can, for example, result
+in an incorrect mapping from an element of @code{S-LIST} to the corresponding
+element of @code{R-LIST}.
+
+These three functions can be used to implement associative arrays, count
+matching cells, rank results, group data etc.  For practical examples
+see @uref{http://orgmode.org/worg/org-tutorials/org-lookups.html, this
+tutorial on Worg}.
+
+@node Editing and debugging formulas, Updating the table, Lookup functions, The spreadsheet
 @subsection Editing and debugging formulas
 @cindex formula editing
 @cindex editing, of table formulas
@@ -3781,7 +3828,7 @@ mostly if more than two TODO states are possible (@pxref{TODO
 extensions}).  See also @ref{Conflicts}, for a discussion of the interaction
 with @code{shift-selection-mode}.  See also the variable
 @code{org-treat-S-cursor-todo-selection-as-state-change}.
-@orgcmd{C-c / t,org-show-todo-key}
+@orgcmd{C-c / t,org-show-todo-tree}
 @cindex sparse tree, for TODO
 @vindex org-todo-keywords
 View TODO items in a @emph{sparse tree} (@pxref{Sparse trees}).  Folds the
@@ -4264,10 +4311,10 @@ The TODO may also have minimum and maximum ranges specified by using the
 syntax @samp{.+2d/3d}, which says that you want to do the task at least every
 three days, but at most every two days.
 @item
-You must also have state logging for the @code{DONE} state enabled, in order
-for historical data to be represented in the consistency graph.  If it is not
-enabled it is not an error, but the consistency graphs will be largely
-meaningless.
+You must also have state logging for the @code{DONE} state enabled
+(@pxref{Tracking TODO state changes}), in order for historical data to be
+represented in the consistency graph.  If it is not enabled it is not an
+error, but the consistency graphs will be largely meaningless.
 @end enumerate
 
 To give you an idea of what the above rules look like in action, here's an
@@ -5629,10 +5676,9 @@ the following column).
 @vindex org-read-date-prefer-future
 When Org mode prompts for a date/time, the default is shown in default
 date/time format, and the prompt therefore seems to ask for a specific
-format.  But it will in fact accept any string containing some date and/or
-time information, and it is really smart about interpreting your input.  You
-can, for example, use @kbd{C-y} to paste a (possibly multi-line) string
-copied from an email message.  Org mode will find whatever information is in
+format.  But it will in fact accept date/time information in a variety of
+formats.  Generally, the information should start at the beginning of the
+string.  Org mode will find whatever information is in
 there and derive anything you have not specified from the @emph{default date
 and time}.  The default is usually the current date and time, but when
 modifying an existing timestamp, or when entering the second stamp of a
@@ -6110,7 +6156,7 @@ is only necessary if you edit the timestamps directly.  If you change
 them with @kbd{S-@key{cursor}} keys, the update is automatic.
 @orgcmd{C-S-@key{up/down},org-clock-timestamps-up/down}
 On @code{CLOCK} log lines, increase/decrease both timestamps so that the
-clock duration keeps the same. 
+clock duration keeps the same.
 @orgcmd{S-M-@key{up/down},org-timestamp-up/down}
 On @code{CLOCK} log lines, increase/decrease the timestamp at point and
 the one of the previous (or the next clock) timestamp by the same duration.
@@ -6495,7 +6541,7 @@ trees to an archive file keeps the system compact and fast.
 * Attachments::                 Add files to tasks
 * RSS Feeds::                   Getting input from RSS feeds
 * Protocols::                   External (e.g.@: Browser) access to Emacs and Org
-* Refiling notes::              Moving a tree from one place to another
+* Refile and copy::             Moving/copying a tree from one place to another
 * Archiving::                   What to do with finished projects
 @end menu
 
@@ -6562,7 +6608,7 @@ so that you can resume your work without further distraction.  When called
 with a prefix arg, finalize and then jump to the captured item.
 
 @orgcmd{C-c C-w,org-capture-refile}
-Finalize the capture process by refiling (@pxref{Refiling notes}) the note to
+Finalize the capture process by refiling (@pxref{Refile and copy}) the note to
 a different place.  Please realize that this is a normal refiling command
 that will be executed---so the cursor position at the moment you run this
 command is important.  If you have inserted a tree with a parent and
@@ -6807,7 +6853,9 @@ dynamic insertion of content.  The templates are expanded in the order given her
 @smallexample
 %[@var{file}]     @r{Insert the contents of the file given by @var{file}.}
 %(@var{sexp})     @r{Evaluate Elisp @var{sexp} and replace with the result.}
-            @r{The sexp must return a string.}
+                  @r{For convenience, %:keyword (see below) placeholders}
+                  @r{within the expression will be expanded prior to this.}
+                  @r{The sexp must return a string.}
 %<...>      @r{The result of format-time-string on the ... format specification.}
 %t          @r{Timestamp, date only.}
 %T          @r{Timestamp, with date and time.}
@@ -7034,7 +7082,7 @@ list of drawers in that file:
 For more information, including how to read atom feeds, see
 @file{org-feed.el} and the docstring of @code{org-feed-alist}.
 
-@node Protocols, Refiling notes, RSS Feeds, Capture - Refile - Archive
+@node Protocols, Refile and copy, RSS Feeds, Capture - Refile - Archive
 @section Protocols for external access
 @cindex protocols, for external access
 @cindex emacsserver
@@ -7048,17 +7096,22 @@ a remote website you are looking at with the browser.  See
 @uref{http://orgmode.org/worg/org-contrib/org-protocol.php} for detailed
 documentation and setup instructions.
 
-@node Refiling notes, Archiving, Protocols, Capture - Refile - Archive
-@section Refiling notes
+@node Refile and copy, Archiving, Protocols, Capture - Refile - Archive
+@section Refile and copy
 @cindex refiling notes
+@cindex copying notes
 
-When reviewing the captured data, you may want to refile some of the entries
-into a different list, for example into a project.  Cutting, finding the
-right location, and then pasting the note is cumbersome.  To simplify this
-process, you can use the following special command:
+When reviewing the captured data, you may want to refile or to copy some of
+the entries into a different list, for example into a project.  Cutting,
+finding the right location, and then pasting the note is cumbersome.  To
+simplify this process, you can use the following special command:
 
 @table @kbd
+@orgcmd{C-c M-w,org-copy}
+@findex org-copy
+Copying works like refiling, except that the original note is not deleted.
 @orgcmd{C-c C-w,org-refile}
+@findex org-refile
 @vindex org-reverse-note-order
 @vindex org-refile-targets
 @vindex org-refile-use-outline-path
@@ -7095,7 +7148,7 @@ setting @code{org-refile-use-cache}.  To make the command see new possible
 targets, you have to clear the cache with this command.
 @end table
 
-@node Archiving,  , Refiling notes, Capture - Refile - Archive
+@node Archiving,  , Refile and copy, Capture - Refile - Archive
 @section Archiving
 @cindex archiving
 
@@ -9228,11 +9281,11 @@ a horizontal line (@samp{<hr/>} in HTML and @code{\hrule} in @LaTeX{}).
 @cindex exporting, not
 @cindex #+BEGIN_COMMENT
 
-Lines starting with zero or more whitespace characters followed by @samp{#}
-are treated as comments and will never be exported.  Also entire subtrees
-starting with the word @samp{COMMENT} will never be exported.  Finally,
-regions surrounded by @samp{#+BEGIN_COMMENT} ... @samp{#+END_COMMENT} will
-not be exported.
+Lines starting with zero or more whitespace characters followed by one
+@samp{#} and a whitespace are treated as comments and will never be exported.
+Also entire subtrees starting with the word @samp{COMMENT} will never be
+exported.  Finally, regions surrounded by @samp{#+BEGIN_COMMENT}
+... @samp{#+END_COMMENT} will not be exported.
 
 @table @kbd
 @kindex C-c ;
@@ -9382,16 +9435,16 @@ so often, shortcuts are provided using the Easy Templates facility
 @item C-c '
 Edit the source code example at point in its native mode.  This works by
 switching to a temporary buffer with the source code.  You need to exit by
-pressing @kbd{C-c '} again@footnote{Upon exit, lines starting with @samp{*}
-or @samp{#} will get a comma prepended, to keep them from being interpreted
-by Org as outline nodes or special comments.  These commas will be stripped
-for editing with @kbd{C-c '}, and also for export.}.  The edited version will
-then replace the old version in the Org buffer.  Fixed-width regions
-(where each line starts with a colon followed by a space) will be edited
-using @code{artist-mode}@footnote{You may select a different-mode with the
-variable @code{org-edit-fixed-width-region-mode}.} to allow creating ASCII
-drawings easily.  Using this command in an empty line will create a new
-fixed-width region.
+pressing @kbd{C-c '} again@footnote{Upon exit, lines starting with @samp{*},
+@samp{,*}, @samp{#+} and @samp{,#+} will get a comma prepended, to keep them
+from being interpreted by Org as outline nodes or special syntax.  These
+commas will be stripped for editing with @kbd{C-c '}, and also for export.}.
+The edited version will then replace the old version in the Org buffer.
+Fixed-width regions (where each line starts with a colon followed by a space)
+will be edited using @code{artist-mode}@footnote{You may select
+a different-mode with the variable @code{org-edit-fixed-width-region-mode}.}
+to allow creating ASCII drawings easily.  Using this command in an empty line
+will create a new fixed-width region.
 @kindex C-c l
 @item C-c l
 Calling @code{org-store-link} while editing a source code example in a
@@ -12932,6 +12985,8 @@ Include the code block in the tangled output to file @samp{filename}.
 @table @code
 @item org-babel-tangle
 Tangle the current file.  Bound to @kbd{C-c C-v t}.
+
+With prefix argument only tangle the current code block.
 @item org-babel-tangle-file
 Choose a file to tangle.  Bound to @kbd{C-c C-v f}.
 @end table
@@ -13669,10 +13724,14 @@ buffer as quoted text.  E.g., @code{:results value verbatim}.
 @item @code{file}
 The results will be interpreted as the path to a file, and will be inserted
 into the Org mode buffer as a file link.  E.g., @code{:results value file}.
-@item @code{raw}, @code{org}
+@item @code{raw}
 The results are interpreted as raw Org mode code and are inserted directly
 into the buffer.  If the results look like a table they will be aligned as
 such by Org mode.  E.g., @code{:results value raw}.
+@item @code{org}
+The results are will be enclosed in a @code{BEGIN_SRC org} block.
+They are not comma-escaped by default but they will be if you hit @kbd{TAB}
+in the block and/or if you export the file.  E.g., @code{:results value org}.
 @item @code{html}
 Results are assumed to be HTML and will be enclosed in a @code{BEGIN_HTML}
 block.  E.g., @code{:results value html}.
@@ -13686,7 +13745,7 @@ E.g., @code{:results value code}.
 The result is converted to pretty-printed code and is enclosed in a code
 block.  This option currently supports Emacs Lisp, Python, and Ruby.  E.g.,
 @code{:results value pp}.
-@item @code{wrap}
+@item @code{drawer}
 The result is wrapped in a RESULTS drawer.  This can be useful for
 inserting @code{raw} or @code{org} syntax results in such a way that their
 extent is known and they can be automatically removed or replaced.
@@ -14527,17 +14586,16 @@ Be sure to adjust the paths to fit your system.
 #
 DIR=`pwd`
 FILES=""
-ORGINSTALL="~/src/org/lisp/org-install.el"
 
 # wrap each argument in the code required to call tangle on it
 for i in $@@; do
     FILES="$FILES \"$i\""
 done
 
-emacs -Q --batch -l $ORGINSTALL \
+emacs -Q --batch \
 --eval "(progn
 (add-to-list 'load-path (expand-file-name \"~/src/org/lisp/\"))
-(add-to-list 'load-path (expand-file-name \"~/src/org/contrib/lisp/\"))
+(add-to-list 'load-path (expand-file-name \"~/src/org/contrib/lisp/\" t))
 (require 'org)(require 'org-exp)(require 'ob)(require 'ob-tangle)
 (mapc (lambda (file)
        (find-file (expand-file-name file \"$DIR\"))
@@ -15384,6 +15442,18 @@ C-S-LEFT  @result{}  M-S--           C-S-RIGHT  @result{}  M-S-+
 Yes, these are unfortunately more difficult to remember.  If you want
 to have other replacement keys, look at the variable
 @code{org-disputed-keys}.
+
+@item @file{filladapt.el} by Kyle Jones
+@cindex @file{filladapt.el}
+
+Org mode tries to do the right thing when filling paragraphs, list items and
+other elements.  Many users reported they had problems using both
+@file{filladapt.el} and Org mode, so a safe thing to do is to disable it like
+this:
+
+@lisp
+(add-hook 'org-mode-hook 'turn-off-filladapt-mode)
+@end lisp
 
 @item @file{yasnippet.el}
 @cindex @file{yasnippet.el}
@@ -16548,7 +16618,7 @@ rely on outline paths, in the hope that these will be unique enough.}.
 Finally, Org writes the file @file{index.org}, containing links to all other
 files.  @i{MobileOrg} first reads this file from the server, and then
 downloads all agendas and Org files listed in it.  To speed up the download,
-MobileOrg will only read files whose checksums@footnote{Checksums are stored 
+MobileOrg will only read files whose checksums@footnote{Checksums are stored
 automatically in the file @file{checksums.dat}} have changed.
 
 @node Pulling from MobileOrg,  , Pushing to MobileOrg, MobileOrg

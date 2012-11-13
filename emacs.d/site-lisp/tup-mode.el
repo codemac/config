@@ -7,7 +7,7 @@
 
 (defun tup-compile ()
   (interactive)
-  (compile "tup upd"))
+  (compile "mm tup upd"))
 
 (defvar tup-mode-map
   (let ((map (make-keymap)))

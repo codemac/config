@@ -28,4 +28,13 @@ map -builtin J T
 " get gmail not suckin'
 set passkeys+=mail.google.com:'!#*+-./<C-Down><C-s><Enter>?INU[]acefjk lmnopqrsuvxyz',*a,*n,*r,*s,*t,*u,ga,gc,gd,gi,gl,gs,gt,yo
 set strictfocus+=mail.google.com:laissez-faire
+
+" Currently I use this because of the following:
+" - I use pano to organize my tabs (https://addons.mozilla.org/en-US/firefox/addon/pano/)
+" - buffer selection is good enough otherwise
+"
+" TODO the tab bar shows up whenever pano is opened..
 set showtabline=never
+
+" gotta love ddg
+set defsearch=duckduckgo
