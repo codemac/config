@@ -768,7 +768,7 @@ My C settings.
       (setq show-trailing-whitespace t)
       (setq c-tab-always-indent t)
       (linum-mode 1)
-      (yas-mode 1)
+      (yas-minor-mode 1)
       (setq comment-multi-line t)
   ;    (gtags-mode 1) ; no more! going to helm!
       (helm-gtags-mode)
@@ -1014,8 +1014,9 @@ Thank you Britt.
 *** Yasnippet
 Really useful when you have a lot of code to write.
 #+begin_src emacs-lisp
-  (require 'yasnippet)
-;  (yas-global-mode 1)
+  (autoload 'yas-minor-mode "yasnippet")
+  (autoload 'yas-global-mode "yasnippet")
+  ;  (yas-global-mode 1)
 #+end_src
 *** Android
 #+begin_src emacs-lisp
@@ -1427,12 +1428,13 @@ Functions borrowed from Sacha Chua.
   (setq org-enforce-todo-dependencies t)
   (setq org-outline-path-complete-in-steps nil) ;ido lol
   (setq org-refile-use-outline-path 'file)
+  (setq org-use-speed-commands t)
   ;; less file local settings!
   (setq org-archive-location "_archive/%s_old::")
   (setq org-global-properties '(("Effort_ALL" . "0:10 0:20 0:30 0:40 0:50 1:00 2:00 3:00 4:00 5:00 6:00 7:00 8:00 9:00 10:00 11:00 12:00")))
   (setq org-columns-default-format "%TODO %50ITEM(Task) %17Effort(Estimated Effort){:} %CLOCKSUM")
   
-
+  
 #+end_src
 **** Tags and todo keywords
 #+begin_src emacs-lisp
@@ -1471,6 +1473,10 @@ Functions borrowed from Sacha Chua.
       (pandoc-set-write "mediawiki")
       (pandoc-run-pandoc nil)
       (pandoc-view-output)))
+  
+  (setq org-export-with-sub-superscripts nil)
+  (setq org-pretty-entities-include-sub-superscripts nil)
+  (setq org-use-sub-superscripts nil)
 #+end_src
 **** org babel & export
 #+begin_src emacs-lisp  
@@ -1500,108 +1506,187 @@ Functions borrowed from Sacha Chua.
      (sh . t)
      (sql .t)))
   (setq org-confirm-babel-evaluate t)  ; nah, let's be safe
+#+end_src
+**** Publishing
+How I deploy my personal website.
+#+begin_src emacs-lisp
+  ;; Inline images in HTML instead of producting links to the image
+  (setq org-export-html-inline-images t)
   
+  ;; Use org.css from the norang website for export document stylesheets
+  ;(setq org-export-html-style-extra "<link rel=\"stylesheet\" href=\"http://doc.norang.ca/org.css\" type=\"text/css\" />")
+  ;(setq org-export-html-style-include-default nil)
   
-  ;; org links!
-  (org-add-link-type "man" 'org-man-open)
-  (add-hook 'org-store-link-functions 'org-man-store-link)
+  ;; Do not generate internal css formatting for HTML exports
+  (setq org-export-htmlize-output-type nil)
+  ;; Export with LaTeX fragments
+  (setq org-export-with-LaTeX-fragments t)
   
-  (defcustom org-man-command 'man
-    "The Emacs command to be used to display a man page."
-    :group 'org-link
-    :type '(choice (const man) (const woman)))
+  ;; List of projects
+  ;; - codemac.net -- My personal website
+  ;; - org-doc -- export all org documents
+  (setq org-publish-project-alist
+        '(("codemac-org"
+           :base-directory "~/org/_www/codemac.net"
+           :publishing-directory "/tmp/codemac.net"
+           :recursive t
+           :base-extension "org"
+           :publishing-function org-publish-org-to-html
+           :exclude-tags ("noexport" "todo")
+           :html-preamble "<div id=\"header\">&nbsp;</div>"
+           :html-postamble "<div class=\"pagedate\">%a &lt;%e&gt;, %d. %c.</div>"
+           :style nil
+           :section-numbers nil
+           :style-include-default nil
+           :table-of-contents t)
+          ("codemac-static"
+           :base-directory "~/org/_www/codemac.net"
+           :publishing-directory "/tmp/codemac.net"
+           :base-extension "css\\|pdf\\|png\\|jpg\\|gif\\|js\\|txt\\|mp3\\|ogg\\|swf"
+           :publishing-function org-publish-attachment
+           :recursive t)
+          ("codemac" :components ("codemac-org" "codemac-static"))
+          ("org-doc-org"
+           :base-directory "~/org/"
+           :publishing-directory "/tmp/published-org"
+           :recursive t
+           :section-numbers nil
+           :table-of-contents nil
+           :base-extension "org"
+           :publishing-function (org-publish-org-to-html org-publish-org-to-org)
+           :plain-source t
+           :htmlized-source t
+           :style-include-default nil
+           :style "<link rel=\"stylesheet\" href=\"/org.css\" type=\"text/css\" />"
+           :auto-sitemap t
+           :sitemap-filename "index.html"
+           :sitemap-title "Test Publishing Area"
+           :sitemap-style "tree"
+           :author-info nil
+           :creator-info nil)
+          ("org-doc-static"
+           :base-directory "~/org/"
+           :publishing-directory "/tmp/published-org"
+           :base-extension "css\\|pdf\\|png\\|jpg\\|gif"
+           :publishing-function org-publish-attachment
+           :recursive t
+           :author nil)
+          ("org-doc" :components ("org-doc-org" "org-doc-static"))))
   
-  (defun org-man-open (path)
-    "Visit the manpage on PATH.
-       PATH should be a topic that can be thrown at the man command."
-    (funcall org-man-command path))
-  
-  (defun org-man-store-link ()
-    "Store a link to a manpage."
-         (when (memq major-mode '(Man-mode woman-mode))
-           ;; This is a man page, we do make this link
-           (let* ((page (org-man-get-page-name))
-                  (link (concat "man:" page))
-                  (description (format "Manpage for %s" page)))
-             (org-store-link-props
-              :type "man"
-              :link link
-              :description description))))
-  
-  (defun org-man-get-page-name ()
-    "Extract the page name from the buffer name."
-    ;; This works for both `Man-mode' and `woman-mode'.
-    (if (string-match " \\(\\S-+\\)\\*" (buffer-name))
-        (match-string 1 (buffer-name))
-      (error "Cannot create link to this man page")))
-  
-  ;; cisco links
-  (defun org-link-type-cisco-open (path)
-    "path is the userid"
-    (shell-command (concat "open \"http://wwwin-tools.cisco.com/dir/details/" path "\"")))
-  
-  (org-add-link-type "cisco" 'org-link-type-cisco-open)
-  
-  (defun org-link-type-websec-open (path)
-    "path is the jira number"
-    (shell-command (concat "open \"https://jira.ironport.com/browse/WEBSEC-" path "\"")))
-  (org-add-link-type "websec" 'org-link-type-websec-open)
-  
-  (defun org-link-type-sas-open (path)
-    "path is the jira number"
-    (shell-command (concat "open \"https://jira.ironport.com/browse/ENGSAS-" path "\"")))
-  (org-add-link-type "engsas" 'org-link-type-sas-open)
-  
-  (defun org-link-type-netapp-open (path)
-    "path is username"
-    (shell-command (concat "open \"http://burtweb-prd.eng.netapp.com/burt/burt-bin/profile?user=" path "\"")))
-  (org-add-link-type "netapp" 'org-link-type-netapp-open)
-  
-  ;; capture for mac os x popup
-  (defun cm-org-capture-other-frame ()
-    "Create a new frame and run org-capture."
+  (defun org-save-then-publish ()
     (interactive)
-    (make-frame '((name . "Org-Capture")
-                  (width . 120)
-                  (height . 20)
-                  (menu-bar-lines . 0)
-                  (tool-bar-lines . 0)
-                  (auto-lower . nil)
-                  (auto-raise . t)))
-    (select-frame-by-name "Org-Capture")
-    (if (condition-case nil
-            (progn (org-capture) t)
-          (error nil))
-        (delete-other-windows)
-      (cm-org-capture-other-frame-cleanup)))
-  
-  (defun cm-org-capture-other-frame-cleanup ()
-    "Close the Org-Capture frame."
-    (if (equal "Org-Capture" (frame-parameter nil 'name))
-        (delete-frame)))
-  (add-hook 'org-capture-after-finalize-hook 'cm-org-capture-other-frame-cleanup)
-  
-  ;; org capture!
-  (setq org-default-notes-file (concat org-directory "/gtd.org"))
-  (define-key global-map "\C-cr" 'org-capture)
-  (setq org-capture-templates
-        `(("t" "Todo" entry (file+headline "~/org/gtd.org" "Inbox") "* TODO %?\n  %U\n  %i\n  %a" :prepend t)
-          ("j" "Journal" entry (file ,(format-time-string "~/org/_editorial/%Y.%m.org")) "* %U %?\n\n  %i\n  %a" :prepend nil)
-          ("n" "Timed Notes" entry (file ,(format-time-string "~/org/_notes/%Y.org")) "* %U %?\n\n  %i\n  %a" :prepend nil)
-          ("w" "Work capture" entry (file "~/org/mars.org") "* %U %?\n\n  %i\n  %a" :prepend nil)
-          ("l" "Life Fitness" table-line (file+headline "~/org/fitness.org" "Fitness") ,(concat (format-time-string "| %Y.%m.%d-%H:%M |") " %^{Weight} | | %^{RHR} |") :table-line-pos "II-1")
-          ("x" "org-capture" entry (file+headline "~/org/_notes/www.org" "Archived Content") "* %^{Title}p: %:description\n\n  Source: %U %c\n\n  %i")))
-  
-  (defun gtd ()
-    (interactive)
-    (find-file "~/org/gtd.org"))
-  
-  ;; Set up my diary file
-  (setq diary-file "~/org/diary") ;; deal with the fact that it's in the org folder
-  
-  ;;
-  
-  (setq org-src-fontify-natively nil)
+    (save-buffer)
+    (org-save-all-org-buffers)
+    (org-publish-current-project))
+#+end_src
+**** Misc Funcs
+#+begin_src emacs-lisp
+    (defun org-insert-datetime ()
+      (interactive)
+      (insert (format-time-string "%Y-%m-%d %a %H:%M %z")))
+#+end_src
+**** Link Types
+#+begin_src emacs-lisp
+    ;; org links!
+    (org-add-link-type "man" 'org-man-open)
+    (add-hook 'org-store-link-functions 'org-man-store-link)
+    
+    (defcustom org-man-command 'man
+      "The Emacs command to be used to display a man page."
+      :group 'org-link
+      :type '(choice (const man) (const woman)))
+    
+    (defun org-man-open (path)
+      "Visit the manpage on PATH.
+         PATH should be a topic that can be thrown at the man command."
+      (funcall org-man-command path))
+    
+    (defun org-man-store-link ()
+      "Store a link to a manpage."
+           (when (memq major-mode '(Man-mode woman-mode))
+             ;; This is a man page, we do make this link
+             (let* ((page (org-man-get-page-name))
+                    (link (concat "man:" page))
+                    (description (format "Manpage for %s" page)))
+               (org-store-link-props
+                :type "man"
+                :link link
+                :description description))))
+    
+    (defun org-man-get-page-name ()
+      "Extract the page name from the buffer name."
+      ;; This works for both `Man-mode' and `woman-mode'.
+      (if (string-match " \\(\\S-+\\)\\*" (buffer-name))
+          (match-string 1 (buffer-name))
+        (error "Cannot create link to this man page")))
+    
+    ;; cisco links
+    (defun org-link-type-cisco-open (path)
+      "path is the userid"
+      (shell-command (concat "open \"http://wwwin-tools.cisco.com/dir/details/" path "\"")))
+    
+    (org-add-link-type "cisco" 'org-link-type-cisco-open)
+    
+    (defun org-link-type-websec-open (path)
+      "path is the jira number"
+      (shell-command (concat "open \"https://jira.ironport.com/browse/WEBSEC-" path "\"")))
+    (org-add-link-type "websec" 'org-link-type-websec-open)
+    
+    (defun org-link-type-sas-open (path)
+      "path is the jira number"
+      (shell-command (concat "open \"https://jira.ironport.com/browse/ENGSAS-" path "\"")))
+    (org-add-link-type "engsas" 'org-link-type-sas-open)
+    
+    (defun org-link-type-netapp-open (path)
+      "path is username"
+      (shell-command (concat "open \"http://burtweb-prd.eng.netapp.com/burt/burt-bin/profile?user=" path "\"")))
+    (org-add-link-type "netapp" 'org-link-type-netapp-open)
+    
+    ;; capture for mac os x popup
+    (defun cm-org-capture-other-frame ()
+      "Create a new frame and run org-capture."
+      (interactive)
+      (make-frame '((name . "Org-Capture")
+                    (width . 120)
+                    (height . 20)
+                    (menu-bar-lines . 0)
+                    (tool-bar-lines . 0)
+                    (auto-lower . nil)
+                    (auto-raise . t)))
+      (select-frame-by-name "Org-Capture")
+      (if (condition-case nil
+              (progn (org-capture) t)
+            (error nil))
+          (delete-other-windows)
+        (cm-org-capture-other-frame-cleanup)))
+    
+    (defun cm-org-capture-other-frame-cleanup ()
+      "Close the Org-Capture frame."
+      (if (equal "Org-Capture" (frame-parameter nil 'name))
+          (delete-frame)))
+    (add-hook 'org-capture-after-finalize-hook 'cm-org-capture-other-frame-cleanup)
+    
+    ;; org capture!
+    (setq org-default-notes-file (concat org-directory "/gtd.org"))
+    (define-key global-map "\C-cr" 'org-capture)
+    (setq org-capture-templates
+          `(("t" "Todo" entry (file+headline "~/org/gtd.org" "Inbox") "* TODO %?\n  %U\n  %i\n  %a" :prepend t)
+            ("j" "Journal" entry (file ,(format-time-string "~/org/_editorial/%Y.%m.org")) "* %U %?\n\n  %i\n  %a" :prepend nil)
+            ("n" "Timed Notes" entry (file ,(format-time-string "~/org/_notes/%Y.org")) "* %U %?\n\n  %i\n  %a" :prepend nil)
+            ("w" "Work capture" entry (file "~/org/mars.org") "* %U %?\n\n  %i\n  %a" :prepend nil)
+            ("l" "Life Fitness" table-line (file+headline "~/org/fitness.org" "Fitness") ,(concat (format-time-string "| %Y.%m.%d-%H:%M |") " %^{Weight} | | %^{RHR} |") :table-line-pos "II-1")
+            ("x" "org-capture" entry (file+headline "~/org/_notes/www.org" "Archived Content") "* %^{Title}p: %:description\n\n  Source: %U %c\n\n  %i")))
+    
+    (defun gtd ()
+      (interactive)
+      (find-file "~/org/gtd.org"))
+    
+    ;; Set up my diary file
+    (setq diary-file "~/org/diary") ;; deal with the fact that it's in the org folder
+    
+    ;;
+    
+    (setq org-src-fontify-natively nil)
 #+end_src
 *** W3M
 #+begin_src emacs-lisp
@@ -1664,7 +1749,7 @@ me over.
   (setq erc-insert-timestamp-function 'erc-insert-timestamp-left)
   
   ;; Auto-fill (static size so log files look decent)
-  (setq erc-fill-column 80)
+  (setq erc-fill-column 100)
   (setq erc-fill-function 'erc-fill-static)
   (setq erc-fill-static-center 15)
   
@@ -1692,10 +1777,9 @@ me over.
     (auto-fill-mode 0)                    ; disable auto fill
     (setq truncate-lines nil)            ; wrap lines
     ;; Add some modules
-    ;(add-to-list 'erc-modules 'spelling) ; kills performance
     (add-to-list 'erc-modules 'scrolltobottom)
     (add-to-list 'erc-modules 'truncate)
-  ;(add-to-list 'erc-modules 'log)
+    (add-to-list 'erc-modules 'log)
     (add-to-list 'erc-modules 'highlight-nicknames)
     (erc-update-modules))
   
@@ -1729,10 +1813,10 @@ me over.
   (add-hook 'erc-after-connect 'my-erc-after-connect)
   
   ;; Start a local bitlbee server
-  ;(require 'bitlbee)
-  ;(setq bitlbee-user-directory "~/.bitlbee")
-  ;(setq bitlbee-executable "/usr/sbin/bitlbee")
-  ;(bitlbee-start)
+  (require 'bitlbee)
+  (setq bitlbee-user-directory "~/.bitlbee")
+  (setq bitlbee-executable "/opt/local/sbin/bitlbee")
+  (bitlbee-start)
   
   ;; Give bitlbee a chance to bind to the local port
   ;(sleep-for 1)
@@ -1740,9 +1824,9 @@ me over.
   ;; Define my ultracool erc-startup
   (defun erc-startup ()
     (interactive)
-  ;  (erc :server "localhost" :port "6667")
+    (erc :server "localhost" :port "6667")
   ;  (erc-ssl :server "irc.oftc.net" :port "6697")
-    (erc-ssl :server "irc.freenode.net" :port "6697"))
+    (erc-ssl :server "chat.freenode.net" :port "8000"))
 #+end_src
 *** Bitlbee
 A subprocess you can use as an irc<-> aim/jabber/im gateway
@@ -2236,8 +2320,8 @@ use it that much. We'll see if I ever start using it more.
 ** Ido
 Everyone should use Ido. (well, maybe helm)
 #+begin_src emacs-lisp
-;  (require 'ido)
-;  (ido-mode t)
+  (require 'ido)
+  ;(ido-mode t)
 #+end_src
 If the exact name isn't found, then flex matching will match against
 anything with the characters in the order you've typed. It matches

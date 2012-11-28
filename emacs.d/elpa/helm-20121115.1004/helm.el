@@ -86,6 +86,7 @@
     (define-key map (kbd "C-c C-u")    'helm-force-update)
     (define-key map (kbd "M-p")        'previous-history-element)
     (define-key map (kbd "M-n")        'next-history-element)
+    (define-key map (kbd "C-!")        'helm-toggle-suspend-update)
     ;; Disable `file-cache-minibuffer-complete'.
     (define-key map (kbd "<C-tab>")    'undefined)
     ;; Debugging command
@@ -476,7 +477,6 @@ It is disabled by default because *Helm Log* grows quickly.")
   "Internal, store locally `helm-pattern' value for later use in `helm-resume'.")
 (defvar helm-source-name nil)
 (defvar helm-candidate-buffer-alist nil)
-(defvar helm-check-minibuffer-input-timer nil)
 (defvar helm-match-hash (make-hash-table :test 'equal))
 (defvar helm-cib-hash (make-hash-table :test 'equal))
 (defvar helm-tick-hash (make-hash-table :test 'equal))
@@ -491,8 +491,9 @@ It is disabled by default because *Helm Log* grows quickly.")
   (list (lambda (candidate)
           (string-match helm-pattern candidate)))
   "Default functions to match candidates according to `helm-pattern'.")
-(defvar helm-process-delayed-sources-timer nil)
-(defvar helm-update-blacklist-regexps '("^" "$" "!" " " "\\b" "\\<" "\\>" "\\<_" "\\>_"))
+(defvar helm-update-blacklist-regexps '("^" "^ *" "$" "!" " " "\\b"
+                                        "\\<" "\\>" "\\<_" "\\>_"))
+(defvar helm-suspend-update-flag nil)
 
 
 ;; Utility: logging
@@ -1031,15 +1032,15 @@ to VALUE by `helm-create-helm-buffer'."
   "Current line string without properties."
   (buffer-substring-no-properties (point-at-bol) (point-at-eol)))
 
-(defun helm-funcall-with-source (source func &rest args)
-  "Call from SOURCE FUNC list or single function FUNC with ARGS.
-FUNC can be a symbol or a list of functions.
+(defun helm-funcall-with-source (source functions &rest args)
+  "Call from SOURCE FUNCTIONS list or single function FUNCTIONS with ARGS.
+FUNCTIONS can be a symbol or a list of functions.
 Return the result of last function call."
   (let ((helm-source-name (assoc-default 'name source))
-        result)
-    (helm-log-eval helm-source-name func args)
-    (dolist (func (if (functionp func) (list func) func) result)
-      (setq result (apply func args)))))
+        (funs (if (functionp functions) (list functions) functions)))
+    (helm-log-eval helm-source-name functions args)
+    (loop with result for fn in funs
+          do (setq result (apply fn args)) finally return result)))
 
 (defun helm-funcall-foreach (sym)
   "Call the function SYM for each source if any."
@@ -1115,12 +1116,6 @@ This is used in transformers to modify candidates list."
              (lambda (&rest args)
                (helm-compose args funcs))
              args)))
-
-(defun helm-new-timer (variable timer)
-  "Give VARIABLE value to TIMER and cancel old timer."
-  (helm-aif (symbol-value variable)
-      (cancel-timer it))
-  (set variable timer))
 
 
 ;; Core: entry point
@@ -1530,6 +1525,7 @@ It use `switch-to-buffer' or `pop-to-buffer' depending of value of
   "Initialize helm settings and set up the helm buffer."
   (helm-log-run-hook 'helm-before-initialize-hook)
   (setq helm-current-prefix-arg nil)
+  (setq helm-suspend-update-flag nil)
   (setq helm-delayed-init-executed nil)
   (setq helm-current-buffer
         (if (minibuffer-window-active-p (minibuffer-window))
@@ -1601,14 +1597,29 @@ For ANY-PRESELECT ANY-RESUME ANY-KEYMAP, See `helm'."
                             (setq timer (run-with-idle-timer
                                          helm-input-idle-delay 'repeat
                                          #'(lambda ()
-                                             ;; Don't update when in persistent action.
-                                             (unless helm-in-persistent-action
+                                             ;; Stop updating when in persistent action
+                                             ;; or when `helm-suspend-update-flag' is
+                                             ;; non--nil.
+                                             (unless (or helm-in-persistent-action
+                                                         helm-suspend-update-flag)
                                                (helm-check-minibuffer-input)
                                                (helm-print-error-messages))))))
                       (read-from-minibuffer (or any-prompt "pattern: ")
                                             any-input helm-map
                                             nil hist tap t))
                  (when timer (cancel-timer timer) (setq timer nil)))))))))
+
+;;;###autoload
+(defun helm-toggle-suspend-update ()
+  "Enable or disable update of display in helm.
+This can be useful for e.g writing quietly a complex regexp."
+  (interactive)
+  (when (setq helm-suspend-update-flag (not helm-suspend-update-flag))
+    (helm-kill-async-processes)
+    (setq helm-pattern ""))
+  (message (if helm-suspend-update-flag
+               "Helm update suspended!"
+               "Helm update reenabled!")))
 
 (defun helm-maybe-update-keymap ()
   "Handle differents keymaps in multiples sources.
@@ -1672,7 +1683,6 @@ if some when multiples sources are present."
     (bury-buffer)
     ;; Be sure we call this from helm-buffer.
     (helm-funcall-foreach 'cleanup))
-  (helm-new-timer 'helm-check-minibuffer-input-timer nil)
   (helm-kill-async-processes)
   (helm-log-run-hook 'helm-cleanup-hook)
   (helm-frame-or-window-configuration 'restore)
@@ -1849,17 +1859,6 @@ If \(candidate-number-limit . 123\) is in SOURCE limit candidate to 123."
       (or (cdr it) 99999999)
     (or helm-candidate-number-limit 99999999)))
 
-(defun helm-compute-matches (source)
-  "Compute matched results from SOURCE according to its settings."
-  (if debug-on-error
-      (helm-compute-matches-internal source)
-      (condition-case v
-          (helm-compute-matches-internal source)
-        (error (helm-log-error
-                "helm-compute-matches: error when processing source: %s"
-                (assoc-default 'name source))
-               nil))))
-
 (defun helm-candidate-get-display (candidate)
   "Get searched display part from CANDIDATE.
 CANDIDATE is a string, a symbol, or \(DISPLAY . REAL\) cons cell."
@@ -1890,9 +1889,9 @@ if ITEM-COUNT reaches LIMIT, exit from inner loop."
      (when (= ,item-count ,limit) (return))))
 
 (defun helm-take-first-elements (seq n)
-  (if (> (length seq) n)
-      (setq seq (subseq seq 0 n))
-      seq))
+  "Return the N first element of SEQ if SEQ is longer than N.
+It is used to narrow down list of candidates to `helm-candidate-number-limit'."
+  (if (> (length seq) n) (subseq seq 0 n) seq))
 
 (defun* helm-set-case-fold-search (&optional (pattern helm-pattern))
   "Used to set the value of `case-fold-search' in helm.
@@ -1923,6 +1922,12 @@ and `helm-pattern'."
               (setq matches (append matches (reverse newmatches))))))
       (invalid-regexp (setq matches nil)))
     matches))
+
+(defun helm-compute-matches (source)
+  "Compute matched results from SOURCE according to its settings."
+  (condition-case nil
+      (helm-compute-matches-internal source)
+    (error nil)))
 
 (defun helm-compute-matches-internal (source)
   (save-current-buffer
@@ -2047,15 +2052,13 @@ is done on whole `helm-buffer' and not on current source."
                                        for d = (assoc-default 'delayed s)
                                        when d do (setq delay (max delay d))
                                        finally return delay)))
-            (helm-new-timer
-             'helm-process-delayed-sources-timer
-             (run-with-idle-timer
-              ;; Be sure helm-idle-delay is >
-              ;; to helm-input-idle-delay
-              ;; otherwise use value of helm-input-idle-delay
-              ;; or 0.1 if == to 0.
-              (max helm-idle-delay helm-input-idle-delay 0.1) nil
-              'helm-process-delayed-sources delayed-sources preselect))))
+            (run-with-idle-timer
+             ;; Be sure helm-idle-delay is >
+             ;; to helm-input-idle-delay
+             ;; otherwise use value of helm-input-idle-delay
+             ;; or 0.1 if == to 0.
+             (max helm-idle-delay helm-input-idle-delay 0.1) nil
+             'helm-process-delayed-sources delayed-sources preselect)))
         (helm-log "end update")))))
 
 (defun helm-update-source-p (source)

@@ -386,7 +386,10 @@ It is intended to use as a let-bound variable, DON'T set this globaly.")
 WHERE can be one of other-window, elscreen, other-frame."
   (let* ((split        (helm-c-grep-split-line candidate))
          (lineno       (string-to-number (nth 1 split)))
-         (loc-fname    (or (with-current-buffer helm-buffer
+         (loc-fname    (or (with-current-buffer
+                               (if (eq major-mode 'helm-grep-mode)
+                                   "*hgrep*"
+                                   helm-buffer)
                              (get-text-property (point-at-bol) 'help-echo))
                            (car split)))
          (tramp-method (file-remote-p helm-ff-default-directory 'method))
@@ -747,7 +750,7 @@ in recurse, search being made on `helm-zgrep-file-extension-regexp'."
   ;; so don't split until grep line is valid, that is
   ;; once the second part of the line comes with next chunk
   ;; send by process.
-  (when (string-match "^\\(.*\\):\\([0-9]+\\):\\(.*\\)" line)
+  (when (string-match "^\\([a-zA-Z]?:?[^:]*\\):\\([0-9]+\\):\\(.*\\)" line)
     ;; Don't use split-string because buffer/file name or string
     ;; may contain a ":".
     (loop for n from 1 to 3 collect (match-string n line))))
@@ -967,7 +970,8 @@ If a prefix arg is given run grep on all buffers ignoring non--file-buffers."
   (let* ((helm-compile-source-functions
           ;; rule out helm-match-plugin because the input is one regexp.
           (delq 'helm-compile-source--match-plugin
-                (copy-sequence helm-compile-source-functions))))
+                (copy-sequence helm-compile-source-functions)))
+         helm-grep-in-recurse) ; recursion is never used in pdfgrep.
     ;; When called as action from an other source e.g *-find-files
     ;; we have to kill action buffer.
     (when (get-buffer helm-action-buffer)

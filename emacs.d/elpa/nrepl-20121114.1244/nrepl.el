@@ -155,7 +155,7 @@ joined together.")
 (defvar nrepl-output-start nil
   "Marker for the start of output.")
 
-(defvar nrepl-output-end
+(defvar nrepl-output-end nil
   "Marker for the end of output.")
 
 (defvar nrepl-sync-response nil
@@ -797,7 +797,6 @@ in a macroexpansion buffer. Prefix argument forces pretty-printed output."
   (let ((buffer (current-buffer)))
     (nrepl-send-request (list "op" "load-file"
                               "session" (nrepl-current-session)
-                              "ns" nrepl-buffer-ns
                               "file" file-contents
                               "file-path" file-path
                               "file-name" file-name)
@@ -1891,12 +1890,18 @@ under point, prompts for a var."
   (let* ((b (process-buffer process))
          (problem (if (and b (buffer-live-p b))
                       (with-current-buffer b
-                        (buffer-substring (point-min) (point-max))))))
+                        (buffer-substring (point-min) (point-max)))
+                    "")))
     (when b
       (kill-buffer b))
-    (if (string-match "Wrong number of arguments to repl task." problem)
-        (error "nrepl.el requires Leiningen 2.x")
-      (error "Could not start nREPL server: %s" problem))))
+    (cond
+     ((string-match "^killed" event)
+      nil)
+     ((string-match "^hangup" event)
+      (nrepl-quit))
+     ((string-match "Wrong number of arguments to repl task" problem)
+      (error "nrepl.el requires Leiningen 2.x"))
+     (t (error "Could not start nREPL server: %s" problem)))))
 
 ;;;###autoload
 (defun nrepl-enable-on-existing-clojure-buffers ()

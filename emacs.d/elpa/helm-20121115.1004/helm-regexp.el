@@ -138,20 +138,18 @@ i.e Don't replace inside a word, regexp is surrounded with \\bregexp\\b."
                ("Kill Regexp" . helm-c-kill-regexp)))))
 
 (defun helm-c-regexp-get-line (s e)
-  (propertize
-   (apply 'concat
-          ;; Line contents
-          (format "%5d: %s" (line-number-at-pos (1- s)) (buffer-substring s e))
-          ;; subexps
-          (loop for i from 0 to (1- (/ (length (match-data)) 2))
-                collect (format "\n         %s'%s'"
-                                (if (zerop i) "Group 0: " (format "Group %d: " i))
-                                (match-string i))))
-   ;; match beginning
-   ;; KLUDGE: point of helm-candidate-buffer is +1 than that of helm-current-buffer.
-   ;; It is implementation problem of candidates-in-buffer.
-   'helm-realvalue
-   (1- s)))
+  (let ((matches (match-data))
+        (line    (buffer-substring s e)))
+    (propertize
+     (loop with ln = (format "%5d: %s" (line-number-at-pos (1- s)) line)
+           for i from 0 to (1- (/ (length matches) 2))
+           concat (format "\n         %s'%s'" (format "Group %d: " i)
+                          (match-string i)) into ln1
+           finally return (concat ln ln1))
+     ;; match beginning
+     ;; KLUDGE: point of helm-candidate-buffer is +1 than that of helm-current-buffer.
+     ;; It is implementation problem of candidates-in-buffer.
+     'helm-real-value (1- s))))
 
 (defun helm-c-regexp-persistent-action (pt)
   (helm-goto-char pt)
@@ -381,7 +379,7 @@ the center of window, otherwise at the top of window.")
                  (copy-sequence helm-compile-source-functions))))
       (when (and (helm-region-active-p)
                  ;; Don't narrow to region if buffer is already narrowed.
-                 (not (helm-current-buffer-narrowed-p)))
+                 (not (helm-current-buffer-narrowed-p (current-buffer))))
         (narrow-to-region (region-beginning) (region-end)))
       (helm :sources helm-c-source-regexp
             :buffer "*helm regexp*"

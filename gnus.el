@@ -81,23 +81,24 @@
 ;; |   |          |
 ;; +---+----------+
 ;; ;
-(gnus-add-configuration
- '(article
-   (horizontal 1.0
-               (vertical 25
-                         (group 1.0))
-               (vertical 1.0
-                         (summary 0.25 point)
-                         (article 1.0)))))
-(gnus-add-configuration
- '(summary
-   (horizontal 1.0
-               (vertical 25
-                         (group 1.0))
-               (vertical 1.0
-                         (summary 1.0 point)))))
+;; (gnus-add-configuration
+;;  '(article
+;;    (horizontal 1.0
+;;                (vertical 25
+;;                          (group 1.0))
+;;                (vertical 1.0
+;;                          (summary 0.25 point)
+;;                          (article 1.0)))))
+;; (gnus-add-configuration
+;;  '(summary
+;;    (horizontal 1.0
+;;                (vertical 25
+;;                          (group 1.0))
+;;                (vertical 1.0
+;;                          (summary 1.0 point)))))
+;; 
 
-
+(setq gnus-use-trees t)
 (add-hook 'gnus-summary-mode-hook 'gnus-hl-line)
 (add-hook 'gnus-group-mode-hook 'gnus-hl-line)
 (add-hook 'gnus-group-mode-hook 'gnus-topic-mode)
