@@ -1718,9 +1718,14 @@ Outside list"
   (should
    (org-test-with-temp-text "<2012-03-29 16:40>"
      (eq (org-element-property :type (org-element-context)) 'active)))
+  (should-not
+   (org-test-with-temp-text "<2012-03-29 Thu>"
+     (let ((timestamp (org-element-context)))
+       (or (org-element-property :hour-start timestamp)
+	   (org-element-property :minute-start timestamp)))))
   (should
    (equal '(2012 3 29 16 40)
-	  (org-test-with-temp-text "<2012-03-29 16:40>"
+	  (org-test-with-temp-text "<2012-03-29 Thu 16:40>"
 	    (let ((object (org-element-context)))
 	      (list (org-element-property :year-start object)
 		    (org-element-property :month-start object)
@@ -1729,12 +1734,12 @@ Outside list"
 		    (org-element-property :minute-start object))))))
   ;; Inactive timestamp.
   (should
-   (org-test-with-temp-text "[2012-03-29 16:40]"
+   (org-test-with-temp-text "[2012-03-29 Thu 16:40]"
      (eq (org-element-property :type (org-element-context)) 'inactive)))
   ;; Time range.
   (should
    (equal '(2012 3 29 16 40 7 30)
-	  (org-test-with-temp-text "<2012-03-29 7:30-16:40>"
+	  (org-test-with-temp-text "<2012-03-29 Thu 7:30-16:40>"
 	    (let ((object (org-element-context)))
 	      (list (org-element-property :year-end object)
 		    (org-element-property :month-end object)
@@ -1743,18 +1748,27 @@ Outside list"
 		    (org-element-property :minute-end object)
 		    (org-element-property :hour-start object)
 		    (org-element-property :minute-start object))))))
+  (should
+   (eq 'active-range
+       (org-test-with-temp-text "<2012-03-29 Thu 7:30-16:40>"
+	 (org-element-property :type (org-element-context)))))
   ;; Date range.
   (should
-   (org-test-with-temp-text "[2012-03-29 16:40]--[2012-03-29 16:41]"
+   (org-test-with-temp-text "[2012-03-29 Thu 16:40]--[2012-03-29 Thu 16:41]"
      (eq (org-element-property :type (org-element-context)) 'inactive-range)))
+  (should-not
+   (org-test-with-temp-text "[2011-07-14 Thu]--[2012-03-29 Thu]"
+     (let ((timestamp (org-element-context)))
+       (or (org-element-property :hour-end timestamp)
+	   (org-element-property :minute-end timestamp)))))
   ;; With repeater.
   (should
    (eq 'catch-up
-       (org-test-with-temp-text "<2012-03-29 ++1y>"
+       (org-test-with-temp-text "<2012-03-29 Thu ++1y>"
 	 (org-element-property :repeater-type (org-element-context)))))
   ;; Timestamps are not planning elements.
   (should-not
-   (org-test-with-temp-text "SCHEDULED: <2012-03-29 16:40>"
+   (org-test-with-temp-text "SCHEDULED: <2012-03-29 Thu 16:40>"
      (org-element-map (org-element-parse-buffer) 'timestamp 'identity))))
 
 
@@ -2237,7 +2251,8 @@ DEADLINE: <2012-01-01> SCHEDULED: <2012-01-01> CLOSED: [2012-01-01]\n"))))
     (org-element-timestamp-interpreter
      '(timestamp
        (:type active :year-start 2012 :month-start 3 :day-start 29
-	      :repeater-type cumulate :repeater-value "1y")) nil))))
+	      :repeater-type cumulate :repeater-value 1 :repeater-unit year))
+     nil))))
 
 (ert-deftest test-org-element/verse-block-interpreter ()
   "Test verse block interpretation."
@@ -2663,7 +2678,14 @@ Paragraph \\alpha."
        (org-test-with-temp-text "Some *bold* text"
 	 (progn (search-forward "bold")
 		(org-element-type
-		 (org-element-property :parent (org-element-context))))))))
+		 (org-element-property :parent (org-element-context)))))))
+  ;; Between two objects, return the second one.
+  (should
+   (eq 'macro
+       (org-test-with-temp-text "<<target>>{{{test}}}"
+	 (progn (search-forward "{")
+		(backward-char)
+		(org-element-type (org-element-context)))))))
 
 
 (provide 'test-org-element)

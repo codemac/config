@@ -1058,8 +1058,7 @@ Don't set this, this is meant for dynamic scoping.")
    ((memq fmt '(estimate)) (org-estimate-print n printf))
    ((not (numberp n)) "")
    ((memq fmt '(add_times max_times min_times mean_times))
-    (let* ((h (floor n)) (m (floor (+ 0.5 (* 60 (- n h))))))
-      (format org-time-clocksum-format h m)))
+    (org-hours-to-clocksum-string n))
    ((eq fmt 'checkbox)
     (cond ((= n (floor n)) "[X]")
 	  ((> n 1.) "[-]")
@@ -1404,7 +1403,7 @@ and tailing newline characters."
 	    ;; OK, the property is not defined.  Use appointment duration?
 	    (when (and org-agenda-columns-add-appointments-to-effort-sum
 		       (setq d (get-text-property (point) 'duration)))
-	      (setq d (org-minutes-to-hh:mm-string d))
+	      (setq d (org-minutes-to-clocksum-string d))
 	      (put-text-property 0 (length d) 'face 'org-warning d)
 	      (push (cons org-effort-property d) p)))
 	  (push (cons (org-current-line) p) cache))

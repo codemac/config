@@ -214,7 +214,7 @@ regexp matching one object can also match the other object.")
 	 table-cell underline)
   "List of recursive object types.")
 
-(defconst org-element-block-name-alist
+(defvar org-element-block-name-alist
   '(("CENTER" . org-element-center-block-parser)
     ("COMMENT" . org-element-comment-block-parser)
     ("EXAMPLE" . org-element-example-block-parser)
@@ -314,7 +314,7 @@ a secondary string.")
     (item export-snippet footnote-reference inline-babel-call latex-or-entity
 	  link macro radio-target sub/superscript target text-markup)
     (keyword inline-babel-call inline-src-block latex-or-entity link macro
-	     sub/superscript text-markup)
+	     sub/superscript text-markup timestamp)
     (link export-snippet inline-babel-call inline-src-block latex-or-entity link
 	  sub/superscript text-markup)
     (paragraph export-snippet footnote-reference inline-babel-call
@@ -329,8 +329,8 @@ a secondary string.")
 	       sub/superscript target text-markup)
     (superscript export-snippet inline-babel-call inline-src-block
 		 latex-or-entity sub/superscript target text-markup)
-    (table-cell export-snippet latex-or-entity link macro radio-target
-		sub/superscript target text-markup timestamp)
+    (table-cell export-snippet footnote-reference latex-or-entity link macro
+		radio-target sub/superscript target text-markup timestamp)
     (table-row table-cell)
     (underline export-snippet inline-babel-call inline-src-block latex-or-entity
 	       link radio-target sub/superscript target text-markup timestamp)
@@ -3441,15 +3441,21 @@ Assume point is at the beginning of the timestamp."
 	   (date-start (match-string-no-properties 1))
 	   (date-end (match-string 3))
 	   (diaryp (match-beginning 2))
-	   (type (cond (diaryp 'diary)
-		       ((and activep date-end) 'active-range)
-		       (activep 'active)
-		       (date-end 'inactive-range)
-		       (t 'inactive)))
 	   (post-blank (progn (goto-char (match-end 0))
 			      (skip-chars-forward " \t")))
 	   (end (point))
-	   (with-time-p (string-match "[012]?[0-9]:[0-5][0-9]" date-start))
+	   (time-range
+	    (and (not diaryp)
+		 (string-match
+		  "[012]?[0-9]:[0-5][0-9]\\(-\\([012]?[0-9]\\):\\([0-5][0-9]\\)\\)"
+		  date-start)
+		 (cons (string-to-number (match-string 2 date-start))
+		       (string-to-number (match-string 3 date-start)))))
+	   (type (cond (diaryp 'diary)
+		       ((and activep (or date-end time-range)) 'active-range)
+		       (activep 'active)
+		       ((or date-end time-range) 'inactive-range)
+		       (t 'inactive)))
 	   (repeater-props
 	    (and (not diaryp)
 		 (string-match "\\([.+]?\\+\\)\\([0-9]+\\)\\([hdwmy]\\)>"
@@ -3464,31 +3470,21 @@ Assume point is at the beginning of the timestamp."
 		  :repeater-unit
 		  (case (string-to-char (match-string 3 raw-value))
 		    (?h 'hour) (?d 'day) (?w 'week) (?m 'month) (t 'year)))))
-	   time-range year-start month-start day-start hour-start minute-start
-	   year-end month-end day-end hour-end minute-end)
-      ;; Extract time range, if any, and remove it from date start.
-      (setq time-range
-	    (and (not diaryp)
-		 (string-match
-		  "[012]?[0-9]:[0-5][0-9]\\(-\\([012]?[0-9]\\):\\([0-5][0-9]\\)\\)"
-		  date-start)
-		 (cons (string-to-number (match-string 2 date-start))
-		       (string-to-number (match-string 3 date-start)))))
-      (when time-range
-	(setq date-start (replace-match "" nil nil date-start 1)))
+	   year-start month-start day-start hour-start minute-start year-end
+	   month-end day-end hour-end minute-end)
       ;; Parse date-start.
       (unless diaryp
-	(let ((date (org-parse-time-string date-start)))
+	(let ((date (org-parse-time-string date-start t)))
 	  (setq year-start (nth 5 date)
 		month-start (nth 4 date)
 		day-start (nth 3 date)
-		hour-start (and with-time-p (nth 2 date))
-		minute-start (and with-time-p (nth 1 date)))))
+		hour-start (nth 2 date)
+		minute-start (nth 1 date))))
       ;; Compute date-end.  It can be provided directly in time-stamp,
       ;; or extracted from time range.  Otherwise, it defaults to the
       ;; same values as date-start.
       (unless diaryp
-	(let ((date (and date-end (org-parse-time-string date-end))))
+	(let ((date (and date-end (org-parse-time-string date-end t))))
 	  (setq year-end (or (nth 5 date) year-start)
 		month-end (or (nth 4 date) month-start)
 		day-end (or (nth 3 date) day-start)
@@ -3566,10 +3562,13 @@ CONTENTS is nil."
 	      (and hour-start minute-start)
 	      (and time-range-p hour-end)
 	      (and time-range-p minute-end)
-	      (concat (case (org-element-property :repeater-type timestamp)
-			(cumulate "+") (catch-up "++") (restart ".+"))
-		      (org-element-property :repeater-value timestamp)
-		      (org-element-property :repeater-unit timestamp)))))
+	      (concat
+	       (case (org-element-property :repeater-type timestamp)
+		 (cumulate "+") (catch-up "++") (restart ".+"))
+	       (let ((val (org-element-property :repeater-value timestamp)))
+		 (and val (number-to-string val)))
+	       (case (org-element-property :repeater-unit timestamp)
+		 (hour "h") (day "d") (week "w") (month "m") (year "y"))))))
 	  ((active-range inactive-range)
 	   (let ((minute-start (org-element-property :minute-start timestamp))
 		 (minute-end (org-element-property :minute-end timestamp))
@@ -4293,8 +4292,8 @@ Return Org syntax as a string."
 	    (mapconcat
 	     (lambda (obj) (org-element-interpret-data obj parent))
 	     (org-element-contents data) ""))
-	   ;; Plain text.
-	   ((stringp data) data)
+	   ;; Plain text: remove `:parent' text property from output.
+	   ((stringp data) (org-no-properties data))
 	   ;; Element/Object without contents.
 	   ((not (org-element-contents data))
 	    (funcall (intern (format "org-element-%s-interpreter" type))
@@ -4680,18 +4679,22 @@ and :post-blank properties."
 				(funcall (intern (format "org-element-%s-parser"
 							 (car closest-cand))))))
 			(cbeg (org-element-property :contents-begin object))
-			(cend (org-element-property :contents-end object)))
+			(cend (org-element-property :contents-end object))
+			(obj-end (org-element-property :end object)))
 		   (cond
 		    ;; ORIGIN is after OBJECT, so skip it.
-		    ((< (org-element-property :end object) origin)
-		     (goto-char (org-element-property :end object)))
-		    ;; ORIGIN is within a non-recursive object or at an
-		    ;; object boundaries: Return that object.
+		    ((<= obj-end origin)
+		     (if (/= obj-end end) (goto-char obj-end)
+		       (throw 'exit
+			      (org-element-put-property
+			       object :parent parent))))
+		    ;; ORIGIN is within a non-recursive object or at
+		    ;; an object boundaries: Return that object.
 		    ((or (not cbeg) (> cbeg origin) (< cend origin))
 		     (throw 'exit
 			    (org-element-put-property object :parent parent)))
-		    ;; Otherwise, move within current object and restrict
-		    ;; search to the end of its contents.
+		    ;; Otherwise, move within current object and
+		    ;; restrict search to the end of its contents.
 		    (t (goto-char cbeg)
 		       (org-element-put-property object :parent parent)
 		       (setq parent object

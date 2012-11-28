@@ -117,7 +117,6 @@
   ((:agenda-style nil nil org-agenda-export-html-style)
    (:creator "CREATOR" nil org-e-html-creator-string)
    (:convert-org-links nil nil org-e-html-link-org-files-as-html)
-   ;; (:expand-quoted-html nil "@" org-e-html-expand)
    (:inline-images nil nil org-e-html-inline-images)
    (:link-home "LINK_HOME" nil org-e-html-link-home)
    (:link-up "LINK_UP" nil org-e-html-link-up)
@@ -125,10 +124,9 @@
    (:style-extra "STYLE" nil org-e-html-style-extra newline)
    (:style-include-default nil nil org-e-html-style-include-default)
    (:style-include-scripts nil nil org-e-html-style-include-scripts)
-   ;; (:timestamp nil nil org-e-html-with-timestamp)
    (:html-extension nil nil org-e-html-extension)
-   (:html-postamble nil nil org-e-html-postamble)
-   (:html-preamble nil nil org-e-html-preamble)
+   (:html-postamble nil "html-postamble" org-e-html-postamble)
+   (:html-preamble nil "html-preamble" org-e-html-preamble)
    (:html-table-tag nil nil org-e-html-table-tag)
    (:xml-declaration nil nil org-e-html-xml-declaration)
    (:LaTeX-fragments nil "LaTeX" org-export-with-LaTeX-fragments)
@@ -1190,14 +1188,6 @@ Replaces invalid characters with \"_\"."
 	"<table>\n%s\n</table>\n"
 	(mapconcat 'org-e-html-format-footnote-definition fn-alist "\n"))))))
 
-(defun org-e-html-format-date (info)
-  (let ((date (org-export-data (plist-get info :date) info)))
-    (cond
-     ((and date (string-match "%" date))
-      (format-time-string date))
-     (date date)
-     (t (format-time-string "%Y-%m-%d %T %Z")))))
-
 
 
 ;;; Template
@@ -1209,6 +1199,9 @@ INFO is a plist used as a communication channel."
 	 (author (and (plist-get info :with-author)
 		      (let ((auth (plist-get info :author)))
 			(and auth (org-export-data auth info)))))
+	 (date (and (plist-get info :with-date)
+		    (let ((date (plist-get info :date)))
+		      (and date (org-export-data date info)))))
 	 (description (plist-get info :description))
 	 (keywords (plist-get info :keywords)))
     (concat
@@ -1217,16 +1210,16 @@ INFO is a plist used as a communication channel."
       "<meta http-equiv=\"Content-Type\" content=\"text/html;charset=%s\"/>"
       (or (and org-e-html-coding-system
 	       (fboundp 'coding-system-get)
-	       (coding-system-get org-e-html-coding-system
-				  'mime-charset))
+	       (coding-system-get org-e-html-coding-system 'mime-charset))
 	  "iso-8859-1"))
      (format "<meta name=\"title\" content=\"%s\"/>\n" title)
      (format "<meta name=\"generator\" content=\"Org-mode\"/>\n")
-     (format "<meta name=\"generated\" content=\"%s\"/>\n"
-	     (org-e-html-format-date info))
-     (format "<meta name=\"author\" content=\"%s\"/>\n" author)
-     (format "<meta name=\"description\" content=\"%s\"/>\n" description)
-     (format "<meta name=\"keywords\" content=\"%s\"/>\n" keywords))))
+     (and date (format "<meta name=\"generated\" content=\"%s\"/>\n" date))
+     (and author (format "<meta name=\"author\" content=\"%s\"/>\n" author))
+     (and description
+	  (format "<meta name=\"description\" content=\"%s\"/>\n" description))
+     (and keywords
+	  (format "<meta name=\"keywords\" content=\"%s\"/>\n" keywords)))))
 
 (defun org-e-html--build-style (info)
   "Return style information for exported document.
@@ -1278,7 +1271,8 @@ INFO is a plist used as a communication channel."
       (let ((preamble-contents
 	     (if (functionp preamble) (funcall preamble info)
 	       (let ((title (org-export-data (plist-get info :title) info))
-		     (date (org-e-html-format-date info))
+		     (date (if (not (plist-get info :with-date)) ""
+			     (org-export-data (plist-get info :date) info)))
 		     (author (if (not (plist-get info :with-author)) ""
 			       (org-export-data (plist-get info :author) info)))
 		     (email (if (not (plist-get info :with-email)) ""
@@ -1305,7 +1299,8 @@ INFO is a plist used as a communication channel."
     (when postamble
       (let ((postamble-contents
 	     (if (functionp postamble) (funcall postamble info)
-	       (let ((date (org-e-html-format-date info))
+	       (let ((date (if (not (plist-get info :with-date)) ""
+			     (org-export-data (plist-get info :date) info)))
 		     (author (let ((author (plist-get info :author)))
 			       (and author (org-export-data author info))))
 		     (email (mapconcat
@@ -2109,8 +2104,7 @@ standalone images, do the following.
 				 element org-e-html-inline-image-rules)
 				(org-export-get-parent element)))
 		     (t nil))))
-    (when paragraph
-      (assert (eq (org-element-type paragraph) 'paragraph))
+    (when (eq (org-element-type paragraph) 'paragraph)
       (when (or (not (and (boundp 'org-e-html-standalone-image-predicate)
 			  (functionp org-e-html-standalone-image-predicate)))
 		(funcall org-e-html-standalone-image-predicate paragraph))
@@ -2707,8 +2701,8 @@ information."
   "Transcode a TIMESTAMP object from Org to HTML.
 CONTENTS is nil.  INFO is a plist holding contextual
 information."
-  (let ((value (org-translate-time
-		(org-element-property :raw-value timestamp))))
+  (let ((value (org-e-html-plain-text
+		(org-export-translate-timestamp timestamp) info)))
     (format "<span class=\"timestamp-wrapper\"><span class=\"timestamp\">%s</span></span>"
 	    (replace-regexp-in-string "--" "&ndash;" value))))
 

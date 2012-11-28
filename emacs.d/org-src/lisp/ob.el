@@ -421,7 +421,7 @@ then run `org-babel-pop-to-session'."
     (padline	. ((yes no)))
     (results	. ((file list vector table scalar verbatim)
 		   (raw html latex org code pp drawer)
-		   (replace silent append prepend)
+		   (replace silent none append prepend)
 		   (output value)))
     (rownames	. ((no yes)))
     (sep	. :any)
@@ -562,6 +562,10 @@ block."
 		(message "executing %s code block%s..."
 			 (capitalize lang)
 			 (if (nth 4 info) (format " (%s)" (nth 4 info)) ""))
+		(if (member "none" result-params)
+		    (progn
+		      (funcall cmd body params)
+		      (message "result silenced"))
 		(setq result
 		      ((lambda (result)
 			 (if (and (eq (cdr (assoc :result-type params)) 'value)
@@ -581,7 +585,8 @@ block."
 		(org-babel-insert-result
 		 result result-params info new-hash indent lang)
 		(run-hooks 'org-babel-after-execute-hook)
-		result))
+		result
+		)))
 	  (setq call-process-region 'org-babel-call-process-region-original))))))
 
 (defun org-babel-expand-body:generic (body params &optional var-lines)
@@ -1028,7 +1033,8 @@ the current subtree."
 	  (sort (copy-sequence (nth 2 info))
 		(lambda (a b) (string< (car a) (car b)))))
     (let* ((rm (lambda (lst)
-		 (dolist (p '("replace" "silent" "append" "prepend"))
+		 (dolist (p '("replace" "silent" "none"
+			      "append" "prepend"))
 		   (setq lst (remove p lst)))
 		 lst))
 	   (norm (lambda (arg)
@@ -1851,7 +1857,10 @@ RESULT-PARAMS can take the following values:
 replace - (default option) insert results after the source block
           replacing any previously inserted results
 
-silent -- no results are inserted
+silent -- no results are inserted into the Org-mode buffer but
+          the results are echoed to the minibuffer and are
+          ingested by Emacs (a potentially time consuming
+          process)
 
 file ---- the results are interpreted as a file path, and are
           inserted into the buffer using the Org-mode file syntax
@@ -2551,6 +2560,20 @@ additionally processed by `shell-quote-argument'"
     "Directory to hold temporary files created to execute code blocks.
 Used by `org-babel-temp-file'.  This directory will be removed on
 Emacs shutdown."))
+
+(defmacro org-babel-result-cond (result-params scalar-form &rest table-forms)
+  "Call the code to parse raw string results according to RESULT-PARAMS."
+  (declare (indent 1))
+  `(unless (member "none" result-params)
+     (if (or (member "scalar" result-params)
+	     (member "verbatim" result-params)
+	     (member "html" result-params)
+	     (member "code" result-params)
+	     (member "pp" result-params)
+	     (and (member "output" result-params)
+		  (not (member "table" result-params))))
+	 ,scalar-form
+       ,@table-forms)))
 
 (defun org-babel-temp-file (prefix &optional suffix)
   "Create a temporary file in the `org-babel-temporary-directory'.

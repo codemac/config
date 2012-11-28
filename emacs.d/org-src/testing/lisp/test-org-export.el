@@ -23,18 +23,22 @@ BACKEND is the name of the back-end.  BODY is the body to
 execute.  The defined back-end simply returns parsed data as Org
 syntax."
   (declare (debug (form body)) (indent 1))
-  `(let ((,(intern (format "org-%s-translate-alist" backend))
-	  ',(let (transcode-table)
-	      (dolist (type (append org-element-all-elements
-				    org-element-all-objects)
-			    transcode-table)
-		(push
-		 (cons type
-		       (lambda (obj contents info)
-			 (funcall
-			  (intern (format "org-element-%s-interpreter" type))
-			  obj contents)))
-		 transcode-table)))))
+  `(let ((org-export-registered-backends
+	  ',(list
+	     (list backend
+		   :translate-alist
+		   (let (transcode-table)
+		     (dolist (type (append org-element-all-elements
+					   org-element-all-objects)
+				   transcode-table)
+		       (push
+			(cons type
+			      (lambda (obj contents info)
+				(funcall
+				 (intern (format "org-element-%s-interpreter"
+						 type))
+				 obj contents)))
+			transcode-table)))))))
      (progn ,@body)))
 
 (defmacro org-test-with-parsed-data (data &rest body)
@@ -181,6 +185,32 @@ Paragraph"
     (forward-line)
     (should (equal (plist-get (org-export-get-environment nil t) :date)
 		   '("29-03-2012"))))
+  ;; Properties with `split' behaviour are stored as a list of
+  ;; strings.
+  (should
+   (equal '("a" "b")
+	  (org-test-with-temp-text "#+EXCLUDE_TAGS: noexport
+* Headline
+  :PROPERTIES:
+  :EXPORT_EXCLUDE_TAGS: a b
+  :END:
+Paragraph"
+	    (progn
+	      (forward-line)
+	      (plist-get (org-export-get-environment nil t) :exclude-tags)))))
+  ;; Handle :PROPERTY+: syntax.
+  (should
+   (equal '("a" "b")
+	  (org-test-with-temp-text "#+EXCLUDE_TAGS: noexport
+* Headline
+  :PROPERTIES:
+  :EXPORT_EXCLUDE_TAGS: a
+  :EXPORT_EXCLUDE_TAGS+: b
+  :END:
+Paragraph"
+	    (progn
+	      (forward-line)
+	      (plist-get (org-export-get-environment nil t) :exclude-tags)))))
   ;; Export properties are case-insensitive.
   (org-test-with-temp-text "* Headline
   :PROPERTIES:
@@ -353,13 +383,6 @@ text
       (forward-line)
       (org-cycle)
       (should (equal (org-export-as 'test nil 'visible) "* Head1\n"))
-      ;; Body only.
-      (flet ((org-test-template (body info) (format "BEGIN\n%sEND" body)))
-	(push '(template . org-test-template) org-test-translate-alist)
-	(should (equal (org-export-as 'test nil nil 'body-only)
-		       "* Head1\n** Head2\ntext\n*** Head3\n"))
-	(should (equal (org-export-as 'test)
-		       "BEGIN\n* Head1\n** Head2\ntext\n*** Head3\nEND")))
       ;; Region.
       (goto-char (point-min))
       (forward-line 3)
@@ -382,7 +405,17 @@ text
 #+END_SRC"
 	    (org-test-with-backend test
 	      (forward-line 1)
-	      (org-export-as 'test 'subtree))))))
+	      (org-export-as 'test 'subtree)))))
+  ;; Body only.
+  (org-test-with-temp-text "Text"
+    (org-test-with-backend test
+      (plist-put
+       (cdr (assq 'test org-export-registered-backends))
+       :translate-alist
+       (cons (cons 'template (lambda (body info) (format "BEGIN\n%sEND" body)))
+	     (org-export-backend-translate-table 'test)))
+      (should (equal (org-export-as 'test nil nil 'body-only) "Text\n"))
+      (should (equal (org-export-as 'test) "BEGIN\nText\nEND")))))
 
 (ert-deftest test-org-export/expand-include ()
   "Test file inclusion in an Org buffer."
@@ -565,22 +598,144 @@ body\n")))
 
 
 
+;;; Back-End Tools
+
+(ert-deftest test-org-export/define-backend ()
+  "Test back-end definition and accessors."
+  ;; Translate table.
+  (should
+   (equal '((headline . my-headline-test))
+	  (let (org-export-registered-backends)
+	    (org-export-define-backend test ((headline . my-headline-test)))
+	    (org-export-backend-translate-table 'test))))
+  ;; Filters.
+  (should
+   (equal '((:filter-headline . my-filter))
+	  (let (org-export-registered-backends)
+	    (org-export-define-backend test
+	      ((headline . my-headline-test))
+	      :filters-alist ((:filter-headline . my-filter)))
+	    (org-export-backend-filters 'test))))
+  ;; Options.
+  (should
+   (equal '((:prop value))
+	  (let (org-export-registered-backends)
+	    (org-export-define-backend test
+	      ((headline . my-headline-test))
+	      :options-alist ((:prop value)))
+	    (org-export-backend-options 'test))))
+  ;; Menu.
+  (should
+   (equal '(?k "Test Export" test)
+	  (let (org-export-registered-backends)
+	    (org-export-define-backend test
+	      ((headline . my-headline-test))
+	      :menu-entry (?k "Test Export" test))
+	    (org-export-backend-menu 'test))))
+  ;; Export Blocks.
+  (should
+   (equal '(("TEST" . org-element-export-block-parser))
+	  (let (org-export-registered-backends org-element-block-name-alist)
+	    (org-export-define-backend test
+	      ((headline . my-headline-test))
+	      :export-block ("test"))
+	    org-element-block-name-alist))))
+
+(ert-deftest test-org-export/define-derived-backend ()
+  "Test `org-export-define-derived-backend' specifications."
+  ;; Error when parent back-end is not defined.
+  (should-error
+   (let (org-export-registered-backends)
+     (org-export-define-derived-backend test parent)))
+  ;; Append translation table to parent's.
+  (should
+   (equal '((:headline . test) (:headline . parent))
+	  (let (org-export-registered-backends)
+	    (org-export-define-backend parent ((:headline . parent)))
+	    (org-export-define-derived-backend test parent
+	      :translate-alist ((:headline . test)))
+	    (org-export-backend-translate-table 'test)))))
+
+(ert-deftest test-org-export/derived-backend-p ()
+  "Test `org-export-derived-backend-p' specifications."
+  ;; Non-nil with direct match.
+  (should
+   (let (org-export-registered-backends)
+     (org-export-define-backend test ((headline . test)))
+     (org-export-derived-backend-p 'test 'test)))
+  (should
+   (let (org-export-registered-backends)
+     (org-export-define-backend test ((headline . test)))
+     (org-export-define-derived-backend test2 test)
+     (org-export-derived-backend-p 'test2 'test2)))
+  ;; Non-nil with a direct parent.
+  (should
+   (let (org-export-registered-backends)
+     (org-export-define-backend test ((headline . test)))
+     (org-export-define-derived-backend test2 test)
+     (org-export-derived-backend-p 'test2 'test)))
+  ;; Non-nil with an indirect parent.
+  (should
+   (let (org-export-registered-backends)
+     (org-export-define-backend test ((headline . test)))
+     (org-export-define-derived-backend test2 test)
+     (org-export-define-derived-backend test3 test2)
+     (org-export-derived-backend-p 'test3 'test)))
+  ;; Nil otherwise.
+  (should-not
+   (let (org-export-registered-backends)
+     (org-export-define-backend test ((headline . test)))
+     (org-export-define-backend test2 ((headline . test2)))
+     (org-export-derived-backend-p 'test2 'test)))
+  (should-not
+   (let (org-export-registered-backends)
+     (org-export-define-backend test ((headline . test)))
+     (org-export-define-backend test2 ((headline . test2)))
+     (org-export-define-derived-backend test3 test2)
+     (org-export-derived-backend-p 'test3 'test))))
+
+(ert-deftest test-org-export/with-backend ()
+  "Test `org-export-with-backend' definition."
+  ;; Error when calling an undefined back-end
+  (should-error
+   (let (org-export-registered-backends)
+     (org-export-with-backend 'test "Test")))
+  ;; Error when called back-end doesn't have an appropriate
+  ;; transcoder.
+  (should-error
+   (let (org-export-registered-backends)
+     (org-export-define-backend test ((headline . ignore)))
+     (org-export-with-backend 'test "Test")))
+  ;; Otherwise, export using correct transcoder
+  (should
+   (equal "Success"
+	  (let (org-export-registered-backends)
+	    (org-export-define-backend test
+	      ((plain-text . (lambda (text contents info) "Failure"))))
+	    (org-export-define-backend test2
+	      ((plain-text . (lambda (text contents info) "Success"))))
+	    (org-export-with-backend 'test2 "Test")))))
+
+
+
 ;;; Export Snippets
 
 (ert-deftest test-org-export/export-snippet ()
   "Test export snippets transcoding."
   (org-test-with-temp-text "@@test:A@@@@t:B@@"
     (org-test-with-backend test
-      (let ((org-test-translate-alist
-	     (cons (cons 'export-snippet
-			 (lambda (snippet contents info)
-			   (when (eq (org-export-snippet-backend snippet) 'test)
-			     (org-element-property :value snippet))))
-		   org-test-translate-alist)))
-	(let ((org-export-snippet-translation-alist nil))
-	  (should (equal (org-export-as 'test) "A\n")))
-	(let ((org-export-snippet-translation-alist '(("t" . "test"))))
-	  (should (equal (org-export-as 'test) "AB\n")))))))
+      (plist-put
+       (cdr (assq 'test org-export-registered-backends))
+       :translate-alist
+       (cons (cons 'export-snippet
+		   (lambda (snippet contents info)
+		     (when (eq (org-export-snippet-backend snippet) 'test)
+		       (org-element-property :value snippet))))
+	     (org-export-backend-translate-table 'test)))
+      (let ((org-export-snippet-translation-alist nil))
+	(should (equal (org-export-as 'test) "A\n")))
+      (let ((org-export-snippet-translation-alist '(("t" . "test"))))
+	(should (equal (org-export-as 'test) "AB\n"))))))
 
 
 
@@ -595,29 +750,29 @@ body\n")))
      (equal
       '((1 . "A\n") (2 . "B") (3 . "C") (4 . "D"))
       (org-test-with-parsed-data
-	  "Text[fn:1] [1] [fn:label:C] [fn::D]\n\n[fn:1] A\n\n[1] B"
-	(org-element-map
-	 tree 'footnote-reference
-	 (lambda (ref)
-	   (let ((def (org-export-get-footnote-definition ref info)))
-	     (cons (org-export-get-footnote-number ref info)
-		   (if (eq (org-element-property :type ref) 'inline) (car def)
-		     (car (org-element-contents
-			   (car (org-element-contents def))))))))
-	 info))))
+       "Text[fn:1] [1] [fn:label:C] [fn::D]\n\n[fn:1] A\n\n[1] B"
+       (org-element-map
+	tree 'footnote-reference
+	(lambda (ref)
+	  (let ((def (org-export-get-footnote-definition ref info)))
+	    (cons (org-export-get-footnote-number ref info)
+		  (if (eq (org-element-property :type ref) 'inline) (car def)
+		    (car (org-element-contents
+			  (car (org-element-contents def))))))))
+	info))))
     ;; 2. Test nested footnotes order.
     (org-test-with-parsed-data
-	"Text[fn:1:A[fn:2]] [fn:3].\n\n[fn:2] B [fn:3] [fn::D].\n\n[fn:3] C."
-      (should
-       (equal
-	'((1 . "fn:1") (2 . "fn:2") (3 . "fn:3") (4))
-	(org-element-map
-	 tree 'footnote-reference
-	 (lambda (ref)
-	   (when (org-export-footnote-first-reference-p ref info)
-	     (cons (org-export-get-footnote-number ref info)
-		   (org-element-property :label ref))))
-	 info))))
+     "Text[fn:1:A[fn:2]] [fn:3].\n\n[fn:2] B [fn:3] [fn::D].\n\n[fn:3] C."
+     (should
+      (equal
+       '((1 . "fn:1") (2 . "fn:2") (3 . "fn:3") (4))
+       (org-element-map
+	tree 'footnote-reference
+	(lambda (ref)
+	  (when (org-export-footnote-first-reference-p ref info)
+	    (cons (org-export-get-footnote-number ref info)
+		  (org-element-property :label ref))))
+	info))))
     ;; 3. Test nested footnote in invisible definitions.
     (org-test-with-temp-text "Text[1]\n\n[1] B [2]\n\n[2] C."
       ;; Hide definitions.
@@ -636,22 +791,24 @@ body\n")))
 \[fn:2] B [fn:3] [fn::D].
 
 \[fn:3] C."
-      (should (= (length (org-export-collect-footnote-definitions tree info))
-		 4)))
+			       (should (= (length (org-export-collect-footnote-definitions tree info))
+					  4)))
     ;; 5. Test export of footnotes defined outside parsing scope.
     (org-test-with-temp-text "[fn:1] Out of scope
 * Title
 Paragraph[fn:1]"
       (org-test-with-backend test
-	(let ((org-test-translate-alist
-	       (cons (cons 'footnote-reference
-			   (lambda (fn contents info)
-			     (org-element-interpret-data
-			      (org-export-get-footnote-definition fn info))))
-		     org-test-translate-alist)))
-	  (forward-line)
-	  (should (equal "ParagraphOut of scope\n"
-			 (org-export-as 'test 'subtree))))))))
+	(plist-put
+	 (cdr (assq 'test org-export-registered-backends))
+	 :translate-alist
+	 (cons (cons 'footnote-reference
+		     (lambda (fn contents info)
+		       (org-element-interpret-data
+			(org-export-get-footnote-definition fn info))))
+	       (org-export-backend-translate-table 'test)))
+	(forward-line)
+	(should (equal "ParagraphOut of scope\n"
+		       (org-export-as 'test 'subtree)))))))
 
 
 
@@ -1883,6 +2040,132 @@ Another text. (ref:text)
      (org-export-table-row-ends-header-p
       (org-element-map tree 'table-row 'identity info 'first-match)
       info))))
+
+
+
+;;; Timestamps
+
+(ert-deftest test-org-export/timestamp-has-time-p ()
+  "Test `org-export-timestamp-has-time-p' specifications."
+  ;; With time.
+  (should
+   (org-test-with-temp-text "<2012-03-29 Thu 16:40>"
+     (org-export-timestamp-has-time-p (org-element-context))))
+  ;; Without time.
+  (should-not
+   (org-test-with-temp-text "<2012-03-29 Thu>"
+     (org-export-timestamp-has-time-p (org-element-context)))))
+
+(ert-deftest test-org-export/format-timestamp ()
+  "Test `org-export-format-timestamp' specifications."
+  ;; Regular test.
+  (should
+   (equal
+    "2012-03-29 16:40"
+    (org-test-with-temp-text "<2012-03-29 Thu 16:40>"
+      (org-export-format-timestamp (org-element-context) "%Y-%m-%d %R"))))
+  ;; Range end.
+  (should
+   (equal
+    "2012-03-29"
+    (org-test-with-temp-text "[2011-07-14 Thu]--[2012-03-29 Thu]"
+      (org-export-format-timestamp (org-element-context) "%Y-%m-%d" t)))))
+
+(ert-deftest test-org-export/split-timestamp-range ()
+  "Test `org-export-split-timestamp-range' specifications."
+  ;; Extract range start (active).
+  (should
+   (equal '(2012 3 29)
+	  (org-test-with-temp-text "<2012-03-29 Thu>--<2012-03-30 Fri>"
+	    (let ((ts (org-export-split-timestamp-range (org-element-context))))
+	      (mapcar (lambda (p) (org-element-property p ts))
+		      '(:year-end :month-end :day-end))))))
+  ;; Extract range start (inactive)
+  (should
+   (equal '(2012 3 29)
+	  (org-test-with-temp-text "[2012-03-29 Thu]--[2012-03-30 Fri]"
+	    (let ((ts (org-export-split-timestamp-range (org-element-context))))
+	      (mapcar (lambda (p) (org-element-property p ts))
+		      '(:year-end :month-end :day-end))))))
+  ;; Extract range end (active).
+  (should
+   (equal '(2012 3 30)
+	  (org-test-with-temp-text "<2012-03-29 Thu>--<2012-03-30 Fri>"
+	    (let ((ts (org-export-split-timestamp-range
+		       (org-element-context) t)))
+	      (mapcar (lambda (p) (org-element-property p ts))
+		      '(:year-end :month-end :day-end))))))
+  ;; Extract range end (inactive)
+  (should
+   (equal '(2012 3 30)
+	  (org-test-with-temp-text "[2012-03-29 Thu]--[2012-03-30 Fri]"
+	    (let ((ts (org-export-split-timestamp-range
+		       (org-element-context) t)))
+	      (mapcar (lambda (p) (org-element-property p ts))
+		      '(:year-end :month-end :day-end))))))
+  ;; Return the timestamp if not a range.
+  (should
+   (org-test-with-temp-text "[2012-03-29 Thu]"
+     (let* ((ts-orig (org-element-context))
+	    (ts-copy (org-export-split-timestamp-range ts-orig)))
+       (eq ts-orig ts-copy))))
+  (should
+   (org-test-with-temp-text "<%%(org-float t 4 2)>"
+     (let* ((ts-orig (org-element-context))
+	    (ts-copy (org-export-split-timestamp-range ts-orig)))
+       (eq ts-orig ts-copy))))
+  ;; Check that parent is the same when a range was split.
+  (should
+   (org-test-with-temp-text "[2012-03-29 Thu]--[2012-03-30 Fri]"
+     (let* ((ts-orig (org-element-context))
+	    (ts-copy (org-export-split-timestamp-range ts-orig)))
+       (eq (org-element-property :parent ts-orig)
+	   (org-element-property :parent ts-copy))))))
+
+(ert-deftest test-org-export/translate-timestamp ()
+  "Test `org-export-translate-timestamp' specifications."
+  ;; Translate whole date range.
+  (should
+   (equal "<29>--<30>"
+	  (org-test-with-temp-text "<2012-03-29 Thu>--<2012-03-30 Fri>"
+	    (let ((org-display-custom-times t)
+		  (org-time-stamp-custom-formats '("<%d>" . "<%d>")))
+	      (org-export-translate-timestamp (org-element-context))))))
+  ;; Translate date range start.
+  (should
+   (equal "<29>"
+	  (org-test-with-temp-text "<2012-03-29 Thu>--<2012-03-30 Fri>"
+	    (let ((org-display-custom-times t)
+		  (org-time-stamp-custom-formats '("<%d>" . "<%d>")))
+	      (org-export-translate-timestamp (org-element-context) 'start)))))
+  ;; Translate date range end.
+  (should
+   (equal "<30>"
+	  (org-test-with-temp-text "<2012-03-29 Thu>--<2012-03-30 Fri>"
+	    (let ((org-display-custom-times t)
+		  (org-time-stamp-custom-formats '("<%d>" . "<%d>")))
+	      (org-export-translate-timestamp (org-element-context) 'end)))))
+  ;; Translate time range.
+  (should
+   (equal "<08>--<16>"
+	  (org-test-with-temp-text "<2012-03-29 Thu 8:30-16:40>"
+	    (let ((org-display-custom-times t)
+		  (org-time-stamp-custom-formats '("<%d>" . "<%H>")))
+	      (org-export-translate-timestamp (org-element-context))))))
+  ;; Translate non-range timestamp.
+  (should
+   (equal "<29>"
+	  (org-test-with-temp-text "<2012-03-29 Thu>"
+	    (let ((org-display-custom-times t)
+		  (org-time-stamp-custom-formats '("<%d>" . "<%d>")))
+	      (org-export-translate-timestamp (org-element-context))))))
+  ;; Do not change `diary' timestamps.
+  (should
+   (equal "<%%(org-float t 4 2)>"
+	  (org-test-with-temp-text "<%%(org-float t 4 2)>"
+	    (let ((org-display-custom-times t)
+		  (org-time-stamp-custom-formats '("<%d>" . "<%d>")))
+	      (org-export-translate-timestamp (org-element-context)))))))
 
 
 

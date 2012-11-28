@@ -819,7 +819,8 @@ INFO is a plist used as a communication channel."
 			(and auth (org-export-data auth info)))))
 	 (email (and (plist-get info :with-email)
 		     (org-export-data (plist-get info :email) info)))
-	 (date (org-export-data (plist-get info :date) info)))
+	 (date (and (plist-get info :with-date)
+		    (org-export-data (plist-get info :date) info))))
     ;; There are two types of title blocks depending on the presence
     ;; of a title to display.
     (if (string= title "")
@@ -951,11 +952,6 @@ INFO is a plist used as a communication channel."
 
 ;;; Transcode Functions
 
-;;;; Babel Call
-
-;; Babel Calls are ignored.
-
-
 ;;;; Bold
 
 (defun org-e-ascii-bold (bold contents info)
@@ -1000,16 +996,6 @@ information."
 CONTENTS is nil.  INFO is a plist holding contextual
 information."
   (format org-e-ascii-verbatim-format (org-element-property :value code)))
-
-
-;;;; Comment
-
-;; Comments are ignored.
-
-
-;;;; Comment Block
-
-;; Comment Blocks are ignored.
 
 
 ;;;; Drawer
@@ -1163,11 +1149,6 @@ information."
      text-width 'center)))
 
 
-;;;; Inline Babel Call
-
-;; Inline Babel Calls are ignored.
-
-
 ;;;; Inline Src Block
 
 (defun org-e-ascii-inline-src-block (inline-src-block contents info)
@@ -1229,6 +1210,7 @@ holding contextual information."
 	    (if (not (org-export-get-parent-headline inlinetask)) 0
 	      org-e-ascii-inner-margin)
 	    (org-e-ascii--current-text-width inlinetask info)))))))
+
 
 ;;;; Italic
 
@@ -1450,11 +1432,6 @@ channel."
    " "))
 
 
-;;;; Property Drawer
-;;
-;; Property drawers are ignored.
-
-
 ;;;; Quote Block
 
 (defun org-e-ascii-quote-block (quote-block contents info)
@@ -1494,6 +1471,7 @@ CONTENTS is nil.  INFO is a plist holding contextual information."
 CONTENTS is the contents of the target.  INFO is a plist holding
 contextual information."
   contents)
+
 
 ;;;; Section
 
@@ -1539,6 +1517,7 @@ contextual information."
       (org-export-format-code-default src-block info) info)
      (when (and caption (not org-e-ascii-caption-above))
        (concat "\n" caption)))))
+
 
 ;;;; Statistics Cookie
 
@@ -1722,20 +1701,12 @@ a communication channel."
 		  (funcall build-hline "+" "-" "+" "+")))))))
 
 
-;;;; Target
-
-;; Targets are invisible.
-
-
 ;;;; Timestamp
 
 (defun org-e-ascii-timestamp (timestamp contents info)
   "Transcode a TIMESTAMP object from Org to ASCII.
 CONTENTS is nil.  INFO is a plist holding contextual information."
-  (let ((value (org-translate-time
-		(org-element-property :raw-value timestamp))))
-    (if (not (eq (plist-get info :ascii-charset) 'utf-8)) value
-      (replace-regexp-in-string "--" "–" value))))
+  (org-e-ascii-plain-text (org-export-translate-timestamp timestamp) info))
 
 
 ;;;; Underline
@@ -1766,6 +1737,7 @@ contextual information."
     (org-e-ascii--indent-string
      (org-e-ascii--justify-string contents verse-width 'left)
      org-e-ascii-quote-margin)))
+
 
 
 ;;; Filters

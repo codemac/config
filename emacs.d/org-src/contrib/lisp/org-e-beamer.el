@@ -45,8 +45,9 @@
 ;; - Headlines become frames when their level is equal to
 ;;   `org-e-beamer-frame-level' (or "H" value in the OPTIONS line).
 ;;   Though, if an headline in the current tree has a "BEAMER_env"
-;;   (see below) property set to "frame", its level overrides the
-;;   variable.
+;;   (see below) property set to either "frame" or "fullframe", its
+;;   level overrides the variable.  A "fullframe" is a frame with an
+;;   empty (ignored) title.
 ;;
 ;; - All frames' children become block environments.  Special block
 ;;   types can be enforced by setting headline's "BEAMER_env" property
@@ -184,10 +185,12 @@ You might want to put e.g. \"allowframebreaks=0.9\" here."
 "The column widths that should be installed as allowed property values.")
 
 (defconst org-e-beamer-environments-special
-  '(("againframe"     "F")
+  '(("againframe"     "A")
     ("appendix"       "x")
     ("column"         "c")
+    ("columns"        "C")
     ("frame"          "f")
+    ("fullframe"      "F")
     ("ignoreheading"  "i")
     ("note"           "n")
     ("noteNH"         "N"))
@@ -262,13 +265,14 @@ brackets.  Return overlay specification, as a string, or nil."
 
 (org-export-define-derived-backend e-beamer e-latex
   :export-block "BEAMER"
-  :sub-menu-entry
-  (?l (?B "As TEX buffer (Beamer)" org-e-beamer-export-as-latex)
-      (?b "As TEX file (Beamer)" org-e-beamer-export-to-latex)
-      (?P "As PDF file (Beamer)" org-e-beamer-export-to-pdf)
-      (?O "As PDF file and open (Beamer)"
-	  (lambda (s v b)
-	    (org-open-file (org-e-beamer-export-to-pdf s v b)))))
+  :menu-entry
+  (?l 1
+      ((?B "As TEX buffer (Beamer)" org-e-beamer-export-as-latex)
+       (?b "As TEX file (Beamer)" org-e-beamer-export-to-latex)
+       (?P "As PDF file (Beamer)" org-e-beamer-export-to-pdf)
+       (?O "As PDF file and open (Beamer)"
+	   (lambda (s v b)
+	     (org-open-file (org-e-beamer-export-to-pdf s v b))))))
   :options-alist
   ((:beamer-theme "BEAMER_THEME" nil org-e-beamer-theme)
    (:beamer-color-theme "BEAMER_COLOR_THEME" nil nil t)
@@ -370,19 +374,22 @@ INFO is a plist used as a communication channel."
    ;;    farthest.
    (catch 'exit
      (mapc (lambda (parent)
-	     (when (equal (org-element-property :beamer-env parent) "frame")
-	       (throw 'exit (org-export-get-relative-level parent info))))
-	   (reverse (org-export-get-genealogy headline)))
+	     (let ((env (org-element-property :beamer-env parent)))
+	       (when (and env (member (downcase env) '("frame" "fullframe")))
+		 (throw 'exit (org-export-get-relative-level parent info)))))
+	   (nreverse (org-export-get-genealogy headline)))
      nil)
    ;; 2. Look for "frame" environment in HEADLINE.
-   (and (equal (org-element-property :beamer-env headline) "frame")
-	(org-export-get-relative-level headline info))
+   (let ((env (org-element-property :beamer-env headline)))
+     (and env (member (downcase env) '("frame" "fullframe"))
+	  (org-export-get-relative-level headline info)))
    ;; 3. Look for "frame" environment in sub-tree.
    (org-element-map
     headline 'headline
     (lambda (hl)
-      (when (equal (org-element-property :beamer-env hl) "frame")
-	(org-export-get-relative-level hl info)))
+      (let ((env (org-element-property :beamer-env hl)))
+	(when (and env (member (downcase env) '("frame" "fullframe")))
+	  (org-export-get-relative-level hl info))))
     info 'first-match)
    ;; 4. No "frame" environment in tree: use default value.
    (plist-get info :headline-levels)))
@@ -393,9 +400,7 @@ CONTENTS holds the contents of the headline.  INFO is a plist
 used as a communication channel."
   ;; Use `e-latex' back-end output, inserting overlay specifications
   ;; if possible.
-  (let ((latex-headline
-	 (funcall (cdr (assq 'headline org-e-latex-translate-alist))
-		  headline contents info))
+  (let ((latex-headline (org-export-with-backend 'e-latex headline contents info))
 	(mode-specs (org-element-property :beamer-act headline)))
     (if (and mode-specs
 	     (string-match "\\`\\\\\\(.*?\\)\\(?:\\*\\|\\[.*\\]\\)?{"
@@ -454,9 +459,11 @@ used as a communication channel."
 		",")
 	       'option))
 	    ;; Title.
-	    (format "{%s}"
-		    (org-export-data (org-element-property :title headline)
-				     info))
+	    (let ((env (org-element-property :beamer-env headline)))
+	      (format "{%s}"
+		      (if (and env (equal (downcase env) "fullframe")) ""
+			(org-export-data
+			 (org-element-property :title headline) info))))
 	    "\n"
 	    ;; The following workaround is required in fragile frames
 	    ;; as Beamer will append "\par" to the beginning of the
@@ -474,51 +481,65 @@ used as a communication channel."
 CONTENTS holds the contents of the headline.  INFO is a plist
 used as a communication channel."
   (let* ((column-width (org-element-property :beamer-col headline))
-	 ;; Environment defaults to "block" if none is specified and
+	 ;; ENVIRONMENT defaults to "block" if none is specified and
 	 ;; there is no column specification.  If there is a column
 	 ;; specified but still no explicit environment, ENVIRONMENT
-	 ;; is nil.
+	 ;; is "column".
 	 (environment (let ((env (org-element-property :beamer-env headline)))
 			(cond
 			 ;; "block" is the fallback environment.
 			 ((and (not env) (not column-width)) "block")
 			 ;; "column" only.
-			 ((not env) nil)
+			 ((not env) "column")
 			 ;; Use specified environment.
 			 (t (downcase env)))))
-	 (env-format (when environment
+	 (env-format (unless (member environment '("column" "columns"))
 		       (assoc environment
 			      (append org-e-beamer-environments-special
 				      org-e-beamer-environments-extra
 				      org-e-beamer-environments-default))))
 	 (title (org-export-data (org-element-property :title headline) info))
-	 ;; Start a columns environment when there is no previous
-	 ;; headline or the previous headline do not have
-	 ;; a BEAMER_column property.
+	 (options (let ((options (org-element-property :beamer-opt headline)))
+		    (if (not options) ""
+		      (org-e-beamer--normalize-argument options 'option))))
+	 ;; Start a "columns" environment when explicitly requested or
+	 ;; when there is no previous headline or the previous
+	 ;; headline do not have a BEAMER_column property.
+	 (parent-env (org-element-property
+		      :beamer-env (org-export-get-parent-headline headline)))
 	 (start-columns-p
-	  (and column-width
-	       (or (org-export-first-sibling-p headline info)
-		   (not (org-element-property
-			 :beamer-col
-			 (org-export-get-previous-element headline info))))))
-	 ;; Ends a columns environment when there is no next headline
-	 ;; or the next headline do not have a BEAMER_column property.
+	  (or (equal environment "columns")
+	      (and column-width
+		   (not (and parent-env
+			     (equal (downcase parent-env) "columns")))
+		   (or (org-export-first-sibling-p headline info)
+		       (not (org-element-property
+			     :beamer-col
+			     (org-export-get-previous-element
+			      headline info)))))))
+	 ;; End the "columns" environment when explicitly requested or
+	 ;; when there is no next headline or the next headline do not
+	 ;; have a BEAMER_column property.
 	 (end-columns-p
-	  (and column-width
-	       (or (org-export-last-sibling-p headline info)
-		   (not (org-element-property
-			 :beamer-col
-			 (org-export-get-next-element headline info)))))))
+	  (or (equal environment "columns")
+	      (and column-width
+		   (not (and parent-env
+			     (equal (downcase parent-env) "columns")))
+		   (or (org-export-last-sibling-p headline info)
+		       (not (org-element-property
+			     :beamer-col
+			     (org-export-get-next-element headline info))))))))
     (concat
-     (when start-columns-p "\\begin{columns}\n")
+     (when start-columns-p
+       ;; Column can accept options only when the environment is
+       ;; explicitly defined.
+       (if (not (equal environment "columns")) "\\begin{columns}\n"
+	 (format "\\begin{columns}%s\n" options)))
      (when column-width
        (format "\\begin{column}%s{%s}\n"
 	       ;; One can specify placement for column only when
 	       ;; HEADLINE stands for a column on its own.
-	       (if (not environment) ""
-		 (let ((options (org-element-property :beamer-opt headline)))
-		   (if (not options) ""
-		     (org-e-beamer--normalize-argument options 'option))))
+	       (if (equal environment "column") options "")
 	       (format "%s\\textwidth" column-width)))
      ;; Block's opening string.
      (when env-format
@@ -535,19 +556,12 @@ used as a communication channel."
 	     ((not action) (list (cons "a" "") (cons "A" "")))
 	     ((string-match "\\`\\[.*\\]\\'" action)
 	      (list
-	       (cons "A"
-		     (org-e-beamer--normalize-argument action 'defaction))
+	       (cons "A" (org-e-beamer--normalize-argument action 'defaction))
 	       (cons "a" "")))
 	     (t
-	      (list
-	       (cons "a"
-		     (org-e-beamer--normalize-argument action 'action))
-	       (cons "A" "")))))
-	  (list (cons "o"
-		      (let ((options
-			     (org-element-property :beamer-opt headline)))
-			(if (not options) ""
-			  (org-e-beamer--normalize-argument options 'option))))
+	      (list (cons "a" (org-e-beamer--normalize-argument action 'action))
+		    (cons "A" "")))))
+	  (list (cons "o" options)
 		(cons "h" title)
 		(cons "H" (if (equal title "") "" (format "{%s}" title)))
 		(cons "U" (if (equal title "") "" (format "[%s]" title))))))
@@ -645,8 +659,7 @@ contextual information."
   (let ((action (let ((first-element (car (org-element-contents item))))
 		  (and (eq (org-element-type first-element) 'paragraph)
 		       (org-e-beamer--element-has-overlay-p first-element))))
-	(output (funcall (cdr (assq 'item org-e-latex-translate-alist))
-			 item contents info)))
+	(output (org-export-with-backend 'e-latex item contents info)))
     (if (not action) output
       ;; If the item starts with a paragraph and that paragraph starts
       ;; with an export snippet specifying an overlay, insert it after
@@ -677,8 +690,7 @@ channel."
 	 (when (wholenump depth) (format "\\setcounter{tocdepth}{%s}\n" depth))
 	 "\\tableofcontents" options "\n"
 	 "\\end{frame}")))
-     (t (funcall (cdr (assq 'keyword org-e-latex-translate-alist))
-		 keyword contents info)))))
+     (t (org-export-with-backend 'e-latex keyword contents info)))))
 
 
 ;;;; Link
@@ -860,7 +872,9 @@ holding export options."
 	     (author (format "\\author{%s}\n" author))
 	     (t "\\author{}\n")))
      ;; 6. Date.
-     (format "\\date{%s}\n" (org-export-data (plist-get info :date) info))
+     (let ((date (and (plist-get info :with-date)
+		      (org-export-data (plist-get info :date) info))))
+       (format "\\date{%s}\n" (or date "")))
      ;; 7. Title
      (format "\\title{%s}\n" title)
      ;; 8. Hyperref options.
@@ -1103,7 +1117,7 @@ aid, but the tag does not have any semantic meaning."
 	  (org-delete-property "BEAMER_col")))
        ;; For an "againframe" section, automatically ask for reference
        ;; to resumed frame and overlay specifications.
-       ((eq org-last-tag-selection-key ?F)
+       ((eq org-last-tag-selection-key ?A)
 	(if (equal (org-entry-get nil "BEAMER_env") "againframe")
 	    (progn (org-entry-delete nil "BEAMER_env")
 		   (org-entry-delete nil "BEAMER_ref")

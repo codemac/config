@@ -2714,11 +2714,79 @@ commands, if custom time display is turned on at the time of export."
 	(concat "[" (substring f 1 -1) "]")
       f)))
 
-(defcustom org-time-clocksum-format "%d:%02d"
+(defcustom org-time-clocksum-format
+  '(:days "%dd " :hours "%d" :require-hours t :minutes ":%02d" :require-minutes t)
   "The format string used when creating CLOCKSUM lines.
-This is also used when org-mode generates a time duration."
+This is also used when Org mode generates a time duration.
+
+The value can be a single format string containing two
+%-sequences, which will be filled with the number of hours and
+minutes in that order.
+
+Alternatively, the value can be a plist associating any of the
+keys :years, :months, :weeks, :days, :hours or :minutes with
+format strings.  The time duration is formatted using only the
+time components that are needed and concatenating the results.
+If a time unit in absent, it falls back to the next smallest
+unit.
+
+The keys :require-years, :require-months, :require-days,
+:require-weeks, :require-hours, :require-minutes are also
+meaningful.  A non-nil value for these keys indicates that the
+corresponding time component should always be included, even if
+its value is 0.
+
+
+For example,
+
+  \(:days \"%dd\" :hours \"%d\" :require-hours t :minutes \":%02d\"
+    :require-minutes t)
+
+means durations longer than a day will be expressed in days,
+hours and minutes, and durations less than a day will always be
+expressed in hours and minutes (even for durations less than an
+hour).
+
+The value
+
+  \(:days \"%dd\" :minutes \"%dm\")
+
+means durations longer than a day will be expressed in days and
+minutes, and durations less than a day will be expressed entirely
+in minutes (even for durations longer than an hour)."
   :group 'org-time
-  :type 'string)
+  :type '(choice (string :tag "Format string")
+		 (set :tag "Plist"
+		      (group :inline t (const :tag "Years" :years)
+			     (string :tag "Format string"))
+		      (group :inline t
+			     (const :tag "Always show years" :require-years)
+			     (const t))
+		      (group :inline t (const :tag "Months" :months)
+			     (string :tag "Format string"))
+		      (group :inline t
+			     (const :tag "Always show months" :require-months)
+			     (const t))
+		      (group :inline t (const :tag "Weeks" :weeks)
+			     (string :tag "Format string"))
+		      (group :inline t
+			     (const :tag "Always show weeks" :require-weeks)
+			     (const t))
+		      (group :inline t (const :tag "Days" :days)
+			     (string :tag "Format string"))
+		      (group :inline t
+			     (const :tag "Always show days" :require-days)
+			     (const t))
+		      (group :inline t (const :tag "Hours" :hours)
+			     (string :tag "Format string"))
+		      (group :inline t
+			     (const :tag "Always show hours" :require-hours)
+			     (const t))
+		      (group :inline t (const :tag "Minutes" :minutes)
+			     (string :tag "Format string"))
+		      (group :inline t
+			     (const :tag "Always show minutes" :require-minutes)
+			     (const t)))))
 
 (defcustom org-time-clocksum-use-fractional nil
   "If non-nil, \\[org-clock-display] uses fractional times.
@@ -2727,10 +2795,34 @@ org-mode generates a time duration."
   :type 'boolean)
 
 (defcustom org-time-clocksum-fractional-format "%.2f"
-  "The format string used when creating CLOCKSUM lines, or when
-org-mode generates a time duration."
+  "The format string used when creating CLOCKSUM lines,
+or when Org mode generates a time duration, if
+`org-time-clocksum-use-fractional' is enabled.
+
+The value can be a single format string containing one
+%-sequence, which will be filled with the number of hours as
+a float.
+
+Alternatively, the value can be a plist associating any of the
+keys :years, :months, :weeks, :days, :hours or :minutes with
+a format string.  The time duration is formatted using the
+largest time unit which gives a non-zero integer part.  If all
+specified formats have zero integer part, the smallest time unit
+is used."
   :group 'org-time
-  :type 'string)
+  :type '(choice (string :tag "Format string")
+		 (set (group :inline t (const :tag "Years" :years)
+			    (string :tag "Format string"))
+		      (group :inline t (const :tag "Months" :months)
+			    (string :tag "Format string"))
+		      (group :inline t (const :tag "Weeks" :weeks)
+			     (string :tag "Format string"))
+		      (group :inline t (const :tag "Days" :days)
+			     (string :tag "Format string"))
+		      (group :inline t (const :tag "Hours" :hours)
+			     (string :tag "Format string"))
+		      (group :inline t (const :tag "Minutes" :minutes)
+			     (string :tag "Format string")))))
 
 (defcustom org-deadline-warning-days 14
   "No. of days before expiration during which a deadline becomes active.
@@ -3111,7 +3203,7 @@ and the clock summary:
                    (let ((clocksum (org-clock-sum-current-item))
                          (effort (org-duration-string-to-minutes
                                    (org-entry-get (point) \"Effort\"))))
-                     (org-minutes-to-hh:mm-string (- effort clocksum))))))"
+                     (org-minutes-to-clocksum-string (- effort clocksum))))))"
   :group 'org-properties
   :version "24.1"
   :type '(alist :key-type (string     :tag "Property")
@@ -5793,13 +5885,13 @@ needs to be inserted at a specific position in the font-lock sequence.")
 		 '(1 'org-special-keyword t)
 		 '(3 'org-property-value t))
 	   ;; Links
+	   (if (memq 'footnote lk) '(org-activate-footnote-links))
 	   (if (memq 'tag lk) '(org-activate-tags (1 'org-tag prepend)))
 	   (if (memq 'angle lk) '(org-activate-angle-links (0 'org-link t)))
 	   (if (memq 'plain lk) '(org-activate-plain-links))
 	   (if (memq 'bracket lk) '(org-activate-bracket-links (0 'org-link t)))
 	   (if (memq 'radio lk) '(org-activate-target-links (0 'org-link t)))
 	   (if (memq 'date lk) '(org-activate-dates (0 'org-date t)))
-	   (if (memq 'footnote lk) '(org-activate-footnote-links))
 	   '("^&?%%(.*\\|<%%([^>\n]*?>" (0 'org-sexp-date t))
 	   '(org-hide-wide-columns (0 nil append))
 	   ;; TODO keyword
@@ -12640,10 +12732,10 @@ EXTRA is additional text that will be inserted into the notes buffer."
 (defvar org-note-abort nil) ; dynamically scoped
 (defun org-store-log-note ()
   "Finish taking a log note, and insert it to where it belongs."
-  (let ((txt (buffer-string))
-	(note (cdr (assq org-log-note-purpose org-log-note-headings)))
-	lines ind bul)
+  (let ((txt (buffer-string)))
     (kill-buffer (current-buffer))
+    (let ((note (cdr (assq org-log-note-purpose org-log-note-headings)))
+	  lines ind bul)
     (while (string-match "\\`# .*\n[ \t\n]*" txt)
       (setq txt (replace-match "" t t txt)))
     (if (string-match "\\s-+\\'" txt)
@@ -12710,7 +12802,7 @@ EXTRA is additional text that will be inserted into the notes buffer."
 	      (insert (pop lines))))
 	  (message "Note stored")
 	  (org-back-to-heading t)
-	  (org-cycle-hide-drawers 'children)))))
+	  (org-cycle-hide-drawers 'children))))))
   (set-window-configuration org-log-note-window-configuration)
   (with-current-buffer (marker-buffer org-log-note-return-to)
     (goto-char org-log-note-return-to))
@@ -16667,11 +16759,88 @@ If there is already a time stamp at the cursor position, update it."
       (org-insert-time-stamp
        (encode-time 0 0 0 (nth 1 cal-date) (car cal-date) (nth 2 cal-date))))))
 
-(defun org-minutes-to-hh:mm-string (m)
-  "Compute H:MM from a number of minutes."
-  (let ((h (/ m 60)))
-    (setq m (- m (* 60 h)))
-    (format org-time-clocksum-format h m)))
+(defun org-minutes-to-clocksum-string (m)
+  "Format number of minutes as a clocksum string.
+The format is determined by `org-time-clocksum-format',
+`org-time-clocksum-use-fractional' and
+`org-time-clocksum-fractional-format'."
+  (let ((clocksum "") fmt n)
+    ;; fractional format
+    (if org-time-clocksum-use-fractional
+	(cond
+	 ;; single format string
+	 ((stringp org-time-clocksum-fractional-format)
+	  (format org-time-clocksum-fractional-format (/ m 60.0)))
+	 ;; choice of fractional formats for different time units
+	 ((and (setq fmt (plist-get org-time-clocksum-fractional-format :years))
+	       (> (/ (truncate m) (* 365 24 60)) 0))
+	  (format fmt (/ m (* 365 24 60.0))))
+	 ((and (setq fmt (plist-get org-time-clocksum-fractional-format :months))
+	       (> (/ (truncate m) (* 30 24 60)) 0))
+	  (format fmt (/ m (* 30 24 60.0))))
+	 ((and (setq fmt (plist-get org-time-clocksum-fractional-format :weeks))
+	       (> (/ (truncate m) (* 7 24 60)) 0))
+	  (format fmt (/ m (* 7 24 60.0))))
+	 ((and (setq fmt (plist-get org-time-clocksum-fractional-format :days))
+	       (> (/ (truncate m) (* 24 60)) 0))
+	  (format fmt (/ m (* 24 60.0))))
+	 ((and (setq fmt (plist-get org-time-clocksum-fractional-format :hours))
+	       (> (/ (truncate m) 60) 0))
+	  (format fmt (/ m 60.0)))
+	 ((setq fmt (plist-get org-time-clocksum-fractional-format :minutes))
+	  (format fmt m))
+	 ;; fall back to smallest time unit with a format
+	 ((setq fmt (plist-get org-time-clocksum-fractional-format :hours))
+	  (format fmt (/ m 60.0)))
+	 ((setq fmt (plist-get org-time-clocksum-fractional-format :days))
+	  (format fmt (/ m (* 24 60.0))))
+	 ((setq fmt (plist-get org-time-clocksum-fractional-format :weeks))
+	  (format fmt (/ m (* 7 24 60.0))))
+	 ((setq fmt (plist-get org-time-clocksum-fractional-format :months))
+	  (format fmt (/ m (* 30 24 60.0))))
+	 ((setq fmt (plist-get org-time-clocksum-fractional-format :years))
+	  (format fmt (/ m (* 365 24 60.0)))))
+      ;; standard (non-fractional) format, with single format string
+      (if (stringp org-time-clocksum-format)
+	  (format org-time-clocksum-format (setq n (/ m 60)) (- m (* 60 n)))
+	;; separate formats components
+	(and (setq fmt (plist-get org-time-clocksum-format :years))
+	     (or (> (setq n (/ (truncate m) (* 365 24 60))) 0)
+		 (plist-get org-time-clocksum-format :require-years))
+	     (setq clocksum (concat clocksum (format fmt n))
+		   m (- m (* n 365 24 60))))
+	(and (setq fmt (plist-get org-time-clocksum-format :months))
+	     (or (> (setq n (/ (truncate m) (* 30 24 60))) 0)
+		 (plist-get org-time-clocksum-format :require-months))
+	     (setq clocksum (concat clocksum (format fmt n))
+		   m (- m (* n 30 24 60))))
+	(and (setq fmt (plist-get org-time-clocksum-format :weeks))
+	     (or (> (setq n (/ (truncate m) (* 7 24 60))) 0)
+		 (plist-get org-time-clocksum-format :require-weeks))
+	     (setq clocksum (concat clocksum (format fmt n))
+		   m (- m (* n 7 24 60))))
+	(and (setq fmt (plist-get org-time-clocksum-format :days))
+	     (or (> (setq n (/ (truncate m) (* 24 60))) 0)
+		 (plist-get org-time-clocksum-format :require-days))
+	     (setq clocksum (concat clocksum (format fmt n))
+		   m (- m (* n 24 60))))
+	(and (setq fmt (plist-get org-time-clocksum-format :hours))
+	     (or (> (setq n (/ (truncate m) 60)) 0)
+		 (plist-get org-time-clocksum-format :require-hours))
+	     (setq clocksum (concat clocksum (format fmt n))
+		   m (- m (* n 60))))
+	(and (setq fmt (plist-get org-time-clocksum-format :minutes))
+	     (or (> m 0) (plist-get org-time-clocksum-format :require-minutes))
+	     (setq clocksum (concat clocksum (format fmt m))))
+	;; return formatted time duration
+	clocksum))))
+
+(defalias 'org-minutes-to-hh:mm-string 'org-minutes-to-clocksum-string)
+(make-obsolete 'org-minutes-to-hh:mm-string 'org-minutes-to-clocksum-string
+	       "Org mode version 8.0")
+
+(defun org-hours-to-clocksum-string (n)
+  (org-minutes-to-clocksum-string (* n 60)))
 
 (defun org-hh:mm-string-to-minutes (s)
   "Convert a string H:MM to a number of minutes.
@@ -21577,7 +21746,7 @@ beyond the end of the headline."
 		     (car org-special-ctrl-a/e)
 		   org-special-ctrl-a/e))
 	refpos)
-    (if (org-bound-and-true-p line-move-visual)
+    (if (org-bound-and-true-p visual-line-mode)
 	(beginning-of-visual-line 1)
       (beginning-of-line 1))
     (if (and arg (fboundp 'move-beginning-of-line))
@@ -21704,7 +21873,7 @@ depending on context."
 		(not (y-or-n-p "Kill hidden subtree along with headline? ")))
 	    (error "C-k aborted - would kill hidden subtree")))
     (call-interactively
-     (if (and (boundp 'visual-line-mode) visual-line-mode) 'kill-visual-line 'kill-line)))
+     (if (org-bound-and-true-p visual-line-mode) 'kill-visual-line 'kill-line)))
    ((looking-at (org-re ".*?\\S-\\([ \t]+\\(:[[:alnum:]_@#%:]+:\\)\\)[ \t]*$"))
     (kill-region (point) (match-beginning 1))
     (org-set-tags nil t))

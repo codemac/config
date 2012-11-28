@@ -36,6 +36,9 @@
 ;; "TEXINFO_FILENAME", "TEXINFO_HEADER", "TEXINFO_DIR_CATEGORY",
 ;; "TEXINFO_DIR_TITLE", "TEXINFO_DIR_DESC" "SUBTITLE" and "SUBAUTHOR".
 ;;
+;; It introduces 1 new headline property keywords:
+;; "TEXINFO_MENU_TITLE" for optional menu titles. 
+;;
 ;; To include inline code snippets (for example for generating @kbd{}
 ;; and @key{} commands), the following export-snippet keys are
 ;; accepted:
@@ -127,7 +130,8 @@
    (:subauthor "SUBAUTHOR" nil nil newline)
    (:texinfo-dircat "TEXINFO_DIR_CATEGORY" nil nil t)
    (:texinfo-dirtitle "TEXINFO_DIR_TITLE" nil nil t)
-   (:texinfo-dirdesc "TEXINFO_DIR_DESC" nil nil t)))
+   (:texinfo-dirdesc "TEXINFO_DIR_DESC" nil nil t)
+   (:texinfo-menu-title "TEXINFO_MENU_TITLE" nil nil newline)))
 
 
 
@@ -386,7 +390,7 @@ inserted in a specific location."
     (org-element-map (plist-get info :parse-tree) 'headline
 		     (lambda (copy)
 		       (when (org-element-property :copying copy)
-			 (push copy copying))) info 't)
+			 (push copy copying))) info t)
     ;; Retrieve the single entry
     (car copying)))
 
@@ -459,7 +463,7 @@ retrieved."
 	 ;; Is exported as-is (value)
 	 ((org-element-map contents '(verbatim code)
 			   (lambda (value)
-			     (org-element-property :value value))))
+			     (org-element-property :value value)) info))
 	 ;; Has content and recurse into the content
 	 ((org-element-contents contents)
 	  (org-e-texinfo--sanitize-headline-contents
@@ -541,16 +545,22 @@ of the tree for further formatting.
 TREE is the parse-tree containing the headlines.  LEVEL is the
 headline level to generate a list of.  INFO is a plist holding
 contextual information."
-  (let (seq)
+  (let (seq
+	(noexport (string= "noexport" 
+		   (and (plist-get info :with-tags)
+			    (org-export-get-tags tree info)))))
     (org-element-map
      tree 'headline
      (lambda (head)
        (when (org-element-property :level head)
 	 (if (and (eq level (org-element-property :level head))
-		  ;; Do not take note of footnotes or copying headlines
+		  ;; Do not take note of footnotes or copying
+		  ;; headlines.  Also ignore :noexport: headlines
+		  (not noexport)
 		  (not (org-element-property :copying head))
 		  (not (org-element-property :footnote-section-p head)))
-	     (push head seq)))))
+	     (push head seq))))
+     info)
     ;; Return the list of headlines (reverse to have in actual order)
     (reverse seq)))
 
@@ -564,13 +574,21 @@ Returns a list containing the following information from each
 headline: length, title, description.  This is used to format the
 menu using `org-e-texinfo--format-menu'."
   (loop for headline in items collect
-	(let* ((title (org-e-texinfo--sanitize-menu
+	(let* ((menu-title (org-e-texinfo--sanitize-menu
+			    (org-export-data
+			     (org-element-property :texinfo-menu-title headline)
+			     info)))
+	       (title (org-e-texinfo--sanitize-menu
 		       (org-e-texinfo--sanitize-headline
 			(org-element-property :title headline) info)))
 	       (descr (org-export-data
-		       (org-element-property :description headline) info))
-	       (len (length title))
-	       (output (list len title descr)))
+		       (org-element-property :description headline)
+		       info))
+	       (menu-entry (if (string= "" menu-title) title menu-title))
+	       (len (length menu-entry))
+	       (output (list len menu-entry descr)))
+	  (message "%S" menu-title)
+	  ;; (message "%s" headline)
 	  output)))
 
 (defun org-e-texinfo--menu-headlines (headline info)
@@ -891,13 +909,22 @@ holding contextual information."
 	 (class-sectionning (assoc class org-e-texinfo-classes))
 	 ;; Find the index type, if any
 	 (index (org-element-property :index headline))
+	 ;; Retrieve custom menu title (if any)
+	 (menu-title (org-e-texinfo--sanitize-menu
+		      (org-export-data
+		       (org-element-property :texinfo-menu-title headline)
+		       info)))
 	 ;; Retrieve headline text
 	 (text (org-e-texinfo--sanitize-headline
 		(org-element-property :title headline) info))
 	 ;; Create node info, to insert it before section formatting.
+	 ;; Use custom menu title if present
 	 (node (format "@node %s\n"
 		       (org-e-texinfo--sanitize-menu
-			(replace-regexp-in-string "%" "%%" text))))
+			(replace-regexp-in-string "%" "%%"
+						  (if (not (string= "" menu-title))
+						      menu-title
+						    text)))))
 	 ;; Menus must be generated with first child, otherwise they
 	 ;; will not nest properly
 	 (menu (let* ((first (org-export-first-sibling-p headline info))
@@ -912,7 +939,7 @@ holding contextual information."
 		      (lambda (ref)
 			(if (member title (org-element-property :title ref))
 			    (push ref heading)))
-		      info 't))
+		      info t))
 		 (setq listing (org-e-texinfo--build-menu
 				(car heading) level info))
 	 	 (if listing
@@ -1216,7 +1243,7 @@ are generated directly."
 	 (top (org-element-map
 	       parse 'headline
 	       (lambda (headline)
-		 (org-element-property :level headline)) info 't)))
+		 (org-element-property :level headline)) info t)))
     (cond
      ;; Generate the main menu
      ((eq level 'main)
@@ -1470,8 +1497,7 @@ TABLE is the table element to transcode.  INFO is a plist used as
 a communication channel."
   (let* ((rows (org-element-map table 'table-row 'identity info))
 	 (collected (loop for row in rows collect
-			  (org-element-map
-			   row 'table-cell 'identity info)))
+			  (org-element-map row 'table-cell 'identity info)))
 	 (number-cells (length (car collected)))
 	 cells counts)
     (loop for row in collected do
@@ -1575,8 +1601,8 @@ information."
   "Transcode a TIMESTAMP object from Org to Texinfo.
 CONTENTS is nil.  INFO is a plist holding contextual
 information."
-  (let ((value (org-translate-time
-		(org-element-property :raw-value timestamp))))
+  (let ((value (org-e-texinfo-plain-text
+		(org-export-translate-timestamp timestamp) info)))
     (case (org-element-property :type timestamp)
       ((active active-range)
        (format org-e-texinfo-active-timestamp-format value))
@@ -1749,7 +1775,7 @@ none."
 	      (errors ""))
 	  (when (save-excursion
 		  (re-search-forward "perhaps incorrect sectioning?" nil t))
-	    (setq errors (concat errors " [incorrect sectionnng]")))
+	    (setq errors (concat errors " [incorrect sectioning]")))
 	  (when (save-excursion
 		  (re-search-forward "missing close brace" nil t))
 	    (setq errors (concat errors " [syntax error]")))
