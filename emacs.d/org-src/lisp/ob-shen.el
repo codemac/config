@@ -66,8 +66,9 @@ This function is called by `org-babel-execute-src-block'"
 	 (result-params (cdr (assoc :result-params params)))
          (full-body (org-babel-expand-body:shen body params)))
     ((lambda (results)
-       (org-babel-result-cond result-params 
-	 results
+       (if (or (member 'scalar result-params)
+	       (member 'verbatim result-params))
+	   results
 	 (condition-case nil (org-babel-script-escape results)
 	   (error results))))
      (with-temp-buffer

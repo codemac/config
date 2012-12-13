@@ -36,9 +36,6 @@
 ;; "TEXINFO_FILENAME", "TEXINFO_HEADER", "TEXINFO_DIR_CATEGORY",
 ;; "TEXINFO_DIR_TITLE", "TEXINFO_DIR_DESC" "SUBTITLE" and "SUBAUTHOR".
 ;;
-;; It introduces 1 new headline property keywords:
-;; "TEXINFO_MENU_TITLE" for optional menu titles. 
-;;
 ;; To include inline code snippets (for example for generating @kbd{}
 ;; and @key{} commands), the following export-snippet keys are
 ;; accepted:
@@ -64,76 +61,93 @@
 
 (defvar orgtbl-exp-regexp)
 
-
 
 ;;; Define Back-End
 
-(org-export-define-backend e-texinfo
-  ((bold . org-e-texinfo-bold)
-   (center-block . org-e-texinfo-center-block)
-   (clock . org-e-texinfo-clock)
-   (code . org-e-texinfo-code)
-   (comment . org-e-texinfo-comment)
-   (comment-block . org-e-texinfo-comment-block)
-   (drawer . org-e-texinfo-drawer)
-   (dynamic-block . org-e-texinfo-dynamic-block)
-   (entity . org-e-texinfo-entity)
-   (example-block . org-e-texinfo-example-block)
-   (export-block . org-e-texinfo-export-block)
-   (export-snippet . org-e-texinfo-export-snippet)
-   (fixed-width . org-e-texinfo-fixed-width)
-   (footnote-definition . org-e-texinfo-footnote-definition)
-   (footnote-reference . org-e-texinfo-footnote-reference)
-   (headline . org-e-texinfo-headline)
-   (inline-src-block . org-e-texinfo-inline-src-block)
-   (inlinetask . org-e-texinfo-inlinetask)
-   (italic . org-e-texinfo-italic)
-   (item . org-e-texinfo-item)
-   (keyword . org-e-texinfo-keyword)
-   (line-break . org-e-texinfo-line-break)
-   (link . org-e-texinfo-link)
-   (paragraph . org-e-texinfo-paragraph)
-   (plain-list . org-e-texinfo-plain-list)
-   (plain-text . org-e-texinfo-plain-text)
-   (planning . org-e-texinfo-planning)
-   (property-drawer . org-e-texinfo-property-drawer)
-   (quote-block . org-e-texinfo-quote-block)
-   (quote-section . org-e-texinfo-quote-section)
-   (radio-target . org-e-texinfo-radio-target)
-   (section . org-e-texinfo-section)
-   (special-block . org-e-texinfo-special-block)
-   (src-block . org-e-texinfo-src-block)
-   (statistics-cookie . org-e-texinfo-statistics-cookie)
-   (subscript . org-e-texinfo-subscript)
-   (superscript . org-e-texinfo-superscript)
-   (table . org-e-texinfo-table)
-   (table-cell . org-e-texinfo-table-cell)
-   (table-row . org-e-texinfo-table-row)
-   (target . org-e-texinfo-target)
-   (template . org-e-texinfo-template)
-   (timestamp . org-e-texinfo-timestamp)
-   (verbatim . org-e-texinfo-verbatim)
-   (verse-block . org-e-texinfo-verse-block))
-  :export-block "TEXINFO"
-  :filters-alist
-  ((:filter-headline . org-e-texinfo-filter-section-blank-lines)
-   (:filter-section . org-e-texinfo-filter-section-blank-lines))
-  :menu-entry
-  (?i "Export to Texinfo"
-      ((?t "As TEXI file" org-e-texinfo-export-to-texinfo)
-       (?i "As INFO file" org-e-texinfo-export-to-info)))
-  :options-alist
-  ((:texinfo-filename "TEXINFO_FILENAME" nil org-e-texinfo-filename t)
-   (:texinfo-class "TEXINFO_CLASS" nil org-e-texinfo-default-class t)
-   (:texinfo-header "TEXINFO_HEADER" nil nil newline)
-   (:subtitle "SUBTITLE" nil nil newline)
-   (:subauthor "SUBAUTHOR" nil nil newline)
-   (:texinfo-dircat "TEXINFO_DIR_CATEGORY" nil nil t)
-   (:texinfo-dirtitle "TEXINFO_DIR_TITLE" nil nil t)
-   (:texinfo-dirdesc "TEXINFO_DIR_DESC" nil nil t)
-   (:texinfo-menu-title "TEXINFO_MENU_TITLE" nil nil newline)))
+(defvar org-e-texinfo-translate-alist
+  '((babel-call . org-e-texinfo-babel-call)
+    (bold . org-e-texinfo-bold)
+    (center-block . org-e-texinfo-center-block)
+    (clock . org-e-texinfo-clock)
+    (code . org-e-texinfo-code)
+    (comment . org-e-texinfo-comment)
+    (comment-block . org-e-texinfo-comment-block)
+    (drawer . org-e-texinfo-drawer)
+    (dynamic-block . org-e-texinfo-dynamic-block)
+    (entity . org-e-texinfo-entity)
+    (example-block . org-e-texinfo-example-block)
+    (export-block . org-e-texinfo-export-block)
+    (export-snippet . org-e-texinfo-export-snippet)
+    (fixed-width . org-e-texinfo-fixed-width)
+    (footnote-definition . org-e-texinfo-footnote-definition)
+    (footnote-reference . org-e-texinfo-footnote-reference)
+    (headline . org-e-texinfo-headline)
+    (horizontal-rule . org-e-texinfo-horizontal-rule)
+    (inline-babel-call . org-e-texinfo-inline-babel-call)
+    (inline-src-block . org-e-texinfo-inline-src-block)
+    (inlinetask . org-e-texinfo-inlinetask)
+    (italic . org-e-texinfo-italic)
+    (item . org-e-texinfo-item)
+    (keyword . org-e-texinfo-keyword)
+    (latex-environment . org-e-texinfo-latex-environment)
+    (latex-fragment . org-e-texinfo-latex-fragment)
+    (line-break . org-e-texinfo-line-break)
+    (link . org-e-texinfo-link)
+    (macro . org-e-texinfo-macro)
+    (paragraph . org-e-texinfo-paragraph)
+    (plain-list . org-e-texinfo-plain-list)
+    (plain-text . org-e-texinfo-plain-text)
+    (planning . org-e-texinfo-planning)
+    (property-drawer . org-e-texinfo-property-drawer)
+    (quote-block . org-e-texinfo-quote-block)
+    (quote-section . org-e-texinfo-quote-section)
+    (radio-target . org-e-texinfo-radio-target)
+    (section . org-e-texinfo-section)
+    (special-block . org-e-texinfo-special-block)
+    (src-block . org-e-texinfo-src-block)
+    (statistics-cookie . org-e-texinfo-statistics-cookie)
+    (strike-through . org-e-texinfo-strike-through)
+    (subscript . org-e-texinfo-subscript)
+    (superscript . org-e-texinfo-superscript)
+    (table . org-e-texinfo-table)
+    (table-cell . org-e-texinfo-table-cell)
+    (table-row . org-e-texinfo-table-row)
+    (target . org-e-texinfo-target)
+    (template . org-e-texinfo-template)
+    (timestamp . org-e-texinfo-timestamp)
+    (underline . org-e-texinfo-underline)
+    (verbatim . org-e-texinfo-verbatim)
+    (verse-block . org-e-texinfo-verse-block))
+  "Alist between element or object types and translators.")
 
+(defconst org-e-texinfo-options-alist
+  '((:texinfo-filename "TEXINFO_FILENAME" nil org-e-texinfo-filename t)
+    (:texinfo-class "TEXINFO_CLASS" nil org-e-texinfo-default-class t)
+    (:texinfo-header "TEXINFO_HEADER" nil nil newline)
+    (:subtitle "SUBTITLE" nil nil newline)
+    (:subauthor "SUBAUTHOR" nil nil newline)
+    (:texinfo-dircat "TEXINFO_DIR_CATEGORY" nil nil t)
+    (:texinfo-dirtitle "TEXINFO_DIR_TITLE" nil nil t)
+    (:texinfo-dirdesc "TEXINFO_DIR_DESC" nil nil t))
+  "Alist between Texinfo export properties and ways to set them.
+See `org-export-options-alist' for more information on the
+structure of the values.
 
+SUBAUTHOR and SUBTITLE are for the inclusion of additional author
+and title information beyond the initial variable.")
+
+(defconst org-e-texinfo-filters-alist
+  '((:filter-headline . org-e-texinfo-filter-section-blank-lines)
+    (:filter-section . org-e-texinfo-filter-section-blank-lines))
+  "Alist between filters keywords and back-end specific filters.
+  See `org-export-filters-alist' for more information")
+
+
+;;; Internal Variables
+
+;; Add TEXINFO to the list of available of available export blocks.
+(add-to-list 'org-element-block-name-alist
+	     '("TEXINFO" . org-element-export-block-parser))
 
 ;;; User Configurable Variables
 
@@ -358,6 +372,36 @@ in order to mimic default behaviour:
 ;;
 ;; Src Blocks are example blocks, except for LISP
 
+;;; Plain text
+
+(defcustom org-e-texinfo-quotes
+  '(("quotes"
+     ("\\(\\s-\\|[[(]\\|^\\)\"" . "``")
+     ("\\(\\S-\\)\"" . "''")
+     ("\\(\\s-\\|(\\|^\\)'" . "`")))
+  "Alist for quotes to use when converting english double-quotes.
+
+The CAR of each item in this alist is the language code.
+The CDR of each item in this alist is a list of three CONS:
+- the first CONS defines the opening quote;
+- the second CONS defines the closing quote;
+- the last CONS defines single quotes.
+
+For each item in a CONS, the first string is a regexp
+for allowed characters before/after the quote, the second
+string defines the replacement string for this quote."
+  :group 'org-export-e-texinfo
+  :type '(list
+	  (cons :tag "Opening quote"
+		(string :tag "Regexp for char before")
+		(string :tag "Replacement quote     "))
+	  (cons :tag "Closing quote"
+		(string :tag "Regexp for char after ")
+		(string :tag "Replacement quote     "))
+	  (cons :tag "Single quote"
+		(string :tag "Regexp for char before")
+		(string :tag "Replacement quote     "))))
+
 ;;; Compilation
 
 (defcustom org-e-texinfo-info-process
@@ -390,7 +434,7 @@ inserted in a specific location."
     (org-element-map (plist-get info :parse-tree) 'headline
 		     (lambda (copy)
 		       (when (org-element-property :copying copy)
-			 (push copy copying))) info t)
+			 (push copy copying))) info 't)
     ;; Retrieve the single entry
     (car copying)))
 
@@ -413,6 +457,18 @@ nil."
 			 (concat "=" (second pair)))))
 	     options
 	     ","))
+
+(defun org-e-texinfo--quotation-marks (text info)
+  "Export quotation marks using ` and ' as the markers.
+TEXT is a string containing quotation marks to be replaced.  INFO
+is a plist used as a communication channel."
+  (mapc (lambda(l)
+	  (let ((start 0))
+	    (while (setq start (string-match (car l) text start))
+	      (let ((new-quote (concat (match-string 1 text) (cdr l))))
+		(setq text (replace-match new-quote  t t text))))))
+	(cdr org-e-texinfo-quotes))
+  text)
 
 (defun org-e-texinfo--text-markup (text markup)
   "Format TEXT depending on MARKUP text markup.
@@ -463,7 +519,7 @@ retrieved."
 	 ;; Is exported as-is (value)
 	 ((org-element-map contents '(verbatim code)
 			   (lambda (value)
-			     (org-element-property :value value)) info))
+			     (org-element-property :value value))))
 	 ;; Has content and recurse into the content
 	 ((org-element-contents contents)
 	  (org-e-texinfo--sanitize-headline-contents
@@ -545,22 +601,16 @@ of the tree for further formatting.
 TREE is the parse-tree containing the headlines.  LEVEL is the
 headline level to generate a list of.  INFO is a plist holding
 contextual information."
-  (let (seq
-	(noexport (string= "noexport" 
-		   (and (plist-get info :with-tags)
-			    (org-export-get-tags tree info)))))
+  (let (seq)
     (org-element-map
      tree 'headline
      (lambda (head)
        (when (org-element-property :level head)
 	 (if (and (eq level (org-element-property :level head))
-		  ;; Do not take note of footnotes or copying
-		  ;; headlines.  Also ignore :noexport: headlines
-		  (not noexport)
+		  ;; Do not take note of footnotes or copying headlines
 		  (not (org-element-property :copying head))
 		  (not (org-element-property :footnote-section-p head)))
-	     (push head seq))))
-     info)
+	     (push head seq)))))
     ;; Return the list of headlines (reverse to have in actual order)
     (reverse seq)))
 
@@ -574,21 +624,13 @@ Returns a list containing the following information from each
 headline: length, title, description.  This is used to format the
 menu using `org-e-texinfo--format-menu'."
   (loop for headline in items collect
-	(let* ((menu-title (org-e-texinfo--sanitize-menu
-			    (org-export-data
-			     (org-element-property :texinfo-menu-title headline)
-			     info)))
-	       (title (org-e-texinfo--sanitize-menu
+	(let* ((title (org-e-texinfo--sanitize-menu
 		       (org-e-texinfo--sanitize-headline
 			(org-element-property :title headline) info)))
 	       (descr (org-export-data
-		       (org-element-property :description headline)
-		       info))
-	       (menu-entry (if (string= "" menu-title) title menu-title))
-	       (len (length menu-entry))
-	       (output (list len menu-entry descr)))
-	  (message "%S" menu-title)
-	  ;; (message "%s" headline)
+		       (org-element-property :description headline) info))
+	       (len (length title))
+	       (output (list len title descr)))
 	  output)))
 
 (defun org-e-texinfo--menu-headlines (headline info)
@@ -761,6 +803,10 @@ holding export options."
 
 ;;; Transcode Functions
 
+;;; Babel Call
+;;
+;; Babel Calls are ignored.
+
 ;;; Bold
 
 (defun org-e-texinfo-bold (bold contents info)
@@ -770,12 +816,8 @@ contextual information."
   (org-e-texinfo--text-markup contents 'bold))
 
 ;;; Center Block
-
-(defun org-e-texinfo-center-block (center-block contents info)
-  "Transcode a CENTER-BLOCK element from Org to Texinfo.
-CONTENTS holds the contents of the block.  INFO is a plist used
-as a communication channel."
-  contents)
+;;
+;; Center blocks are ignored
 
 ;;; Clock
 
@@ -787,10 +829,8 @@ information."
    "@noindent"
    (format "@strong{%s} " org-clock-string)
    (format org-e-texinfo-inactive-timestamp-format
-	   (concat (org-translate-time
-		    (org-element-property :raw-value
-					  (org-element-property :value clock)))
-		   (let ((time (org-element-property :duration clock)))
+	   (concat (org-translate-time (org-element-property :value clock))
+		   (let ((time (org-element-property :time clock)))
 		     (and time (format " (%s)" time)))))
    "@*"))
 
@@ -885,6 +925,10 @@ CONTENTS is nil.  INFO is a plist holding contextual information."
 	   (org-e-texinfo--sanitize-content
 	    (org-element-property :value fixed-width)))))
 
+;;; Footnote Definition
+;;
+;; Footnote Definitions are ignored.
+
 ;;; Footnote Reference
 ;;
 
@@ -909,22 +953,13 @@ holding contextual information."
 	 (class-sectionning (assoc class org-e-texinfo-classes))
 	 ;; Find the index type, if any
 	 (index (org-element-property :index headline))
-	 ;; Retrieve custom menu title (if any)
-	 (menu-title (org-e-texinfo--sanitize-menu
-		      (org-export-data
-		       (org-element-property :texinfo-menu-title headline)
-		       info)))
 	 ;; Retrieve headline text
 	 (text (org-e-texinfo--sanitize-headline
 		(org-element-property :title headline) info))
 	 ;; Create node info, to insert it before section formatting.
-	 ;; Use custom menu title if present
 	 (node (format "@node %s\n"
 		       (org-e-texinfo--sanitize-menu
-			(replace-regexp-in-string "%" "%%"
-						  (if (not (string= "" menu-title))
-						      menu-title
-						    text)))))
+			(replace-regexp-in-string "%" "%%" text))))
 	 ;; Menus must be generated with first child, otherwise they
 	 ;; will not nest properly
 	 (menu (let* ((first (org-export-first-sibling-p headline info))
@@ -939,7 +974,7 @@ holding contextual information."
 		      (lambda (ref)
 			(if (member title (org-element-property :title ref))
 			    (push ref heading)))
-		      info t))
+		      info 't))
 		 (setq listing (org-e-texinfo--build-menu
 				(car heading) level info))
 	 	 (if listing
@@ -1071,6 +1106,14 @@ holding contextual information."
 	(format (replace-regexp-in-string "%]" "%%]" section-fmt) full-text
 		(concat pre-blanks contents))))))))
 
+;;; Horizontal Rule
+;;
+;; Horizontal rules are ignored
+
+;;; Inline Babel Call
+;;
+;; Inline Babel Calls are ignored.
+
 ;;; Inline Src Block
 
 (defun org-e-texinfo-inline-src-block (inline-src-block contents info)
@@ -1149,6 +1192,14 @@ CONTENTS is nil.  INFO is a plist holding contextual information."
      ((string= key "TINDEX") (format "@tindex %s" value))
      ((string= key "VINDEX") (format "@vindex %s" value)))))
 
+;;; Latex Environment
+;;
+;; Latex environments are ignored
+
+;;; Latex Fragment
+;;
+;; Latex fragments are ignored.
+
 ;;; Line Break
 
 (defun org-e-texinfo-line-break (line-break contents info)
@@ -1172,6 +1223,8 @@ INFO is a plist holding contextual information.  See
 		((member type '("http" "https" "ftp"))
 		 (concat type ":" raw-path))
 		((string= type "file")
+		 (when (string-match "\\(.+\\)::.+" raw-path)
+		   (setq raw-path (match-string 1 raw-path)))
 		 (if (file-name-absolute-p raw-path)
 		     (concat "file://" (expand-file-name raw-path))
 		   (concat "file://" raw-path)))
@@ -1226,6 +1279,13 @@ INFO is a plist holding contextual information.  See
      ;; No path, only description.  Try to do something useful.
      (t (format org-e-texinfo-link-with-unknown-path-format desc)))))
 
+;;; Macro
+
+(defun org-e-texinfo-macro (macro contents info)
+  "Transcode a MACRO element from Org to Texinfo.
+CONTENTS is nil.  INFO is a plist holding contextual information."
+  ;; Use available tools.
+  (org-export-expand-macro macro info))
 
 ;;; Menu
 
@@ -1243,7 +1303,7 @@ are generated directly."
 	 (top (org-element-map
 	       parse 'headline
 	       (lambda (headline)
-		 (org-element-property :level headline)) info t)))
+		 (org-element-property :level headline)) info 't)))
     (cond
      ;; Generate the main menu
      ((eq level 'main)
@@ -1297,30 +1357,25 @@ contextual information."
   "Transcode a TEXT string from Org to Texinfo.
 TEXT is the string to transcode.  INFO is a plist holding
 contextual information."
-  ;; First protect @, { and }.
-  (let ((output (org-e-texinfo--sanitize-content text)))
-    ;; Activate smart quotes.  Be sure to provide original TEXT string
-    ;; since OUTPUT may have been modified.
-    (when (plist-get info :with-smart-quotes)
-      (setq output
-	    (org-export-activate-smart-quotes output :texinfo info text)))
-    ;; LaTeX into @LaTeX{} and TeX into @TeX{}
-    (let ((case-fold-search nil)
-	  (start 0))
-      (while (string-match "\\(\\(?:La\\)?TeX\\)" output start)
-	(setq output (replace-match
-		      (format "@%s{}" (match-string 1 output)) nil t output)
-	      start (match-end 0))))
-    ;; Convert special strings.
-    (when (plist-get info :with-special-strings)
-      (while (string-match (regexp-quote "...") output)
-	(setq output (replace-match "@dots{}" nil t output))))
-    ;; Handle break preservation if required.
-    (when (plist-get info :preserve-breaks)
-      (setq output (replace-regexp-in-string
-		    "\\(\\\\\\\\\\)?[ \t]*\n" " @*\n" output)))
-    ;; Return value.
-    output))
+  ;; LaTeX into @LaTeX{} and TeX into @TeX{}
+  (let ((case-fold-search nil)
+	(start 0))
+    (while (string-match "\\(\\(?:La\\)?TeX\\)" text start)
+      (setq text (replace-match
+		  (format "@%s{}" (match-string 1 text)) nil t text)
+	    start (match-end 0))))
+  ;; Handle quotation marks
+  (setq text (org-e-texinfo--quotation-marks text info))
+  ;; Convert special strings.
+  (when (plist-get info :with-special-strings)
+    (while (string-match (regexp-quote "...") text)
+      (setq text (replace-match "@dots{}" nil t text))))
+  ;; Handle break preservation if required.
+  (when (plist-get info :preserve-breaks)
+    (setq text (replace-regexp-in-string "\\(\\\\\\\\\\)?[ \t]*\n" " @*\n"
+					 text)))
+  ;; Return value with @ { and } protected.
+  (org-e-texinfo--sanitize-content text))
 
 ;;; Planning
 
@@ -1337,24 +1392,21 @@ information."
 	   (let ((closed (org-element-property :closed planning)))
 	     (when closed
 	       (concat
-		(format "@strong{%s} " org-closed-string)
+		(format "@strong%s} " org-closed-string)
 		(format org-e-texinfo-inactive-timestamp-format
-			(org-translate-time
-			 (org-element-property :raw-value closed))))))
+			(org-translate-time closed)))))
 	   (let ((deadline (org-element-property :deadline planning)))
 	     (when deadline
 	       (concat
 		(format "@strong{%s} " org-deadline-string)
 		(format org-e-texinfo-active-timestamp-format
-			(org-translate-time
-			 (org-element-property :raw-value deadline))))))
+			(org-translate-time deadline)))))
 	   (let ((scheduled (org-element-property :scheduled planning)))
 	     (when scheduled
 	       (concat
 		(format "@strong{%s} " org-scheduled-string)
 		(format org-e-texinfo-active-timestamp-format
-			(org-translate-time
-			 (org-element-property :raw-value scheduled))))))))
+			(org-translate-time scheduled)))))))
     " ")
    "@*"))
 
@@ -1409,12 +1461,8 @@ holding contextual information."
   contents)
 
 ;;; Special Block
-
-(defun org-e-texinfo-special-block (special-block contents info)
-  "Transcode a SPECIAL-BLOCK element from Org to Texinfo.
-CONTENTS holds the contents of the block.  INFO is a plist used
-as a communication channel."
-  contents)
+;;
+;; Are ignored at the moment
 
 ;;; Src Block
 
@@ -1440,6 +1488,10 @@ contextual information."
   "Transcode a STATISTICS-COOKIE object from Org to Texinfo.
 CONTENTS is nil.  INFO is a plist holding contextual information."
   (org-element-property :value statistics-cookie))
+
+;;; Strike-Through
+;;
+;; Strikethrough is ignored
 
 ;;; Subscript
 
@@ -1497,7 +1549,8 @@ TABLE is the table element to transcode.  INFO is a plist used as
 a communication channel."
   (let* ((rows (org-element-map table 'table-row 'identity info))
 	 (collected (loop for row in rows collect
-			  (org-element-map row 'table-cell 'identity info)))
+			  (org-element-map
+			   row 'table-cell 'identity info)))
 	 (number-cells (length (car collected)))
 	 cells counts)
     (loop for row in collected do
@@ -1506,7 +1559,7 @@ a communication channel."
 				 (end (org-element-property :contents-end ref))
 				 (length (- end start)))
 			    length)) row) cells))
-    (setq cells (org-remove-if 'null cells))
+    (setq cells (remove-if #'null cells))
     (push (loop for count from 0 to (- number-cells 1) collect
 		(loop for item in cells collect
 		      (nth count item))) counts)
@@ -1572,19 +1625,7 @@ a communication channel."
   ;; Rules are ignored since table separators are deduced from
   ;; borders of the current row.
   (when (eq (org-element-property :type table-row) 'standard)
-   (let ((rowgroup-tag
-	  (cond
-	   ;; Case 1: Belongs to second or subsequent rowgroup.
-	   ((not (= 1 (org-export-table-row-group table-row info)))
-	    "@item ")
-	   ;; Case 2: Row is from first rowgroup.  Table has >=1 rowgroups.
-	   ((org-export-table-has-header-p
-	     (org-export-get-parent-table table-row) info)
-	    "@headitem ")
-	   ;; Case 3: Row is from first and only row group.
-	   (t "@item "))))
-     (when (eq (org-element-property :type table-row) 'standard)
-       (concat rowgroup-tag contents "\n")))))
+    (concat "@item " contents "\n")))
 
 ;;; Target
 
@@ -1601,14 +1642,17 @@ information."
   "Transcode a TIMESTAMP object from Org to Texinfo.
 CONTENTS is nil.  INFO is a plist holding contextual
 information."
-  (let ((value (org-e-texinfo-plain-text
-		(org-export-translate-timestamp timestamp) info)))
-    (case (org-element-property :type timestamp)
-      ((active active-range)
-       (format org-e-texinfo-active-timestamp-format value))
-      ((inactive inactive-range)
-       (format org-e-texinfo-inactive-timestamp-format value))
-      (t (format org-e-texinfo-diary-timestamp-format value)))))
+  (let ((value (org-translate-time (org-element-property :value timestamp)))
+	(type (org-element-property :type timestamp)))
+    (cond ((memq type '(active active-range))
+	   (format org-e-texinfo-active-timestamp-format value))
+	  ((memq type '(inactive inactive-range))
+	   (format org-e-texinfo-inactive-timestamp-format value))
+	  (t (format org-e-texinfo-diary-timestamp-format value)))))
+
+;;; Underline
+;;
+;; Underline is ignored
 
 ;;; Verbatim
 
@@ -1706,58 +1750,58 @@ Return INFO file's name."
    (org-e-texinfo-export-to-texinfo
     subtreep visible-only body-only ext-plist pub-dir)))
 
-(defun org-e-texinfo-compile (file)
+(defun org-e-texinfo-compile (texifile)
   "Compile a texinfo file.
 
-FILE is the name of the file being compiled.  Processing is
+TEXIFILE is the name of the file being compiled.  Processing is
 done through the command specified in `org-e-texinfo-info-process'.
 
 Return INFO file name or an error if it couldn't be produced."
-  (let* ((base-name (file-name-sans-extension (file-name-nondirectory file)))
-	 (full-name (file-truename file))
-	 (out-dir (file-name-directory file))
-	 ;; Make sure `default-directory' is set to FILE directory,
-	 ;; not to whatever value the current buffer may have.
-	 (default-directory (file-name-directory full-name))
+  (let* ((wconfig (current-window-configuration))
+	 (texifile (file-truename texifile))
+	 (base (file-name-sans-extension texifile))
 	 errors)
-    (message (format "Processing Texinfo file %s ..." file))
-    (save-window-excursion
-      (cond
-       ;; A function is provided: Apply it.
-       ((functionp org-e-texinfo-info-process)
-	(funcall org-e-texinfo-info-process (shell-quote-argument file)))
-       ;; A list is provided: Replace %b, %f and %o with appropriate
-       ;; values in each command before applying it.  Output is
-       ;; redirected to "*Org INFO Texinfo Output*" buffer.
-       ((consp org-e-texinfo-info-process)
-	(let ((outbuf (get-buffer-create "*Org INFO Texinfo Output*")))
-	  (mapc
-	   (lambda (command)
-	     (shell-command
-	      (replace-regexp-in-string
-	       "%b" (shell-quote-argument base-name)
-	       (replace-regexp-in-string
-		"%f" (shell-quote-argument full-name)
-		(replace-regexp-in-string
-		 "%o" (shell-quote-argument out-dir) command t t) t t) t t)
-	      outbuf))
-	   org-e-texinfo-info-process)
-	  ;; Collect standard errors from output buffer.
-	  (setq errors (org-e-texinfo-collect-errors outbuf))))
-       (t (error "No valid command to process to Info")))
-      (let ((infofile (concat out-dir base-name ".info")))
-	;; Check for process failure.  Provide collected errors if
-	;; possible.
-	(if (not (file-exists-p infofile))
-	    (error (concat (format "INFO file %s wasn't produced" infofile)
-			   (when errors (concat ": " errors))))
-	  ;; Else remove log files, when specified, and signal end of
-	  ;; process to user, along with any error encountered.
-	  (message (concat "Process completed"
-			   (if (not errors) "."
-			     (concat " with errors: " errors)))))
-	;; Return output file name.
-	infofile))))
+    (message (format "Processing Texinfo file %s ..." texifile))
+    (unwind-protect
+	(progn
+	  (cond
+	   ;; A function is provided: Apply it.
+	   ((functionp org-e-texinfo-info-process)
+	    (funcall org-e-texinfo-info-process (shell-quote-argument texifile)))
+	   ;; A list is provided: Replace %b, %f and %o with appropriate
+	   ;; values in each command before applying it.  Output is
+	   ;; redirected to "*Org INFO Texinfo Output*" buffer.
+	   ((consp org-e-texinfo-info-process)
+	    (let* ((out-dir (or (file-name-directory texifile) "./"))
+		   (outbuf (get-buffer-create "*Org Info Texinfo Output*")))
+	      (mapc
+	       (lambda (command)
+		 (shell-command
+		  (replace-regexp-in-string
+		   "%b" (shell-quote-argument base)
+		   (replace-regexp-in-string
+		    "%f" (shell-quote-argument texifile)
+		    (replace-regexp-in-string
+		     "%o" (shell-quote-argument out-dir) command t t) t t) t t)
+		  outbuf))
+	       org-e-texinfo-info-process)
+	      ;; Collect standard errors from output buffer.
+	      (setq errors (org-e-texinfo-collect-errors outbuf))))
+	   (t (error "No valid command to process to Info")))
+	  (let ((infofile (concat base ".info")))
+	    ;; Check for process failure.  Provide collected errors if
+	    ;; possible.
+	    (if (not (file-exists-p infofile))
+		(error (concat (format "INFO file %s wasn't produced" infofile)
+			       (when errors (concat ": " errors))))
+	      ;; Else remove log files, when specified, and signal end of
+	      ;; process to user, along with any error encountered.
+	      (message (concat "Process completed"
+			       (if (not errors) "."
+				 (concat " with errors: " errors)))))
+	    ;; Return output file name.
+	    infofile))
+      (set-window-configuration wconfig))))
 
 (defun org-e-texinfo-collect-errors (buffer)
   "Collect some kind of errors from \"makeinfo\" command output.
@@ -1775,7 +1819,7 @@ none."
 	      (errors ""))
 	  (when (save-excursion
 		  (re-search-forward "perhaps incorrect sectioning?" nil t))
-	    (setq errors (concat errors " [incorrect sectioning]")))
+	    (setq errors (concat errors " [incorrect sectionnng]")))
 	  (when (save-excursion
 		  (re-search-forward "missing close brace" nil t))
 	    (setq errors (concat errors " [syntax error]")))

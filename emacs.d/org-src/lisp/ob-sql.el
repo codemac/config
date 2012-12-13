@@ -47,8 +47,7 @@
 (eval-when-compile (require 'cl))
 
 (declare-function org-table-import "org-table" (file arg))
-(declare-function orgtbl-to-csv "org-table" (table params))
-(declare-function org-table-to-lisp "org-table" (&optional txt))
+(declare-function orgtbl-to-csv "org-table" (TABLE PARAMS))
 
 (defvar org-babel-default-header-args:sql '())
 
@@ -103,8 +102,12 @@ This function is called by `org-babel-execute-src-block'."
        (org-babel-expand-body:sql body params)))
     (message command)
     (shell-command command)
-    (org-babel-result-cond result-params
-      (with-temp-buffer
+    (if (or (member "scalar" result-params)
+	    (member "verbatim" result-params)
+	    (member "html" result-params)
+	    (member "code" result-params)
+	    (equal (point-min) (point-max)))
+	(with-temp-buffer
 	  (progn (insert-file-contents-literally out-file) (buffer-string)))
       (with-temp-buffer
 	;; need to figure out what the delimiter is for the header row

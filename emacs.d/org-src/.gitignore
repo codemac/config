@@ -30,7 +30,7 @@
 orgcard_letter.tex
 orgcard.txt
 org
-org-loaddefs.el
+org-install.el
 org-version.el
 doc/org-version.inc
 org-*.tar*

@@ -79,8 +79,9 @@
     (insert (org-babel-expand-body:clojure body params))
     ((lambda (result)
        (let ((result-params (cdr (assoc :result-params params))))
-	 (org-babel-result-cond result-params
-	   result
+	 (if (or (member "scalar" result-params)
+		 (member "verbatim" result-params))
+	     result
 	   (condition-case nil (org-babel-script-escape result)
 	     (error result)))))
      (slime-eval

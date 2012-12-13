@@ -3,7 +3,7 @@
       [(0 8)
        nil "Interface to ack, a source code search tool" tar])
  (adaptive-wrap .
-		[(0 1)
+		[(0 2)
 		 nil "Smart line-wrapping with wrap-prefix" single])
  (all .
       [(1 0)
@@ -14,6 +14,9 @@
  (auctex .
 	 [(11 86)
 	  nil "Integrated environment for *TeX*" tar])
+ (cl-lib .
+	 [(0 2)
+	  nil "Properly prefixed CL functions and macros" single])
  (coffee-mode .
 	      [(0 4 1)
 	       nil "Major mode for CoffeeScript files" tar])
@@ -57,7 +60,7 @@
 	 [(2 4)
 	  nil "Incremental occur" single])
  (jgraph-mode .
-	      [(0 0)
+	      [(1 0)
 	       nil "Major mode for Jgraph files" single])
  (js2-mode .
 	   [(20090814)
@@ -87,8 +90,8 @@
 	 [(1 1)
 	  nil "Show line numbers in the margin" single])
  (notes-mode .
-	     [(0 0)
-	      nil "Indexing system for on-line note-taking" single])
+	     [(1 30)
+	      nil "Organizing on-line note-taking" tar])
  (num3-mode .
 	    [(1 1)
 	     nil "highlight groups of digits in long numbers" single])
@@ -96,7 +99,7 @@
 	 [(0 8)
 	  nil "OAuth 2.0 Authorization Protocol" single])
  (org .
-      [(20121105)
+      [(20121210)
        nil "Outline-based notes management and organizer" tar])
  (quarter-plane .
 		[(0 1)
@@ -105,7 +108,7 @@
 	[(0 1)
 	 nil "Queue data structure" single])
  (rainbow-mode .
-	       [(0 4)
+	       [(0 5)
 		nil "Colorize color names in buffers" single])
  (register-list .
 		[(0 1)
@@ -120,7 +123,7 @@
 		 [(4 0)
 		  nil "Insert operators with surrounding spaces smartly" single])
  (sml-mode .
-	   [(6 1)
+	   [(6 2)
 	    nil "Major mode for editing (Standard) ML" single])
  (svg-clock .
 	    [(0 4)
@@ -138,7 +141,7 @@
 	  (0 3)))
 	"Trie data structure" single])
  (undo-tree .
-	    [(0 5 5)
+	    [(0 6 3)
 	     nil "Treat undo history as a tree" single])
  (uni-confusables .
 		  [(0 1)

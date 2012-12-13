@@ -41,8 +41,10 @@
 (declare-function org-at-table.el-p "org" ())
 (declare-function org-get-indentation "org" (&optional line))
 (declare-function org-switch-to-buffer-other-window "org" (&rest args))
+(declare-function org-strip-protective-commas "org" (beg end))
 (declare-function org-pop-to-buffer-same-window
 		  "org-compat" (&optional buffer-or-name norecord label))
+(declare-function org-strip-protective-commas "org" (beg end))
 (declare-function org-base-buffer "org" (buffer))
 
 (defcustom org-edit-src-region-extra nil
@@ -309,8 +311,13 @@ buffer."
 	     (error "Language mode `%s' fails with: %S" lang-f (nth 1 e)))))
 	(dolist (pair transmitted-variables)
 	  (org-set-local (car pair) (cadr pair)))
-	;; Remove protecting commas from visible part of buffer.
-	(org-unescape-code-in-region (point-min) (point-max))
+	(if (derived-mode-p 'org-mode)
+	    (progn
+	      (goto-char (point-min))
+	      (while (re-search-forward "^," nil t)
+		(if (eq (org-current-line) line) (setq total-nindent (1+ total-nindent)))
+		(replace-match "")))
+	  (org-strip-protective-commas (point-min) (point-max)))
 	(when markline
 	  (org-goto-line (1+ (- markline begline)))
 	  (org-move-to-column
@@ -583,38 +590,20 @@ the language, a switch telling if the content should be in a single line."
     (goto-char pos)
     (org-get-indentation)))
 
-(defun org-escape-code-in-region (beg end)
-  "Escape lines between BEG and END.
-Escaping happens when a line starts with \"*\", \"#+\", \",*\" or
-\",#+\" by appending a comma to it."
+(defun org-add-protective-commas (beg end &optional line)
+  "Add protective commas in region.
+Return the delta in size of the region."
   (interactive "r")
-  (save-excursion
-    (goto-char beg)
-    (while (re-search-forward "^[ \t]*,?\\(\\*\\|#\\+\\)" end t)
-      (replace-match ",\\1" nil nil nil 1))))
-
-(defun org-escape-code-in-string (s)
-  "Escape lines in string S.
-Escaping happens when a line starts with \"*\", \"#+\", \",*\" or
-\",#+\" by appending a comma to it."
-  (replace-regexp-in-string "^[ \t]*,?\\(\\*\\|#\\+\\)" ",\\1" s nil nil 1))
-
-(defun org-unescape-code-in-region (beg end)
-  "Un-escape lines between BEG and END.
-Un-escaping happens by removing the first comma on lines starting
-with \",*\", \",#+\", \",,*\" and \",,#+\"."
-  (interactive "r")
-  (save-excursion
-    (goto-char beg)
-    (while (re-search-forward "^[ \t]*,?\\(,\\)\\(?:\\*\\|#\\+\\)" end t)
-      (replace-match "" nil nil nil 1))))
-
-(defun org-unescape-code-in-string (s)
-  "Un-escape lines in string S.
-Un-escaping happens by removing the first comma on lines starting
-with \",*\", \",#+\", \",,*\" and \",,#+\"."
-  (replace-regexp-in-string
-   "^[ \t]*,?\\(,\\)\\(?:\\*\\|#\\+\\)" "" s nil nil 1))
+  (let ((org-re "^\\(.\\)")
+	(other-re "^\\([*]\\|[ \t]*#\\+\\)")
+	(delta 0))
+    (save-excursion
+      (goto-char beg)
+      (while (re-search-forward (if (derived-mode-p 'org-mode) org-re other-re)
+				end t)
+	(if (and line (eq (org-current-line) line)) (setq delta (1+ delta)))
+	(replace-match ",\\1")))
+    delta))
 
 (defun org-edit-src-exit (&optional context)
   "Exit special edit and protect problematic lines."
@@ -660,12 +649,8 @@ with \",*\", \",#+\", \",,*\" and \",,#+\"."
 	(goto-char (point-min))
 	(if (looking-at "\\s-*") (replace-match " ")))
       (when (org-bound-and-true-p org-edit-src-from-org-mode)
-	(org-escape-code-in-region (point-min) (point-max))
-	(setq delta (+ delta
-		       (save-excursion
-			 (org-goto-line line)
-			 (if (looking-at "[ \t]*\\(,,\\)?\\(\\*\\|#+\\)") 1
-			   0)))))
+	(setq delta (+ delta (org-add-protective-commas
+			      (point-min) (point-max) line))))
       (when (org-bound-and-true-p org-edit-src-picture)
 	(setq preserve-indentation nil)
 	(untabify (point-min) (point-max))
@@ -689,10 +674,9 @@ with \",*\", \",#+\", \",,*\" and \",,#+\"."
       (kill-buffer buffer))
     (goto-char beg)
     (when allow-write-back-p
-      (delete-region beg (max beg (1- end)))
-      (unless (string-match "\\`[ \t]*\\'" code)
-	(insert code)
-	(delete-char 1))
+      (delete-region beg (1- end))
+      (insert code)
+      (delete-char 1)
       (goto-char beg)
       (if single (just-one-space)))
     (if (memq t (mapcar (lambda (overlay)

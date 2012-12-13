@@ -589,9 +589,9 @@ an integer, select that value."
       (if (= nth -1) (setq nth 9)))
     (when (equal key "ITEM")
       (error "Cannot edit item headline from here"))
-    (unless (or allowed (member key '("SCHEDULED" "DEADLINE" "CLOCKSUM")))
+    (unless (or allowed (member key '("SCHEDULED" "DEADLINE")))
       (error "Allowed values for this property have not been defined"))
-    (if (member key '("SCHEDULED" "DEADLINE" "CLOCKSUM"))
+    (if (member key '("SCHEDULED" "DEADLINE"))
 	(setq nval (if previous 'earlier 'later))
       (if previous (setq allowed (reverse allowed)))
       (cond
@@ -686,7 +686,6 @@ around it."
       (move-marker org-columns-top-level-marker org-entry-property-inherited-from)
     (move-marker org-columns-top-level-marker (point))))
 
-;;;###autoload
 (defun org-columns (&optional columns-fmt-string)
   "Turn on column view on an org-mode file.
 When COLUMNS-FMT-STRING is non-nil, use it as the column format."
@@ -1058,7 +1057,8 @@ Don't set this, this is meant for dynamic scoping.")
    ((memq fmt '(estimate)) (org-estimate-print n printf))
    ((not (numberp n)) "")
    ((memq fmt '(add_times max_times min_times mean_times))
-    (org-hours-to-clocksum-string n))
+    (let* ((h (floor n)) (m (floor (+ 0.5 (* 60 (- n h))))))
+      (format org-time-clocksum-format h m)))
    ((eq fmt 'checkbox)
     (cond ((= n (floor n)) "[X]")
 	  ((> n 1.) "[-]")
@@ -1222,7 +1222,6 @@ of fields."
 	      (push row tbl)))))
       (append (list title 'hline) (nreverse tbl)))))
 
-;;;###autoload
 (defun org-dblock-write:columnview (params)
   "Write the column view table.
 PARAMS is a property list of parameters:
@@ -1335,7 +1334,6 @@ and tailing newline characters."
       (t (error "Garbage in listtable: %s" x))))
    tbl "\n"))
 
-;;;###autoload
 (defun org-insert-columns-dblock ()
   "Create a dynamic block capturing a column view table."
   (interactive)
@@ -1359,7 +1357,6 @@ and tailing newline characters."
 (defvar org-agenda-columns-compute-summary-properties); defined in org-agenda.el
 (defvar org-agenda-columns-add-appointments-to-effort-sum); as well
 
-;;;###autoload
 (defun org-agenda-columns ()
   "Turn on or update column view in the agenda."
   (interactive)
@@ -1403,7 +1400,7 @@ and tailing newline characters."
 	    ;; OK, the property is not defined.  Use appointment duration?
 	    (when (and org-agenda-columns-add-appointments-to-effort-sum
 		       (setq d (get-text-property (point) 'duration)))
-	      (setq d (org-minutes-to-clocksum-string d))
+	      (setq d (org-minutes-to-hh:mm-string d))
 	      (put-text-property 0 (length d) 'face 'org-warning d)
 	      (push (cons org-effort-property d) p)))
 	  (push (cons (org-current-line) p) cache))

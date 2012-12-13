@@ -98,8 +98,6 @@ a-list placed behind the generic `org-babel-key-prefix'.")
 
 (provide 'ob-keys)
 
-;; Local variables:
-;; generated-autoload-file: "org-loaddefs.el"
-;; End:
+
 
 ;;; ob-keys.el ends here

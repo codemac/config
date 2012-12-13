@@ -223,9 +223,7 @@ freely formatted text.  Furthermore, the following %-escapes will
 be replaced with content and expanded in this order:
 
   %[pathname] Insert the contents of the file given by `pathname'.
-  %(sexp)     Evaluate elisp `(sexp)' and replace it with the results.
-              For convenience, %:keyword (see below) placeholders within
-              the expression will be expanded prior to this.
+  %(sexp)     Evaluate elisp `(sexp)' and replace with the result.
   %<...>      The result of format-time-string on the ... format specification.
   %t          Time stamp, date only.
   %T          Time stamp with date and time.
@@ -436,10 +434,9 @@ Turning on this mode runs the normal hook `org-capture-mode-hook'."
 
 ;;; The main commands
 
+;;;###autoload
 (defvar org-capture-initial nil)
 (defvar org-capture-entry nil)
-
-;;;###autoload
 (defun org-capture-string (string &optional keys)
   (interactive "sInitial text: \n")
   (let ((org-capture-initial string)
@@ -1252,8 +1249,7 @@ Of course, if exact position has been required, just put it there."
 	(save-restriction
 	  (widen)
 	  (goto-char pos)
-	  (with-demoted-errors
-	    (bookmark-set "org-capture-last-stored"))
+	  (bookmark-set "org-capture-last-stored")
 	  (move-marker org-capture-last-stored-marker (point)))))))
 
 (defun org-capture-narrow (beg end)
@@ -1284,7 +1280,7 @@ Point will remain at the first line after the inserted text."
     (goto-char pos)))
 
 (defvar org-clock-marker) ; Defined in org.el
-
+;;;###autoload
 (defun org-capture-insert-template-here ()
   (let* ((template (org-capture-get :template))
 	 (type  (org-capture-get :type))
@@ -1623,25 +1619,9 @@ The template may still contain \"%?\" for cursor positioning."
       (goto-char (match-beginning 0))
       (let ((template-start (point)))
 	(forward-char 1)
-	(let ((result (org-eval
-		       (org-capture--expand-keyword-in-embedded-elisp
-			(read (current-buffer))))))
+	(let ((result (org-eval (read (current-buffer)))))
 	  (delete-region template-start (point))
 	  (insert result))))))
-
-(defun org-capture--expand-keyword-in-embedded-elisp (attr)
-  "Recursively replace capture link keywords in ATTR sexp.
-Such keywords are prefixed with \"%:\".  See
-`org-capture-template' for more information."
-  (cond ((consp attr)
-	 (mapcar 'org-capture--expand-keyword-in-embedded-elisp attr))
-	((symbolp attr)
-	 (let* ((attr-symbol (symbol-name attr))
-		(key (and (string-match "%\\(:.*\\)" attr-symbol)
-			  (intern (match-string 1 attr-symbol)))))
-	   (or (plist-get org-store-link-plist key)
-	       attr)))
-	(t attr)))
 
 (defun org-capture-inside-embedded-elisp-p ()
   "Return non-nil if point is inside of embedded elisp %(sexp)."

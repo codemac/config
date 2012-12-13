@@ -76,8 +76,8 @@ current directory string."
   (require 'slime)
   (org-babel-reassemble-table
    ((lambda (result)
-      (org-babel-result-cond (cdr (assoc :result-params params))
-	(car result)
+      (if (member "output" (cdr (assoc :result-params params)))
+	  (car result)
 	(condition-case nil
 	    (read (org-babel-lisp-vector-to-list (cadr result)))
 	  (error (cadr result)))))

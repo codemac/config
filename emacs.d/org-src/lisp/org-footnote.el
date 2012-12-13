@@ -948,8 +948,4 @@ If LABEL is non-nil, delete that footnote instead."
 
 (provide 'org-footnote)
 
-;; Local variables:
-;; generated-autoload-file: "org-loaddefs.el"
-;; End:
-
 ;;; org-footnote.el ends here

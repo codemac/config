@@ -32,9 +32,6 @@
 ;;
 ;;; Commentary:
 ;;
-;; WARNING: This library is obsolete, you should use the make targets
-;; to keep track of Org latest developments.
-;;
 ;; Download the latest development tarball, unpack and optionally compile it
 ;;
 ;; Usage:
@@ -49,10 +46,14 @@
 ;;
 ;;   M-x org-track-update RET
 
+
+
 (require 'url-parse)
 (require 'url-handlers)
 (autoload 'url-file-local-copy "url-handlers")
 (autoload 'url-generic-parse-url "url-parse")
+
+
 
 
 
@@ -65,7 +66,7 @@ To use org-track, adjust `org-track-directory'.
 Org will download the archived latest git version for you,
 unpack it into that directory (i.e. a subdirectory
 `org-mode/' is added), create the autoloads file
-`org-loaddefs.el' for you and, optionally, compile the
+`org-install.el' for you and, optionally, compile the
 sources.
 All you'll have to do is call `M-x org-track-update' from
 time to time."
@@ -79,7 +80,7 @@ If that directory does not exist, it will be created."
 
 (defcustom org-track-compile-sources t
   "If `nil', never compile org-sources.
-Org will only create the autoloads file `org-loaddefs.el' for
+Org will only create the autoloads file `org-install.el' for
 you then. If `t', compile the sources, too.
 Note, that emacs preferes compiled elisp files over
 non-compiled ones."
@@ -100,6 +101,8 @@ you need to unpack it."
 (defcustom org-track-remove-package nil
   "Remove org-latest.tar.gz after updates?"
   :type 'boolean)
+
+
 
 
 
@@ -127,6 +130,7 @@ Also, generate autoloads and evtl. compile the sources."
             (org-track-fetch-package)
             (org-track-compile-org))
         (error (message "%s" (error-message-string err)))))))
+
 
 
 
@@ -167,6 +171,7 @@ subdirectory org-mode/ to DIRECTORY."
     (if org-track-remove-package
         (delete-file target))))
 
+
 
 
 ;;; Compile Org-mode sources
@@ -175,7 +180,7 @@ subdirectory org-mode/ to DIRECTORY."
 ;;;###autoload
 (defun org-track-compile-org (&optional directory)
   "Compile all *.el files that come with org-mode.
-Generate the autoloads file `org-loaddefs.el'.
+Generate the autoloads file `org-install.el'.
 
 DIRECTORY is where the directory org-mode/ lives (i.e. the
           parent directory of your local repo."
@@ -188,15 +193,15 @@ DIRECTORY is where the directory org-mode/ lives (i.e. the
                     "/")))
   (add-to-list 'load-path directory)
   (let ((list-of-org-files (file-expand-wildcards (concat directory "*.el"))))
-    ;; create the org-loaddefs file
+    ;; create the org-install file
     (require 'autoload)
-    (setq esf/org-install-file (concat directory "org-loaddefs.el"))
+    (setq esf/org-install-file (concat directory "org-install.el"))
     (find-file esf/org-install-file)
     (erase-buffer)
     (mapc (lambda (x)
             (generate-file-autoloads x))
           list-of-org-files)
-    (insert "\n(provide (quote org-loaddefs))\n")
+    (insert "\n(provide (quote org-install))\n")
     (save-buffer)
     (kill-buffer)
     (byte-compile-file esf/org-install-file t)
@@ -207,6 +212,7 @@ DIRECTORY is where the directory org-mode/ lives (i.e. the
           list-of-org-files)
     (if org-track-compile-sources
         (mapc (lambda (f) (byte-compile-file f)) list-of-org-files))))
+
 
 (provide 'org-track)
 

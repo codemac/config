@@ -252,8 +252,4 @@ default."
 
 (provide 'org-irc)
 
-;; Local variables:
-;; generated-autoload-file: "org-loaddefs.el"
-;; End:
-
 ;;; org-irc.el ends here

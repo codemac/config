@@ -56,13 +56,6 @@ This variable can be set to either `atx' or `setext'."
 (org-export-define-derived-backend md e-html
   :export-block ("MD" "MARKDOWN")
   :filters-alist ((:filter-parse-tree . org-md-separate-elements))
-  :menu-entry
-  (?m "Export to Markdown"
-      ((?M "To temporary buffer"
-	   (lambda (s v b) (org-md-export-as-markdown s v)))
-       (?m "To file" (lambda (s v b) (org-md-export-to-markdown s v)))
-       (?o "To file and open"
-	   (lambda (s v b) (org-open-file (org-md-export-to-markdown s v))))))
   :translate-alist ((bold . org-md-bold)
 		    (code . org-md-verbatim)
 		    (example-block . org-md-example-block)
@@ -287,9 +280,10 @@ a communication channel."
 					   ".")))))))
 	  ((org-export-inline-image-p link org-e-html-inline-image-rules)
 	   (format "![%s](%s)"
-		   (let ((caption (org-export-get-caption
-				   (org-export-get-parent-element link))))
-		     (when caption (org-export-data caption info)))
+		   (let ((caption
+			  (org-element-property
+			   :caption (org-export-get-parent-element link))))
+		     (when caption (org-export-data (car caption) info)))
 		   path))
 	  ((string= type "coderef")
 	   (let ((ref (org-element-property :path link)))
@@ -313,6 +307,10 @@ a communication channel."
 			   ((member type '("http" "https" "ftp"))
 			    (concat type ":" raw-path))
 			   ((equal type "file")
+			    ;; Extract just the file path and strip
+			    ;; all other components.
+			    (when (string-match "\\(.+\\)::.+" raw-path)
+			      (setq raw-path (match-string 1 raw-path)))
 			    ;; Treat links to ".org" files as ".html",
 			    ;; if needed.
 			    (setq raw-path
@@ -355,8 +353,6 @@ a communication channel."
   "Transcode a TEXT string into Markdown format.
 TEXT is the string to transcode.  INFO is a plist holding
 contextual information."
-  (when (plist-get info :with-smart-quotes)
-    (setq text (org-export-activate-smart-quotes text :html info)))
   ;; Protect ambiguous #.  This will protect # at the beginning of
   ;; a line, but not at the beginning of a paragraph.  See
   ;; `org-md-paragraph'.
@@ -364,7 +360,9 @@ contextual information."
   ;; Protect ambiguous !
   (setq text (replace-regexp-in-string "\\(!\\)\\[" "\\\\!" text nil nil 1))
   ;; Protect `, *, _ and \
-  (setq text (replace-regexp-in-string "[`*_\\]" "\\\\\\&" text))
+  (setq text
+	(replace-regexp-in-string
+	 "[`*_\\]" (lambda (rep) (concat "\\\\" (match-string 1 rep))) text))
   ;; Handle special strings, if required.
   (when (plist-get info :with-special-strings)
     (setq text (org-e-html-convert-special-strings text)))

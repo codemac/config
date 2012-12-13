@@ -224,6 +224,17 @@ Yup, zenburn.
   (load-theme 'zenburn t)
 #+end_src
 * Builtin
+** CUA mode
+I don't use CUA in that C-x/c/v make no sense to me when I'm using
+emacs. However, there is a nifty trick you can do to maintain the CUA
+rectangle editing functionality without the keybindings.
+
+Grabbed from [[http://www.reddit.com/r/emacs/comments/13ren4/ysk_that_you_can_paste_a_string_on_multiple_lines/c7f19ye][prakashk's comment on reddit]]. In it he references the
+[[http://emacs-fu.blogspot.com/2010/01/rectangles-and-cua.html][emacs-fu post]] on the same topic.
+#+begin_src emacs-lisp
+  (setq cua-enable-cua-keys nil)
+  (cua-mode t)
+#+end_src
 ** Occur, isearch, and all
 I like to launch occur from an isearch query. It's great when your
 muscle memory searches for a word, THEN you realize you want to see it
@@ -772,8 +783,12 @@ My C settings.
       (setq comment-multi-line t)
   ;    (gtags-mode 1) ; no more! going to helm!
       (helm-gtags-mode)
+      (setq compilation-directory-matcher
+            '("\\(?:\\(?:Entering\\|Leavin\\(g\\)\\) directory
+  `\\(.+\\)'$\\)\\|\\(?:[^]^[]*\\][[:space:]]*\\(\\(?:[[:alnum:]]*/\\)+\\)\\)\\|\\(?:^\\(\\[\\)\\)"
+              (2 . 1) (3 . 9) (4 . 4)))
       (set (make-local-variable 'compile-command)
-           (format "mm tup upd 2>&1 | gsed -r \"s#/.*@tupjob-[0-9]+(.*):#\\1#\" | gsed -r \"s#build_default/##\"")))
+           (format "mm tup upd 2>&1 | gsed -r \"s#/.*@tupjob-[0-9]+(.*):#\\1#\" | gsed -r \"s#build-o./##\"")))
     (add-hook 'c++-mode-hook 'my-c-hook)
     (add-hook 'cc-mode-hook 'my-c-hook)
     (add-hook 'c-mode-hook 'my-c-hook)
@@ -1350,45 +1365,78 @@ Functions borrowed from Sacha Chua.
 #+end_src
 **** Custom agendas
 #+begin_src emacs-lisp  
+  (defun my-agenda-sort-by-inactive-timestamp (a b)
+    "Sort by interactive timestamp. Oldest first, items without any ts at the bottom."
+    (let* ((ma (or (get-text-property 1 'org-marker a)
+                   (get-text-property 1 'org-hd-marker a)))
+           (mb (or (get-text-property 1 'org-marker b)
+                   (get-text-property 1 'org-hd-marker b)))
+           (tsa (org-entry-get ma "TIMESTAMP_IA"))
+           (tsb (org-entry-get mb "TIMESTAMP_IA"))
+           (ta (when tsa (date-to-time tsa)))
+           (tb (when tsb (date-to-time tsb))))
+      (cond ((eq tsa nil) +1)
+            ((eq tsb nil) -1)
+            ((time-less-p ta tb)
+             -1)
+            ((time-less-p tb ta)
+             +1)
+            (t nil))))
+  
   (setq org-agenda-custom-commands
-            '(("d" "Full Day Agenda"
-               ((agenda)
-                (sacha/org-agenda-load)
-                (tags "PROJECT/!WAITING")
-                (todo "WAITING")
-                (tags-todo "-MAYBE-BLOCKED=\"t\"")))
-              ("i" "Inbox"
-               ((tags-todo "-{.*}")))
-              ("n" "Next agenda"
-               ((todo "NEXT")
-                (todo "STARTED")))
-              ("w" "Work Agenda"
-               ((agenda)
-                (tags-todo "WORK-BLOCKED=\"t\"/!-WAITING")
-                (tags-todo "WORK-BLOCKED=\"t\"/!+WAITING")
-                (tags "WORK+PROJECT")
-                (tags "WORK")))
-              ("h" "Home Agenda"
-               ((agenda)
-                (tags-todo "HOME-BLOCKED=\"t\"/!-WAITING")
-                (tags-todo "HOME-BLOCKED=\"t\"/!+WAITING")
-                (tags "HOME+PROJECT")
-                (tags "HOME")))
-              ("r" "Errand Agenda"
-               ((agenda)
-                (tags-todo "ERRAND-BLOCKED=\"t\"/!-WAITING")
-                (tags-todo "ERRAND-BLOCKED=\"t\"/!+WAITING")
-                (tags "ERRAND+PROJECT")
-                (tags "ERRAND")))
-              ("Z" "Receipt Agenda"
-               ((org-receipt-agenda)))
-  ;           ("X" agenda ""
-  ;            ((ps-number-of-columns 3)
-  ;             (ps-landscape-mode t)
-  ;             (org-agenda-prefix-format " [ ] ")
-  ;             (org-agenda-with-colors t)
-  ;             ("theagenda.ps")))
-              ))
+        '(("d" "Full Day Agenda"
+           ((agenda)
+            (sacha/org-agenda-load)
+            (tags "PROJECT/!WAITING")
+            (todo "WAITING")
+            (tags-todo "-MAYBE-BLOCKED=\"t\""))
+           ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
+            (org-agenda-sorting-strategy '(user-defined-up))))
+          ("i" "Inbox"
+           ((tags-todo "-{.*}")))
+          ("n" "Next agenda"
+           ((todo "NEXT")
+            (todo "STARTED"))
+           ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
+            (org-agenda-sorting-strategy '(user-defined-up))))
+          ("v" "INTERNET agenda"
+           ((tags-todo "COMPUTER|INTERNET|EMAIL-BLOCKED=\"t\""))
+           ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
+            (org-agenda-sorting-strategy '(user-defined-up))))
+          ("c" "COMPUTER agenda"
+           ((tags-todo "COMPUTER-BLOCKED=\"t\""))
+           ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
+            (org-agenda-sorting-strategy '(user-defined-up))))
+          ("w" "Work Agenda"
+           ((agenda)
+            (tags-todo "WORK-BLOCKED=\"t\"|COMPUTER-BLOCKED=\"t\"|INTERNET-BLOCKED=\"t\"/!-WAITING")
+            (tags-todo "WORK-BLOCKED=\"t\"/!+WAITING")
+            (tags "WORK+PROJECT")
+            (tags "WORK"))
+           ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
+            (org-agenda-sorting-strategy '(user-defined-up))))
+          ("h" "Home Agenda"
+           ((agenda)
+            (tags-todo "HOME-BLOCKED=\"t\"/!-WAITING")
+            (tags-todo "HOME-BLOCKED=\"t\"/!+WAITING")
+            (tags "HOME+PROJECT")
+            (tags "HOME"))
+           ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
+            (org-agenda-sorting-strategy '(user-defined-up))))
+          ("r" "Errand Agenda"
+           ((agenda)
+            (tags-todo "ERRAND-BLOCKED=\"t\"/!-WAITING")
+            (tags-todo "ERRAND-BLOCKED=\"t\"/!+WAITING")
+            (tags "ERRAND+PROJECT")
+            (tags "ERRAND"))
+           ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
+            (org-agenda-sorting-strategy '(user-defined-up))))
+          ("x" "Tasks" ((tags-todo "-BLOCKED=\"t\""
+                                   ((org-agenda-overriding-header "Tasks sorted by TIMESTAMP_IA")
+                                    (org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
+                                    (org-agenda-sorting-strategy '(user-defined-up))))))
+          ("Z" "Receipt Agenda"
+           ((org-receipt-agenda)))))
 #+end_src
 **** Useful setq's
 #+begin_src emacs-lisp  
@@ -1452,8 +1500,9 @@ Functions borrowed from Sacha Chua.
                         ("PROJECT" . ?o)))
   
   (setq org-log-done '(note))
+  (setq org-log-into-drawer t) ; record state changes into LOGBOOK
   (setq org-todo-keywords
-        '((sequence "TODO(t)" "NEXT(n)" "STARTED(s)" "WAITING(w@)" "|" "DONE(d@)" "NVM(v@)" "MAYBE(m@)")))
+        '((sequence "TODO(t@)" "NEXT(n!)" "STARTED(s)" "WAITING(w@)" "|" "DONE(d@)" "NVM(v@)" "MAYBE(m@)")))
   (setq org-tags-exclude-from-inheritance '("PROJECT"))
   ;(setq org-agenda-category-icon-alist
   ;      '(("netapp" "" nil t)

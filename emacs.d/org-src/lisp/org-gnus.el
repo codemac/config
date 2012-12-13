@@ -66,12 +66,6 @@ this variable to `t'."
   :version "24.1"
   :type 'boolean)
 
-(defcustom org-gnus-no-server nil
-  "Should Gnus be started using `gnus-no-server'?"
-  :group 'org-gnus
-  ;; :version "24.3"
-  :type 'boolean)
-
 
 ;; Install the link type
 (org-add-link-type "gnus" 'org-gnus-open)
@@ -293,7 +287,7 @@ If `org-store-link' was called with a prefix arg the meaning of
 
 (defun org-gnus-no-new-news ()
   "Like `M-x gnus' but doesn't check for new news."
-  (if (not (gnus-alive-p)) (if org-gnus-no-server (gnus-no-server) (gnus))))
+  (if (not (gnus-alive-p)) (gnus)))
 
 (provide 'org-gnus)
 

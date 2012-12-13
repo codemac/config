@@ -1230,9 +1230,7 @@ some heuristics to guess the result."
 	     ;; Are there blank lines inside the list so far?
 	     ((save-excursion
 		(goto-char (org-list-get-top-point struct))
-		;; Do not use `org-list-search-forward' so blank lines
-		;; in blocks can be counted in.
-		(re-search-forward
+		(org-list-search-forward
 		 "^[ \t]*$" (org-list-get-item-end-before-blank item struct) t))
 	      1)
 	     ;; Default choice: no blank line.
@@ -2807,16 +2805,13 @@ COMPARE-FUNC to compare entries."
 	 (start (org-list-get-list-begin (point-at-bol) struct prevs))
 	 (end (org-list-get-list-end (point-at-bol) struct prevs))
 	 (sorting-type
-	  (or sorting-type
-	      (progn
-		(message
-		 "Sort plain list: [a]lpha  [n]umeric  [t]ime  [f]unc   A/N/T/F means reversed:")
-		(read-char-exclusive))))
-	 (getkey-func
-	  (or getkey-func
-	      (and (= (downcase sorting-type) ?f)
-		   (intern (org-icompleting-read "Sort using function: "
-						 obarray 'fboundp t nil nil))))))
+	  (progn
+	    (message
+	     "Sort plain list: [a]lpha  [n]umeric  [t]ime  [f]unc   A/N/T/F means reversed:")
+	    (read-char-exclusive)))
+	 (getkey-func (and (= (downcase sorting-type) ?f)
+			   (intern (org-icompleting-read "Sort using function: "
+							 obarray 'fboundp t nil nil)))))
     (message "Sorting items...")
     (save-restriction
       (narrow-to-region start end)

@@ -38,6 +38,7 @@
 (declare-function org-babel-update-block-body "org" (new-body))
 (declare-function make-directory "files" (dir &optional parents))
 
+;;;###autoload
 (defcustom org-babel-tangle-lang-exts
   '(("emacs-lisp" . "el"))
   "Alist mapping languages to their file extensions.
@@ -513,8 +514,6 @@ which enable the original code blocks to be found."
 
 (provide 'ob-tangle)
 
-;; Local variables:
-;; generated-autoload-file: "org-loaddefs.el"
-;; End:
+
 
 ;;; ob-tangle.el ends here

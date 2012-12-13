@@ -60,7 +60,6 @@
 (eval-when-compile (require 'cl))
 
 (declare-function run-picolisp "ext:inferior-picolisp" (cmd))
-(defvar org-babel-tangle-lang-exts) ;; Autoloaded
 
 ;; optionally define a file extension for this language
 (add-to-list 'org-babel-tangle-lang-exts '("picolisp" . "l"))
@@ -123,8 +122,13 @@
            (t full-body))))
 
     ((lambda (result)
-       (org-babel-result-cond result-params
-	 result
+       (if (or (member "verbatim" result-params)
+               (member "scalar" result-params)
+               (member "output" result-params)
+               (member "code" result-params)
+               (member "pp" result-params)
+               (= (length result) 0))
+           result
          (read result)))
      (if (not (string= session-name "none"))
          ;; session based evaluation

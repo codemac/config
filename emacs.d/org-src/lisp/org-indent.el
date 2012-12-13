@@ -431,8 +431,4 @@ This function is meant to be called by `after-change-functions'."
 
 (provide 'org-indent)
 
-;; Local variables:
-;; generated-autoload-file: "org-loaddefs.el"
-;; End:
-
 ;;; org-indent.el ends here

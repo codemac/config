@@ -98,7 +98,7 @@
 ;;                          (summary 1.0 point)))))
 ;; 
 
-(setq gnus-use-trees t)
+;(setq gnus-use-trees nil)
 (add-hook 'gnus-summary-mode-hook 'gnus-hl-line)
 (add-hook 'gnus-group-mode-hook 'gnus-hl-line)
 (add-hook 'gnus-group-mode-hook 'gnus-topic-mode)
@@ -149,6 +149,8 @@
   (setq fill-column 72)
   (turn-on-auto-fill))
 (add-hook 'message-mode-hook 'my-message-mode-setup)
+(add-hook 'message-mode-hook 'turn-on-orgtbl)
+(add-hook 'message-mode-hook 'turn-on-orgstruct)
 ;;
 
 (setq gnus-visible-headers 
@@ -212,7 +214,15 @@
      (aset standard-display-table val (vector (create-glyph val)))
      (setq val (1+ val))))
 
-;    (setq gnus-sum-thread-tree-vertical "\232"
+(setq gnus-sum-thread-tree-indent " "
+      gnus-sum-thread-tree-root "\u250c\u25e6 "
+      gnus-sum-thread-tree-false-root " \u25cc "
+      gnus-sum-thread-tree-single-indent " \u25e6 "
+      gnus-sum-thread-tree-leaf-with-other "\u251c\u2500\u2500\u25b8 "
+      gnus-sum-thread-tree-vertical "\u2502"
+      gnus-sum-thread-tree-single-leaf "\u2514\u2500\u2500\u25b8 ")
+
+;    (setq gnus-sum-thread-tree-vertical "u32f"
 ;          gnus-sum-thread-tree-root ""
 ;          gnus-sum-thread-tree-false-root ""
 ;          gnus-sum-thread-tree-indent " "

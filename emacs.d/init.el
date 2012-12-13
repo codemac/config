@@ -30,7 +30,7 @@
  '(fci-rule-color "#383838")
  '(frame-background-mode (quote dark))
  '(indent-tabs-mode nil)
- '(org-agenda-files (quote ("~/org/fitness.org" "~/org/from-mobile.org" "~/org/gtd.org" "~/org/mars.org" "~/org/_notes/2012.org" "~/org/_notes/class2012pgm.org" "~/org/_notes/gifts.org" "~/org/_notes/nanowrimo2011.org" "~/org/_notes/notes.org" "~/org/_notes/oppression-of-tech.org" "~/org/_notes/steal.org" "~/org/_notes/webmac.org" "~/org/_notes/whoami.org"))))
+ '(org-agenda-files (quote ("~/org/gtd.org" "~/org/fitness.org" "~/org/from-mobile.org" "~/org/mars.org" "~/org/_notes/2012.org" "~/org/_notes/class2012pgm.org" "~/org/_notes/gifts.org" "~/org/_notes/nanowrimo2011.org" "~/org/_notes/notes.org" "~/org/_notes/oppression-of-tech.org" "~/org/_notes/steal.org" "~/org/_notes/webmac.org" "~/org/_notes/whoami.org"))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.

@@ -649,12 +649,6 @@ See `org-publish-org-to' to the list of arguments."
   (org-publish-with-aux-preprocess-maybe
    (org-publish-org-to "utf8" plist filename pub-dir)))
 
-(defun org-publish-org-to-taskjuggler (plist filename pub-dir)
-  "Publish an org file to TaskJuggler.
-See `org-publish-org-to' to the list of arguments."
-  (org-publish-with-aux-preprocess-maybe
-   (org-publish-org-to "taskjuggler" plist filename pub-dir)))
-
 (defun org-publish-attachment (plist filename pub-dir)
   "Publish a file with no transformation of any kind.
 See `org-publish-org-to' to the list of arguments."
@@ -921,6 +915,7 @@ directory and force publishing all files."
     (let ((org-publish-use-timestamps-flag
 	   (if force nil org-publish-use-timestamps-flag)))
       (org-publish-projects org-publish-project-alist))))
+
 
 ;;;###autoload
 (defun org-publish-current-file (&optional force)
@@ -1196,9 +1191,5 @@ Returns value on success, else nil."
        (cadr (nth 5 attr)))))
 
 (provide 'org-publish)
-
-;; Local variables:
-;; generated-autoload-file: "org-loaddefs.el"
-;; End:
 
 ;;; org-publish.el ends here
