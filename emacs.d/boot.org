@@ -338,22 +338,38 @@ Easy navigation around lots of splits. C-x o isn't that geographical.
   (global-set-key [M-down] 'windmove-down)
 #+end_src
 ** Dired
+This is what is sent to ls. I'm usually on a *nix-like userspace, so
+ls usually exists. On windows emacs uses some ls elisp, I'm not sure
+if these settings work for that.
+#+begin_src emacs-lisp
+  (setq dired-listing-switches "-ahlF")
+#+end_src
+On Mac OS X, ls -F prints an @ symbol when printing symlinks. This
+setting lets dired know that this is the case.
+#+begin_src emacs-lisp
+  (when (eq system-type 'darwin)
+    (setq dired-ls-F-marks-symlinks t))
+#+end_src
+*** Disabled: set dired to reuse buffers
+Every time you hit enter, instead of opening a new buffer, it'll reuse
+the buffer. I've found I don't like using this, but it was very useful
+when I first started using emacs, less so later.
+
 Have =^= and =Enter= open the next directory in the same buffer.  I
 don't think there is a situation where I don't want this to happen, so
 we'll roll with this.
 #+begin_src emacs-lisp
   ;; reenable!
   (put 'dired-find-alternate-file 'disabled nil)
-  
-  (add-hook 'dired-mode-hook
-   (lambda ()
-    (define-key dired-mode-map (kbd "<return>")
-      'dired-find-alternate-file) ; was dired-advertised-find-file
-    (define-key dired-mode-map (kbd "a")
-      'dired-advertised-find-file) ; was dired-find-alternate-file
-    (define-key dired-mode-map (kbd "^")
-      (lambda () (interactive) (find-alternate-file "..")))))
-    ; was dired-up-directory
+  ;; (add-hook 'dired-mode-hook
+  ;;  (lambda ()
+  ;;   (define-key dired-mode-map (kbd "<return>")
+  ;;     'dired-find-alternate-file) ; was dired-advertised-find-file
+  ;;   (define-key dired-mode-map (kbd "a")
+  ;;     'dired-advertised-find-file) ; was dired-find-alternate-file
+  ;;   ; was dired-up-directory
+  ;;   (define-key dired-mode-map (kbd "^")
+  ;;     (lambda () (interactive) (find-alternate-file "..")))))
 #+end_src
 ** Info
 Mac fix for info installation location!
@@ -783,10 +799,10 @@ My C settings.
       (setq comment-multi-line t)
   ;    (gtags-mode 1) ; no more! going to helm!
       (helm-gtags-mode)
-      (setq compilation-directory-matcher
-            '("\\(?:\\(?:Entering\\|Leavin\\(g\\)\\) directory
-  `\\(.+\\)'$\\)\\|\\(?:[^]^[]*\\][[:space:]]*\\(\\(?:[[:alnum:]]*/\\)+\\)\\)\\|\\(?:^\\(\\[\\)\\)"
-              (2 . 1) (3 . 9) (4 . 4)))
+;      (setq compilation-directory-matcher
+;            '("\\(?:\\(?:Entering\\|Leavin\\(g\\)\\) directory
+;  `\\(.+\\)'$\\)\\|\\(?:[^]^[]*\\][[:space:]]*\\(\\(?:[[:alnum:]]*/\\)+\\)\\)\\|\\(?:^\\(\\[\\)\\)"
+;              (2 . 1) (3 . 9) (4 . 4)))
       (set (make-local-variable 'compile-command)
            (format "mm tup upd 2>&1 | gsed -r \"s#/.*@tupjob-[0-9]+(.*):#\\1#\" | gsed -r \"s#build-o./##\"")))
     (add-hook 'c++-mode-hook 'my-c-hook)
@@ -1387,11 +1403,12 @@ Functions borrowed from Sacha Chua.
         '(("d" "Full Day Agenda"
            ((agenda)
             (sacha/org-agenda-load)
-            (tags "PROJECT/!WAITING")
-            (todo "WAITING")
-            (tags-todo "-MAYBE-BLOCKED=\"t\""))
-           ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
-            (org-agenda-sorting-strategy '(user-defined-up))))
+            (tags "PROJECT/!WAITING" ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
+                                      (org-agenda-sorting-strategy '(user-defined-up))))
+            (todo "WAITING" ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
+                             (org-agenda-sorting-strategy '(user-defined-up))))
+            (tags-todo "-MAYBE-BLOCKED=\"t\"" ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
+                                               (org-agenda-sorting-strategy '(user-defined-up))))))
           ("i" "Inbox"
            ((tags-todo "-{.*}")))
           ("n" "Next agenda"
