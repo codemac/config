@@ -63,8 +63,13 @@
 	      [(1 0)
 	       nil "Major mode for Jgraph files" single])
  (js2-mode .
-	   [(20090814)
-	    nil "Improved JavaScript editing mode" single])
+	   [(1 1)
+	    ((emacs
+	      (24 1)))
+	    "Improved JavaScript editing mode" single])
+ (lex .
+      [(1 0)
+       nil "Lexical analyser construction" single])
  (lmc .
       [(1 0)
        nil "Little Man Computer in Elisp" single])
@@ -99,7 +104,7 @@
 	 [(0 8)
 	  nil "OAuth 2.0 Authorization Protocol" single])
  (org .
-      [(20121217)
+      [(20130114)
        nil "Outline-based notes management and organizer" tar])
  (quarter-plane .
 		[(0 1)

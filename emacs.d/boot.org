@@ -829,6 +829,7 @@ use magit-status and magit-log.
 magit-log is missing the commiter annotation, I need to fix that.
 #+begin_src emacs-lisp
   (require 'magit-autoloads)
+  (autoload 'magit-log "magit" "Open magit for magit log" t nil)
 #+end_src
 Add a commit signoff to every commit message.
 #+begin_src emacs-lisp
@@ -1088,10 +1089,75 @@ Really useful when you have a lot of code to write.
                     (smex-major-mode-commands)))
 #+end_src
 ** Programs
+*** mu4e
+=mu4e= is a Maildir emacs mail mode. It's quite simple, but it's
+design goals fall right in the "super perfect" range, and I think it
+has a huge opportunity to succeed. It is similar to notmuch.
+#+begin_src emacs-lisp
+  (require 'mu4e)
+#+end_src
+**** Folders
+These match the Outlook ones..
+#+begin_src emacs-lisp
+  (setq mu4e-maildir "~/maildir"
+        mu4e-sent-folder "/Sent Items"
+        mu4e-drafts-folder "/Drafts"
+        mu4e-trash-folder "/Deleted Items"
+        mu4e-refile-folder "/archive")
+  
+  (setq mu4e-maildir-shortcuts
+        '(("/INBOX" . ?i)
+          ("/mars" . ?m)))
+#+end_src
+**** Retrieval and Indexing
+Let's update the maildirs once every 5 minutes
+#+begin_src emacs-lisp
+  (setq mu4e-get-mail-command "offlineimap"
+        mu4e-upate-interval 300)
+#+end_src
+**** Sending mail
+We're just borrowing the gnus settings here..
+#+begin_src emacs-lisp
+  (setq smtpmail-auth-credentials "~/.authinfo"
+        smtpmail-smtp-server "mail.netapp.com"
+        smtpmail-default-smtp-server "mail.netapp.com"
+        smtpmail-smtp-service 25
+        send-mail-function 'smtpmail-send-it
+        message-send-mail-function 'smtpmail-send-it
+        smtpmail-auth-supported '(login))
+  
+  (setq mu4e-sent-messages-behavior 'sent)
+#+end_src
+**** Message view
+#+begin_src emacs-lisp
+  ;; enable inline images
+  (setq mu4e-view-show-images t)
+  ;; use imagemagick, if available
+  (when (fboundp 'imagemagick-register-types)
+    (imagemagick-register-types))
+  
+  (setq message-citation-line-format "* %N <%n> [%Y.%m.%d %H:%M]:")
+  (setq message-citation-line-function 'message-insert-formatted-citation-line)
+  
+  (setq mu4e-html2text-command "w3m -T 'text/html' -dump")
+  (setq mu4e-view-prefer-html t)
+  
+#+end_src
+**** Setting the default mail client
+#+begin_src emacs-lisp
+  (setq mail-user-agent 'mu4e-user-agent)
+  (setq user-mail-address "jmickey@netapp.com")
+  (setq user-full-name "Jeff Mickey")
+#+end_src
+**** Org mode integration
+#+begin_src emacs-lisp
+  (require 'org-mu4e)
+  (setq org-mu4e-convert-to-html t)
+#+end_src
 *** Geiser
 Let's get our scheme on!
 #+begin_src emacs-lisp
-  (load-file "~/config/emacs.d/site-lisp/geiser/elisp/geiser.el")
+  (require 'geiser)
   ;; racket is great and all, but I need me some ffi, ice-9, and of course, gnu.
   (setq geiser-active-implementations '(guile))
 #+end_src
@@ -1104,39 +1170,6 @@ Microblog, baby.
   
   (global-set-key "\C-cip" 'identica-update-status-interactive)
   (global-set-key "\C-cid" 'identica-direct-message-interactive)
-#+end_src
-
-*** BBDB - Big Brother DataBase
-Well integrated into Gnus, eventually just had to start using it!
-Borrowed this pretty heavily from somewhere, will document once I know
-what all these features really mean.
-#+begin_src emacs-lisp
-  (require 'bbdb)
-  (require 'bbdb-gnus)
-  (bbdb-initialize 'gnus 'message)
-  
-  (setq 
-   bbdb-offer-save 1                        ;; 1 means save-without-asking
-   bbdb-use-pop-up t                        ;; allow popups for addresses
-   bbdb-electric-p t                        ;; be disposable with SPC
-   bbdb-popup-target-lines  1               ;; very small
-   bbdb-dwim-net-address-allow-redundancy t ;; always use full name
-   bbdb-quiet-about-name-mismatches 2       ;; show name-mismatches 2 secs
-   bbdb-always-add-address t                ;; add new addresses to existing...
-   ;; ...contacts automatically
-   bbdb-canonicalize-redundant-nets-p t     ;; x@foo.bar.cx => x@bar.cx
-   bbdb-completion-type nil                 ;; complete on anything
-   bbdb-complete-name-allow-cycling t       ;; cycle through matches
-   ;; this only works partially
-   bbbd-message-caching-enabled t           ;; be fast
-   bbdb-use-alternate-names t               ;; use AKA
-   bbdb-elided-display t                    ;; single-line addresses
-   ;; auto-create addresses from mail
-   bbdb/mail-auto-create-p 'bbdb-ignore-some-messages-hook   
-   bbdb-ignore-some-messages-alist ;; don't ask about fake addresses
-   ;; NOTE: there can be only one entry per header (such as To, From)
-   ;; http://flex.ee.uec.ac.jp/texi/bbdb/bbdb_11.html
-   '(( "From" . "no.?reply\\|DAEMON\\|daemon\\|facebookmail\\|twitter")))
 #+end_src
 *** Muse
 Good for person wikis, however I pretty much exclusively use =org-blog=/=org-export= now.
@@ -1899,50 +1932,6 @@ A subprocess you can use as an irc<-> aim/jabber/im gateway
 #+begin_src emacs-lisp
   (require 'bitlbee)
 #+end_src
-*** Wanderlust
-  A great IMAP client, but I'm with the Gnus folks these days.
-#+begin_src emacs-lisp
-  (autoload 'wl "wl" "Wanderlust" t)
-  (autoload 'wl-other-frame "wl" "Wanderlust on new frame." t)
-  (autoload 'wl-draft "wl-draft" "Write draft with Wanderlust." t)
-  
-  ;; IMAP
-  (setq elmo-imap4-default-server "imap.gmail.com")
-  (setq elmo-imap4-default-user "codemac@gmail.com") 
-  (setq elmo-imap4-default-authenticate-type 'clear) 
-  (setq elmo-imap4-default-port '993)
-  (setq elmo-imap4-default-stream-type 'ssl)
-  
-  (setq elmo-imap4-use-modified-utf7 t) 
-  
-  ;; SMTP
-  (setq wl-smtp-connection-type 'starttls)
-  (setq wl-smtp-posting-port 587)
-  (setq wl-smtp-authenticate-type "plain")
-  (setq wl-smtp-posting-user "codemac")
-  (setq wl-smtp-posting-server "smtp.gmail.com")
-  (setq wl-local-domain "gmail.com")
-  
-  (setq wl-default-folder "%inbox")
-  (setq wl-default-spec "%")
-  (setq wl-draft-folder "%[Gmail]/Drafts") ; Gmail IMAP
-  (setq wl-trash-folder "%[Gmail]/Trash")
-  
-  (setq wl-folder-check-async t) 
-  
-  (setq elmo-imap4-use-modified-utf7 t)
-  
-  (autoload 'wl-user-agent-compose "wl-draft" nil t)
-  (if (boundp 'mail-user-agent)
-      (setq mail-user-agent 'wl-user-agent))
-  (if (fboundp 'define-mail-user-agent)
-      (define-mail-user-agent
-        'wl-user-agent
-        'wl-user-agent-compose
-        'wl-draft-send
-        'wl-draft-kill
-        'mail-send-hook))
-#+end_src
 *** Jabber
 Directly use jabber with elisp! It's painfully slow, and the single
 threaded nature of emacs means it turns out to be quite a failure if
@@ -2010,27 +1999,6 @@ you are trying to edit anything.
         '(lambda () 
            (interactive) 
            (jabber-send-presence "xa" "" 10)))))
-#+end_src
-*** Gnus
-Uh oh, here come the big guns.
-#+begin_src emacs-lisp
-  ;(defvar gnus-lock-filename)
-  ;(setq gnus-lock-filename "~/.machine-lock-gnus-my")
-  (put 'gnus 'disabled t)
-  
-  (defun gf-touch (file)
-    "Touches file"
-    (save-excursion
-      (unless (file-exists-p file)
-        (find-file file)
-        (write-file file)
-        (kill-buffer (current-buffer)))))
-  
-  (defun gnusu (&rest args)
-    (interactive "P")
-  ;  (if (file-exists-p gnus-lock-filename)
-  ;  (error "Can't start gnus, Lock file exists %S" gnus-lock-filename)
-  (call-interactively 'gnus))
 #+end_src
 *** SLIME
 #+begin_src emacs-lisp
@@ -2394,6 +2362,106 @@ anything with the characters in the order you've typed. It matches
 only for strings that have that sequence of characters in order.
 #+begin_src emacs-lisp
   (setq ido-enable-flex-matching t)
+#+end_src
+
+** BBDB - Big Brother DataBase
+Well integrated into Gnus, eventually just had to start using it!
+Borrowed this pretty heavily from somewhere, will document once I know
+what all these features really mean.
+#+begin_src emacs-lisp
+  ;; (require 'bbdb)
+  ;; (require 'bbdb-gnus)
+  ;; ;; uber failure
+  ;; (require 'message)
+  ;; (bbdb-initialize 'gnus 'message)
+  
+  ;; (setq 
+  ;;  bbdb-offer-save 1                        ;; 1 means save-without-asking
+  ;;  bbdb-use-pop-up t                        ;; allow popups for addresses
+  ;;  bbdb-electric-p t                        ;; be disposable with SPC
+  ;;  bbdb-popup-target-lines  1               ;; very small
+  ;;  bbdb-dwim-net-address-allow-redundancy t ;; always use full name
+  ;;  bbdb-quiet-about-name-mismatches 2       ;; show name-mismatches 2 secs
+  ;;  bbdb-always-add-address t                ;; add new addresses to existing...
+  ;;  ;; ...contacts automatically
+  ;;  bbdb-canonicalize-redundant-nets-p t     ;; x@foo.bar.cx => x@bar.cx
+  ;;  bbdb-completion-type nil                 ;; complete on anything
+  ;;  bbdb-complete-name-allow-cycling t       ;; cycle through matches
+  ;;  ;; this only works partially
+  ;;  bbbd-message-caching-enabled t           ;; be fast
+  ;;  bbdb-use-alternate-names t               ;; use AKA
+  ;;  bbdb-elided-display t                    ;; single-line addresses
+  ;;  ;; auto-create addresses from mail
+  ;;  bbdb/mail-auto-create-p 'bbdb-ignore-some-messages-hook   
+  ;;  bbdb-ignore-some-messages-alist ;; don't ask about fake addresses
+  ;;  ;; NOTE: there can be only one entry per header (such as To, From)
+  ;;  ;; http://flex.ee.uec.ac.jp/texi/bbdb/bbdb_11.html
+  ;;  '(( "From" . "no.?reply\\|DAEMON\\|daemon\\|facebookmail\\|twitter")))
+#+end_src
+** Gnus
+Uh oh, here come the big guns.
+#+begin_src emacs-lisp
+  ;(defvar gnus-lock-filename)
+  ;(setq gnus-lock-filename "~/.machine-lock-gnus-my")
+  ;; (put 'gnus 'disabled t)
+  
+  ;; (defun gf-touch (file)
+  ;;   "Touches file"
+  ;;   (save-excursion
+  ;;     (unless (file-exists-p file)
+  ;;       (find-file file)
+  ;;       (write-file file)
+  ;;       (kill-buffer (current-buffer)))))
+  
+  ;; (defun gnusu (&rest args)
+  ;;   (interactive "P")
+  ;; ;  (if (file-exists-p gnus-lock-filename)
+  ;; ;  (error "Can't start gnus, Lock file exists %S" gnus-lock-filename)
+  ;; (call-interactively 'gnus))
+#+end_src
+** Wanderlust
+  A great IMAP client, but I'm with the Gnus folks these days.
+#+begin_src emacs-lisp
+  ;; (autoload 'wl "wl" "Wanderlust" t)
+  ;; (autoload 'wl-other-frame "wl" "Wanderlust on new frame." t)
+  ;; (autoload 'wl-draft "wl-draft" "Write draft with Wanderlust." t)
+  
+  ;; ;; IMAP
+  ;; (setq elmo-imap4-default-server "imap.gmail.com")
+  ;; (setq elmo-imap4-default-user "codemac@gmail.com") 
+  ;; (setq elmo-imap4-default-authenticate-type 'clear) 
+  ;; (setq elmo-imap4-default-port '993)
+  ;; (setq elmo-imap4-default-stream-type 'ssl)
+  
+  ;; (setq elmo-imap4-use-modified-utf7 t) 
+  
+  ;; ;; SMTP
+  ;; (setq wl-smtp-connection-type 'starttls)
+  ;; (setq wl-smtp-posting-port 587)
+  ;; (setq wl-smtp-authenticate-type "plain")
+  ;; (setq wl-smtp-posting-user "codemac")
+  ;; (setq wl-smtp-posting-server "smtp.gmail.com")
+  ;; (setq wl-local-domain "gmail.com")
+  
+  ;; (setq wl-default-folder "%inbox")
+  ;; (setq wl-default-spec "%")
+  ;; (setq wl-draft-folder "%[Gmail]/Drafts") ; Gmail IMAP
+  ;; (setq wl-trash-folder "%[Gmail]/Trash")
+  
+  ;; (setq wl-folder-check-async t) 
+  
+  ;; (setq elmo-imap4-use-modified-utf7 t)
+  
+  ;; (autoload 'wl-user-agent-compose "wl-draft" nil t)
+  ;; (if (boundp 'mail-user-agent)
+  ;;     (setq mail-user-agent 'wl-user-agent))
+  ;; (if (fboundp 'define-mail-user-agent)
+  ;;     (define-mail-user-agent
+  ;;       'wl-user-agent
+  ;;       'wl-user-agent-compose
+  ;;       'wl-draft-send
+  ;;       'wl-draft-kill
+  ;;       'mail-send-hook))
 #+end_src
 * Custom variables
 #+begin_src emacs-lisp
