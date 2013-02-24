@@ -49,20 +49,17 @@ Let's get weird.
 #+begin_src emacs-lisp
   (setq enable-recursive-minibuffers t)
 #+end_src
-Put a clock in the modeline. Useful because I lose track of time all
-the time. It's actually kind of a problem.
+*** Modeline management
 #+begin_src emacs-lisp  
   ;; Turn on the clock!
-  (autoload 'display-time "time" "clock in status bar" t) ;shut up compiler
-  (if (locate-library "time")
-      (progn
-        (require 'time)
-        (defconst display-time-day-and-date t)
-        (defconst display-time-24hr-format t)
-        (display-time))
-      (message "Get time.el from your distro."))
+  (setq display-time-day-and-date t)
+  (setq display-time-24hr-format t)
+  (setq display-time-use-mail-icon t)
+  (setq display-time-default-load-average nil)
+  
+  (display-time-mode t)
+  
 #+end_src
-
 ** System sepecific settings
 Had to do some funky stuff to get around how shitty Mac OS X default
 VPN settings are. Also, set different font sizes for the different
@@ -77,6 +74,20 @@ screen DPI's.
     (add-to-list 'default-frame-alist '(font . "DejaVu Sans Mono-9:hinting=true:autohint=true"))))
 #+end_src
 * Environment
+** Dvorak
+The dvorak keyboard layout is really advantageous to those of us who
+write emails all day (read: me). However, it does create some problem
+with things like =C-x= in Emacs. In dvorak, =x= is =b= on the
+keyboard, meaning you're reaching quite far with your hand.
+
+I'm going to try out switching =C-t= and =C-x= as per suggested by [[http://ergoemacs.org/emacs/emacs_dvorak_C-x.html][Xah
+Lee's page]] on the dvorak =C-x= problem.
+
+#+begin_src emacs-lisp
+  (keyboard-translate ?\C-x ?\C-t)
+  (keyboard-translate ?\C-t ?\C-x)
+#+end_src
+
 ** Shell paths
 Setting paths correctly depending on whether or not I'm on a
 Mac. Mostly these days, I'm on a Mac :/
@@ -224,17 +235,6 @@ Yup, zenburn.
   (load-theme 'zenburn t)
 #+end_src
 * Builtin
-** CUA mode
-I don't use CUA in that C-x/c/v make no sense to me when I'm using
-emacs. However, there is a nifty trick you can do to maintain the CUA
-rectangle editing functionality without the keybindings.
-
-Grabbed from [[http://www.reddit.com/r/emacs/comments/13ren4/ysk_that_you_can_paste_a_string_on_multiple_lines/c7f19ye][prakashk's comment on reddit]]. In it he references the
-[[http://emacs-fu.blogspot.com/2010/01/rectangles-and-cua.html][emacs-fu post]] on the same topic.
-#+begin_src emacs-lisp
-  (setq cua-enable-cua-keys nil)
-  (cua-mode t)
-#+end_src
 ** Occur, isearch, and all
 I like to launch occur from an isearch query. It's great when your
 muscle memory searches for a word, THEN you realize you want to see it
@@ -269,6 +269,34 @@ frame. I've found this very convenient.
                                       (if (> (frame-width) 150)
                                           (split-window-horizontally arg)
                                         (split-window-vertically arg))))
+#+end_src
+** Useful window functions
+from :
+http://www.emacswiki.org/emacs/Rick_Bielawski
+#+begin_src emacs-lisp
+  ;; Idea and starter code from Benjamin Rutt (rutt.4+news@osu.edu) on comp.emacs
+  (defun window-horizontal-to-vertical ()
+    "Switches from a horizontal split to a vertical split."
+    (interactive)
+    (let ((one-buf (window-buffer (selected-window)))
+          (buf-point (point)))
+      (other-window 1)
+      (delete-other-windows)
+      (split-window-horizontally)
+      (switch-to-buffer one-buf)
+      (goto-char buf-point)))
+
+  ;; complement of above created by rgb 11/2004
+  (defun window-vertical-to-horizontal ()
+    "Switches from a vertical split to a horizontal split."
+    (interactive)
+    (let ((one-buf (window-buffer (selected-window)))
+          (buf-point (point)))
+      (other-window 1)
+      (delete-other-windows)
+      (split-window-vertically)
+      (switch-to-buffer one-buf)
+      (goto-char buf-point)))
 #+end_src
 ** Private stuff
 Just an easy way to put passwords, and other sensitive data outside of
@@ -410,9 +438,18 @@ Mac fix for info installation location!
   (defun eshell-new (name)
     "Create a shell buffer named NAME."
     (interactive "sEshell Name: ")
-    (setq name (concat "*eshell:" name "*"))
-    (eshell)
-    (rename-buffer name))
+    (let* ((bn (concat "*eshell:" name "*"))
+           (eb (get-buffer bn)))
+      (if eb
+          (switch-to-buffer eb)
+        (eshell)
+        (rename-buffer bn))))
+  
+  (defun eshell-main ()
+    (interactive)
+    (eshell-new "main"))
+  
+  (global-set-key (kbd "<f7>") 'eshell-main)
   
   (defalias 'enew 'eshell-new)
   
@@ -515,6 +552,15 @@ Mac fix for info installation location!
 #+end_src
 * External
 ** Emacs Features
+*** simple httpd
+This is a mode that provides a full http server in elisp. It does
+default to serving =~/public_html=, so I turn that off here.
+
+#+begin_src emacs-lisp
+  (require 'simple-httpd-autoloads)
+  (setq httpd-root "")
+  (setq httpd-serve-files nil)  
+#+end_src
 *** Pretty Mode
 #+begin_src emacs-lisp
   (require 'pretty-mode-autoloads)
@@ -531,6 +577,14 @@ direction!
   ;(add-to-list 'helm-completing-read-handlers-alist '(find-file . ido))
 #+end_src
 
+Add support for mac os x spotlight:
+#+begin_src emacs-lisp
+  ;; skip locate
+  (delete helm-c-source-locate helm-for-files-preferred-list)
+    
+  (when (eq system-type 'darwin)
+    (add-to-list 'helm-for-files-preferred-list 'helm-c-source-mac-spotlight))
+#+end_src
 Yay gtags support for helm!
 #+begin_src emacs-lisp
   (require 'helm-gtags)
@@ -767,47 +821,53 @@ Lisp seems to be the current mental debate.
 *** C
 My C settings.
 #+begin_src emacs-lisp
-    (require 'cl)
-    (require 'compile)
-    
-    (defun* get-closest-pathname (&optional (file "*akefile") (dir default-directory))
-      "Determine the pathname of the first instance of FILE starting
-    from the current directory towards root. This may not do the
-    correct thing in presence of links. If it does not find FILE,
-    then it shall return the name of FILE in the current directory,
-    suitable for creation"
-      (let ((root (expand-file-name "/")))
-        (loop 
-         for d = dir then (expand-file-name ".." d)
-         if (file-expand-wildcards (expand-file-name file d))
-         return (car (file-expand-wildcards (expand-file-name file d)))
-         if (equal d root)
-         return nil)))
-    
-    (defun my-c-hook ()
-      (interactive)
-      (setq tab-width 8)
-      (setq indent-tabs-mode t)
-      (setq tab-stop-list
-            '(8 16 24 32 40 48 56 64 72 80 88 96 104 112 120))
-      (setq fill-column 80)
-      (setq-default c-basic-offset 8)
-      (setq show-trailing-whitespace t)
-      (setq c-tab-always-indent t)
-      (linum-mode 1)
-      (yas-minor-mode 1)
-      (setq comment-multi-line t)
-  ;    (gtags-mode 1) ; no more! going to helm!
-      (helm-gtags-mode)
-;      (setq compilation-directory-matcher
-;            '("\\(?:\\(?:Entering\\|Leavin\\(g\\)\\) directory
-;  `\\(.+\\)'$\\)\\|\\(?:[^]^[]*\\][[:space:]]*\\(\\(?:[[:alnum:]]*/\\)+\\)\\)\\|\\(?:^\\(\\[\\)\\)"
-;              (2 . 1) (3 . 9) (4 . 4)))
-      (set (make-local-variable 'compile-command)
-           (format "mm tup upd 2>&1 | gsed -r \"s#/.*@tupjob-[0-9]+(.*):#\\1#\" | gsed -r \"s#build-o./##\"")))
-    (add-hook 'c++-mode-hook 'my-c-hook)
-    (add-hook 'cc-mode-hook 'my-c-hook)
-    (add-hook 'c-mode-hook 'my-c-hook)
+  (require 'cl)
+  (require 'compile)
+  
+  (defun* get-closest-pathname (&optional (file "*akefile") (dir default-directory))
+    "Determine the pathname of the first instance of FILE starting
+     from the current directory towards root. This may not do the
+     correct thing in presence of links. If it does not find FILE,
+     then it shall return the name of FILE in the current
+     directory, suitable for creation"
+    (let ((root (expand-file-name "/")))
+      (loop 
+       for d = dir then (expand-file-name ".." d)
+       if (file-expand-wildcards (expand-file-name file d))
+       return (car (file-expand-wildcards (expand-file-name file d)))
+       if (equal d root)
+       return nil)))
+  
+  (defun cm/make-c++-header ()
+    (interactive)
+    (c++-mode)
+    (add-file-local-variable-prop-line 'mode 'c++))
+  
+  (defun my-c-hook ()
+    (interactive)
+    (setq tab-width 8)
+    (setq indent-tabs-mode t)
+    (setq tab-stop-list
+          '(8 16 24 32 40 48 56 64 72 80 88 96 104 112 120))
+    (setq fill-column 80)
+    (setq-default c-basic-offset 8)
+    (setq show-trailing-whitespace t)
+    (setq c-tab-always-indent t)
+    (linum-mode 1)
+    (yas-minor-mode 1)
+    (setq comment-multi-line t)
+    (local-set-key (kbd "C-c o") 'ff-find-other-file)
+    ;; (gtags-mode 1) ; no more! going to helm!
+    (helm-gtags-mode)
+    ;;     (setq compilation-directory-matcher
+    ;;           '("\\(?:\\(?:Entering\\|Leavin\\(g\\)\\) directory
+    ;; `\\(.+\\)'$\\)\\|\\(?:[^]^[]*\\][[:space:]]*\\(\\(?:[[:alnum:]]*/\\)+\\)\\)\\|\\(?:^\\(\\[\\)\\)"
+    ;;             (2 . 1) (3 . 9) (4 . 4)))
+    (set (make-local-variable 'compile-command)
+         (format "mm tup upd 2>&1 | gsed -r \"s#/.*@tupjob-[0-9]+(.*):#\\1#\" | gsed -r \"s#build-o./##\"")))
+  (add-hook 'c++-mode-hook 'my-c-hook)
+  (add-hook 'cc-mode-hook 'my-c-hook)
+  (add-hook 'c-mode-hook 'my-c-hook)
 #+end_src
 *** GNU Plot
 Get some fancy graphs going. I mostly use R, but this is nice when /other/ people use gnuplot.
@@ -1099,15 +1159,23 @@ has a huge opportunity to succeed. It is similar to notmuch.
 **** Folders
 These match the Outlook ones..
 #+begin_src emacs-lisp
-  (setq mu4e-maildir "~/maildir"
+  (setq mu4e-maildir "~/mail"
         mu4e-sent-folder "/Sent Items"
         mu4e-drafts-folder "/Drafts"
         mu4e-trash-folder "/Deleted Items"
         mu4e-refile-folder "/archive")
   
   (setq mu4e-maildir-shortcuts
-        '(("/INBOX" . ?i)
-          ("/mars" . ?m)))
+        '(("/INBOX" . ?i)))
+  
+  (setq mu4e-refile-folder
+        (lambda (msg)
+          (cond
+           ((mu4e-message-contact-field-matches msg :to "ng-mars@netapp.com")
+            "/INBOX.mars")
+           ((mu4e-message-contact-field-matches msg :to "marsrevu@netapp.com")
+            "/INBOX.gerrit")
+           (t "/INBOX.archive"))))
 #+end_src
 **** Retrieval and Indexing
 Let's update the maildirs once every 5 minutes
@@ -1136,11 +1204,21 @@ We're just borrowing the gnus settings here..
   (when (fboundp 'imagemagick-register-types)
     (imagemagick-register-types))
   
-  (setq message-citation-line-format "* %N <%n> [%Y.%m.%d %H:%M]:")
+  (setq message-citation-line-format "* %f [%Y.%m.%d %H:%M]:")
   (setq message-citation-line-function 'message-insert-formatted-citation-line)
   
-  (setq mu4e-html2text-command "w3m -T 'text/html' -dump")
+  ;; for w3m
+  ;; (setq mu4e-html2text-command "w3m -T 'text/html' -dump")
+  (setq mu4e-html2text-command "html2text -nobs -ascii -style pretty")
   (setq mu4e-view-prefer-html t)
+  
+  (add-to-list 'mu4e-view-actions
+               '("browser render" . mu4e-action-view-in-browser))
+  
+  (setq mu4e-text2speech-command "say")
+  (add-to-list 'mu4e-view-actions
+               '("speak message" . mu4e-action-message-to-speech))
+  
   
 #+end_src
 **** Setting the default mail client
@@ -1811,8 +1889,6 @@ How I deploy my personal website.
       (delete-region (1- (match-end 0)) (match-end 0))
       (delete-region (match-beginning 0) (match-end 1))))
   
-  ;; turn on spell checking
-  (add-hook 'rcirc-mode-hook (lambda () '()))
   ;; Turn on logging everything to a special buffer, for debugging.
   ;(setq rcirc-debug-flag t)
   ;; scroll as little as possible
@@ -1822,12 +1898,40 @@ How I deploy my personal website.
                (make-local-variable 'scroll-conservatively)
                8192)))
   
+  ;; add reconnect
+  (eval-after-load 'rcirc
+    '(defun-rcirc-command reconnect (arg)
+       "Reconnect the server process."
+       (interactive "i")
+       (unless process
+         (error "There's no process for this target"))
+       (let* ((server (car (process-contact process)))
+              (port (process-contact process :service))
+              (nick (rcirc-nick process))
+              channels query-buffers)
+         (dolist (buf (buffer-list))
+           (with-current-buffer buf
+             (when (eq process (rcirc-buffer-process))
+               (remove-hook 'change-major-mode-hook
+                            'rcirc-change-major-mode-hook)
+               (if (rcirc-channel-p rcirc-target)
+                   (setq channels (cons rcirc-target channels))
+                 (setq query-buffers (cons buf query-buffers))))))
+         (delete-process process)
+         (rcirc-connect server port nick
+                        rcirc-default-user-name
+                        rcirc-default-full-name
+                        channels))))
+  
+  
   ;; Change user info
   (setq rcirc-default-nick "codemac")
   (setq rcirc-default-user-name "codemac")
   (setq rcirc-default-user-full-name "codemac")
   
-  (setq rcirc-authinfo '(("freenode" nickserv "codemac" cm-freenode-pass)))
+  (setq rcirc-server-alist '(("chat.freenode.net" :port 8000)
+                             ("localhost" :port 6667)))
+  
   (setq rcirc-startup-channels-alist '(("\\.freenode\\.net$" "#emacs")))
 #+end_src
 *** ERC
@@ -2462,6 +2566,17 @@ Uh oh, here come the big guns.
   ;;       'wl-draft-send
   ;;       'wl-draft-kill
   ;;       'mail-send-hook))
+#+end_src
+** CUA mode
+I don't use CUA in that C-x/c/v make no sense to me when I'm using
+emacs. However, there is a nifty trick you can do to maintain the CUA
+rectangle editing functionality without the keybindings.
+
+Grabbed from [[http://www.reddit.com/r/emacs/comments/13ren4/ysk_that_you_can_paste_a_string_on_multiple_lines/c7f19ye][prakashk's comment on reddit]]. In it he references the
+[[http://emacs-fu.blogspot.com/2010/01/rectangles-and-cua.html][emacs-fu post]] on the same topic.
+#+begin_src emacs-lisp
+  ;; (setq cua-enable-cua-keys nil)
+  ;; (cua-mode t)
 #+end_src
 * Custom variables
 #+begin_src emacs-lisp
