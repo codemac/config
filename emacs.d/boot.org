@@ -49,6 +49,27 @@ Let's get weird.
 #+begin_src emacs-lisp
   (setq enable-recursive-minibuffers t)
 #+end_src
+And of course, transparency!
+#+begin_src emacs-lisp
+  ;; Set transparency of emacs
+  (defun transparency (value)
+    "Sets the transparency of the frame window. 0=transparent/100=opaque"
+    (interactive "nTransparency Value 0 - 100 opaque:")
+    (set-frame-parameter (selected-frame) 'alpha value))
+  
+  (defun netflix ()
+    (interactive)
+    (set-background-color "black")
+    (transparency 45))
+  
+  
+  (defun opaque ()
+    (interactive)
+    (load-theme 'zenburn t)
+    (set-cursor-color "yellow")
+    (setq cursor-type 'box)
+    (transparency 100))
+#+end_src
 *** Modeline management
 #+begin_src emacs-lisp  
   ;; Turn on the clock!
@@ -68,7 +89,7 @@ screen DPI's.
   (cond
    ((or (string-prefix-p "phoenix-mta" system-name)
         (string-prefix-p "vpn2ntap-" system-name)
-        (string-prefix-p "moc.ppaten.qh" (apply 'string (reverse (string-to-list system-name)))))
+        (string-prefix-p "moc.ppaten" (apply 'string (reverse (string-to-list system-name)))))
     (add-to-list 'default-frame-alist '(font . "DejaVu Sans Mono-12:hinting=true:autohint=true")))
    ((equal system-name "penolpe")
     (add-to-list 'default-frame-alist '(font . "DejaVu Sans Mono-9:hinting=true:autohint=true"))))
@@ -86,6 +107,24 @@ Lee's page]] on the dvorak =C-x= problem.
 #+begin_src emacs-lisp
   (keyboard-translate ?\C-x ?\C-t)
   (keyboard-translate ?\C-t ?\C-x)
+#+end_src
+
+Also, let's get angry about using C-x until I'm used to it actually being C-t.
+
+#+begin_src emacs-lisp
+  (global-set-key
+   (kbd "C-t") 
+   (lambda ()
+     (interactive)
+     (run-with-timer 
+      0.3 nil 
+      (lambda ()
+        ;; Assuming these are the default values
+        (setq visible-bell nil)
+        (setq ring-bell-function 'ignore)))
+     (setq visible-bell t)
+     (setq ring-bell-function nil)
+     (error "Don't press that button.")))
 #+end_src
 
 ** Shell paths
@@ -238,8 +277,8 @@ Yup, zenburn.
 ** Occur, isearch, and all
 I like to launch occur from an isearch query. It's great when your
 muscle memory searches for a word, THEN you realize you want to see it
-all in one buffer. Add in [[file:site-lisp/all.el][all.el]], and then you can edit the lines in
-an occur like buffer.
+all in one buffer. Rock the =C-c C-e= in occur mode and you can edit
+everything! heck yes!
 
 This was mostly taken from [[http://www.emacswiki.org/emacs/OccurFromIsearch][the emacs wiki]].
 #+begin_src emacs-lisp
@@ -252,14 +291,7 @@ This was mostly taken from [[http://www.emacswiki.org/emacs/OccurFromIsearch][th
   (define-key isearch-mode-map (kbd "C-o") 'isearch-occur)
   
   
-  (require 'all)
-  (defun isearch-all ()
-    "Invoke `all' from within isearch."
-    (interactive)
-    (let ((case-fold-search isearch-case-fold-search))
-      (all (if isearch-regexp isearch-string (regexp-quote isearch-string)))))
-  
-  (define-key isearch-mode-map (kbd "C-e") 'isearch-all)
+
 #+end_src
 ** Ediff
 Split the Ediff window depending on the orientation/size of the emacs
@@ -304,11 +336,11 @@ this emacs config! Ideally I'll document all variables missing, this
 may or may not be always true though.
 #+begin_src emacs-lisp
   ;; irc
-  (defvar cm-freenode-pass "nope" "The nickserv password for freenode.")
-  (defvar cm-oftc-pass "nope" "The nickserv password for oftc.")
-  (defvar cm-what-pass "nope" "The nickserv password for what.")
-  (defvar cm-rizon-pass "nope" "The nickserv password for rizon.")
-  (defvar cm-bitlbee-pass "nope" "The password for bitlbee!")
+  (defvar cm-freenode-password "nope" "The nickserv password for freenode.")
+  (defvar cm-oftc-password "nope" "The nickserv password for oftc.")
+  (defvar cm-what-password "nope" "The nickserv password for what.")
+  (defvar cm-rizon-password "nope" "The nickserv password for rizon.")
+  (defvar cm-bitlbee-password "nope" "The password for bitlbee!")
   (defvar cm-irc-channel-alist '(("freenode" "#archlinux" "#emacs")
                                  ("oftc" "#ikiwiki"))
     "The channel list..")
@@ -636,20 +668,6 @@ Got jealous, had to have it in emacs. Not so useful after all...
 #+begin_src emacs-lisp
   (autoload 'minimap "minimap" "minimap for code" t)
 #+end_src
-*** Command Frequency
-This can be useful to figure out what commands you do and don't use
-all the time, so you can figure out what keybindings you need to
-fix. I found that I never used the data though..
-#+begin_src emacs-lisp
-  (require 'command-frequency)
-  
-  (setq-default command-frequency-table-file "~/.emacs-frequency")
-  
-  (command-frequency-table-load)
-  (command-frequency-mode 1)
-  (command-frequency-autosave-mode 1)
-#+end_src
-
 *** Word count
 NaNoWriMo!
 #+begin_src emacs-lisp
@@ -755,6 +773,57 @@ out semantically.
   ;(add-hook 'gnus-group-mode-hook 'hl-line-fancy-highlight)
 #+end_src
 ** Major Modes
+*** Valgrind
+#+begin_src emacs-lisp
+  ; Based on compile.el included with Emacs
+  ; and ideas from http://tromey.com/blog/?p=342
+  ; compile.el is GPL, so this is too.
+  
+  (require 'compile "compile")
+  
+  (defgroup valgrind nil
+    "Run valgrind as inferior of Emacs, parse error messages."
+    :group 'tools
+    :group 'processes)
+  
+  
+  (defcustom valgrind-command "valgrind --leak-check=full "
+    "*Last shell command used to run valgrind; default for next valgrind run.
+  
+  Sometimes it is useful for files to supply local values for this variable.
+  You might also use mode hooks to specify it in certain modes, like this:
+  
+      (add-hook 'c-mode-hook
+         (lambda ()
+           (unless (or (file-exists-p \"makefile\")
+                       (file-exists-p \"Makefile\"))
+             (set (make-local-variable 'valgrind-command)
+                  (concat \"make -k \"
+                          (file-name-sans-extension buffer-file-name))))))"
+    :type 'string
+    :group 'valgrind)
+  
+  ;; History of compile commands.
+  (defvar valgrind-history nil)
+  
+  
+  (defun valgrind (command)
+    "Run valgrind.
+  Runs COMMAND, a shell command, in a separate process asynchronously
+  with output going to the buffer `*valgrind*'.
+  
+  You can then use the command \\[next-error] to find the next error message
+  and move to the source code that caused it."
+    (interactive
+     (if (or compilation-read-command current-prefix-arg)
+         (list (read-from-minibuffer "Valgrind command: "
+                                   (eval valgrind-command) nil nil
+                                   '(valgrind-history . 1)))
+       (list (eval valgrind-command))))
+    (unless (equal command (eval valgrind-command))
+      (setq valgrind-command command))
+    (compilation-start command t))
+#+end_src
 *** PlantUML
 Get the jarfile in the correct place...
 #+begin_src emacs-lisp
@@ -843,8 +912,12 @@ My C settings.
     (c++-mode)
     (add-file-local-variable-prop-line 'mode 'c++))
   
+  (c-add-style "mars" '("linux"))
+  
   (defun my-c-hook ()
     (interactive)
+    (c-set-style "mars")
+    (require 'auto-complete)
     (setq tab-width 8)
     (setq indent-tabs-mode t)
     (setq tab-stop-list
@@ -859,12 +932,17 @@ My C settings.
     (local-set-key (kbd "C-c o") 'ff-find-other-file)
     ;; (gtags-mode 1) ; no more! going to helm!
     (helm-gtags-mode)
-    ;;     (setq compilation-directory-matcher
-    ;;           '("\\(?:\\(?:Entering\\|Leavin\\(g\\)\\) directory
-    ;; `\\(.+\\)'$\\)\\|\\(?:[^]^[]*\\][[:space:]]*\\(\\(?:[[:alnum:]]*/\\)+\\)\\)\\|\\(?:^\\(\\[\\)\\)"
-    ;;             (2 . 1) (3 . 9) (4 . 4)))
-    (set (make-local-variable 'compile-command)
-         (format "mm tup upd 2>&1 | gsed -r \"s#/.*@tupjob-[0-9]+(.*):#\\1#\" | gsed -r \"s#build-o./##\"")))
+    (set (make-local-variable 'compilation-directory-matcher)
+         '("\\(?:\\(?:Entering\\|Leavin\\(g\\)\\) directory
+    `\\(.+\\)'$\\)\\|\\(?:[^]^[]*\\][[:space:]]*\\(\\(?:[[:alnum:]]*/\\)+\\)\\)\\|\\(?:^\\(\\[\\)\\)"
+           (2 . 1) (3 . 9) (4 . 4)))
+    (set (make-local-variable 'compile-command) "~/bin/emacs-mars-compile")
+    (add-to-list 'ac-sources '(ac-source-gtags
+                               ac-source-semantic
+                               ac-source-words-in-buffer))
+    (auto-complete-mode -1))
+  
+  
   (add-hook 'c++-mode-hook 'my-c-hook)
   (add-hook 'cc-mode-hook 'my-c-hook)
   (add-hook 'c-mode-hook 'my-c-hook)
@@ -1168,20 +1246,14 @@ These match the Outlook ones..
   (setq mu4e-maildir-shortcuts
         '(("/INBOX" . ?i)))
   
-  (setq mu4e-refile-folder
-        (lambda (msg)
-          (cond
-           ((mu4e-message-contact-field-matches msg :to "ng-mars@netapp.com")
-            "/INBOX.mars")
-           ((mu4e-message-contact-field-matches msg :to "marsrevu@netapp.com")
-            "/INBOX.gerrit")
-           (t "/INBOX.archive"))))
+  (setq mu4e-refile-folder cm-mu4e-refile-folder)
+  
 #+end_src
 **** Retrieval and Indexing
 Let's update the maildirs once every 5 minutes
 #+begin_src emacs-lisp
   (setq mu4e-get-mail-command "offlineimap"
-        mu4e-upate-interval 300)
+        mu4e-update-interval 200)
 #+end_src
 **** Sending mail
 We're just borrowing the gnus settings here..
@@ -1196,6 +1268,12 @@ We're just borrowing the gnus settings here..
   
   (setq mu4e-sent-messages-behavior 'sent)
 #+end_src
+**** Queuing mail
+This is very useful for when I ride the train.
+#+begin_src emacs-lisp
+  (setq smtpmail-queue-mail  nil  ;; start in non-queuing mode
+        smtpmail-queue-dir   "~/mail/queue/cur")
+#+end_src
 **** Message view
 #+begin_src emacs-lisp
   ;; enable inline images
@@ -1204,13 +1282,13 @@ We're just borrowing the gnus settings here..
   (when (fboundp 'imagemagick-register-types)
     (imagemagick-register-types))
   
-  (setq message-citation-line-format "* %f [%Y.%m.%d %H:%M]:")
+  (setq message-citation-line-format "* %f [%Y-%m-%d %H:%M]:")
   (setq message-citation-line-function 'message-insert-formatted-citation-line)
   
   ;; for w3m
-  ;; (setq mu4e-html2text-command "w3m -T 'text/html' -dump")
-  (setq mu4e-html2text-command "html2text -nobs -ascii -style pretty")
-  (setq mu4e-view-prefer-html t)
+  (setq mu4e-html2text-command "w3m -T 'text/html' -dump")
+  ;; (setq mu4e-html2text-command "html2text -nobs -ascii -style pretty")
+  (setq mu4e-view-prefer-html nil)
   
   (add-to-list 'mu4e-view-actions
                '("browser render" . mu4e-action-view-in-browser))
@@ -1523,7 +1601,8 @@ Functions borrowed from Sacha Chua.
           ("i" "Inbox"
            ((tags-todo "-{.*}")))
           ("n" "Next agenda"
-           ((todo "NEXT")
+           ((todo "WAITING")
+            (todo "NEXT")
             (todo "STARTED"))
            ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
             (org-agenda-sorting-strategy '(user-defined-up))))
@@ -1644,7 +1723,7 @@ Functions borrowed from Sacha Chua.
   
   (defun cm/org-export-as-pandoc ()
     (interactive)
-    (org-export-as-html 3 nil nil "*Org HTML Export*" t nil)
+    (org-export-as-html 3 nil "*Org HTML Export*" t nil)
     (with-current-buffer "*Org HTML Export*"
       (pandoc-mode 1)
       (pandoc-set-write "mediawiki")
@@ -1929,8 +2008,7 @@ How I deploy my personal website.
   (setq rcirc-default-user-name "codemac")
   (setq rcirc-default-user-full-name "codemac")
   
-  (setq rcirc-server-alist '(("chat.freenode.net" :port 8000)
-                             ("localhost" :port 6667)))
+  (setq rcirc-server-alist cm-rcirc-server-alist)
   
   (setq rcirc-startup-channels-alist '(("\\.freenode\\.net$" "#emacs")))
 #+end_src
@@ -1957,13 +2035,14 @@ me over.
   (setq erc-fill-static-center 15)
   
   ;; Ignore messages from the server that are not channel activity
-  ;(setq erc-track-exclude-types '("JOIN" "NICK" "PART" "QUIT" "MODE"
-  ;                                "324" "329" "332" "333" "353" "477"))
-  ;(setq erc-track-exclude '("&bitlbee" "#emacs" "#ruby" "#applescript"))
+  (setq erc-track-exclude-types '("JOIN" "NICK" "PART" "QUIT" "MODE"
+                                  "324" "329" "332" "333" "353" "477"))
+  (setq erc-track-exclude cm-erc-track-exclude)
   
   (setq erc-header-line-format "%n on %t (%m,%l)")
   
   ;; Auto join the given channels
+  (erc-autojoin-mode t)
   (setq erc-autojoin-channels-alist cm-irc-channel-alist)
   
   ;; Some other settings
@@ -1972,13 +2051,14 @@ me over.
   (setq erc-track-showcount t)
   (setq erc-auto-query 'bury)             ; Private messages go to a hidden buffer
   (setq erc-query-display 'buffer)        ; Reuse current buffer when sending private messages
-  (setq erc-keywords '("codemac" "jeff"))
+  (setq erc-keywords cm-erc-keywords)
   
   ;; Setup ERC buffers
   (defun my-erc-hook ()
     "Correctly configure ERC buffers"
     (auto-fill-mode 0)                    ; disable auto fill
     (setq truncate-lines nil)            ; wrap lines
+    (require 'erc-highlight-nicknames)
     ;; Add some modules
     (add-to-list 'erc-modules 'scrolltobottom)
     (add-to-list 'erc-modules 'truncate)
@@ -1988,10 +2068,10 @@ me over.
   
   (defun my-erc-after-connect (server nick)
     (cond
-     ((string-match "localhost" server) (erc-message "PRIVMSG" (concat "&bitlbee identify " cm-bitlbee-pass)))
-     ((string-match "freenode"  server) (erc-message "PRIVMSG" (concat "NickServ identify " cm-freenode-pass)))
-     ((string-match "oftc"      server) (erc-message "PRIVMSG" (concat "nickserv identify " cm-oftc-pass)))
-     ((string-match "what"      server) (erc-message "PRIVMSG" (concat "Drone enter #what.cd codemac " cm-what-pass)))
+     ((string-match "localhost" server) (erc-message "PRIVMSG" (concat "&bitlbee identify " cm-bitlbee-password)))
+     ((string-match "freenode"  server) (erc-message "PRIVMSG" (concat "NickServ identify " cm-freenode-password)))
+     ((string-match "oftc"      server) (erc-message "PRIVMSG" (concat "nickserv identify " cm-oftc-password)))
+     ((string-match "what"      server) (erc-message "PRIVMSG" (concat "Drone enter #what.cd codemac " cm-what-password)))
   ))
   
   
@@ -2024,12 +2104,7 @@ me over.
   ;; Give bitlbee a chance to bind to the local port
   ;(sleep-for 1)
   
-  ;; Define my ultracool erc-startup
-  (defun erc-startup ()
-    (interactive)
-    (erc :server "localhost" :port "6667")
-  ;  (erc-ssl :server "irc.oftc.net" :port "6697")
-    (erc-ssl :server "chat.freenode.net" :port "8000"))
+  
 #+end_src
 *** Bitlbee
 A subprocess you can use as an irc<-> aim/jabber/im gateway
@@ -2323,6 +2398,20 @@ A wholly owned subsidiary of Cisco.
 #+begin_src emacs-lisp
   ; have to figure out how to comment multiple lines...
 #+end_src
+
+** All edit in occur
+Turns out that occur actually handles this just fine..
+
+#+begin_src emacs-lisp
+  ;; (require 'all)
+  ;; (defun isearch-all ()
+  ;;   "Invoke `all' from within isearch."
+  ;;   (interactive)
+  ;;   (let ((case-fold-search isearch-case-fold-search))
+  ;;     (all (if isearch-regexp isearch-string (regexp-quote isearch-string)))))
+  
+  ;; (define-key isearch-mode-map (kbd "C-e") 'isearch-all)
+#+end_src
 ** Hippe tab
 I.. don't use this anymore
 #+begin_src emacs-lisp
@@ -2459,6 +2548,7 @@ use it that much. We'll see if I ever start using it more.
 Everyone should use Ido. (well, maybe helm)
 #+begin_src emacs-lisp
   (require 'ido)
+  (put 'ido-exit-minibuffer 'disabled nil)
   ;(ido-mode t)
 #+end_src
 If the exact name isn't found, then flex matching will match against
@@ -2578,6 +2668,20 @@ Grabbed from [[http://www.reddit.com/r/emacs/comments/13ren4/ysk_that_you_can_pa
   ;; (setq cua-enable-cua-keys nil)
   ;; (cua-mode t)
 #+end_src
+** Command Frequency
+This can be useful to figure out what commands you do and don't use
+all the time, so you can figure out what keybindings you need to
+fix. I found that I never used the data though..
+#+begin_src emacs-lisp
+  ;; (require 'command-frequency)
+  
+  ;; (setq-default command-frequency-table-file "~/.emacs-frequency")
+  
+  ;; (command-frequency-table-load)
+  ;; (command-frequency-mode 1)
+  ;; (command-frequency-autosave-mode 1)
+#+end_src
+
 * Custom variables
 #+begin_src emacs-lisp
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; CUSTOM!
@@ -2633,11 +2737,5 @@ Start a server if it's not started, and I'm not root.
       (server-start)))
   
   (when (eq system-type 'darwin) (add-hook 'server-visit-hook 'raise-frame))
-#+end_src
-* Finish load time
-#+begin_src emacs-lisp
-  (message "My .emacs loaded in %ds"
-           (destructuring-bind (hi lo ms) (current-time)
-             (- (+ hi lo) (+ (first *emacs-load-start*) (second *emacs-load-start*)))))
 #+end_src
 

@@ -18,8 +18,8 @@
 	      [(0 4 1)
 	       nil "Major mode for CoffeeScript files" tar])
  (company .
-	  [(0 5)
-	   nil "Flexible inline text and code completion" tar])
+	  [(0 6 8)
+	   nil "Modular in-buffer completion framework" tar])
  (csv-mode .
 	   [(1 1)
 	    nil "Major mode for editing comma/char separated values" single])
@@ -47,6 +47,9 @@
  (eldoc-eval .
 	     [(0 1)
 	      nil "Enable eldoc support when minibuffer is in use." single])
+ (enwc .
+       [(1 0)
+	nil "The Emacs Network Client" tar])
  (epoch-view .
 	     [(0 0 1)
 	      nil "Minor mode to visualize epoch timestamps" single])
@@ -54,7 +57,7 @@
 			[(1 1)
 			 nil "Parse and browse f90 interfaces" single])
  (ggtags .
-	 [(0 6)
+	 [(0 6 3)
 	  nil "GNU Global source code tagging system" single])
  (heap .
        [(0 3)
@@ -66,15 +69,18 @@
 	      [(1 0)
 	       nil "Major mode for Jgraph files" single])
  (js2-mode .
-	   [(20130219)
+	   [(20130307)
 	    ((emacs
 	      (24 1)))
 	    "Improved JavaScript editing mode" single])
+ (jumpc .
+	[(2 0)
+	 nil "jump to previous insertion points" single])
  (lex .
-      [(1 0)
-       nil "Lexical analyser construction" single])
+      [(1 1)
+       nil "Lexical analyser construction" tar])
  (lmc .
-      [(1 0)
+      [(1 1)
        nil "Little Man Computer in Elisp" single])
  (load-dir .
 	   [(0 0 3)
@@ -106,8 +112,11 @@
  (oauth2 .
 	 [(0 8)
 	  nil "OAuth 2.0 Authorization Protocol" single])
+ (omn-mode .
+	   [(1 0)
+	    nil "Support for OWL Manchester Notation" single])
  (org .
-      [(20130218)
+      [(20130415)
        nil "Outline-based notes management and organizer" tar])
  (quarter-plane .
 		[(0 1)
@@ -116,7 +125,7 @@
 	[(0 1)
 	 nil "Queue data structure" single])
  (rainbow-mode .
-	       [(0 6)
+	       [(0 7)
 		nil "Colorize color names in buffers" single])
  (register-list .
 		[(0 1)
@@ -131,8 +140,11 @@
 		 [(4 0)
 		  nil "Insert operators with surrounding spaces smartly" single])
  (sml-mode .
-	   [(6 3)
+	   [(6 4)
 	    nil "Major mode for editing (Standard) ML" single])
+ (sokoban .
+	  [(1 0 4)
+	   nil "Sokoban game for emacs" tar])
  (svg-clock .
 	    [(0 4)
 	     nil "Analog clock using Scalable Vector Graphics" single])
