@@ -224,9 +224,10 @@ God I love backword-kill-word. Also some bookmarks
   (global-set-key "\C-w" 'backward-kill-word)
   (global-set-key "\C-x\C-k" 'kill-region)
   
-  (global-set-key [f5] 'bookmark-bmenu-list)
-  (global-set-key [f6] 'bookmark-set)
-  (global-set-key [f7] 'bookmark-jump)
+  ;; not really using this..
+  ;(global-set-key [f5] 'bookmark-bmenu-list)
+  ;(global-set-key [f6] 'bookmark-set)
+  ;(global-set-key [f7] 'bookmark-jump)
   
   (defun my-backward-kill-word (&optional arg)
     "Replacement for the backward-kill-word command
@@ -255,6 +256,27 @@ God I love backword-kill-word. Also some bookmarks
 ** Narrow regions
 #+begin_src emacs-lisp
   (put 'narrow-to-region 'disabled nil)
+#+end_src
+** kill with linum
+Really useful for source code copying.. This is from [[http://stackoverflow.com/questions/12165205/how-to-copy-paste-a-region-from-emacs-buffer-with-line-file-reference][stack overflow]].
+
+#+begin_src emacs-lisp
+  (defun kill-with-linenum (beg end)
+    (interactive "r")
+    (save-excursion
+      (goto-char end)
+      (skip-chars-backward "\n \t")
+      (setq end (point))
+      (let* ((chunk (buffer-substring beg end))
+             (chunk (concat
+                     (format "╭──────── #%-d ─ %s ──\n│ "
+                             (line-number-at-pos beg)
+                             (or (buffer-file-name) (buffer-name)))
+                     (replace-regexp-in-string "\n" "\n│ " chunk)
+                     (format "\n╰──────── #%-d ─" 
+                             (line-number-at-pos end)))))
+        (kill-new chunk)))
+    (deactivate-mark))
 #+end_src
 * ELPA
 #+begin_src emacs-lisp
@@ -376,6 +398,20 @@ Inspired by [[http://www.reddit.com/r/emacs/comments/gjqki/is_there_any_way_to_t
   
   ;; Press [pause] key in each window you want to "freeze"
   (global-set-key [f11] 'toggle-window-dedicated)
+#+end_src
+** Narrow to indirect buffer
+There was a [[http://demonastery.org/2013/04/emacs-narrow-to-region-indirect/][blog post]] on [[http://www.reddit.com/r/emacs/comments/1clte0/narrowtoregionindirect_for_emacs/][reddit]] about this, and It's too good to not
+use. I haven't decided what the key binding should really be yet..
+#+begin_src emacs-lisp
+  (defun narrow-to-region-indirect (start end)
+    "Restrict editing in this buffer to the current region, indirectly."
+    (interactive "r")
+    (when (boundp 'evil-mode) ; There's probably a nicer way to do this
+      (evil-exit-visual-state))
+    (let ((buf (clone-indirect-buffer nil nil)))
+      (with-current-buffer buf
+        (narrow-to-region start end))
+        (switch-to-buffer buf)))
 #+end_src
 ** Revert
 To revert a buffer easily, put the char back where I had it.
@@ -1246,7 +1282,7 @@ These match the Outlook ones..
   (setq mu4e-maildir-shortcuts
         '(("/INBOX" . ?i)))
   
-  (setq mu4e-refile-folder cm-mu4e-refile-folder)
+  (setq mu4e-refile-folder 'cm-mu4e-refile-folder)
   
 #+end_src
 **** Retrieval and Indexing
@@ -1352,6 +1388,7 @@ org-mouse in case I already have a pointing device. I imagine
 #+begin_src emacs-lisp
   (add-to-list 'auto-mode-alist '("\\.org$" . org-mode))
   
+  (require 'org-loaddefs)
   (require 'org)
   (require 'org-protocol)
   (require 'org-mouse)
@@ -1689,7 +1726,7 @@ Functions borrowed from Sacha Chua.
   (setq org-global-properties '(("Effort_ALL" . "0:10 0:20 0:30 0:40 0:50 1:00 2:00 3:00 4:00 5:00 6:00 7:00 8:00 9:00 10:00 11:00 12:00")))
   (setq org-columns-default-format "%TODO %50ITEM(Task) %17Effort(Estimated Effort){:} %CLOCKSUM")
   
-  
+  (global-set-key (kbd "<f6>") 'org-clock-goto)
 #+end_src
 **** Tags and todo keywords
 #+begin_src emacs-lisp
@@ -1716,7 +1753,6 @@ Functions borrowed from Sacha Chua.
 #+end_src
 **** org export
 #+begin_src emacs-lisp
-  (add-to-list 'load-path "~/config/emacs.d/org-src/contrib/lisp")
   (require 'pandoc-mode)
   ;; mediawiki + pandoc hack
   (setq pandoc-binary "/Users/jmickey/bin/pandoc")
@@ -1733,6 +1769,16 @@ Functions borrowed from Sacha Chua.
   (setq org-export-with-sub-superscripts nil)
   (setq org-pretty-entities-include-sub-superscripts nil)
   (setq org-use-sub-superscripts nil)
+  
+  (org-babel-load-file (expand-file-name
+                        "org-docco.org"
+                        (expand-file-name
+                         "scripts"
+                         (expand-file-name
+                          "contrib"
+                          (expand-file-name
+                           "org-src"
+                           dotfiles-dir)))))
 #+end_src
 **** org babel & export
 #+begin_src emacs-lisp  
@@ -1787,7 +1833,7 @@ How I deploy my personal website.
            :publishing-directory "/tmp/codemac.net"
            :recursive t
            :base-extension "org"
-           :publishing-function org-publish-org-to-html
+           :publishing-function org-html-publish-to-html
            :exclude-tags ("noexport" "todo")
            :html-preamble "<div id=\"header\">&nbsp;</div>"
            :html-postamble "<div class=\"pagedate\">%a &lt;%e&gt;, %d. %c.</div>"
@@ -1809,7 +1855,7 @@ How I deploy my personal website.
            :section-numbers nil
            :table-of-contents nil
            :base-extension "org"
-           :publishing-function (org-publish-org-to-html org-publish-org-to-org)
+           :publishing-function (org-html-publish-to-html org-org-publish-to-org)
            :plain-source t
            :htmlized-source t
            :style-include-default nil
@@ -2096,10 +2142,10 @@ me over.
   (add-hook 'erc-after-connect 'my-erc-after-connect)
   
   ;; Start a local bitlbee server
-  (require 'bitlbee)
-  (setq bitlbee-user-directory "~/.bitlbee")
-  (setq bitlbee-executable "/opt/local/sbin/bitlbee")
-  (bitlbee-start)
+  ;(require 'bitlbee)
+  ;(setq bitlbee-user-directory "~/.bitlbee")
+  ;(setq bitlbee-executable "/opt/local/sbin/bitlbee")
+  ;(bitlbee-start)
   
   ;; Give bitlbee a chance to bind to the local port
   ;(sleep-for 1)

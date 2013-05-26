@@ -24,7 +24,7 @@ infodir = $(prefix)/info
 
 # Define if you want to include some (or all) files from contrib/lisp
 # just the filename please (no path prefix, no .el suffix), maybe with globbing
-#ORG_ADD_CONTRIB = org-e-* org-md org-export # e.g. the new exporter
+#ORG_ADD_CONTRIB = ox-* # e.g. the contributed exporter
 
 # Where to create temporary files for the testsuite
 # respect TMPDIR if it is already defined in the environment
@@ -56,7 +56,7 @@ BTEST	= $(BATCH) \
 	  --eval '(add-to-list '"'"'load-path "./lisp")' \
 	  --eval '(add-to-list '"'"'load-path "./testing")' \
 	  $(BTEST_POST) \
-	  -l org-install.el \
+	  -l org-loaddefs.el \
 	  -l testing/org-test.el \
 	  $(foreach ob-lang,$(BTEST_OB_LANGUAGES),$(req-ob-lang)) \
 	  $(foreach req,$(BTEST_EXTRA),$(req-extra)) \
@@ -65,7 +65,8 @@ BTEST	= $(BATCH) \
 
 # Using emacs in batch mode.
 # BATCH = $(EMACS) -batch -vanilla # XEmacs
-BATCH	= $(EMACS) -batch -Q
+BATCH	= $(EMACS) -batch -Q \
+	  --eval '(setq vc-handled-backends nil)'
 
 # Emacs must be started in toplevel directory
 BATCHO	= $(BATCH) \
@@ -81,17 +82,17 @@ MAKE_LOCAL_MK = $(BATCHO) \
 BATCHL	= $(BATCH) \
 	  --eval '(add-to-list '"'"'load-path ".")'
 
-# How to generate org-install.el
+# How to generate org-loaddefs.el
 MAKE_ORG_INSTALL = $(BATCHL) \
 	  --eval '(load "org-compat.el")' \
 	  --eval '(load "../mk/org-fixup.el")' \
-	  --eval '(org-make-org-install)'
+	  --eval '(org-make-org-loaddefs)'
 
 # How to generate org-version.el
 MAKE_ORG_VERSION = $(BATCHL) \
 	  --eval '(load "org-compat.el")' \
 	  --eval '(load "../mk/org-fixup.el")' \
-	  --eval '(org-make-org-version "$(ORGVERSION)" "$(GITVERSION)" "$(datadir)")'
+	  --eval '(org-make-org-version "$(ORGVERSION)" "$(GITVERSION)" "'$(datadir)'")'
 
 # How to byte-compile the whole source directory
 ELCDIR	= $(BATCHL) \

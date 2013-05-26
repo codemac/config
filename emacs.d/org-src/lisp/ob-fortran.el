@@ -1,6 +1,6 @@
 ;;; ob-fortran.el --- org-babel functions for fortran
 
-;; Copyright (C) 2011-2012  Free Software Foundation, Inc.
+;; Copyright (C) 2011-2013 Free Software Foundation, Inc.
 
 ;; Authors: Sergey Litvinov
 ;;       Eric Schulte
@@ -28,7 +28,6 @@
 
 ;;; Code:
 (require 'ob)
-(require 'ob-eval)
 (require 'cc-mode)
 
 (declare-function org-entry-get "org"
@@ -62,11 +61,11 @@
 		     (org-babel-process-file-name tmp-src-file)) ""))))
     ((lambda (results)
        (org-babel-reassemble-table
-	(if (member "vector" (cdr (assoc :result-params params)))
-	    (let ((tmp-file (org-babel-temp-file "f-")))
-	      (with-temp-file tmp-file (insert results))
-	      (org-babel-import-elisp-from-file tmp-file))
-	  (org-babel-read results))
+	(org-babel-result-cond (cdr (assoc :result-params params))
+	  (org-babel-read results)
+	  (let ((tmp-file (org-babel-temp-file "f-")))
+	    (with-temp-file tmp-file (insert results))
+	    (org-babel-import-elisp-from-file tmp-file)))
 	(org-babel-pick-name
 	 (cdr (assoc :colname-names params)) (cdr (assoc :colnames params)))
 	(org-babel-pick-name

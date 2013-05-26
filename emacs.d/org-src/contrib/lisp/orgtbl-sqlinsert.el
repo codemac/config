@@ -1,9 +1,11 @@
 ;;; orgtbl-sqlinsert.el --- orgtbl to SQL insert statements.
 
-;; Copyright (C) 2008-2012  Free Software Foundation
+;; Copyright (C) 2008-2013  Free Software Foundation
 
 ;; Author: Jason Riedy <jason@acm.org>
 ;; Keywords: org, tables, sql
+
+;; This file is not part of GNU Emacs.
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by

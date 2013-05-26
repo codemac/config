@@ -1,7 +1,7 @@
 \input texinfo.tex    @c -*-texinfo-*-
 @c %**start of header
 @setfilename mu4e.info
-@settitle mu4e user manual
+@settitle mu4e @value{mu-version} user manual
 
 @c Use proper quote and backtick for code sections in PDF output
 @c Cf. Texinfo manual 14.2
@@ -54,7 +54,7 @@ Documentation License.''
 @unnumbered Welcome to mu4e
 @end iftex
 
-Welcome to @t{mu4e}!
+Welcome to @t{mu4e} @value{mu-version}!
 
 @t{mu4e} (@t{mu}-for-emacs) is an e-mail client for GNU-Emacs version 23 and
 later, built on top of the
@@ -454,7 +454,8 @@ As we have seen, we can do all of the mail retrieval @emph{outside} of
 @t{mu4e}. For that, set the variable @code{mu4e-get-mail-command} to the
 program or shell command you want to use for retrieving mail. You can then
 retrieve your e-mail using @kbd{M-x mu4e-update-mail-and-index}, or
-@kbd{C-S-u} in all @t{mu4e}-views.
+@kbd{C-S-u} in all @t{mu4e}-views; alternatively, you can use @kbd{C-c C-u},
+which may be more convenient if you use emacs in a terminal.
 
 If you don't have a specific command for getting mail, for example because you
 are running your own mail-server, you can set @code{mu4e-get-mail-command} to
@@ -526,6 +527,10 @@ For Gmail-over-@abbr{IMAP}, you could add the following to your settings:
 (setq mu4e-sent-messages-behavior 'delete)
 @end verbatim
 And that's it! We should now be ready to go.
+
+For more complex needs, @code{mu4e-sent-messages-behavior} can also be a
+a parameter-less function that returns one of the metioned symbols; see the
+built-in documentation for the variable.
 
 @node Running mu4e
 @section Running mu4e
@@ -696,15 +701,15 @@ An example headers view:
 @cartouche
 @verbatim
 Date V       Flgs  From/To             List       Subject
-06:32        Nu    To Edmund Dantès    GstDev       + Re: Gstreamer-V4L... 
-15:08        Nu    Abbé Busoni         GstDev         + Re: Gstreamer-V... 
-18:20        Nu    Pierre Morrel       GstDev           \ Re: Gstreamer... 
-2013-03-18   S     Jacopo              EmacsUsr   + emacs server on win... 
-2013-03-18   S     Mercédès            EmacsUsr     \ RE: emacs server ... 
-2013-03-18   S     Beachamp            EmacsUsr   + Re: Copying a whole... 
-22:07        Nu    Albert de Moncerf   EmacsUsr     \ Re: Copying a who... 
-2013-03-18   S     Gaspard Caderousse  GstDev     | Issue with GESSimpl... 
-2013-03-18   Ss    Baron Danglars      GuileUsr   | Guile-SDL 0.4.2 ava... 
+06:32        Nu    To Edmund Dantès    GstDev       + Re: Gstreamer-V4L...
+15:08        Nu    Abbé Busoni         GstDev         + Re: Gstreamer-V...
+18:20        Nu    Pierre Morrel       GstDev           \ Re: Gstreamer...
+2013-03-18   S     Jacopo              EmacsUsr   + emacs server on win...
+2013-03-18   S     Mercédès            EmacsUsr     \ RE: emacs server ...
+2013-03-18   S     Beachamp            EmacsUsr   + Re: Copying a whole...
+22:07        Nu    Albert de Moncerf   EmacsUsr     \ Re: Copying a who...
+2013-03-18   S     Gaspard Caderousse  GstDev     | Issue with GESSimpl...
+2013-03-18   Ss    Baron Danglars      GuileUsr   | Guile-SDL 0.4.2 ava...
 End of search results
 @end verbatim
 @end cartouche
@@ -1050,6 +1055,7 @@ A            execute some custom action on an attachment
 
 misc
 ----
+c            copy address at point (with C-u copy long version)
 w            toggle line wrapping
 h            toggle showing cited parts
 
@@ -2902,6 +2908,9 @@ See @ref{Setting the default emacs mail program}.
 boring plain-ASCII ones?} Glad you asked! Yes, if you set
 @code{mu4e-use-fancy-chars} to @t{t}, @t{mu4e} uses such fancy characters in a
 number of places.
+@item @emph{Can I start @t{mu4e} in the background?} Yes - if you provide a
+prefix-argument (@key{C-u}), @t{mu4e} starts, but does not show the
+main-window.
 @end enumerate
 
 @node Reading messages
@@ -3409,7 +3418,7 @@ A typical message s-expression looks something like the following:
  :in-reply-to "38203498230942D81EE81AF0114E4E74@@123213.mail.example.com"
  :body-txt "Hi Tom,
  ....
-"))
+")
 @end lisp
 
 This s-expression forms a property list (@t{plist}), and we can get values

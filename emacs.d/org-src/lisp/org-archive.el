@@ -1,6 +1,6 @@
 ;;; org-archive.el --- Archiving for Org-mode
 
-;; Copyright (C) 2004-2012 Free Software Foundation, Inc.
+;; Copyright (C) 2004-2013 Free Software Foundation, Inc.
 
 ;; Author: Carsten Dominik <carsten at orgmode dot org>
 ;; Keywords: outlines, hypermedia, calendar, wp
@@ -70,6 +70,15 @@ This variable is obsolete and has no effect anymore, instead add or remove
 `time' from the variable `org-archive-save-context-info'."
   :group 'org-archive
   :type 'boolean)
+
+(defcustom org-archive-file-header-format "\nArchived entries from file %s\n\n"
+  "The header format string for newly created archive files.
+When nil, no header will be inserted.
+When a string, a %s formatter will be replaced by the file name."
+  :group 'org-archive
+  :version "24.4"
+  :package-version '(Org . "8.0")
+  :type 'string)
 
 (defcustom org-archive-subtree-add-inherited-tags 'infile
   "Non-nil means append inherited tags when archiving a subtree."
@@ -181,6 +190,7 @@ if LOCATION is not given, the value of `org-archive-location' is used."
 	      (file-name-nondirectory
 	       (buffer-file-name (buffer-base-buffer))))))
 
+;;;###autoload
 (defun org-archive-subtree (&optional find-done)
   "Move the current subtree to the archive.
 The archive can be a certain top-level heading in the current file, or in
@@ -277,9 +287,9 @@ this heading."
 	      (let ((org-insert-mode-line-in-empty-file t)
 		    (org-inhibit-startup t))
 		(call-interactively 'org-mode)))
-	  (when newfile-p
+	  (when (and newfile-p org-archive-file-header-format)
 	    (goto-char (point-max))
-	    (insert (format "\nArchived entries from file %s\n\n"
+	    (insert (format org-archive-file-header-format
 			    (buffer-file-name this-buffer))))
 	  (when datetree-date
 	    (require 'org-datetree)
@@ -369,6 +379,7 @@ this heading."
     (if (looking-at "^[ \t]*$")
 	(outline-next-visible-heading 1))))
 
+;;;###autoload
 (defun org-archive-to-archive-sibling ()
   "Archive the current heading by moving it under the archive sibling.
 The archive sibling is a sibling of the heading with the heading name
@@ -483,6 +494,7 @@ When TAG is non-nil, don't move trees, but mark them with the ARCHIVE tag."
 	    (goto-char end)))))
     (message "%d trees archived" cntarch)))
 
+;;;###autoload
 (defun org-toggle-archive-tag (&optional find-done)
   "Toggle the archive tag for the current headline.
 With prefix ARG, check all children of current headline and offer tagging
@@ -536,5 +548,9 @@ This command is set with the variable `org-archive-default-command'."
     (error "Abort")))
 
 (provide 'org-archive)
+
+;; Local variables:
+;; generated-autoload-file: "org-loaddefs.el"
+;; End:
 
 ;;; org-archive.el ends here
