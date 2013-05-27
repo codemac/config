@@ -344,6 +344,14 @@ may or may not be always true though.
   (defvar cm-irc-channel-alist '(("freenode" "#archlinux" "#emacs")
                                  ("oftc" "#ikiwiki"))
     "The channel list..")
+  (defvar cm-identica-username "nope" "The password for bitlbee!")
+  (defvar cm-identica-password "nope" "The password for bitlbee!")
+  (defvar cm-erc-keywords "nope" "The password for bitlbee!")
+  (defvar cm-rcirc-server-alist '() "The password for bitlbee!")
+  (defvar cm-ironport-p4port "" "p4port")
+  (defvar cm-mu4e-refile-folder (lambda (x) '()) "refile!")
+  (defvar cm-erc-track-exclude "" "track exclude")
+
   
   (let ((private-file "~/.emacs-priv.el"))
     (when (file-exists-p private-file)
@@ -445,7 +453,6 @@ Mac fix for info installation location!
 ** Eshell
 #+begin_src emacs-lisp
   (autoload 'eshell "eshell" "")
-  (load-file "~/.emacs-priv.el")
   
   (defun cm-eshell-prompt ()
     (concat user-login-name "@" system-name ":"

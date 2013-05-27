@@ -27,7 +27,7 @@ yeahconsole*matcher.button:	1
 yeahconsole*urlLauncher:      firefox
 
 
-emacs*font: Dina-11
+!emacs*font: Dina-11
 
 ! amazing xcalc from pig0
 xcalc*geometry: 210x275
