@@ -53,7 +53,7 @@ host_triplet = @host@
 DIST_COMMON = $(top_srcdir)/gtest.mk $(srcdir)/Makefile.in \
 	$(srcdir)/Makefile.am $(srcdir)/mu4e-meta.el.in \
 	$(srcdir)/texi.texi.in $(mu4e_TEXINFOS) texinfo.tex \
-	$(dist_lisp_LISP) TODO mdate-sh
+	$(dist_lisp_LISP) TODO
 subdir = mu4e
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/libtool.m4 \

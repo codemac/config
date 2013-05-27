@@ -102,8 +102,8 @@ The first letter of NAME is used as a shortcut character.")
      ("ein-emacs"  . mu4e-view-open-attachment-emacs)
      ("|pipe"      . mu4e-view-pipe-attachment))
   "List of actions to perform on message attachments.
-The actions are of the form:
- (NAME  FUNC)
+The actions are cons-cells of the form:
+ (NAME . FUNC)
 where:
 * NAME is the name of the action (e.g. \"Count lines\")
 * FUNC is a function which receives two arguments: the message
@@ -295,8 +295,17 @@ at POINT, or if nil, at (point)."
   "Compose a message for the address at point."
   (interactive)
   (unless (get-text-property (or point (point)) 'email)
-    (error "No address at point"))
+    (mu4e-error "No address at point"))
   (mu4e~compose-mail (get-text-property (or point (point)) 'email)))
+
+(defun mu4e~view-copy-contact (&optional full)
+  "Compose a message for the address at (point)."
+  (interactive "P")
+  (let ((email (get-text-property (point) 'email))
+	 (long (get-text-property (point) 'long)))
+    (unless email (mu4e-error "No address at point"))
+    (kill-new (if full long email))
+    (mu4e-message "Address copied.")))
 
 (defun mu4e~view-construct-contacts-header (msg field)
   "Add a header for a contact field (ie., :to, :from, :cc, :bcc)."
@@ -312,6 +321,7 @@ at POINT, or if nil, at (point)."
 	  (define-key map [?\M-\r]  'mu4e~view-toggle-contact)
 	  (define-key map [mouse-2] 'mu4e~view-compose-contact)
 	  (define-key map "C"  'mu4e~view-compose-contact)
+	  (define-key map "c"  'mu4e~view-copy-contact)
 	  (propertize
 	    (if mu4e-view-show-addresses long short)
 	    'long long
@@ -461,6 +471,7 @@ FUNC should be a function taking two arguments:
     (let ((map (make-sparse-keymap)))
 
       (define-key map  (kbd "C-S-u") 'mu4e-update-mail-and-index)
+      (define-key map  (kbd "C-c C-u") 'mu4e-update-mail-and-index)
 
       (define-key map "q" 'mu4e~view-quit-buffer)
 

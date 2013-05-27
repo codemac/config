@@ -1,10 +1,22 @@
 ;;; test-ob-fortran.el --- tests for ob-fortran.el
 
-;; Copyright (c) 2010-2012 Sergey Litvinov
+;; Copyright (c) 2010-2013 Sergey Litvinov
 ;; Authors: Sergey Litvinov
 
-;; Released under the GNU General Public License version 3
-;; see: http://www.gnu.org/licenses/gpl-3.0.html
+;; This file is not part of GNU Emacs.
+
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Code:
 (org-test-for-executable "gfortran")
@@ -32,18 +44,17 @@
     (org-babel-next-src-block)
     (should (= 15 (org-babel-execute-src-block)))))
 
-(ert-deftest ob-fortran/preprosessor-var ()
+(ert-deftest ob-fortran/preprocessor-var ()
   "Test preprocessed fortran"
   (org-test-at-id "d8d1dfd3-5f0c-48fe-b55d-777997e02242"
     (org-babel-next-src-block 2)
     (should (= 42 (org-babel-execute-src-block)))))
 
-;; ;; TODO: test fails
-;; (ert-deftest ob-fortran/character-var ()
-;;   "Test string input"
-;;   (org-test-at-id "d8d1dfd3-5f0c-48fe-b55d-777997e02242"
-;;     (org-babel-next-src-block 3)
-;;     (should (equal "word" (org-babel-execute-src-block)))))
+(ert-deftest ob-fortran/character-var ()
+  "Test string input"
+  (org-test-at-id "d8d1dfd3-5f0c-48fe-b55d-777997e02242"
+    (org-babel-next-src-block 3)
+    (should (equal "word" (org-babel-execute-src-block)))))
 
 (ert-deftest ob-fortran/list-var ()
   "Test real array input"

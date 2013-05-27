@@ -1,6 +1,6 @@
 ;;; org-collector --- collect properties into tables
 
-;; Copyright (C) 2008-2012 Free Software Foundation, Inc.
+;; Copyright (C) 2008-2013 Free Software Foundation, Inc.
 
 ;; Author: Eric Schulte <schulte dot eric at gmail dot com>
 ;; Keywords: outlines, hypermedia, calendar, wp, experimentation,
@@ -10,12 +10,12 @@
 
 ;; This file is not yet part of GNU Emacs.
 
-;; GNU Emacs is free software; you can redistribute it and/or modify
+;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation; either version 3, or (at your option)
 ;; any later version.
 
-;; GNU Emacs is distributed in the hope that it will be useful,
+;; This program is distributed in the hope that it will be useful,
 ;; but WITHOUT ANY WARRANTY; without even the implied warranty of
 ;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ;; GNU General Public License for more details.

@@ -1,6 +1,6 @@
 ;;; ob-scala.el --- org-babel functions for Scala evaluation
 
-;; Copyright (C) 2012  Free Software Foundation, Inc.
+;; Copyright (C) 2012-2013 Free Software Foundation, Inc.
 
 ;; Author: Andrzej Lichnerowicz
 ;; Keywords: literate programming, reproducible research
@@ -31,16 +31,13 @@
 
 ;;; Code:
 (require 'ob)
-(require 'ob-ref)
-(require 'ob-comint)
-(require 'ob-eval)
 (eval-when-compile (require 'cl))
 
+(defvar org-babel-tangle-lang-exts) ;; Autoloaded
 (add-to-list 'org-babel-tangle-lang-exts '("scala" . "scala"))
 (defvar org-babel-default-header-args:scala '())
 (defvar org-babel-scala-command "scala"
   "Name of the command to use for executing Scala code.")
-
 
 (defun org-babel-execute:scala (body params)
   "Execute a block of Scala code with org-babel.  This function is
@@ -72,9 +69,17 @@ Emacs-lisp table, otherwise return the results as a string."
 
 
 (defvar org-babel-scala-wrapper-method
-  "(
+
+"var str_result :String = null;
+
+Console.withOut(new java.io.OutputStream() {def write(b: Int){
+}}) {
+  str_result = {
 %s
-) asString print
+  }.toString
+}
+
+print(str_result)
 ")
 
 
@@ -96,8 +101,8 @@ in BODY as elisp."
             (wrapper (format org-babel-scala-wrapper-method body)))
        (with-temp-file src-file (insert wrapper))
        ((lambda (raw)
-          (if (member "code" result-params)
-              raw
+          (org-babel-result-cond result-params
+	    raw
             (org-babel-scala-table-or-string raw)))
         (org-babel-eval
          (concat org-babel-scala-command " " src-file) ""))))))

@@ -20,7 +20,7 @@ File: mu4e.info,  Node: Top,  Next: Introduction,  Up: (dir)
 mu4e manual
 ***********
 
-   Welcome to mu4e!
+   Welcome to mu4e 0.9.9.5!
 
    mu4e (mu-for-emacs) is an e-mail client for GNU-Emacs version 23 and
 later, built on top of the mu(1) e-mail search engine. mu4e is
@@ -492,7 +492,8 @@ As we have seen, we can do all of the mail retrieval _outside_ of
 set the variable `mu4e-get-mail-command' to the program or shell
 command you want to use for retrieving mail. You can then retrieve your
 e-mail using `M-x mu4e-update-mail-and-index', or `C-S-u' in all
-mu4e-views.
+mu4e-views; alternatively, you can use `C-c C-u', which may be more
+convenient if you use emacs in a terminal.
 
    If you don't have a specific command for getting mail, for example
 because you are running your own mail-server, you can set
@@ -563,6 +564,10 @@ can deal with it).
 ;; don't save messages to Sent Messages, Gmail/IMAP takes care of this
 (setq mu4e-sent-messages-behavior 'delete)
  And that's it! We should now be ready to go.
+
+   For more complex needs, `mu4e-sent-messages-behavior' can also be a
+a parameter-less function that returns one of the metioned symbols; see
+the built-in documentation for the variable.
 
 
 File: mu4e.info,  Node: Running mu4e,  Prev: Sending mail,  Up: Getting started
@@ -1142,6 +1147,7 @@ A            execute some custom action on an attachment
 
 misc
 ----
+c            copy address at point (with C-u copy long version)
 w            toggle line wrapping
 h            toggle showing cited parts
 
@@ -3125,6 +3131,10 @@ C.1 General
      `mu4e-use-fancy-chars' to t, mu4e uses such fancy characters in a
      number of places.
 
+ 12. _Can I start mu4e in the background?_ Yes - if you provide a
+     prefix-argument (<C-u>), mu4e starts, but does not show the
+     main-window.
+
 
 File: mu4e.info,  Node: Reading messages,  Next: Writing messages,  Prev: General,  Up: FAQ
 
@@ -3637,7 +3647,7 @@ A typical message s-expression looks something like the following:
       :in-reply-to "38203498230942D81EE81AF0114E4E74@123213.mail.example.com"
       :body-txt "Hi Tom,
       ....
-     "))
+     ")
 
    This s-expression forms a property list (plist), and we can get
 values from it using plist-get; for example `(plist-get msg :subject)'
@@ -4147,157 +4157,157 @@ permit their use in free software.
 
 Tag Table:
 Node: Top630
-Ref: Top-Footnote-12817
-Ref: Top-Footnote-22862
-Ref: Top-Footnote-32955
-Node: Introduction3078
-Node: Why another e-mail client3309
-Node: Other mail clients3990
-Ref: Other mail clients-Footnote-14698
-Ref: Other mail clients-Footnote-24731
-Ref: Other mail clients-Footnote-34774
-Ref: Other mail clients-Footnote-44810
-Ref: Other mail clients-Footnote-54846
-Node: What mu4e does not do4877
-Ref: What mu4e does not do-Footnote-15896
-Ref: What mu4e does not do-Footnote-25930
-Ref: What mu4e does not do-Footnote-35970
-Node: Becoming a mu4e user6007
-Ref: Becoming a mu4e user-Footnote-16891
-Ref: Becoming a mu4e user-Footnote-26943
-Ref: Becoming a mu4e user-Footnote-36987
-Node: Getting started7047
-Node: Requirements7829
-Ref: Requirements-Footnote-18608
-Ref: Requirements-Footnote-28637
-Node: Installation8684
-Ref: Building from a release tarball10678
-Ref: Building from git11071
-Ref: Installation-Footnote-112445
-Ref: Installation-Footnote-212499
-Node: Getting mail12605
-Ref: Getting mail-Footnote-113693
-Node: Indexing your messages13859
-Ref: Indexing your messages-Footnote-115349
-Node: Basic configuration15490
-Node: Folders16098
-Ref: Folders-Footnote-116870
-Node: Retrieval and indexing17141
-Node: Sending mail18616
-Node: Running mu4e20616
-Node: Main view21922
-Node: MV Overview22357
-Node: Basic actions23454
-Node: MV Bookmarks24290
-Node: Miscellaneous24918
-Node: Headers view25782
-Node: HV Overview26288
-Ref: HV Overview-Footnote-129587
-Ref: HV Overview-Footnote-229674
-Ref: HV Overview-Footnote-329777
-Node: Keybindings29874
-Node: Marking messages31795
-Node: Sort order and threading32998
-Ref: Sort order and threading-Footnote-134233
-Node: HV Actions34320
-Node: Split view35010
-Node: Message view36089
-Node: MSGV Overview36576
-Node: MSGV Keybindings38415
-Node: Opening and saving attachments40897
-Ref: Opening and saving attachments-Footnote-142311
-Ref: Opening and saving attachments-Footnote-242359
-Node: Viewing images inline42467
-Ref: Viewing images inline-Footnote-143306
-Node: Displaying rich-text messages43343
-Ref: Displaying rich-text messages-Footnote-144699
-Ref: Displaying rich-text messages-Footnote-244796
-Node: MSGV Crypto44838
-Ref: Decryption45730
-Ref: Verifying signatures46439
-Ref: MSGV Crypto-Footnote-147131
-Node: MSGV Actions47234
-Node: Editor view48721
-Node: EV Overview49237
-Node: Useful keybindings49621
-Node: Address autocompletion50209
-Ref: Address autocompletion-Footnote-152471
-Node: Compose hooks52514
-Node: Signing and encrypting55148
-Node: Queuing mail55958
-Node: Other settings57243
-Node: Searching57710
-Node: Queries58641
-Ref: Queries-Footnote-160667
-Node: Bookmarks60779
-Ref: Bookmarks-Footnote-163121
-Node: Maildir searches63164
-Node: Other search functionality65285
-Ref: Including related messages67155
-Ref: Skipping duplicates67614
-Node: Marking68186
-Node: Selecting messages for marking68755
-Node: What to mark for69572
-Ref: What to mark for-Footnote-171121
-Ref: What to mark for-Footnote-271220
-Node: Executing the marks71404
-Node: Leaving the headers buffer71673
-Node: Built-in marking functions72102
-Node: Custom mark functions72635
-Node: Dynamic folders74926
-Node: Smart refiling76066
-Ref: Smart refiling-Footnote-178516
-Node: Other dynamic folders78561
-Node: Actions79848
-Node: Defining actions80665
-Ref: Defining actions-Footnote-181924
-Ref: Defining actions-Footnote-282096
-Node: Adding an action in the headers view82283
-Node: Adding an action in the message view83276
-Node: Adding an attachment action84172
-Node: More example actions85003
-Node: Extending mu4e85407
-Node: Extension points85815
-Node: Available functions87119
-Node: Message functions88019
-Node: Utility functions89251
-Ref: Utility functions-Footnote-190442
-Node: Interaction with other tools90546
-Node: Setting the default emacs mail program91133
-Node: Creating org-mode links91696
-Node: Rich-text messages with org-mode92645
-Ref: Rich-text messages with org-mode-Footnote-194827
-Ref: Rich-text messages with org-mode-Footnote-294886
-Node: Maintaining an address-book with org-contacts95009
-Ref: Maintaining an address-book with org-contacts-Footnote-196250
-Node: Getting new mail notifications with Sauron96311
-Ref: Getting new mail notifications with Sauron-Footnote-198060
-Node: Speedbar support98203
-Node: Citations with mu-cite99194
-Ref: Citations with mu-cite-Footnote-199945
-Node: Attaching files with dired100021
-Node: Example configurations101360
-Node: Minimal configuration101818
-Node: Longer configuration103048
-Node: Gmail configuration105916
-Node: Some other useful settings110835
-Node: FAQ111462
-Node: General111817
-Node: Reading messages115249
-Node: Writing messages117407
-Node: Known issues119600
-Node: Tips and Tricks120448
-Node: Multiple accounts120671
-Node: Refiling message125293
-Node: Saving outgoing messages128806
-Node: How it works131235
-Node: High-level overview131606
-Node: mu server133100
-Node: Reading from the server134107
-Node: The message s-expression136360
-Ref: The message s-expression-Footnote-1139527
-Node: Logging and debugging139716
-Node: GNU Free Documentation License140775
+Ref: Top-Footnote-12825
+Ref: Top-Footnote-22870
+Ref: Top-Footnote-32963
+Node: Introduction3086
+Node: Why another e-mail client3317
+Node: Other mail clients3998
+Ref: Other mail clients-Footnote-14706
+Ref: Other mail clients-Footnote-24739
+Ref: Other mail clients-Footnote-34782
+Ref: Other mail clients-Footnote-44818
+Ref: Other mail clients-Footnote-54854
+Node: What mu4e does not do4885
+Ref: What mu4e does not do-Footnote-15904
+Ref: What mu4e does not do-Footnote-25938
+Ref: What mu4e does not do-Footnote-35978
+Node: Becoming a mu4e user6015
+Ref: Becoming a mu4e user-Footnote-16899
+Ref: Becoming a mu4e user-Footnote-26951
+Ref: Becoming a mu4e user-Footnote-36995
+Node: Getting started7055
+Node: Requirements7837
+Ref: Requirements-Footnote-18616
+Ref: Requirements-Footnote-28645
+Node: Installation8692
+Ref: Building from a release tarball10686
+Ref: Building from git11079
+Ref: Installation-Footnote-112453
+Ref: Installation-Footnote-212507
+Node: Getting mail12613
+Ref: Getting mail-Footnote-113701
+Node: Indexing your messages13867
+Ref: Indexing your messages-Footnote-115357
+Node: Basic configuration15498
+Node: Folders16106
+Ref: Folders-Footnote-116878
+Node: Retrieval and indexing17149
+Node: Sending mail18723
+Node: Running mu4e20912
+Node: Main view22218
+Node: MV Overview22653
+Node: Basic actions23750
+Node: MV Bookmarks24586
+Node: Miscellaneous25214
+Node: Headers view26078
+Node: HV Overview26584
+Ref: HV Overview-Footnote-129883
+Ref: HV Overview-Footnote-229970
+Ref: HV Overview-Footnote-330073
+Node: Keybindings30170
+Node: Marking messages32091
+Node: Sort order and threading33294
+Ref: Sort order and threading-Footnote-134529
+Node: HV Actions34616
+Node: Split view35306
+Node: Message view36385
+Node: MSGV Overview36872
+Node: MSGV Keybindings38711
+Node: Opening and saving attachments41257
+Ref: Opening and saving attachments-Footnote-142671
+Ref: Opening and saving attachments-Footnote-242719
+Node: Viewing images inline42827
+Ref: Viewing images inline-Footnote-143666
+Node: Displaying rich-text messages43703
+Ref: Displaying rich-text messages-Footnote-145059
+Ref: Displaying rich-text messages-Footnote-245156
+Node: MSGV Crypto45198
+Ref: Decryption46090
+Ref: Verifying signatures46799
+Ref: MSGV Crypto-Footnote-147491
+Node: MSGV Actions47594
+Node: Editor view49081
+Node: EV Overview49597
+Node: Useful keybindings49981
+Node: Address autocompletion50569
+Ref: Address autocompletion-Footnote-152831
+Node: Compose hooks52874
+Node: Signing and encrypting55508
+Node: Queuing mail56318
+Node: Other settings57603
+Node: Searching58070
+Node: Queries59001
+Ref: Queries-Footnote-161027
+Node: Bookmarks61139
+Ref: Bookmarks-Footnote-163481
+Node: Maildir searches63524
+Node: Other search functionality65645
+Ref: Including related messages67515
+Ref: Skipping duplicates67974
+Node: Marking68546
+Node: Selecting messages for marking69115
+Node: What to mark for69932
+Ref: What to mark for-Footnote-171481
+Ref: What to mark for-Footnote-271580
+Node: Executing the marks71764
+Node: Leaving the headers buffer72033
+Node: Built-in marking functions72462
+Node: Custom mark functions72995
+Node: Dynamic folders75286
+Node: Smart refiling76426
+Ref: Smart refiling-Footnote-178876
+Node: Other dynamic folders78921
+Node: Actions80208
+Node: Defining actions81025
+Ref: Defining actions-Footnote-182284
+Ref: Defining actions-Footnote-282456
+Node: Adding an action in the headers view82643
+Node: Adding an action in the message view83636
+Node: Adding an attachment action84532
+Node: More example actions85363
+Node: Extending mu4e85767
+Node: Extension points86175
+Node: Available functions87479
+Node: Message functions88379
+Node: Utility functions89611
+Ref: Utility functions-Footnote-190802
+Node: Interaction with other tools90906
+Node: Setting the default emacs mail program91493
+Node: Creating org-mode links92056
+Node: Rich-text messages with org-mode93005
+Ref: Rich-text messages with org-mode-Footnote-195187
+Ref: Rich-text messages with org-mode-Footnote-295246
+Node: Maintaining an address-book with org-contacts95369
+Ref: Maintaining an address-book with org-contacts-Footnote-196610
+Node: Getting new mail notifications with Sauron96671
+Ref: Getting new mail notifications with Sauron-Footnote-198420
+Node: Speedbar support98563
+Node: Citations with mu-cite99554
+Ref: Citations with mu-cite-Footnote-1100305
+Node: Attaching files with dired100381
+Node: Example configurations101720
+Node: Minimal configuration102178
+Node: Longer configuration103408
+Node: Gmail configuration106276
+Node: Some other useful settings111195
+Node: FAQ111822
+Node: General112177
+Node: Reading messages115759
+Node: Writing messages117917
+Node: Known issues120110
+Node: Tips and Tricks120958
+Node: Multiple accounts121181
+Node: Refiling message125803
+Node: Saving outgoing messages129316
+Node: How it works131745
+Node: High-level overview132116
+Node: mu server133610
+Node: Reading from the server134617
+Node: The message s-expression136870
+Ref: The message s-expression-Footnote-1140036
+Node: Logging and debugging140225
+Node: GNU Free Documentation License141284
 
 End Tag Table
 
