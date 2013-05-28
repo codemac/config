@@ -8,10 +8,18 @@
 
 (setq dotfiles-dir (file-name-directory (or load-file-name (buffer-file-name))))
 
-;; (add-to-list 'load-path (expand-file-name
-;;                          "lisp" (expand-file-name
-;;                                  "org-src" dotfiles-dir)))
+(add-to-list 'load-path (expand-file-name
+                         "lisp" (expand-file-name
+                                 "org-src" dotfiles-dir)))
+
+(add-to-list 'load-path (expand-file-name
+                         "lisp" (expand-file-name
+                                 "contrib" (expand-file-name
+                                            "org-src" dotfiles-dir))) t)
+
 ; load up the main file
+(require 'org-install)
+(require 'ob)
 (require 'org)
 (org-babel-load-file (expand-file-name "boot.org" dotfiles-dir))
 
@@ -34,7 +42,8 @@
  '(indent-tabs-mode nil)
  '(org-agenda-files (quote ("~/org/gtd.org" "~/org/fitness.org" "~/org/mars.org" "~/org/_notes/2012.org" "~/org/_notes/class2012pgm.org" "~/org/_notes/gifts.org" "~/org/_notes/nanowrimo2011.org" "~/org/_notes/notes.org" "~/org/_notes/oppression-of-tech.org" "~/org/_notes/steal.org" "~/org/_notes/webmac.org" "~/org/_notes/whoami.org")))
  '(safe-local-variable-values (quote ((yaml-indent-offset . 8) (after-save-hook archive-done-tasks))))
- '(yaml-indent-offset 3))
+ '(yaml-indent-offset 8)
+ '(znc-servers (quote (("198.199.115.88" 2049 nil ((sackheads "mta" "merlin")))))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
