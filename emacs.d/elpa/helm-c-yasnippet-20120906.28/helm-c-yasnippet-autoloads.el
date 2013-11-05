@@ -3,8 +3,9 @@
 ;;; Code:
 
 
-;;;### (autoloads nil nil ("helm-c-yasnippet-pkg.el" "helm-c-yasnippet.el")
-;;;;;;  (20578 6429 383623))
+;;;### (autoloads nil nil ("../../../../.emacs.d/elpa/helm-c-yasnippet-20120906.28/helm-c-yasnippet-pkg.el"
+;;;;;;  "../../../../.emacs.d/elpa/helm-c-yasnippet-20120906.28/helm-c-yasnippet.el")
+;;;;;;  (21034 17617 581693 0))
 
 ;;;***
 

@@ -68,6 +68,7 @@
   '((headline . org-deck-headline)
     (inner-template . org-deck-inner-template)
     (item . org-deck-item)
+    (link . org-deck-link)
     (template . org-deck-template)))
 
 (defgroup org-export-deck nil
@@ -300,9 +301,11 @@ and have the id \"title-slide\"."
               (format
                "<a href='#outline-container-%s'>%s</a>"
                (or (org-element-property :CUSTOM_ID headline)
-                   (mapconcat
-                    'number-to-string
-                    (org-export-get-headline-number headline info) "-"))
+		   (concat
+		    "sec-"
+		    (mapconcat
+		     'number-to-string
+		     (org-export-get-headline-number headline info) "-")))
                title)
             title)
           (org-export-get-relative-level headline info))))
@@ -373,19 +376,23 @@ the \"slide\" class will be added to the to the list element,
         (replace-regexp-in-string "^<li>" "<li class='slide'>" text)
       text)))
 
+(defun org-deck-link (link desc info)
+  (replace-regexp-in-string "href=\"#" "href=\"#outline-container-"
+			    (org-html-link link desc info)))
+
 (defun org-deck-template (contents info)
   "Return complete document string after HTML conversion.
 CONTENTS is the transcoded contents string.  INFO is a plist
 holding export options."
   (let ((pkg-info (org-deck--get-packages info))
-         (org-html--pre/postamble-class "deck-status")
-         (info (plist-put
-                (plist-put info :html-preamble (plist-get info :deck-preamble))
-                :html-postamble (plist-get info :deck-postamble))))
+	(org-html--pre/postamble-class "deck-status")
+	(info (plist-put
+	       (plist-put info :html-preamble (plist-get info :deck-preamble))
+	       :html-postamble (plist-get info :deck-postamble))))
     (mapconcat
      'identity
      (list
-      (plist-get info :html-doctype)
+      (org-html-doctype info)
       (let ((lang (plist-get info :language)))
         (mapconcat
          (lambda (x)
@@ -517,23 +524,8 @@ Export is done in a buffer named \"*Org deck.js Export*\", which
 will be displayed when `org-export-show-temporary-export-buffer'
 is non-nil."
   (interactive)
-  (if async
-      (org-export-async-start
-          (lambda (output)
-            (with-current-buffer (get-buffer-create "*Org deck.js Export*")
-              (erase-buffer)
-              (insert output)
-              (goto-char (point-min))
-              (nxml-mode)
-              (org-export-add-to-stack (current-buffer) 'deck)))
-        `(org-export-as 'deck ,subtreep ,visible-only ,body-only ',ext-plist))
-    (let ((outbuf (org-export-to-buffer
-                   'deck "*Org deck.js Export*"
-                   subtreep visible-only body-only ext-plist)))
-      ;; Set major mode.
-      (with-current-buffer outbuf (nxml-mode))
-      (when org-export-show-temporary-export-buffer
-        (switch-to-buffer-other-window outbuf)))))
+  (org-export-to-buffer 'deck "*Org deck.js Export*"
+    async subtreep visible-only body-only ext-plist (lambda () (nxml-mode))))
 
 (defun org-deck-export-to-html
   (&optional async subtreep visible-only body-only ext-plist)
@@ -566,17 +558,9 @@ Return output file's name."
   (interactive)
   (let* ((extension (concat "." org-html-extension))
          (file (org-export-output-file-name extension subtreep))
-         (org-export-coding-system org-html-coding-system))
-    (if async
-        (org-export-async-start
-            (lambda (f) (org-export-add-to-stack f 'deck))
-          (let ((org-export-coding-system org-html-coding-system))
-            `(expand-file-name
-              (org-export-to-file
-               'deck ,file ,subtreep ,visible-only ,body-only ',ext-plist))))
-      (let ((org-export-coding-system org-html-coding-system))
-        (org-export-to-file
-         'deck file subtreep visible-only body-only ext-plist)))))
+	 (org-export-coding-system org-html-coding-system))
+    (org-export-to-file 'deck file
+      async subtreep visible-only body-only ext-plist)))
 
 (defun org-deck-publish-to-html (plist filename pub-dir)
   "Publish an org file to deck.js HTML Presentation.

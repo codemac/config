@@ -69,7 +69,8 @@
 	      (goto-char (point-max))
 	      (call-interactively 'comment-dwim)
 	      (buffer-string)))))
-  ;; Region selected without comments: comment all non-blank lines.
+  ;; Region selected without comments: comment all lines if
+  ;; `comment-empty-lines' is non-nil, only non-blank lines otherwise.
   (should
    (equal "# Comment 1\n\n# Comment 2"
 	  (org-test-with-temp-text "Comment 1\n\nComment 2"
@@ -77,7 +78,18 @@
 	      (transient-mark-mode 1)
 	      (push-mark (point) t t)
 	      (goto-char (point-max))
-	      (call-interactively 'comment-dwim)
+	      (let ((comment-empty-lines nil))
+		(call-interactively 'comment-dwim))
+	      (buffer-string)))))
+  (should
+   (equal "# Comment 1\n# \n# Comment 2"
+	  (org-test-with-temp-text "Comment 1\n\nComment 2"
+	    (progn
+	      (transient-mark-mode 1)
+	      (push-mark (point) t t)
+	      (goto-char (point-max))
+	      (let ((comment-empty-lines t))
+		(call-interactively 'comment-dwim))
 	      (buffer-string)))))
   ;; In front of a keyword without region, insert a new comment.
   (should
@@ -164,6 +176,14 @@
 	      (narrow-to-region 1 8)
 	      (org-fill-paragraph)
 	      (buffer-string)))))
+  ;; Handle `adaptive-fill-regexp' in paragraphs.
+  (should
+   (equal "> a b"
+	  (org-test-with-temp-text "> a\n> b"
+	    (let ((fill-column 5)
+		  (adaptive-fill-regexp "[ \t]*>+[ \t]*"))
+	      (org-fill-paragraph)
+	      (buffer-string)))))
   ;; Special case: Fill first paragraph when point is at an item or
   ;; a plain-list or a footnote reference.
   (should
@@ -199,6 +219,28 @@
 	    (let ((fill-column 20))
 	      (org-fill-paragraph)
 	      (buffer-string)))))
+  ;; Do not mix consecutive comments when filling one of them.
+  (should
+   (equal "# A B\n\n# C"
+	  (org-test-with-temp-text "# A\n# B\n\n# C"
+	    (let ((fill-column 20))
+	      (org-fill-paragraph)
+	      (buffer-string)))))
+  ;; Use commented empty lines as separators when filling comments.
+  (should
+   (equal "# A B\n#\n# C"
+	  (org-test-with-temp-text "# A\n# B\n#\n# C"
+	    (let ((fill-column 20))
+	      (org-fill-paragraph)
+	      (buffer-string)))))
+  ;; Handle `adaptive-fill-regexp' in comments.
+  (should
+   (equal "# > a b"
+	  (org-test-with-temp-text "# > a\n# > b"
+	    (let ((fill-column 20)
+		  (adaptive-fill-regexp "[ \t]*>+[ \t]*"))
+	      (org-fill-paragraph)
+	      (buffer-string)))))
   ;; Do nothing at affiliated keywords.
   (org-test-with-temp-text "#+NAME: para\nSome\ntext."
     (let ((fill-column 20))
@@ -227,6 +269,32 @@
 	  (org-test-with-temp-text "- 12345 7890"
 	    (let ((fill-column 7))
 	      (end-of-line)
+	      (org-auto-fill-function)
+	      (buffer-string)))))
+  ;; Auto fill paragraph when `adaptive-fill-regexp' matches.
+  (should
+   (equal "> 12345\n  7890"
+	  (org-test-with-temp-text "> 12345 7890"
+	    (let ((fill-column 10)
+		  (adaptive-fill-regexp "[ \t]*>+[ \t]*")
+		  (adaptive-fill-first-line-regexp "\\`[ 	]*\\'"))
+	      (end-of-line)
+	      (org-auto-fill-function)
+	      (buffer-string)))))
+  (should
+   (equal "> 12345\n> 12345\n> 7890"
+	  (org-test-with-temp-text "> 12345\n> 12345 7890"
+	    (let ((fill-column 10)
+		  (adaptive-fill-regexp "[ \t]*>+[ \t]*"))
+	      (goto-char (point-max))
+	      (org-auto-fill-function)
+	      (buffer-string)))))
+  (should-not
+   (equal " 12345\n *12345\n *12345"
+	  (org-test-with-temp-text " 12345\n *12345 12345"
+	    (let ((fill-column 10)
+		  (adaptive-fill-regexp "[ \t]*>+[ \t]*"))
+	      (goto-char (point-max))
 	      (org-auto-fill-function)
 	      (buffer-string)))))
   ;; Auto fill comments.
@@ -294,6 +362,51 @@
 	      (end-of-line)
 	      (org-auto-fill-function)
 	      (buffer-string))))))
+
+
+
+;;; Editing
+
+;;;; Insert elements
+
+(ert-deftest test-org/meta-return ()
+  "Test M-RET (`org-meta-return')."
+  ;; In a table field insert a row above.
+  (should
+   (org-test-with-temp-text "| a |"
+     (forward-char)
+     (org-meta-return)
+     (forward-line -1)
+     (looking-at "|   |$")))
+  ;; In a paragraph change current line into a header.
+  (should
+   (org-test-with-temp-text "a"
+     (org-meta-return)
+     (beginning-of-line)
+     (looking-at "\* a$")))
+  ;; In an item insert an item, in this case above.
+  (should
+   (org-test-with-temp-text "- a"
+     (org-meta-return)
+     (beginning-of-line)
+     (looking-at "- $")))
+  ;; In a drawer and paragraph insert an empty line, in this case above.
+  (should
+   (let ((org-drawers '("MYDRAWER")))
+     (org-test-with-temp-text ":MYDRAWER:\na\n:END:"
+       (forward-line)
+       (org-meta-return)
+       (forward-line -1)
+       (looking-at "$"))))
+  ;; In a drawer and item insert an item, in this case above.
+  (should
+   (let ((org-drawers '("MYDRAWER")))
+     (org-test-with-temp-text ":MYDRAWER:\n- a\n:END:"
+       (forward-line)
+       (org-meta-return)
+       (beginning-of-line)
+       (looking-at "- $")))))
+
 
 
 
@@ -395,15 +508,25 @@
   (should
    (string=
     "àâçèéêîôùû"
-        (decode-coding-string (org-link-unescape "%E0%E2%E7%E8%E9%EA%EE%F4%F9%FB") 'latin-1))))
+        (decode-coding-string
+	 (org-link-unescape "%E0%E2%E7%E8%E9%EA%EE%F4%F9%FB") 'latin-1))))
 
 (ert-deftest test-org/org-link-escape-url-with-escaped-char ()
-  "Escape and unscape a URL that includes an escaped char.
+  "Escape and unescape a URL that includes an escaped char.
 http://article.gmane.org/gmane.emacs.orgmode/21459/"
   (should
    (string=
     "http://some.host.com/form?&id=blah%2Bblah25"
-    (org-link-unescape (org-link-escape "http://some.host.com/form?&id=blah%2Bblah25")))))
+    (org-link-unescape
+     (org-link-escape "http://some.host.com/form?&id=blah%2Bblah25")))))
+
+(ert-deftest test-org/org-link-escape-chars-browser ()
+  "Escape a URL to pass to `browse-url'."
+  (should
+   (string=
+    "http://some.host.com/search?q=%22Org%20mode%22"
+    (org-link-escape "http://some.host.com/search?q=\"Org mode\""
+		     org-link-escape-chars-browser))))
 
 
 
@@ -527,6 +650,155 @@ http://article.gmane.org/gmane.emacs.orgmode/21459/"
        (org-hide-block-toggle)
        (org-end-of-line)
        (eobp)))))
+
+(ert-deftest test-org/forward-paragraph ()
+  "Test `org-forward-paragraph' specifications."
+  ;; At end of buffer, return an error.
+  (should-error
+   (org-test-with-temp-text "Paragraph"
+     (goto-char (point-max))
+     (org-forward-paragraph)))
+  ;; Standard test.
+  (should
+   (org-test-with-temp-text "P1\n\nP2\n\nP3"
+     (org-forward-paragraph)
+     (looking-at "P2")))
+  ;; Ignore depth.
+  (should
+   (org-test-with-temp-text "#+BEGIN_CENTER\nP1\n#+END_CENTER\nP2"
+     (org-forward-paragraph)
+     (looking-at "P1")))
+  ;; Do not enter elements with invisible contents.
+  (should
+   (org-test-with-temp-text "#+BEGIN_CENTER\nP1\n\nP2\n#+END_CENTER\nP3"
+     (org-hide-block-toggle)
+     (org-forward-paragraph)
+     (looking-at "P3")))
+  ;; On an affiliated keyword, jump to the beginning of the element.
+  (should
+   (org-test-with-temp-text "#+name: para\n#+caption: caption\nPara"
+     (org-forward-paragraph)
+     (looking-at "Para")))
+  ;; On an item or a footnote definition, move to the second element
+  ;; inside, if any.
+  (should
+   (org-test-with-temp-text "- Item1\n\n  Paragraph\n- Item2"
+     (org-forward-paragraph)
+     (looking-at "  Paragraph")))
+  (should
+   (org-test-with-temp-text "[fn:1] Def1\n\nParagraph\n\n[fn:2] Def2"
+     (org-forward-paragraph)
+     (looking-at "Paragraph")))
+  ;; On an item, or a footnote definition, when the first line is
+  ;; empty, move to the first item.
+  (should
+   (org-test-with-temp-text "- \n\n  Paragraph\n- Item2"
+     (org-forward-paragraph)
+     (looking-at "  Paragraph")))
+  (should
+   (org-test-with-temp-text "[fn:1]\n\nParagraph\n\n[fn:2] Def2"
+     (org-forward-paragraph)
+     (looking-at "Paragraph")))
+  ;; On a table (resp. a property drawer) do not move through table
+  ;; rows (resp. node properties).
+  (should
+   (org-test-with-temp-text "| a | b |\n| c | d |\nParagraph"
+     (org-forward-paragraph)
+     (looking-at "Paragraph")))
+  (should
+   (org-test-with-temp-text ":PROPERTIES:\n:prop: value\n:END:\nParagraph"
+     (org-forward-paragraph)
+     (looking-at "Paragraph")))
+  ;; On a verse or source block, stop after blank lines.
+  (should
+   (org-test-with-temp-text "#+BEGIN_VERSE\nL1\n\nL2\n#+END_VERSE"
+     (org-forward-paragraph)
+     (looking-at "L2")))
+  (should
+   (org-test-with-temp-text "#+BEGIN_SRC\nL1\n\nL2\n#+END_SRC"
+     (org-forward-paragraph)
+     (looking-at "L2"))))
+
+(ert-deftest test-org/backward-paragraph ()
+  "Test `org-backward-paragraph' specifications."
+  ;; Error at beginning of buffer.
+  (should-error
+   (org-test-with-temp-text "Paragraph"
+     (org-backward-paragraph)))
+  ;; Regular test.
+  (should
+   (org-test-with-temp-text "P1\n\nP2\n\nP3"
+     (goto-char (point-max))
+     (org-backward-paragraph)
+     (looking-at "P3")))
+  (should
+   (org-test-with-temp-text "P1\n\nP2\n\nP3"
+     (goto-char (point-max))
+     (beginning-of-line)
+     (org-backward-paragraph)
+     (looking-at "P2")))
+  ;; Ignore depth.
+  (should
+   (org-test-with-temp-text "P1\n\n#+BEGIN_CENTER\nP2\n#+END_CENTER\nP3"
+     (goto-char (point-max))
+     (beginning-of-line)
+     (org-backward-paragraph)
+     (looking-at "P2")))
+  ;; Ignore invisible elements.
+  (should
+   (org-test-with-temp-text "* H1\n  P1\n* H2"
+     (org-cycle)
+     (goto-char (point-max))
+     (beginning-of-line)
+     (org-backward-paragraph)
+     (bobp)))
+  ;; On an affiliated keyword, jump to the first one.
+  (should
+   (org-test-with-temp-text "P1\n#+name: n\n#+caption: c1\n#+caption: c2\nP2"
+     (search-forward "c2")
+     (org-backward-paragraph)
+     (looking-at "#\\+name")))
+  ;; On the second element in an item or a footnote definition, jump
+  ;; to item or the definition.
+  (should
+   (org-test-with-temp-text "- line1\n\n  line2"
+     (goto-char (point-max))
+     (beginning-of-line)
+     (org-backward-paragraph)
+     (looking-at "- line1")))
+  (should
+   (org-test-with-temp-text "[fn:1] line1\n\n  line2"
+     (goto-char (point-max))
+     (beginning-of-line)
+     (org-backward-paragraph)
+     (looking-at "\\[fn:1\\] line1")))
+  ;; On a table (resp. a property drawer), ignore table rows
+  ;; (resp. node properties).
+  (should
+   (org-test-with-temp-text "| a | b |\n| c | d |\nP1"
+     (goto-char (point-max))
+     (beginning-of-line)
+     (org-backward-paragraph)
+     (bobp)))
+  (should
+   (org-test-with-temp-text ":PROPERTIES:\n:prop: value\n:END:\nP1"
+     (goto-char (point-max))
+     (beginning-of-line)
+     (org-backward-paragraph)
+     (bobp)))
+  ;; On a source or verse block, stop before blank lines.
+  (should
+   (org-test-with-temp-text "#+BEGIN_VERSE\nL1\n\nL2\n\nL3\n#+END_VERSE"
+     (search-forward "L3")
+     (beginning-of-line)
+     (org-backward-paragraph)
+     (looking-at "L2")))
+  (should
+   (org-test-with-temp-text "#+BEGIN_SRC\nL1\n\nL2\n\nL3#+END_SRC"
+     (search-forward "L3")
+     (beginning-of-line)
+     (org-backward-paragraph)
+     (looking-at "L2"))))
 
 (ert-deftest test-org/forward-element ()
   "Test `org-forward-element' specifications."

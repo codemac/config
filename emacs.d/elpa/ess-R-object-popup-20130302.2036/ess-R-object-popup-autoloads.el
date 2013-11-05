@@ -3,9 +3,9 @@
 ;;; Code:
 
 
-;;;### (autoloads (ess-R-object-popup) "ess-R-object-popup" "ess-R-object-popup.el"
-;;;;;;  (20881 47549 0 0))
-;;; Generated autoloads from ess-R-object-popup.el
+;;;### (autoloads (ess-R-object-popup) "ess-R-object-popup" "../../../../.emacs.d/elpa/ess-R-object-popup-20130302.2036/ess-R-object-popup.el"
+;;;;;;  "e02d921a798f2da001a9cdc1faf54bef")
+;;; Generated autoloads from ../../../../.emacs.d/elpa/ess-R-object-popup-20130302.2036/ess-R-object-popup.el
 
 (autoload 'ess-R-object-popup "ess-R-object-popup" "\
 Get info for object at point, and display it in a popup.
@@ -14,8 +14,9 @@ Get info for object at point, and display it in a popup.
 
 ;;;***
 
-;;;### (autoloads nil nil ("ess-R-object-popup-pkg.el") (20881 47549
-;;;;;;  849277 0))
+;;;### (autoloads nil nil ("../../../../.emacs.d/elpa/ess-R-object-popup-20130302.2036/ess-R-object-popup-pkg.el"
+;;;;;;  "../../../../.emacs.d/elpa/ess-R-object-popup-20130302.2036/ess-R-object-popup.el")
+;;;;;;  (21034 17633 498698 0))
 
 ;;;***
 

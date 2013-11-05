@@ -501,7 +501,13 @@ Some other text
 	    '(("test" "test" nil "test" "test" "test" "test"))))
        (org-test-with-temp-text "\\test"
 	 (org-element-map (org-element-parse-buffer) 'entity 'identity nil t))))
-    "test")))
+    "test"))
+  ;; Special case: entity at the end of a container.
+  (should
+   (eq 'entity
+       (org-test-with-temp-text "*\\alpha \\beta*"
+	 (search-forward "be")
+	 (org-element-type (org-element-context))))))
 
 
 ;;;; Example Block
@@ -513,121 +519,155 @@ Some other text
    (org-test-with-temp-text "#+BEGIN_EXAMPLE\nText\n#+END_EXAMPLE"
      (org-element-map (org-element-parse-buffer) 'example-block 'identity)))
   ;; Test folded block.
-  (org-test-with-temp-text "#+BEGIN_EXAMPLE\nText\n#+END_EXAMPLE"
-    (org-cycle)
-    (should
-     (org-element-property
-      :hiddenp
-      (org-element-map
-       (org-element-parse-buffer) 'example-block 'identity nil t))))
+  (should
+   (org-test-with-temp-text "#+BEGIN_EXAMPLE\nText\n#+END_EXAMPLE"
+     (org-cycle)
+     (org-element-property :hiddenp (org-element-at-point))))
   ;; Ignore incomplete block.
   (should-not
-   (org-test-with-temp-text "#+BEGIN_EXAMPLE"
-     (org-element-map
-      (org-element-parse-buffer) 'example-block 'identity nil t)))
+   (eq 'example-block
+       (org-test-with-temp-text "#+BEGIN_EXAMPLE"
+	 (org-element-type (org-element-at-point)))))
   ;; Properly un-escape code.
   (should
    (equal "* Headline\n #+keyword\nText\n"
 	  (org-test-with-temp-text
 	      "#+BEGIN_EXAMPLE\n,* Headline\n ,#+keyword\nText\n#+END_EXAMPLE"
-	    (org-element-property :value (org-element-at-point))))))
+	    (org-element-property :value (org-element-at-point)))))
+  ;; Nil `org-src-preserve-indentation': Remove maximum common
+  ;; indentation.
+  (should
+   (equal " L1\nL2\n"
+	  (org-test-with-temp-text "#+BEGIN_EXAMPLE\n  L1\n L2\n#+END_EXAMPLE"
+	    (let ((org-src-preserve-indentation nil))
+	      (org-element-property :value (org-element-at-point))))))
+  ;; Non-nil `org-src-preserve-indentation': Remove block indentation
+  ;; only, unless block contents are less indented than block
+  ;; boundaries.
+  (should
+   (equal " L1\nL2\n"
+	  (org-test-with-temp-text " #+BEGIN_EXAMPLE\n  L1\n L2\n #+END_EXAMPLE"
+	    (let ((org-src-preserve-indentation t))
+	      (org-element-property :value (org-element-at-point))))))
+  (should
+   (equal
+    "  L1\n L2\n"
+    (org-test-with-temp-text "  #+BEGIN_EXAMPLE\n  L1\n L2\n  #+END_EXAMPLE"
+      (let ((org-src-preserve-indentation t))
+	(org-element-property :value (org-element-at-point)))))))
 
 (ert-deftest test-org-element/block-switches ()
   "Test `example-block' and `src-block' switches parsing."
   (let ((org-coderef-label-format "(ref:%s)"))
     ;; 1. Test "-i" switch.
-    (org-test-with-temp-text "#+BEGIN_SRC emacs-lisp\n(+ 1 1)\n#+END_SRC"
-      (should-not
+    (should-not
+     (org-test-with-temp-text "#+BEGIN_SRC emacs-lisp\n(+ 1 1)\n#+END_SRC"
        (org-element-property :preserve-indent (org-element-at-point))))
-    (org-test-with-temp-text "#+BEGIN_SRC emacs-lisp -i\n(+ 1 1)\n#+END_SRC"
-      (should (org-element-property :preserve-indent (org-element-at-point))))
-    (org-test-with-temp-text "#+BEGIN_EXAMPLE\nText.\n#+END_EXAMPLE"
-      (should-not
+    (should
+     (org-test-with-temp-text "#+BEGIN_SRC emacs-lisp -i\n(+ 1 1)\n#+END_SRC"
        (org-element-property :preserve-indent (org-element-at-point))))
-    (org-test-with-temp-text "#+BEGIN_EXAMPLE -i\nText.\n#+END_EXAMPLE"
-      (should (org-element-property :preserve-indent (org-element-at-point))))
+    (should-not
+     (org-test-with-temp-text "#+BEGIN_EXAMPLE\nText.\n#+END_EXAMPLE"
+       (org-element-property :preserve-indent (org-element-at-point))))
+    (should
+     (org-test-with-temp-text "#+BEGIN_EXAMPLE -i\nText.\n#+END_EXAMPLE"
+       (org-element-property :preserve-indent (org-element-at-point))))
     ;; 2. "-n -r -k" combination should number lines, retain labels but
     ;;    not use them in coderefs.
-    (org-test-with-temp-text "#+BEGIN_EXAMPLE -n -r -k\nText.\n#+END_EXAMPLE"
-      (let ((element (org-element-at-point)))
-	(should (and (org-element-property :number-lines element)
-		     (org-element-property :retain-labels element)
-		     (not (org-element-property :use-labels element))))))
-    (org-test-with-temp-text
-	"#+BEGIN_SRC emacs-lisp -n -r -k\n(+ 1 1)\n#+END_SRC"
-      (let ((element (org-element-at-point)))
-	(should (and (org-element-property :number-lines element)
-		     (org-element-property :retain-labels element)
-		     (not (org-element-property :use-labels element))))))
+    (should
+     (org-test-with-temp-text "#+BEGIN_EXAMPLE -n -r -k\nText.\n#+END_EXAMPLE"
+       (let ((element (org-element-at-point)))
+	 (and (org-element-property :number-lines element)
+	      (org-element-property :retain-labels element)
+	      (not (org-element-property :use-labels element))))))
+    (should
+     (org-test-with-temp-text
+	 "#+BEGIN_SRC emacs-lisp -n -r -k\n(+ 1 1)\n#+END_SRC"
+       (let ((element (org-element-at-point)))
+	 (and (org-element-property :number-lines element)
+	      (org-element-property :retain-labels element)
+	      (not (org-element-property :use-labels element))))))
     ;; 3. "-n -r" combination should number-lines remove labels and not
     ;;    use them in coderefs.
-    (org-test-with-temp-text "#+BEGIN_EXAMPLE -n -r\nText.\n#+END_EXAMPLE"
-      (let ((element (org-element-at-point)))
-	(should (and (org-element-property :number-lines element)
-		     (not (org-element-property :retain-labels element))
-		     (not (org-element-property :use-labels element))))))
-    (org-test-with-temp-text "#+BEGIN_SRC emacs-lisp -n -r\n(+ 1 1)\n#+END_SRC"
-      (let ((element (org-element-at-point)))
-	(should (and (org-element-property :number-lines element)
-		     (not (org-element-property :retain-labels element))
-		     (not (org-element-property :use-labels element))))))
+    (should
+     (org-test-with-temp-text "#+BEGIN_EXAMPLE -n -r\nText.\n#+END_EXAMPLE"
+       (let ((element (org-element-at-point)))
+	 (and (org-element-property :number-lines element)
+	      (not (org-element-property :retain-labels element))
+	      (not (org-element-property :use-labels element))))))
+    (should
+     (org-test-with-temp-text "#+BEGIN_SRC emacs-lisp -n -r\n(+ 1 1)\n#+END_SRC"
+       (let ((element (org-element-at-point)))
+	 (and (org-element-property :number-lines element)
+	      (not (org-element-property :retain-labels element))
+	      (not (org-element-property :use-labels element))))))
     ;; 4. "-n" or "+n" should number lines, retain labels and use them
     ;;    in coderefs.
-    (org-test-with-temp-text "#+BEGIN_EXAMPLE -n\nText.\n#+END_EXAMPLE"
-      (let ((element (org-element-at-point)))
-	(should (and (org-element-property :number-lines element)
-		     (org-element-property :retain-labels element)
-		     (org-element-property :use-labels element)))))
-    (org-test-with-temp-text "#+BEGIN_SRC emacs-lisp -n\n(+ 1 1)\n#+END_SRC"
-      (let ((element (org-element-at-point)))
-	(should (and (org-element-property :number-lines element)
-		     (org-element-property :retain-labels element)
-		     (org-element-property :use-labels element)))))
-    (org-test-with-temp-text "#+BEGIN_EXAMPLE +n\nText.\n#+END_EXAMPLE"
-      (let ((element (org-element-at-point)))
-	(should (and (org-element-property :number-lines element)
-		     (org-element-property :retain-labels element)
-		     (org-element-property :use-labels element)))))
-    (org-test-with-temp-text "#+BEGIN_SRC emacs-lisp +n\n(+ 1 1)\n#+END_SRC"
-      (let ((element (org-element-at-point)))
-	(should (and (org-element-property :number-lines element)
-		     (org-element-property :retain-labels element)
-		     (org-element-property :use-labels element)))))
+    (should
+     (org-test-with-temp-text "#+BEGIN_EXAMPLE -n\nText.\n#+END_EXAMPLE"
+       (let ((element (org-element-at-point)))
+	 (and (org-element-property :number-lines element)
+	      (org-element-property :retain-labels element)
+	      (org-element-property :use-labels element)))))
+    (should
+     (org-test-with-temp-text "#+BEGIN_SRC emacs-lisp -n\n(+ 1 1)\n#+END_SRC"
+       (let ((element (org-element-at-point)))
+	 (and (org-element-property :number-lines element)
+	      (org-element-property :retain-labels element)
+	      (org-element-property :use-labels element)))))
+    (should
+     (org-test-with-temp-text "#+BEGIN_EXAMPLE +n\nText.\n#+END_EXAMPLE"
+       (let ((element (org-element-at-point)))
+	 (and (org-element-property :number-lines element)
+	      (org-element-property :retain-labels element)
+	      (org-element-property :use-labels element)))))
+    (should
+     (org-test-with-temp-text "#+BEGIN_SRC emacs-lisp +n\n(+ 1 1)\n#+END_SRC"
+       (let ((element (org-element-at-point)))
+	 (and (org-element-property :number-lines element)
+	      (org-element-property :retain-labels element)
+	      (org-element-property :use-labels element)))))
     ;; 5. No switch should not number lines, but retain labels and use
     ;;    them in coderefs.
-    (org-test-with-temp-text "#+BEGIN_EXAMPLE\nText.\n#+END_EXAMPLE"
-      (let ((element (org-element-at-point)))
-	(should (and (not (org-element-property :number-lines element))
-		     (org-element-property :retain-labels element)
-		     (org-element-property :use-labels element)))))
-    (org-test-with-temp-text "#+BEGIN_SRC emacs-lisp\n(+ 1 1)\n#+END_SRC"
-      (let ((element (org-element-at-point)))
-	(should (and (not (org-element-property :number-lines element))
-		     (org-element-property :retain-labels element)
-		     (org-element-property :use-labels element)))))
+    (should
+     (org-test-with-temp-text "#+BEGIN_EXAMPLE\nText.\n#+END_EXAMPLE"
+       (let ((element (org-element-at-point)))
+	 (and (not (org-element-property :number-lines element))
+	      (org-element-property :retain-labels element)
+	      (org-element-property :use-labels element)))))
+    (should
+     (org-test-with-temp-text "#+BEGIN_SRC emacs-lisp\n(+ 1 1)\n#+END_SRC"
+       (let ((element (org-element-at-point)))
+	 (and (not (org-element-property :number-lines element))
+	      (org-element-property :retain-labels element)
+	      (org-element-property :use-labels element)))))
     ;; 6. "-r" switch only: do not number lines, remove labels, and
     ;;    don't use labels in coderefs.
-    (org-test-with-temp-text "#+BEGIN_EXAMPLE -r\nText.\n#+END_EXAMPLE"
-      (let ((element (org-element-at-point)))
-	(should (and (not (org-element-property :number-lines element))
-		     (not (org-element-property :retain-labels element))
-		     (not (org-element-property :use-labels element))))))
-    (org-test-with-temp-text "#+BEGIN_SRC emacs-lisp -r\n(+ 1 1)\n#+END_SRC"
-      (let ((element (org-element-at-point)))
-	(should (and (not (org-element-property :number-lines element))
-		     (not (org-element-property :retain-labels element))
-		     (not (org-element-property :use-labels element))))))
+    (should
+     (org-test-with-temp-text "#+BEGIN_EXAMPLE -r\nText.\n#+END_EXAMPLE"
+       (let ((element (org-element-at-point)))
+	 (and (not (org-element-property :number-lines element))
+	      (not (org-element-property :retain-labels element))
+	      (not (org-element-property :use-labels element))))))
+    (should
+     (org-test-with-temp-text "#+BEGIN_SRC emacs-lisp -r\n(+ 1 1)\n#+END_SRC"
+       (let ((element (org-element-at-point)))
+	 (and (not (org-element-property :number-lines element))
+	      (not (org-element-property :retain-labels element))
+	      (not (org-element-property :use-labels element))))))
     ;; 7. Recognize coderefs with user-defined syntax.
-    (org-test-with-temp-text
-	"#+BEGIN_EXAMPLE -l \"[ref:%s]\"\nText [ref:text]\n#+END_EXAMPLE"
-      (let ((element (org-element-at-point)))
-	(should
-	 (equal (org-element-property :label-fmt element) "[ref:%s]"))))
-    (org-test-with-temp-text
-	"#+BEGIN_SRC emacs-lisp -l \"[ref:%s]\"\n(+ 1 1) [ref:text]\n#+END_SRC"
-      (let ((element (org-element-at-point)))
-	(should
-	 (equal (org-element-property :label-fmt element) "[ref:%s]"))))))
+    (should
+     (equal
+      "[ref:%s]"
+      (org-test-with-temp-text
+	  "#+BEGIN_EXAMPLE -l \"[ref:%s]\"\nText [ref:text]\n#+END_EXAMPLE"
+	(org-element-property :label-fmt (org-element-at-point)))))
+    (should
+     (equal
+      "[ref:%s]"
+      (org-test-with-temp-text
+	  "#+BEGIN_SRC emacs-lisp -l \"[ref:%s]\"\n(+ 1 1) [ref:text]\n#+END_SRC"
+	(org-element-property :label-fmt (org-element-at-point)))))))
 
 
 ;;;; Export Block
@@ -720,21 +760,26 @@ Some other text
   "Test `footnote-definition' parser."
   (should
    (org-test-with-temp-text "[fn:1] Definition"
-     (org-element-map
-      (org-element-parse-buffer) 'footnote-definition 'identity nil t)))
+     (org-element-map (org-element-parse-buffer) 'footnote-definition
+       'identity nil t)))
   ;; Footnote with more contents
   (should
    (= 29
       (org-element-property
        :end
        (org-test-with-temp-text "[fn:1] Definition\n\n| a | b |"
-	 (org-element-map
-	  (org-element-parse-buffer)
-	  'footnote-definition 'identity nil t)))))
+	 (org-element-map (org-element-parse-buffer) 'footnote-definition
+	   'identity nil t)))))
   ;; Footnote starting with special syntax.
   (should-not
    (org-test-with-temp-text "[fn:1] - no item"
-     (org-element-map (org-element-parse-buffer) 'item 'identity))))
+     (org-element-map (org-element-parse-buffer) 'item 'identity)))
+  ;; Correctly handle footnote starting with an empty line.
+  (should
+   (= 9
+      (org-test-with-temp-text "[fn:1]\n\n  Body"
+	(org-element-property :contents-begin
+			      (org-element-at-point))))))
 
 
 ;;;; Footnotes Reference.
@@ -1117,8 +1162,7 @@ Paragraph"
   "Test `latex-environment' parser."
   (should
    (org-test-with-temp-text "\\begin{equation}\ne^{i\\pi}+1=0\n\\end{equation}"
-     (org-element-map
-      (org-element-parse-buffer) 'latex-environment 'identity)))
+     (org-element-map (org-element-parse-buffer) 'latex-environment 'identity)))
   ;; Allow nested environments.
   (should
    (equal
@@ -1136,7 +1180,21 @@ e^{i\\pi}+1=0
       (org-element-property
        :value
        (org-element-map
-	(org-element-parse-buffer) 'latex-environment 'identity nil t))))))
+	   (org-element-parse-buffer) 'latex-environment 'identity nil t)))))
+  ;; Allow environments with options and arguments.
+  (should
+   (eq 'latex-environment
+       (org-test-with-temp-text
+	   "\\begin{theorem}[Euler]\ne^{i\\pi}+1=0\n\\end{theorem}"
+	 (org-element-type (org-element-at-point)))))
+  (should
+   (eq 'latex-environment
+       (org-test-with-temp-text "\\begin{env}{arg}\nvalue\n\\end{env}"
+	 (org-element-type (org-element-at-point)))))
+  (should-not
+   (eq 'latex-environment
+       (org-test-with-temp-text "\\begin{env}{arg} something\nvalue\n\\end{env}"
+	 (org-element-type (org-element-at-point))))))
 
 
 ;;;; Latex Fragment
@@ -1304,7 +1362,7 @@ e^{i\\pi}+1=0
 	  (org-test-with-temp-text
 	      "#+LINK: orgmode http://www.orgmode.org/\n[[orgmode:#docs]]"
 	    (progn (org-mode-restart)
-		   (goto-char (point-max))
+		   (goto-char (1- (point-max)))
 		   (org-element-property :type (org-element-context))))))
   ;; Link abbreviation in a secondary string.
   (should
@@ -1447,24 +1505,29 @@ e^{i\\pi}+1=0
 
 (ert-deftest test-org-element/plain-list-parser ()
   "Test `plain-list' parser."
-  (should
-   (org-test-with-temp-text "- item"
-     (org-element-map (org-element-parse-buffer) 'plain-list 'identity)))
+  (org-test-with-temp-text "- item"
+    (should (org-element-map (org-element-parse-buffer) 'plain-list 'identity)))
   ;; Blank lines after the list only belong to outer plain list.
-  (org-test-with-temp-text "
+  (should
+   (equal
+    '(t t)
+    (org-test-with-temp-text "
 - outer
   - inner
 
 Outside list"
-    (let ((endings (org-element-map
-		    (org-element-parse-buffer) 'plain-list
-		    (lambda (pl) (org-element-property :end pl)))))
-      ;; Move to ending of outer list.
-      (goto-char (car endings))
-      (should (looking-at "Outside list"))
-      ;; Move to ending of inner list.
-      (goto-char (nth 1 endings))
-      (should (looking-at "^$")))))
+      (let ((endings (org-element-map (org-element-parse-buffer) 'plain-list
+		       (lambda (pl) (org-element-property :end pl)))))
+	(list
+	 ;; Move to ending of outer list.
+	 (progn (goto-char (car endings)) (looking-at "Outside list"))
+	 ;; Move to ending of inner list.
+	 (progn (goto-char (nth 1 endings)) (looking-at "^$")))))))
+  ;; Correctly compute end of list if it doesn't end at a line
+  ;; beginning.
+  (should
+   (org-test-with-temp-text "- list\n   \n   "
+     (= (org-element-property :end (org-element-at-point)) (point-max)))))
 
 
 ;;;; Planning
@@ -1601,25 +1664,33 @@ Outside list"
 (ert-deftest test-org-element/special-block-parser ()
   "Test `special-block' parser."
   ;; Standard test.
-  (let ((special-block
-	 (org-test-with-temp-text "#+BEGIN_SPECIAL\nText\n#+END_SPECIAL"
-	   (org-element-map
-	    (org-element-parse-buffer) 'special-block 'identity nil t))))
-    (should (equal (org-element-property :type special-block) "SPECIAL"))
-    (should (org-element-map special-block 'paragraph 'identity)))
+  (should
+   (equal "SPECIAL"
+	  (org-test-with-temp-text "#+BEGIN_SPECIAL\nText\n#+END_SPECIAL"
+	    (org-element-property :type (org-element-at-point)))))
+  ;; Special blocks can contain paragraphs.
+  (should
+   (eq 'paragraph
+       (org-test-with-temp-text "#+BEGIN_SPECIAL\nText\n#+END_SPECIAL"
+	 (forward-line)
+	 (org-element-type (org-element-at-point)))))
   ;; Test folded block.
-  (org-test-with-temp-text "#+BEGIN_SPECIAL\nText\n#+END_SPECIAL"
-    (org-cycle)
-    (should
-     (org-element-property
-      :hiddenp
-      (org-element-map
-       (org-element-parse-buffer) 'special-block 'identity nil t))))
+  (should
+   (org-test-with-temp-text "#+BEGIN_SPECIAL\nText\n#+END_SPECIAL"
+     (org-cycle)
+     (org-element-property :hiddenp (org-element-at-point))))
   ;; Ignore incomplete block.
   (should-not
-   (org-test-with-temp-text "#+BEGIN_SPECIAL"
-     (org-element-map
-      (org-element-parse-buffer) 'special-block 'identity nil t))))
+   (eq 'special-block
+       (org-test-with-temp-text "#+BEGIN_SPECIAL"
+	 (org-element-type (org-element-at-point)))))
+  ;; Allow special characters in type.
+  (should
+   (equal '(special-block "SPECIAL*")
+	  (org-test-with-temp-text "#+BEGIN_SPECIAL*\nContents\n#+END_SPECIAL*"
+	    (let ((element (org-element-at-point)))
+	      (list (org-element-type element)
+		    (org-element-property :type element)))))))
 
 
 ;;;; Src Block
@@ -1628,16 +1699,13 @@ Outside list"
   "Test `src-block' parser."
   ;; Regular tests.
   (should
-   (org-test-with-temp-text "#+BEGIN_SRC\nText\n#+END_SRC"
+   (org-test-with-temp-text "#+BEGIN_SRC org\nText\n#+END_SRC"
      (org-element-map (org-element-parse-buffer) 'src-block 'identity)))
   ;; Test folded block.
-  (org-test-with-temp-text "#+BEGIN_SRC\nText\n#+END_SRC"
-    (org-cycle)
-    (should
-     (org-element-property
-      :hiddenp
-      (org-element-map
-       (org-element-parse-buffer) 'src-block 'identity nil t))))
+  (should
+   (org-test-with-temp-text "#+BEGIN_SRC org\nText\n#+END_SRC"
+     (org-cycle)
+     (org-element-property :hiddenp (org-element-at-point))))
   ;; Ignore incomplete block.
   (should-not
    (org-test-with-temp-text "#+BEGIN_SRC"
@@ -1647,7 +1715,28 @@ Outside list"
    (equal "* Headline\n #+keyword\nText\n"
 	  (org-test-with-temp-text
 	      "#+BEGIN_SRC org\n,* Headline\n ,#+keyword\nText\n#+END_SRC"
-	    (org-element-property :value (org-element-at-point))))))
+	    (org-element-property :value (org-element-at-point)))))
+  ;; Nil `org-src-preserve-indentation': Remove maximum common
+  ;; indentation.
+  (should
+   (equal " L1\nL2\n"
+	  (org-test-with-temp-text "#+BEGIN_SRC org\n  L1\n L2\n#+END_SRC"
+	    (let ((org-src-preserve-indentation nil))
+	      (org-element-property :value (org-element-at-point))))))
+  ;; Non-nil `org-src-preserve-indentation': Remove block indentation
+  ;; only, unless block contents are less indented than block
+  ;; boundaries.
+  (should
+   (equal " L1\nL2\n"
+	  (org-test-with-temp-text " #+BEGIN_SRC org\n  L1\n L2\n #+END_SRC"
+	    (let ((org-src-preserve-indentation t))
+	      (org-element-property :value (org-element-at-point))))))
+  (should
+   (equal
+    "  L1\n L2\n"
+    (org-test-with-temp-text "  #+BEGIN_SRC org\n  L1\n L2\n  #+END_SRC"
+      (let ((org-src-preserve-indentation t))
+	(org-element-property :value (org-element-at-point)))))))
 
 
 ;;;; Statistics Cookie
@@ -2066,30 +2155,38 @@ Outside list"
 (ert-deftest test-org-element/plain-list-interpreter ()
   "Test plain-list and item interpreters."
   (let ((org-list-two-spaces-after-bullet-regexp nil))
-    ;; 1. Unordered list.
+    ;; Unordered list.
     (should (equal (org-test-parse-and-interpret "- item 1") "- item 1\n"))
-    ;; 2. Description list.
+    ;; Description list.
     (should
      (equal (org-test-parse-and-interpret "- tag :: desc") "- tag :: desc\n"))
-    ;; 3. Ordered list.
+    ;; Ordered list.
     (should
      (equal (let ((org-plain-list-ordered-item-terminator t))
 	      (org-test-parse-and-interpret "1. Item"))
 	    "1. Item\n"))
-    ;; 4. Ordered list with counter.
+    (should
+     (equal (let ((org-plain-list-ordered-item-terminator ?\)))
+	      (org-test-parse-and-interpret "1) Item"))
+	    "1) Item\n"))
+    ;; Ordered list with counter.
     (should
      (equal (let ((org-plain-list-ordered-item-terminator t))
 	      (org-test-parse-and-interpret "1. [@5] Item"))
 	    "5. [@5] Item\n"))
-    ;; 5. List with check-boxes.
+    ;; List with check-boxes.
     (should
      (equal (org-test-parse-and-interpret
 	     "- [-] Item 1\n  - [X] Item 2\n  - [ ] Item 3")
 	    "- [-] Item 1\n  - [X] Item 2\n  - [ ] Item 3\n"))
-    ;; 6. Item not starting with a paragraph.
+    ;; Item not starting with a paragraph.
     (should
      (equal (org-test-parse-and-interpret "-\n  | a | b |")
-	    "- \n  | a | b |\n"))))
+	    "- \n  | a | b |\n"))
+    ;; Special case: correctly handle "*" bullets.
+    (should (org-test-parse-and-interpret " * item"))
+    ;; Special case: correctly handle empty items.
+    (should (org-test-parse-and-interpret "-"))))
 
 (ert-deftest test-org-element/quote-block-interpreter ()
   "Test quote block interpreter."
@@ -2218,7 +2315,10 @@ CLOCK: [2012-01-01 sun. 00:01]--[2012-01-01 sun. 00:02] =>  0:01"))
   "Test latex environment interpreter."
   (should (equal (org-test-parse-and-interpret
 		  "\\begin{equation}\n1+1=2\n\\end{equation}")
-		 "\\begin{equation}\n1+1=2\n\\end{equation}\n")))
+		 "\\begin{equation}\n1+1=2\n\\end{equation}\n"))
+  (should (equal (org-test-parse-and-interpret
+		  "\\begin{theorem}[me]\n1+1=2\n\\end{theorem}")
+		 "\\begin{theorem}[me]\n1+1=2\n\\end{theorem}\n")))
 
 (ert-deftest test-org-element/planning-interpreter ()
   "Test planning interpreter."
@@ -2256,9 +2356,24 @@ DEADLINE: <2012-01-01> SCHEDULED: <2012-01-01> CLOSED: [2012-01-01]\n"))))
 	  "#+BEGIN_SRC emacs-lisp -n -k\n  (+ 1 1)\n#+END_SRC\n"))
   ;; Preserve code escaping.
   (should
-   (equal (org-test-parse-and-interpret
-	   "#+BEGIN_SRC org\n,* Headline\n ,#+keyword\nText #+END_SRC")
-	  "#+BEGIN_SRC org\n,* Headline\n ,#+keyword\nText #+END_SRC\n")))
+   (equal (let ((org-edit-src-content-indentation 2))
+	    (org-test-parse-and-interpret
+	     "#+BEGIN_SRC org\n,* Headline\n ,#+keyword\nText #+END_SRC"))
+	  "#+BEGIN_SRC org\n,* Headline\n ,#+keyword\nText #+END_SRC\n"))
+  ;; Do not apply `org-edit-src-content-indentation' when preserving
+  ;; indentation.
+  (should
+   (equal (let ((org-edit-src-content-indentation 2)
+		(org-src-preserve-indentation t))
+	    (org-test-parse-and-interpret
+	     "#+BEGIN_SRC emacs-lisp\n(+ 1 1)\n#+END_SRC"))
+	  "#+BEGIN_SRC emacs-lisp\n(+ 1 1)\n#+END_SRC\n"))
+  (should
+   (equal (let ((org-edit-src-content-indentation 2)
+		(org-src-preserve-indentation nil))
+	    (org-test-parse-and-interpret
+	     "#+BEGIN_SRC emacs-lisp -i\n(+ 1 1)\n#+END_SRC"))
+	  "#+BEGIN_SRC emacs-lisp -i\n(+ 1 1)\n#+END_SRC\n")))
 
 (ert-deftest test-org-element/table-interpreter ()
   "Test table, table-row and table-cell interpreters."
@@ -2605,6 +2720,20 @@ Paragraph \\alpha."
 
 
 
+;;; Test Visible Only Parsing
+
+(ert-deftest test-org-element/parse-buffer-visible ()
+  "Test `org-element-parse-buffer' with visible only argument."
+  (should
+   (equal '("H1" "H3" "H5")
+      (org-test-with-temp-text
+	  "* H1\n** H2\n** H3 :visible:\n** H4\n** H5 :visible:"
+	(org-occur ":visible:")
+	(org-element-map (org-element-parse-buffer nil t) 'headline
+	  (lambda (hl) (org-element-property :raw-value hl)))))))
+
+
+
 ;;; Test `:parent' Property
 
 (ert-deftest test-org-element/parent-property ()
@@ -2695,6 +2824,12 @@ Paragraph \\alpha."
 	 (progn (search-forward "A")
 		(org-element-type
 		 (org-element-property :parent (org-element-at-point)))))))
+  ;; Special case: at a blank line just below a headline, return that
+  ;; headline.
+  (should
+   (equal "H1" (org-test-with-temp-text "* H1\n  \n* H2\n"
+		 (forward-line)
+		 (org-element-property :title (org-element-at-point)))))
   ;; Special case: at the very beginning of a table, return `table'
   ;; object instead of `table-row'.
   (should
@@ -2730,6 +2865,13 @@ Paragraph \\alpha."
        (org-test-with-temp-text "- Para1\n- Para2\n\nPara3"
 	 (progn (forward-line 2)
 		(org-element-type (org-element-at-point))))))
+  ;; Special case: when a list ends at the end of buffer and there's
+  ;; no final newline, return last element in last item.
+  (should
+   (eq 'paragraph
+       (org-test-with-temp-text "- a"
+	 (end-of-line)
+	 (org-element-type (org-element-at-point)))))
   ;; With an optional argument, return trail.
   (should
    (equal '(paragraph center-block)
@@ -2743,7 +2885,12 @@ Paragraph \\alpha."
 	   "- outer\n  #+begin_center\n  - inner\n  #+end_center"
 	 (search-forward "inner")
 	 (beginning-of-line)
-	 (org-element-type (org-element-at-point))))))
+	 (org-element-type (org-element-at-point)))))
+  ;; Do not error at eob on an empty line.
+  (should
+   (org-test-with-temp-text "* H\n"
+     (forward-line)
+     (or (org-element-at-point) t))))
 
 (ert-deftest test-org-element/context ()
   "Test `org-element-context' specifications."

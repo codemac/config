@@ -3,9 +3,9 @@
 ;;; Code:
 
 
-;;;### (autoloads (minimap-kill minimap-create) "minimap" "minimap.el"
-;;;;;;  (20736 48692))
-;;; Generated autoloads from minimap.el
+;;;### (autoloads (minimap-kill minimap-create) "minimap" "../../../../.emacs.d/elpa/minimap-20110427.1123/minimap.el"
+;;;;;;  "ccb4bce7d0ed30bcbe5f566ac0d3b170")
+;;; Generated autoloads from ../../../../.emacs.d/elpa/minimap-20110427.1123/minimap.el
 
 (autoload 'minimap-create "minimap" "\
 Create a minimap sidebar for the current window.
@@ -20,7 +20,9 @@ Cancel the idle timer if no more minimaps are active.
 
 ;;;***
 
-;;;### (autoloads nil nil ("minimap-pkg.el") (20736 48692 334407))
+;;;### (autoloads nil nil ("../../../../.emacs.d/elpa/minimap-20110427.1123/minimap-pkg.el"
+;;;;;;  "../../../../.emacs.d/elpa/minimap-20110427.1123/minimap.el")
+;;;;;;  (21034 17612 809745 0))
 
 ;;;***
 

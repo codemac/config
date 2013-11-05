@@ -4,6 +4,7 @@
 ;;
 ;; Author: Georg Brandl <georg@python.org>
 ;; Version: 20111122.1048
+;; X-Original-Version: 0.1
 ;;
 ;; This file is NOT part of GNU Emacs.
 ;;

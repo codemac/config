@@ -3,8 +3,9 @@
 ;;; Code:
 
 
-;;;### (autoloads (gtags-mode) "gtags" "gtags.el" (20508 7542))
-;;; Generated autoloads from gtags.el
+;;;### (autoloads (gtags-mode) "gtags" "../../../../.emacs.d/elpa/gtags-3.3/gtags.el"
+;;;;;;  "8def9b6e90a8a7377987f0a05bd2d1e2")
+;;; Generated autoloads from ../../../../.emacs.d/elpa/gtags-3.3/gtags.el
 
 (autoload 'gtags-mode "gtags" "\
 Toggle Gtags mode, a minor mode for browsing source code using GLOBAL.
@@ -45,7 +46,9 @@ with no args, if that value is non-nil.
 
 ;;;***
 
-;;;### (autoloads nil nil ("gtags-pkg.el") (20508 7542 652664))
+;;;### (autoloads nil nil ("../../../../.emacs.d/elpa/gtags-3.3/gtags-pkg.el"
+;;;;;;  "../../../../.emacs.d/elpa/gtags-3.3/gtags.el") (21034 17624
+;;;;;;  496562 0))
 
 ;;;***
 

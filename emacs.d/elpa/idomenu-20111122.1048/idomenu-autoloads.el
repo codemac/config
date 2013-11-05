@@ -3,9 +3,9 @@
 ;;; Code:
 
 
-;;;### (autoloads (idomenu) "idomenu" "idomenu.el" (20830 13555 0
-;;;;;;  0))
-;;; Generated autoloads from idomenu.el
+;;;### (autoloads (idomenu) "idomenu" "../../../../.emacs.d/elpa/idomenu-20111122.1048/idomenu.el"
+;;;;;;  "71cf5ccb24081db84cf61c3660699857")
+;;; Generated autoloads from ../../../../.emacs.d/elpa/idomenu-20111122.1048/idomenu.el
 
 (autoload 'idomenu "idomenu" "\
 Switch to a buffer-local tag from Imenu via Ido.
@@ -14,8 +14,9 @@ Switch to a buffer-local tag from Imenu via Ido.
 
 ;;;***
 
-;;;### (autoloads nil nil ("idomenu-pkg.el") (20830 13555 426019
-;;;;;;  0))
+;;;### (autoloads nil nil ("../../../../.emacs.d/elpa/idomenu-20111122.1048/idomenu-pkg.el"
+;;;;;;  "../../../../.emacs.d/elpa/idomenu-20111122.1048/idomenu.el")
+;;;;;;  (21034 17616 419704 0))
 
 ;;;***
 

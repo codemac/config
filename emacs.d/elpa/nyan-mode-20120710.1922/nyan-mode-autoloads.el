@@ -3,8 +3,9 @@
 ;;; Code:
 
 
-;;;### (autoloads (nyan-mode) "nyan-mode" "nyan-mode.el" (20683 55679))
-;;; Generated autoloads from nyan-mode.el
+;;;### (autoloads (nyan-mode) "nyan-mode" "../../../../.emacs.d/elpa/nyan-mode-20120710.1922/nyan-mode.el"
+;;;;;;  "f7bcd85eec48518953b026cd81839895")
+;;; Generated autoloads from ../../../../.emacs.d/elpa/nyan-mode-20120710.1922/nyan-mode.el
 
 (defvar nyan-mode nil "\
 Non-nil if Nyan mode is enabled.
@@ -26,7 +27,9 @@ option `scroll-bar-mode'.
 
 ;;;***
 
-;;;### (autoloads nil nil ("nyan-mode-pkg.el") (20683 55679 793525))
+;;;### (autoloads nil nil ("../../../../.emacs.d/elpa/nyan-mode-20120710.1922/nyan-mode-pkg.el"
+;;;;;;  "../../../../.emacs.d/elpa/nyan-mode-20120710.1922/nyan-mode.el")
+;;;;;;  (21034 17610 837628 0))
 
 ;;;***
 

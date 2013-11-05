@@ -3,8 +3,9 @@
 ;;; Code:
 
 
-;;;### (autoloads nil nil ("emagician-fix-spell-memory-pkg.el" "emagician-fix-spell-memory.el")
-;;;;;;  (20848 28046 281488 0))
+;;;### (autoloads nil nil ("../../../../.emacs.d/elpa/emagician-fix-spell-memory-20130415.1244/emagician-fix-spell-memory-pkg.el"
+;;;;;;  "../../../../.emacs.d/elpa/emagician-fix-spell-memory-20130415.1244/emagician-fix-spell-memory.el")
+;;;;;;  (21034 17642 433949 0))
 
 ;;;***
 

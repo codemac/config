@@ -121,9 +121,9 @@
   (add-to-list 'org-latex-classes
 	       '("beamer"
 		 "\\documentclass[presentation]{beamer}
-     \[DEFAULT-PACKAGES]
-     \[PACKAGES]
-     \[EXTRA]"
+\[DEFAULT-PACKAGES]
+\[PACKAGES]
+\[EXTRA]"
 		 ("\\section{%s}" . "\\section*{%s}")
 		 ("\\subsection{%s}" . "\\subsection*{%s}")
 		 ("\\subsubsection{%s}" . "\\subsubsection*{%s}"))))
@@ -194,12 +194,13 @@ open    The opening template for the environment, with the following escapes
         %A   the default action/overlay specification
         %o   the options argument of the template
         %h   the headline text
-        %H   if there is headline text, that text in {} braces
-        %U   if there is headline text, that text in [] brackets
+        %r   the raw headline text (i.e. without any processing)
+        %H   if there is headline text, that raw text in {} braces
+        %U   if there is headline text, that raw text in [] brackets
 close   The closing string of the environment."
   :group 'org-export-beamer
   :version "24.4"
-  :package-version '(Org . "8.0")
+  :package-version '(Org . "8.1")
   :type '(repeat
 	  (list
 	   (string :tag "Environment")
@@ -538,11 +539,14 @@ used as a communication channel."
 			 ((not env) "column")
 			 ;; Use specified environment.
 			 (t env))))
-	 (env-format (unless (member environment '("column" "columns"))
-		       (assoc environment
-			      (append org-beamer-environments-special
-				      org-beamer-environments-extra
-				      org-beamer-environments-default))))
+	 (raw-title (org-element-property :raw-value headline))
+	 (env-format
+	  (cond ((member environment '("column" "columns")) nil)
+		((assoc environment
+			(append org-beamer-environments-extra
+				org-beamer-environments-default)))
+		(t (user-error "Wrong block type at a headline named \"%s\""
+			       raw-title))))
 	 (title (org-export-data (org-element-property :title headline) info))
 	 (options (let ((options (org-element-property :BEAMER_OPT headline)))
 		    (if (not options) ""
@@ -587,7 +591,7 @@ used as a communication channel."
 	       (if (equal environment "column") options "")
 	       (format "%s\\textwidth" column-width)))
      ;; Block's opening string.
-     (when env-format
+     (when (nth 2 env-format)
        (concat
 	(org-fill-template
 	 (nth 2 env-format)
@@ -608,12 +612,15 @@ used as a communication channel."
 		    (cons "A" "")))))
 	  (list (cons "o" options)
 		(cons "h" title)
-		(cons "H" (if (equal title "") "" (format "{%s}" title)))
-		(cons "U" (if (equal title "") "" (format "[%s]" title))))))
+		(cons "r" raw-title)
+		(cons "H" (if (equal raw-title "") ""
+			    (format "{%s}" raw-title)))
+		(cons "U" (if (equal raw-title "") ""
+			    (format "[%s]" raw-title))))))
 	"\n"))
      contents
-     ;; Block's closing string.
-     (when environment (concat (nth 3 env-format) "\n"))
+     ;; Block's closing string, if any.
+     (and (nth 3 env-format) (concat (nth 3 env-format) "\n"))
      (when column-width "\\end{column}\n")
      (when end-columns-p "\\end{columns}"))))
 
@@ -856,28 +863,30 @@ holding export options."
      (and (plist-get info :time-stamp-file)
 	  (format-time-string "%% Created %Y-%m-%d %a %H:%M\n"))
      ;; 2. Document class and packages.
-     (let ((class (plist-get info :latex-class))
-	   (class-options (plist-get info :latex-class-options)))
-       (org-element-normalize-string
-	(let* ((header (nth 1 (assoc class org-latex-classes)))
-	       (document-class-string
-		(and (stringp header)
-		     (if (not class-options) header
-		       (replace-regexp-in-string
-			"^[ \t]*\\\\documentclass\\(\\(\\[[^]]*\\]\\)?\\)"
-			class-options header t nil 1)))))
-	  (if (not document-class-string)
-	      (user-error "Unknown LaTeX class `%s'" class)
-	    (org-latex-guess-babel-language
-	     (org-latex-guess-inputenc
-	      (org-splice-latex-header
-	       document-class-string
-	       org-latex-default-packages-alist
-	       org-latex-packages-alist nil
-	       (concat (plist-get info :latex-header)
-		       (plist-get info :latex-header-extra)
-		       (plist-get info :beamer-header-extra))))
-	     info)))))
+     (let* ((class (plist-get info :latex-class))
+	    (class-options (plist-get info :latex-class-options))
+	    (header (nth 1 (assoc class org-latex-classes)))
+	    (document-class-string
+	     (and (stringp header)
+		  (if (not class-options) header
+		    (replace-regexp-in-string
+		     "^[ \t]*\\\\documentclass\\(\\(\\[[^]]*\\]\\)?\\)"
+		     class-options header t nil 1)))))
+       (if (not document-class-string)
+	   (user-error "Unknown LaTeX class `%s'" class)
+	 (org-latex-guess-babel-language
+	  (org-latex-guess-inputenc
+	   (org-element-normalize-string
+	    (org-splice-latex-header
+	     document-class-string
+	     org-latex-default-packages-alist
+	     org-latex-packages-alist nil
+	     (concat (org-element-normalize-string
+		      (plist-get info :latex-header))
+		     (org-element-normalize-string
+		      (plist-get info :latex-header-extra))
+		     (plist-get info :beamer-header-extra)))))
+	  info)))
      ;; 3. Insert themes.
      (let ((format-theme
 	    (function
@@ -1056,23 +1065,8 @@ Export is done in a buffer named \"*Org BEAMER Export*\", which
 will be displayed when `org-export-show-temporary-export-buffer'
 is non-nil."
   (interactive)
-  (if async
-      (org-export-async-start
-	  (lambda (output)
-	    (with-current-buffer (get-buffer-create "*Org BEAMER Export*")
-	      (erase-buffer)
-	      (insert output)
-	      (goto-char (point-min))
-	      (LaTeX-mode)
-	      (org-export-add-to-stack (current-buffer) 'beamer)))
-	`(org-export-as 'beamer ,subtreep ,visible-only ,body-only
-			',ext-plist))
-    (let ((outbuf (org-export-to-buffer
-		   'beamer "*Org BEAMER Export*"
-		   subtreep visible-only body-only ext-plist)))
-      (with-current-buffer outbuf (LaTeX-mode))
-      (when org-export-show-temporary-export-buffer
-	(switch-to-buffer-other-window outbuf)))))
+  (org-export-to-buffer 'beamer "*Org BEAMER Export*"
+    async subtreep visible-only body-only ext-plist (lambda () (LaTeX-mode))))
 
 ;;;###autoload
 (defun org-beamer-export-to-latex
@@ -1104,16 +1098,9 @@ file-local settings.
 
 Return output file's name."
   (interactive)
-  (let ((outfile (org-export-output-file-name ".tex" subtreep)))
-    (if async
-	(org-export-async-start
-	    (lambda (f) (org-export-add-to-stack f 'beamer))
-	  `(expand-file-name
-	    (org-export-to-file
-	     'beamer ,outfile ,subtreep ,visible-only ,body-only
-	     ',ext-plist)))
-      (org-export-to-file
-       'beamer outfile subtreep visible-only body-only ext-plist))))
+  (let ((file (org-export-output-file-name ".tex" subtreep)))
+    (org-export-to-file 'beamer file
+      async subtreep visible-only body-only ext-plist)))
 
 ;;;###autoload
 (defun org-beamer-export-to-pdf
@@ -1145,18 +1132,10 @@ file-local settings.
 
 Return PDF file's name."
   (interactive)
-  (if async
-      (let ((outfile (org-export-output-file-name ".tex" subtreep)))
-	(org-export-async-start
-	    (lambda (f) (org-export-add-to-stack f 'beamer))
-	  `(expand-file-name
-	    (org-latex-compile
-	     (org-export-to-file
-	      'beamer ,outfile ,subtreep ,visible-only ,body-only
-	      ',ext-plist)))))
-    (org-latex-compile
-     (org-beamer-export-to-latex
-      nil subtreep visible-only body-only ext-plist))))
+  (let ((file (org-export-output-file-name ".tex" subtreep)))
+    (org-export-to-file 'beamer file
+      async subtreep visible-only body-only ext-plist
+      (lambda (file) (org-latex-compile file)))))
 
 ;;;###autoload
 (defun org-beamer-select-environment ()

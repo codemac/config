@@ -4,8 +4,9 @@
 
 
 ;;;### (autoloads (inline-string-rectangle) "inline-string-rectangle"
-;;;;;;  "inline-string-rectangle.el" (20736 52011))
-;;; Generated autoloads from inline-string-rectangle.el
+;;;;;;  "../../../../.emacs.d/elpa/mark-multiple-20121118.1654/inline-string-rectangle.el"
+;;;;;;  "92dea725f42f25f12e98eced9cb4a970")
+;;; Generated autoloads from ../../../../.emacs.d/elpa/mark-multiple-20121118.1654/inline-string-rectangle.el
 
 (autoload 'inline-string-rectangle "inline-string-rectangle" "\
 
@@ -16,9 +17,9 @@
 
 ;;;### (autoloads (mark-more-like-this-extended mark-more-like-this
 ;;;;;;  mark-all-like-this-in-region mark-all-like-this mark-previous-like-this
-;;;;;;  mark-next-like-this) "mark-more-like-this" "mark-more-like-this.el"
-;;;;;;  (20736 52011))
-;;; Generated autoloads from mark-more-like-this.el
+;;;;;;  mark-next-like-this) "mark-more-like-this" "../../../../.emacs.d/elpa/mark-multiple-20121118.1654/mark-more-like-this.el"
+;;;;;;  "dd0b5fc6c45c5569dd6fcd3aeb3d2a58")
+;;; Generated autoloads from ../../../../.emacs.d/elpa/mark-multiple-20121118.1654/mark-more-like-this.el
 
 (autoload 'mark-next-like-this "mark-more-like-this" "\
 Find and mark the next part of the buffer matching the currently active region
@@ -71,9 +72,9 @@ is one of the above.
 ;;;***
 
 ;;;### (autoloads (mm/clear-all mm/deactivate-region-and-clear-all
-;;;;;;  mm/deactivate-region-or-clear-all) "mark-multiple" "mark-multiple.el"
-;;;;;;  (20736 52011))
-;;; Generated autoloads from mark-multiple.el
+;;;;;;  mm/deactivate-region-or-clear-all) "mark-multiple" "../../../../.emacs.d/elpa/mark-multiple-20121118.1654/mark-multiple.el"
+;;;;;;  "f6815d49b9b5d6d0a832d0f08a253637")
+;;; Generated autoloads from ../../../../.emacs.d/elpa/mark-multiple-20121118.1654/mark-multiple.el
 
 (autoload 'mm/deactivate-region-or-clear-all "mark-multiple" "\
 Deactivate mark if active, otherwise clear all.
@@ -92,9 +93,9 @@ Remove all marks
 
 ;;;***
 
-;;;### (autoloads (rename-sgml-tag) "rename-sgml-tag" "rename-sgml-tag.el"
-;;;;;;  (20736 52011))
-;;; Generated autoloads from rename-sgml-tag.el
+;;;### (autoloads (rename-sgml-tag) "rename-sgml-tag" "../../../../.emacs.d/elpa/mark-multiple-20121118.1654/rename-sgml-tag.el"
+;;;;;;  "3d1c32b1e50339b752fb2ce651784af4")
+;;; Generated autoloads from ../../../../.emacs.d/elpa/mark-multiple-20121118.1654/rename-sgml-tag.el
 
 (autoload 'rename-sgml-tag "rename-sgml-tag" "\
 
@@ -103,8 +104,13 @@ Remove all marks
 
 ;;;***
 
-;;;### (autoloads nil nil ("mark-multiple-pkg.el" "mm-pabbrev-integration.el")
-;;;;;;  (20736 52011 776932))
+;;;### (autoloads nil nil ("../../../../.emacs.d/elpa/mark-multiple-20121118.1654/inline-string-rectangle.el"
+;;;;;;  "../../../../.emacs.d/elpa/mark-multiple-20121118.1654/mark-more-like-this.el"
+;;;;;;  "../../../../.emacs.d/elpa/mark-multiple-20121118.1654/mark-multiple-pkg.el"
+;;;;;;  "../../../../.emacs.d/elpa/mark-multiple-20121118.1654/mark-multiple.el"
+;;;;;;  "../../../../.emacs.d/elpa/mark-multiple-20121118.1654/mm-pabbrev-integration.el"
+;;;;;;  "../../../../.emacs.d/elpa/mark-multiple-20121118.1654/rename-sgml-tag.el")
+;;;;;;  (21034 17613 301568 0))
 
 ;;;***
 

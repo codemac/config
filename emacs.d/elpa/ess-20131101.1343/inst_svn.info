@@ -1,0 +1,34 @@
+This is /home/melpa/melpa/working/ess-20131101.1343/inst_svn.info,
+produced by makeinfo version 4.13 from
+/home/melpa/melpa/working/ess/doc/inst_svn.texi.
+
+The latest development version of ESS is available via
+`https://svn.R-project.org/ESS/', the ESS Subversion repository.  If
+you have a Subversion client (see `http://subversion.tigris.org/'), you
+can download the sources using:
+     % svn checkout https://svn.r-project.org/ESS/trunk PATH
+   which will put the ESS files into directory PATH.  Later, within
+that directory, `svn update' will bring that directory up to date.
+Windows-based tools such as TortoiseSVN are also available for
+downloading the files.  Alternatively, you can browse the sources with a
+web browser at: ESS SVN site (https://svn.r-project.org/ESS/trunk).
+However, please use a subversion client instead to minimize the load
+when retrieving.
+
+   If you remove other versions of ESS from your emacs load-path, you
+can then use the development version by adding the following to .emacs:
+
+     (load "/path/to/ess-svn/lisp/ess-site.el")
+
+   Note that https is required, and that the SSL certificate for the
+Subversion server of the R project is
+
+     Certificate information:
+      - Hostname: svn.r-project.org
+      - Valid: from Jul 16 08:10:01 2004 GMT until Jul 14 08:10:01 2014 GMT
+      - Issuer: Department of Mathematics, ETH Zurich, Zurich, Switzerland, CH
+      - Fingerprint: c9:5d:eb:f9:f2:56:d1:04:ba:44:61:f8:64:6b:d9:33:3f:93:6e:ad
+
+(currently, there is no "trusted certificate").  You can accept this
+certificate permanently and will not be asked about it anymore.
+

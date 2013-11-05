@@ -179,7 +179,7 @@ but which mess up the display of a snippet in Org exported files.")
 (defcustom org-src-lang-modes
   '(("ocaml" . tuareg) ("elisp" . emacs-lisp) ("ditaa" . artist)
     ("asymptote" . asy) ("dot" . fundamental) ("sqlite" . sql)
-    ("calc" . fundamental) ("C" . c) ("cpp" . c++)
+    ("calc" . fundamental) ("C" . c) ("cpp" . c++) ("C++" . c++)
     ("screen" . shell-script))
   "Alist mapping languages to their major mode.
 The key is the language name, the value is the string that should
@@ -757,6 +757,8 @@ with \",*\", \",#+\", \",,*\" and \",,#+\"."
 	(delete-region beg (max beg end))
 	(unless (string-match "\\`[ \t]*\\'" code)
 	  (insert code))
+	;; Make sure the overlay stays in place
+	(when (eq context 'save) (move-overlay ovl beg (point)))
 	(goto-char beg)
 	(if single (just-one-space))))
     (if (memq t (mapcar (lambda (overlay)

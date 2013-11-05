@@ -4,7 +4,8 @@
 
 ;; Author: David Engster <dengste@eml.cc>
 ;; Keywords:
-;; Version: 0.7
+;; Version: 20110427.1123
+;; X-Original-Version: 0.7
 
 ;; This file is NOT part of GNU Emacs.
 

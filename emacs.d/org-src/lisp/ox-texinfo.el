@@ -149,7 +149,9 @@
   :type '(string :tag "Export Filename"))
 
 (defcustom org-texinfo-coding-system nil
-  "Default document encoding for Texinfo output."
+  "Default document encoding for Texinfo output.
+
+If `nil' it will default to `buffer-file-coding-system'."
   :group 'org-export-texinfo
   :type 'coding-system)
 
@@ -693,7 +695,9 @@ holding export options."
 	 ;; `.' in text.
 	 (dirspacing (- 29 (length dirtitle)))
 	 (menu (org-texinfo-make-menu info 'main))
-	 (detail-menu (org-texinfo-make-menu info 'detailed)))
+	 (detail-menu (org-texinfo-make-menu info 'detailed))
+	 (coding-system (or org-texinfo-coding-system
+			    buffer-file-coding-system)))
     (concat
      ;; Header
      header "\n"
@@ -701,9 +705,8 @@ holding export options."
      ;; Filename and Title
      "@setfilename " info-filename "\n"
      "@settitle " title "\n"
-     (if org-texinfo-coding-system
-       (format "@documentencoding %s\n"
-	       (upcase (symbol-name org-texinfo-coding-system))) "\n")
+     (format "@documentencoding %s\n"
+	     (upcase (symbol-name coding-system))) "\n"
      (format "@documentlanguage %s\n" lang)
      "\n\n"
      "@c Version and Contact Info\n"
@@ -1547,7 +1550,7 @@ a communication channel."
 		      (nth count item))) counts)
     (mapconcat (lambda (size)
 		 (make-string size ?a)) (mapcar (lambda (ref)
-						  (apply 'max `,@ref)) (car counts))
+						  (apply 'max `(,@ref))) (car counts))
 		 "} {")))
 
 (defun org-texinfo-table--org-table (table contents info)
@@ -1707,18 +1710,9 @@ file-local settings.
 Return output file's name."
   (interactive)
   (let ((outfile (org-export-output-file-name ".texi" subtreep))
-	(org-export-coding-system org-texinfo-coding-system))
-    (if async
-	(org-export-async-start
-	    (lambda (f) (org-export-add-to-stack f 'texinfo))
-	  (let ((org-export-coding-system org-texinfo-coding-system))
-	    `(expand-file-name
-	      (org-export-to-file
-	       'texinfo ,outfile ,subtreep ,visible-only ,body-only
-	       ',ext-plist))))
-      (let ((org-export-coding-system org-texinfo-coding-system))
-	(org-export-to-file
-	 'texinfo outfile subtreep visible-only body-only ext-plist)))))
+	(org-export-coding-system `,org-texinfo-coding-system))
+    (org-export-to-file 'texinfo outfile
+      async subtreep visible-only body-only ext-plist)))
 
 (defun org-texinfo-export-to-info
   (&optional async subtreep visible-only body-only ext-plist)
@@ -1752,21 +1746,11 @@ directory.
 
 Return INFO file's name."
   (interactive)
-  (if async
-      (let ((outfile (org-export-output-file-name ".texi" subtreep))
-	    (org-export-coding-system org-texinfo-coding-system))
-	(org-export-async-start
-	    (lambda (f) (org-export-add-to-stack f 'texinfo))
-	  (let ((org-export-coding-system org-texinfo-coding-system))
-	    `(expand-file-name
-	      (org-texinfo-compile
-	       (org-export-to-file
-		'texinfo ,outfile ,subtreep ,visible-only ,body-only
-		',ext-plist))))))
-    (org-texinfo-compile
-     (let ((org-export-coding-system org-texinfo-coding-system))
-       (org-texinfo-export-to-texinfo
-	nil subtreep visible-only body-only ext-plist)))))
+  (let ((outfile (org-export-output-file-name ".texi" subtreep))
+	(org-export-coding-system `,org-texinfo-coding-system))
+    (org-export-to-file 'texinfo outfile
+      async subtreep visible-only body-only ext-plist
+      (lambda (file) (org-texinfo-compile file)))))
 
 ;;;###autoload
 (defun org-texinfo-publish-to-texinfo (plist filename pub-dir)
@@ -1798,9 +1782,10 @@ Return INFO file name or an error if it couldn't be produced."
   (let* ((base-name (file-name-sans-extension (file-name-nondirectory file)))
 	 (full-name (file-truename file))
 	 (out-dir (file-name-directory file))
-	 ;; Make sure `default-directory' is set to FILE directory,
-	 ;; not to whatever value the current buffer may have.
-	 (default-directory (file-name-directory full-name))
+	 ;; Properly set working directory for compilation.
+	 (default-directory (if (file-name-absolute-p file)
+				(file-name-directory full-name)
+			      default-directory))
 	 errors)
     (message (format "Processing Texinfo file %s..." file))
     (save-window-excursion

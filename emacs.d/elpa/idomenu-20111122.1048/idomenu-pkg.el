@@ -1,1 +1,1 @@
-(define-package "idomenu" "20111122.1048" "imenu tag selection a la ido [source: wiki]" (quote nil))
+(define-package "idomenu" "20111122.1048" "imenu tag selection a la ido [wiki]" (quote nil))

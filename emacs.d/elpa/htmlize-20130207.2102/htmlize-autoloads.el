@@ -4,9 +4,9 @@
 
 
 ;;;### (autoloads (htmlize-many-files-dired htmlize-many-files htmlize-file
-;;;;;;  htmlize-region htmlize-buffer) "htmlize" "htmlize.el" (20763
-;;;;;;  57651))
-;;; Generated autoloads from htmlize.el
+;;;;;;  htmlize-region htmlize-buffer) "htmlize" "../../../../.emacs.d/elpa/htmlize-20130207.2102/htmlize.el"
+;;;;;;  "68681dd270be98051c650ec5fa0d9d10")
+;;; Generated autoloads from ../../../../.emacs.d/elpa/htmlize-20130207.2102/htmlize.el
 
 (autoload 'htmlize-buffer "htmlize" "\
 Convert BUFFER to HTML, preserving colors and decorations.
@@ -70,7 +70,9 @@ HTMLize dired-marked files.
 
 ;;;***
 
-;;;### (autoloads nil nil ("htmlize-pkg.el") (20763 57651 894229))
+;;;### (autoloads nil nil ("../../../../.emacs.d/elpa/htmlize-20130207.2102/htmlize-pkg.el"
+;;;;;;  "../../../../.emacs.d/elpa/htmlize-20130207.2102/htmlize.el")
+;;;;;;  (21034 17616 822211 0))
 
 ;;;***
 

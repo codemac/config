@@ -4,9 +4,9 @@
 
 
 ;;;### (autoloads (color-theme-solarized-light color-theme-solarized-dark
-;;;;;;  color-theme-solarized) "color-theme-solarized" "color-theme-solarized.el"
-;;;;;;  (20794 59189))
-;;; Generated autoloads from color-theme-solarized.el
+;;;;;;  color-theme-solarized) "color-theme-solarized" "../../../../.emacs.d/elpa/color-theme-solarized-20130307.1350/color-theme-solarized.el"
+;;;;;;  "38f6821eb277911c612dc63cc8f18ab8")
+;;; Generated autoloads from ../../../../.emacs.d/elpa/color-theme-solarized-20130307.1350/color-theme-solarized.el
 
 (autoload 'color-theme-solarized "color-theme-solarized" "\
 Color theme by Ethan Schoonover, created 2011-03-24.
@@ -26,16 +26,20 @@ Ported to Emacs by Greg Pfeil, http://ethanschoonover.com/solarized.
 
 ;;;***
 
-;;;### (autoloads nil "solarized-definitions" "solarized-definitions.el"
-;;;;;;  (20794 59189))
-;;; Generated autoloads from solarized-definitions.el
+;;;### (autoloads nil "solarized-definitions" "../../../../.emacs.d/elpa/color-theme-solarized-20130307.1350/solarized-definitions.el"
+;;;;;;  "be9a1f23bd6982a7f5003a71717ffd58")
+;;; Generated autoloads from ../../../../.emacs.d/elpa/color-theme-solarized-20130307.1350/solarized-definitions.el
 
 (when (boundp 'custom-theme-load-path) (add-to-list 'custom-theme-load-path (file-name-as-directory (file-name-directory load-file-name))))
 
 ;;;***
 
-;;;### (autoloads nil nil ("color-theme-solarized-pkg.el" "solarized-dark-theme.el"
-;;;;;;  "solarized-light-theme.el") (20794 59189 37638))
+;;;### (autoloads nil nil ("../../../../.emacs.d/elpa/color-theme-solarized-20130307.1350/color-theme-solarized-pkg.el"
+;;;;;;  "../../../../.emacs.d/elpa/color-theme-solarized-20130307.1350/color-theme-solarized.el"
+;;;;;;  "../../../../.emacs.d/elpa/color-theme-solarized-20130307.1350/solarized-dark-theme.el"
+;;;;;;  "../../../../.emacs.d/elpa/color-theme-solarized-20130307.1350/solarized-definitions.el"
+;;;;;;  "../../../../.emacs.d/elpa/color-theme-solarized-20130307.1350/solarized-light-theme.el")
+;;;;;;  (21034 17646 680523 0))
 
 ;;;***
 

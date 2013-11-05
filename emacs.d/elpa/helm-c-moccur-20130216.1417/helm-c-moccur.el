@@ -4,7 +4,8 @@
 ;; Copyright (C) 2012 Yuhei Maeda <yuhei.maeda_at_gmail.com>
 
 ;; Author: Kenji.I (Kenji Imakado) <ken.imakaado@gmail.com>
-;; Version: 0.0.1
+;; Version: 20130216.1417
+;; X-Original-Version: 0.0.1
 ;; Package-version: 0.0.1
 ;; Package-Requires: ()
 ;; Package-Requires: ((helm "20120811")(color-moccur "2.71"))

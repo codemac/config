@@ -95,6 +95,10 @@ screen DPI's.
     (add-to-list 'default-frame-alist '(font . "DejaVu Sans Mono-9:hinting=true:autohint=true"))))
 #+end_src
 * Environment
+** Yes I can scroll left
+#+begin_src emacs-lisp
+  (put 'scroll-left 'disabled nil)
+#+end_src
 ** Dvorak
 The dvorak keyboard layout is really advantageous to those of us who
 write emails all day (read: me). However, it does create some problem
@@ -660,6 +664,11 @@ Add support for mac os x spotlight:
   (when (eq system-type 'darwin)
     (add-to-list 'helm-for-files-preferred-list 'helm-c-source-mac-spotlight))
 #+end_src
+Fix helm-top to work on mac os x..
+#+begin_src emacs-lisp
+  (when (eq system-type 'darwin)
+    (setq helm-c-top-command "COLUMNS=%s top -l 1"))
+#+end_src
 Yay gtags support for helm!
 #+begin_src emacs-lisp
   (require 'helm-gtags)
@@ -816,6 +825,15 @@ out semantically.
   ;(add-hook 'gnus-group-mode-hook 'hl-line-fancy-highlight)
 #+end_src
 ** Major Modes
+*** Evil
+#+begin_src emacs-lisp
+  (require 'evil-autoloads)
+#+end_src
+For some reason that does not include evil-local-mode.
+#+begin_src emacs-lisp
+  (unless (boundp 'evil-local-mode)
+    (autoload 'evil-local-mode "evil" "Toggle evil in single buffer" t))
+#+end_src
 *** Valgrind
 #+begin_src emacs-lisp
   ; Based on compile.el included with Emacs
@@ -903,10 +921,11 @@ Uhh, go CL?
 #+end_src
 *** Haskell
 #+begin_src emacs-lisp
-  (autoload 'haskell-mode "haskell-mode.el" "" t)
   (add-to-list 'auto-mode-alist '("\\.hs$" . haskell-mode))
-  (add-hook 'haskell-mode-hook '(lambda ()
-                                  (linum-mode 1)))
+  (add-hook 'haskell-mode-hook 'turn-on-haskell-indent)
+  (add-hook 'haskell-mode-hook 'turn-on-haskell-doc-mode)
+  (add-hook 'haskell-mode-hook '(lambda () (linum-mode 1)))
+  (setq haskell-hoogle-program "hoogle")
 #+end_src
 *** Ruby
 Lisp has kind of taken over from Ruby. Whether that's Scheme or Common
@@ -1009,8 +1028,7 @@ use magit-status and magit-log.
 
 magit-log is missing the commiter annotation, I need to fix that.
 #+begin_src emacs-lisp
-  (require 'magit-autoloads)
-  (autoload 'magit-log "magit" "Open magit for magit log" t nil)
+  (require 'magit)
 #+end_src
 Add a commit signoff to every commit message.
 #+begin_src emacs-lisp
@@ -1270,33 +1288,9 @@ Really useful when you have a lot of code to write.
                     (smex-major-mode-commands)))
 #+end_src
 ** Programs
-*** mu4e
-=mu4e= is a Maildir emacs mail mode. It's quite simple, but it's
-design goals fall right in the "super perfect" range, and I think it
-has a huge opportunity to succeed. It is similar to notmuch.
+*** notmuch
 #+begin_src emacs-lisp
-  (require 'mu4e)
-#+end_src
-**** Folders
-These match the Outlook ones..
-#+begin_src emacs-lisp
-  (setq mu4e-maildir "~/mail"
-        mu4e-sent-folder "/Sent Items"
-        mu4e-drafts-folder "/Drafts"
-        mu4e-trash-folder "/Deleted Items"
-        mu4e-refile-folder "/archive")
-  
-  (setq mu4e-maildir-shortcuts
-        '(("/INBOX" . ?i)))
-  
-  (setq mu4e-refile-folder 'cm-mu4e-refile-folder)
-  
-#+end_src
-**** Retrieval and Indexing
-Let's update the maildirs once every 5 minutes
-#+begin_src emacs-lisp
-  (setq mu4e-get-mail-command "offlineimap"
-        mu4e-update-interval 200)
+  (require 'notmuch)
 #+end_src
 **** Sending mail
 We're just borrowing the gnus settings here..
@@ -1309,49 +1303,98 @@ We're just borrowing the gnus settings here..
         message-send-mail-function 'smtpmail-send-it
         smtpmail-auth-supported '(login))
   
-  (setq mu4e-sent-messages-behavior 'sent)
+  (setq notmuch-fcc-dirs '((".*netapp.com" . "Sent Items")))
+#+end_src
+***** queueing..
+#+begin_src emacs-lisp
+  (setq smtpmail-queue-mail  nil  ;; start in non-queuing mode
+        smtpmail-queue-dir   "~/mail/queue/cur")
+
+  (setq user-mail-address "jmickey@netapp.com")
+  (setq user-full-name "Jeff Mickey")
+#+end_src
+*** mu4e
+=mu4e= is a Maildir emacs mail mode. It's quite simple, but it's
+design goals fall right in the "super perfect" range, and I think it
+has a huge opportunity to succeed. It is similar to notmuch.
+#+begin_src emacs-lisp
+;  (require 'mu4e)
+#+end_src
+**** Folders
+These match the Outlook ones..
+#+begin_src emacs-lisp
+;  (setq mu4e-maildir "~/mail"
+;        mu4e-sent-folder "/Sent Items"
+;        mu4e-drafts-folder "/Drafts"
+;        mu4e-trash-folder "/Deleted Items"
+;        mu4e-refile-folder "/archive")
+;  
+;  (setq mu4e-maildir-shortcuts
+;        '(("/INBOX" . ?i)))
+;  
+;  (setq mu4e-refile-folder 'cm-mu4e-refile-folder)
+;  
+#+end_src
+**** Retrieval and Indexing
+Let's update the maildirs once every 5 minutes
+#+begin_src emacs-lisp
+;  (setq mu4e-get-mail-command "offlineimap"
+;        mu4e-update-interval 200)
+#+end_src
+**** Sending mail
+We're just borrowing the gnus settings here..
+#+begin_src emacs-lisp
+;  (setq smtpmail-auth-credentials "~/.authinfo"
+;        smtpmail-smtp-server "mail.netapp.com"
+;        smtpmail-default-smtp-server "mail.netapp.com"
+;        smtpmail-smtp-service 25
+;        send-mail-function 'smtpmail-send-it
+;        message-send-mail-function 'smtpmail-send-it
+;        smtpmail-auth-supported '(login))
+;  
+;  (setq mu4e-sent-messages-behavior 'sent)
 #+end_src
 **** Queuing mail
 This is very useful for when I ride the train.
 #+begin_src emacs-lisp
-  (setq smtpmail-queue-mail  nil  ;; start in non-queuing mode
-        smtpmail-queue-dir   "~/mail/queue/cur")
+;  (setq smtpmail-queue-mail  nil  ;; start in non-queuing mode
+;        smtpmail-queue-dir   "~/mail/queue/cur")
 #+end_src
 **** Message view
 #+begin_src emacs-lisp
-  ;; enable inline images
-  (setq mu4e-view-show-images t)
-  ;; use imagemagick, if available
-  (when (fboundp 'imagemagick-register-types)
-    (imagemagick-register-types))
-  
-  (setq message-citation-line-format "* %f [%Y-%m-%d %H:%M]:")
-  (setq message-citation-line-function 'message-insert-formatted-citation-line)
-  
-  ;; for w3m
-  (setq mu4e-html2text-command "w3m -T 'text/html' -dump")
-  ;; (setq mu4e-html2text-command "html2text -nobs -ascii -style pretty")
-  (setq mu4e-view-prefer-html nil)
-  
-  (add-to-list 'mu4e-view-actions
-               '("browser render" . mu4e-action-view-in-browser))
-  
-  (setq mu4e-text2speech-command "say")
-  (add-to-list 'mu4e-view-actions
-               '("speak message" . mu4e-action-message-to-speech))
-  
-  
+;  ;; enable inline images
+;  (setq mu4e-view-show-images t)
+;  ;; use imagemagick, if available
+;  (when (fboundp 'imagemagick-register-types)
+;    (imagemagick-register-types))
+;  
+;  (setq message-citation-line-format "* %f [%Y-%m-%d %H:%M]:")
+;  (setq message-citation-line-function 'message-insert-formatted-citation-line)
+;  
+;  ;; for w3m
+;  (setq mu4e-html2text-command "w3m -T 'text/html' -dump")
+;  ;; (setq mu4e-html2text-command "html2text -nobs -ascii -style pretty")
+;  (setq mu4e-view-prefer-html nil)
+;  
+;  (add-to-list 'mu4e-view-actions
+;               '("browser render" . mu4e-action-view-in-browser))
+;  
+;  (setq mu4e-text2speech-command "say")
+;  (add-to-list 'mu4e-view-actions
+;               '("speak message" . mu4e-action-message-to-speech))
+;  
+;  
 #+end_src
 **** Setting the default mail client
 #+begin_src emacs-lisp
-  (setq mail-user-agent 'mu4e-user-agent)
-  (setq user-mail-address "jmickey@netapp.com")
-  (setq user-full-name "Jeff Mickey")
+;  (setq mail-user-agent 'mu4e-user-agent)
+;  (setq user-mail-address "jmickey@netapp.com")
+;  (setq user-full-name "Jeff Mickey")
 #+end_src
 **** Org mode integration
 #+begin_src emacs-lisp
-  (require 'org-mu4e)
-  (setq org-mu4e-convert-to-html t)
+;  (require 'org-mu4e)
+;  (setq org-mu4e-convert-to-html t)
 #+end_src
 *** Geiser
 Let's get our scheme on!
@@ -1651,35 +1694,39 @@ Functions borrowed from Sacha Chua.
            ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
             (org-agenda-sorting-strategy '(user-defined-up))))
           ("v" "INTERNET agenda"
-           ((tags-todo "COMPUTER|INTERNET|EMAIL-BLOCKED=\"t\""))
+           ((tags-todo "INTERNET-BLOCKED=\"t\"/!-WAITING")
+            (tags-todo "INTERNET-BLOCKED=\"t\"/!+WAITING"))
            ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
             (org-agenda-sorting-strategy '(user-defined-up))))
           ("c" "COMPUTER agenda"
-           ((tags-todo "COMPUTER-BLOCKED=\"t\""))
+           ((tags-todo "COMPUTER-BLOCKED=\"t\"/!-WAITING")
+            (tags-todo "COMPUTER-BLOCKED=\"t\"/!+WAITING"))
            ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
             (org-agenda-sorting-strategy '(user-defined-up))))
           ("w" "Work Agenda"
            ((agenda)
-            (tags-todo "WORK-BLOCKED=\"t\"|COMPUTER-BLOCKED=\"t\"|INTERNET-BLOCKED=\"t\"/!-WAITING")
+            (tags-todo "WORK-BLOCKED=\"t\"/!-WAITING")
             (tags-todo "WORK-BLOCKED=\"t\"/!+WAITING")
             (tags "WORK+PROJECT")
             (tags "WORK"))
            ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
             (org-agenda-sorting-strategy '(user-defined-up))))
           ("h" "Home Agenda"
-           ((agenda)
-            (tags-todo "HOME-BLOCKED=\"t\"/!-WAITING")
+           ((tags-todo "HOME-BLOCKED=\"t\"/!-WAITING")
             (tags-todo "HOME-BLOCKED=\"t\"/!+WAITING")
             (tags "HOME+PROJECT")
             (tags "HOME"))
            ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
             (org-agenda-sorting-strategy '(user-defined-up))))
           ("r" "Errand Agenda"
-           ((agenda)
-            (tags-todo "ERRAND-BLOCKED=\"t\"/!-WAITING")
+           ((tags-todo "ERRAND-BLOCKED=\"t\"/!-WAITING")
             (tags-todo "ERRAND-BLOCKED=\"t\"/!+WAITING")
             (tags "ERRAND+PROJECT")
             (tags "ERRAND"))
+           ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
+            (org-agenda-sorting-strategy '(user-defined-up))))
+          ("p" "People Agenda"
+           ((todo "-ERRAND-HOME-INTERNET-PROJECT-COMPUTER-PHONE"))
            ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
             (org-agenda-sorting-strategy '(user-defined-up))))
           ("x" "Tasks" ((tags-todo "-BLOCKED=\"t\""
@@ -2446,7 +2493,7 @@ A wholly owned subsidiary of Cisco.
 #+begin_src emacs-lisp
   (require 'tup-mode)
 #+end_src
-
+    
 * Disabled lisp
 #+begin_src emacs-lisp
   ; have to figure out how to comment multiple lines...
@@ -2784,9 +2831,7 @@ Start a server if it's not started, and I'm not root.
 #+begin_src emacs-lisp
   (unless (string-equal "root" (getenv "USER"))
   ;; Only start server mode if it isn't started already
-    (when (or (not (boundp 'server-process))
-              (not (eq (process-status server-process)
-                       'listen)))
+    (unless (server-running-p)
       (server-start)))
   
   (when (eq system-type 'darwin) (add-hook 'server-visit-hook 'raise-frame))

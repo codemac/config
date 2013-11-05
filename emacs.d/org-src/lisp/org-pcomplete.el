@@ -36,7 +36,7 @@
 
 (declare-function org-split-string "org" (string &optional separators))
 (declare-function org-make-org-heading-search-string "org"
-		  (&optional string heading))
+		  (&optional string))
 (declare-function org-get-buffer-tags "org" ())
 (declare-function org-get-tags "org" ())
 (declare-function org-buffer-property-keys "org"
@@ -153,13 +153,16 @@ When completing for #+STARTUP, for example, this function returns
 	    (mapcar (lambda (keyword) (concat keyword ": "))
 		    org-element-affiliated-keywords)
 	    (let (block-names)
-	      (mapc (lambda (block-name)
-		      (let ((name (car block-name)))
-			(push (format "END_%s: " name) block-names)
-			(push (format "BEGIN_%s: " name) block-names)
-			(push (format "ATTR_%s: " name) block-names)))
-		    org-element-block-name-alist)
-	      block-names)
+	      (dolist (block-info org-element-block-name-alist block-names)
+		(let ((name (car block-info)))
+		  (push (format "END_%s" name) block-names)
+		  (push (concat "BEGIN_"
+				name
+				;; Since language is compulsory in
+				;; source blocks, add a space.
+				(and (equal name "SRC") " "))
+			block-names)
+		  (push (format "ATTR_%s: " name) block-names))))
 	    (mapcar (lambda (keyword) (concat keyword ": "))
 		    (org-get-export-keywords))))
    (substring pcomplete-stub 2)))
@@ -254,6 +257,8 @@ When completing for #+STARTUP, for example, this function returns
 		     (file-name-nondirectory visited-file)))
 	       (buffer-name (buffer-base-buffer)))))))
 
+
+(declare-function org-export-backend-options "org-export" (cl-x))
 (defun pcomplete/org-mode/file-option/options ()
   "Complete arguments for the #+OPTIONS file option."
   (while (pcomplete-here
@@ -266,9 +271,9 @@ When completing for #+STARTUP, for example, this function returns
 	      "|:" "tags:" "tasks:" "<:" "todo:")
 	    ;; OPTION items from registered back-ends.
 	    (let (items)
-	      (dolist (back-end (org-bound-and-true-p
-				 org-export-registered-backends))
-		(dolist (option (plist-get (cdr back-end) :options-alist))
+	      (dolist (backend (org-bound-and-true-p
+				org-export--registered-backends))
+		(dolist (option (org-export-backend-options backend))
 		  (let ((item (nth 2 option)))
 		    (when item (push (concat item ":") items)))))
 	      items))))))
@@ -321,7 +326,7 @@ This needs more work, to handle headings with lots of spaces in them."
 	 (let (tbl)
 	   (while (re-search-forward org-todo-line-regexp nil t)
 	     (push (org-make-org-heading-search-string
-		    (match-string-no-properties 3) t)
+		    (match-string-no-properties 3))
 		   tbl))
 	   (pcomplete-uniqify-list tbl)))
        (substring pcomplete-stub 1))))
@@ -391,7 +396,7 @@ Complete a language in the first field, the header arguments and switches."
 	  '("-n" "-r" "-l"
 	    ":cache" ":colnames" ":comments" ":dir" ":eval" ":exports"
 	    ":file" ":hlines" ":no-expand" ":noweb" ":results" ":rownames"
-	    ":session" ":shebang" ":tangle" ":var"))))
+	    ":session" ":shebang" ":tangle" ":tangle-mode" ":var"))))
 
 (defun pcomplete/org-mode/block-option/clocktable ()
   "Complete keywords in a clocktable line."

@@ -227,7 +227,9 @@ As the value of this option simply gets inserted into the HTML <head> header,
 you can \"misuse\" it to also add other text to the header."
   :group 'org-agenda-export
   :group 'org-export-html
-  :type 'string)
+  :type '(choice
+	  (const nil)
+	  (string)))
 
 (defcustom org-agenda-persistent-filter nil
   "When set, keep filters from one agenda view to the next."
@@ -328,6 +330,7 @@ the daily/weekly agenda, see `org-agenda-skip-function'.")
 			 (const org-agenda-span)
 			 (choice (const :tag "Day" 'day)
 				 (const :tag "Week" 'week)
+				 (const :tag "Fortnight" 'fortnight)
 				 (const :tag "Month" 'month)
 				 (const :tag "Year" 'year)
 				 (integer :tag "Custom")))
@@ -994,7 +997,7 @@ you want to use two-columns display (see `org-agenda-menu-two-columns')."
   :version "24.1"
   :type 'boolean)
 
-(define-obsolete-variable-alias 'org-agenda-menu-two-column 'org-agenda-menu-two-columns "24.3")
+(define-obsolete-variable-alias 'org-agenda-menu-two-column 'org-agenda-menu-two-columns)
 
 (defcustom org-agenda-menu-two-columns nil
   "Non-nil means, use two columns to show custom commands in the dispatcher.
@@ -1004,7 +1007,7 @@ to nil."
   :version "24.1"
   :type 'boolean)
 
-(define-obsolete-variable-alias 'org-finalize-agenda-hook 'org-agenda-finalize-hook "24.3")
+(define-obsolete-variable-alias 'org-finalize-agenda-hook 'org-agenda-finalize-hook)
 (defcustom org-agenda-finalize-hook nil
   "Hook run just before displaying an agenda buffer.
 The buffer is still writable when the hook is called.
@@ -1124,7 +1127,8 @@ option will be ignored."
 Should be 1 or 7.
 Obsolete, see `org-agenda-span'."
   :group 'org-agenda-daily/weekly
-  :type 'integer)
+  :type '(choice (const nil)
+		 (integer)))
 
 (make-obsolete-variable 'org-agenda-ndays 'org-agenda-span "24.1")
 
@@ -1135,6 +1139,7 @@ Custom commands can set this variable in the options section."
   :group 'org-agenda-daily/weekly
   :type '(choice (const :tag "Day" day)
 		 (const :tag "Week" week)
+		 (const :tag "Fortnight" fortnight)
 		 (const :tag "Month" month)
 		 (const :tag "Year" year)
 		 (integer :tag "Custom")))
@@ -1729,9 +1734,7 @@ that passed since this item was scheduled first."
 These entries are added to the agenda when pressing \"[\"."
   :group 'org-agenda-line-format
   :version "24.1"
-  :type '(list
-	  (string :tag "Scheduled today     ")
-	  (string :tag "Scheduled previously")))
+  :type 'string)
 
 (defcustom org-agenda-deadline-leaders '("Deadline:  " "In %3d d.: " "%2d d. ago: ")
   "Text preceding deadline items in the agenda view.
@@ -1894,7 +1897,7 @@ returns a face, or nil if does not want to specify a face and let
 the normal rules apply."
   :group 'org-agenda-line-format
   :version "24.1"
-  :type 'function)
+  :type '(choice (const nil) (function)))
 
 (defcustom org-agenda-category-icon-alist nil
   "Alist of category icon to be displayed in agenda views.
@@ -1976,7 +1979,7 @@ Note that for the purpose of tag filtering, only the lower-case version of
 all tags will be considered, so that this function will only ever see
 the lower-case version of all tags."
   :group 'org-agenda
-  :type 'function)
+  :type '(choice (const nil) (function)))
 
 (defcustom org-agenda-bulk-custom-functions nil
   "Alist of characters and custom functions for bulk actions.
@@ -2334,7 +2337,11 @@ The following commands are available:
      ["Week View" org-agenda-week-view
       :active (org-agenda-check-type nil 'agenda)
       :style radio :selected (eq org-agenda-current-span 'week)
-      :keys "v w  (or just w)"]
+      :keys "v w"]
+     ["Fortnight View" org-agenda-fortnight-view
+      :active (org-agenda-check-type nil 'agenda)
+      :style radio :selected (eq org-agenda-current-span 'fortnight)
+      :keys "v f"]
      ["Month View" org-agenda-month-view
       :active (org-agenda-check-type nil 'agenda)
       :style radio :selected (eq org-agenda-current-span 'month)
@@ -2737,12 +2744,12 @@ Pressing `<' twice means to restrict to the current subtree or region
 	(put 'org-agenda-files 'org-restrict (list bfn))
 	(cond
 	 ((eq restriction 'region)
-	  (setq org-agenda-restrict t)
+	  (setq org-agenda-restrict (current-buffer))
 	  (move-marker org-agenda-restrict-begin (region-beginning))
 	  (move-marker org-agenda-restrict-end (region-end)))
 	 ((eq restriction 'subtree)
 	  (save-excursion
-	    (setq org-agenda-restrict t)
+	    (setq org-agenda-restrict (current-buffer))
 	    (org-back-to-heading t)
 	    (move-marker org-agenda-restrict-begin (point))
 	    (move-marker org-agenda-restrict-end
@@ -3129,9 +3136,10 @@ longer string it is used as a tags/todo match string.
 Parameters are alternating variable names and values that will be bound
 before running the agenda command."
   (org-eval-in-environment (org-make-parameter-alist parameters)
-    (if (> (length cmd-key) 2)
-	(org-tags-view nil cmd-key)
-      (org-agenda nil cmd-key)))
+    (let (org-agenda-sticky)
+      (if (> (length cmd-key) 2)
+	  (org-tags-view nil cmd-key)
+	(org-agenda nil cmd-key))))
   (set-buffer org-agenda-buffer-name)
   (princ (buffer-string)))
 
@@ -3878,7 +3886,7 @@ continue from there."
       (throw :skip t))))
 
 (defun org-agenda-skip-eval (form)
-  "If FORM is a function or a list, call (or eval) is and return result.
+  "If FORM is a function or a list, call (or eval) it and return the result.
 `save-excursion' and `save-match-data' are wrapped around the call, so point
 and match data are returned to the previous state no matter what these
 functions do."
@@ -4170,7 +4178,7 @@ items if they have an hour specification like [h]h:mm."
 	   (sd (or start-day today))
 	   (ndays (org-agenda-span-to-ndays span sd))
 	   (org-agenda-start-on-weekday
-	    (if (eq ndays 7)
+	    (if (or (eq ndays 7) (eq ndays 14))
 		org-agenda-start-on-weekday))
 	   (thefiles (org-agenda-files nil 'ifmode))
 	   (files thefiles)
@@ -4339,6 +4347,7 @@ items if they have an hour specification like [h]h:mm."
   (cond ((symbolp n) n)
 	((= n 1) 'day)
 	((= n 7) 'week)
+	((= n 14) 'fortnight)
 	(t n)))
 
 (defun org-agenda-span-to-ndays (span &optional start-day)
@@ -4347,6 +4356,7 @@ START-DAY is an absolute time value."
   (cond ((numberp span) span)
 	((eq span 'day) 1)
 	((eq span 'week) 7)
+	((eq span 'fortnight) 14)
 	((eq span 'month)
 	 (let ((date (calendar-gregorian-from-absolute start-day)))
 	   (calendar-last-day-of-month (car date) (caddr date))))
@@ -4557,7 +4567,7 @@ in `org-agenda-text-search-extra-files'."
 	      (let ((case-fold-search t))
 		(save-excursion
 		  (save-restriction
-		    (if org-agenda-restrict
+		    (if (eq buffer org-agenda-restrict)
 			(narrow-to-region org-agenda-restrict-begin
 					  org-agenda-restrict-end)
 		      (widen))
@@ -4813,7 +4823,7 @@ The prefix arg TODO-ONLY limits the search to TODO entries."
 		(error "Agenda file %s is not in `org-mode'" file))
 	      (save-excursion
 		(save-restriction
-		  (if org-agenda-restrict
+		  (if (eq buffer org-agenda-restrict)
 		      (narrow-to-region org-agenda-restrict-begin
 					org-agenda-restrict-end)
 		    (widen))
@@ -5281,7 +5291,7 @@ the documentation of `org-diary'."
 	(let ((case-fold-search nil))
 	  (save-excursion
 	    (save-restriction
-	      (if org-agenda-restrict
+	      (if (eq buffer org-agenda-restrict)
 		  (narrow-to-region org-agenda-restrict-begin
 				    org-agenda-restrict-end)
 		(widen))
@@ -7085,7 +7095,7 @@ in the file.  Otherwise, restriction will be to the current subtree."
 	      (t 'file)))
   (if (eq type 'subtree)
       (progn
-	(setq org-agenda-restrict t)
+	(setq org-agenda-restrict (current-buffer))
 	(setq org-agenda-overriding-restriction 'subtree)
 	(put 'org-agenda-files 'org-restrict
 	     (list (buffer-file-name (buffer-base-buffer))))
@@ -7307,12 +7317,15 @@ The category is that of the current line."
 	   org-agenda-category-filter)
       (org-agenda-filter-show-all-cat)
     (let ((cat (org-no-properties (get-text-property (point) 'org-category))))
-      (if (and cat (not (string= "" cat)))
-	  (org-agenda-filter-apply
-	   (setq org-agenda-category-filter
-		 (list (concat (if strip "-" "+") cat)))
-	   'category)
-	(error "No category at point")))))
+      (cond
+       ((and cat strip)
+        (org-agenda-filter-apply
+         (push (concat "-" cat) org-agenda-category-filter) 'category))
+       ((and cat)
+        (org-agenda-filter-apply
+         (setq org-agenda-category-filter
+	       (list (concat "+" cat))) 'category))
+       ((error "No category at point"))))))
 
 (defun org-find-top-headline (&optional pos)
   "Find the topmost parent headline and return it."
@@ -7825,6 +7838,8 @@ With prefix ARG, go forward that many times the current span."
       (setq sd (+ arg sd)))
      ((eq span 'week)
       (setq sd (+ (* 7 arg) sd)))
+     ((eq span 'fortnight)
+      (setq sd (+ (* 14 arg) sd)))
      ((eq span 'month)
       (setq greg2 (list (+ (car greg) arg) (nth 1 greg) (nth 2 greg))
 	    sd (calendar-absolute-from-gregorian greg2))
@@ -7854,7 +7869,7 @@ With prefix ARG, go backward that many times the current span."
 (defun org-agenda-view-mode-dispatch ()
   "Call one of the view mode commands."
   (interactive)
-  (message "View: [d]ay        [w]eek       [m]onth       [y]ear   [SPC]reset  [q]uit/abort
+  (message "View: [d]ay  [w]eek  for[t]night  [m]onth  [y]ear  [SPC]reset  [q]uit/abort
       time[G]rid   [[]inactive  [f]ollow      [l]og    [L]og-all   [c]lockcheck
       [a]rch-trees [A]rch-files clock[R]eport include[D]iary       [E]ntryText")
   (let ((a (read-char-exclusive)))
@@ -7862,6 +7877,7 @@ With prefix ARG, go backward that many times the current span."
       (?\  (call-interactively 'org-agenda-reset-view))
       (?d (call-interactively 'org-agenda-day-view))
       (?w (call-interactively 'org-agenda-week-view))
+      (?t (call-interactively 'org-agenda-fortnight-view))
       (?m (call-interactively 'org-agenda-month-view))
       (?y (call-interactively 'org-agenda-year-view))
       (?l (call-interactively 'org-agenda-log-mode))
@@ -7900,6 +7916,15 @@ week 12 of year 2007.  Years in the range 1938-2037 can also be
 written as 2-digit years."
   (interactive "P")
   (org-agenda-change-time-span 'week iso-week))
+(defun org-agenda-fortnight-view (&optional iso-week)
+  "Switch to daily view for agenda.
+With argument ISO-WEEK, switch to the corresponding ISO week.
+If ISO-WEEK has more then 2 digits, only the last two encode the
+week.  Any digits before this encode a year.  So 200712 means
+week 12 of year 2007.  Years in the range 1938-2037 can also be
+written as 2-digit years."
+  (interactive "P")
+  (org-agenda-change-time-span 'fortnight iso-week))
 (defun org-agenda-month-view (&optional month)
   "Switch to monthly view for agenda.
 With argument MONTH, switch to that month."
@@ -7921,7 +7946,7 @@ written as 2-digit years."
 
 (defun org-agenda-change-time-span (span &optional n)
   "Change the agenda view to SPAN.
-SPAN may be `day', `week', `month', `year'."
+SPAN may be `day', `week', `fortnight', `month', `year'."
   (org-agenda-check-type t 'agenda)
   (let* ((args (get-text-property (min (1- (point-max)) (point)) 'org-last-args))
 	 (curspan (nth 2 args)))
@@ -7942,7 +7967,7 @@ SPAN may be `day', `week', `month', `year'."
 
 (defun org-agenda-compute-starting-span (sd span &optional n)
   "Compute starting date for agenda.
-SPAN may be `day', `week', `month', `year'.  The return value
+SPAN may be `day', `week', `fortnight', `month', `year'.  The return value
 is a cons cell with the starting date and the number of days,
 so that the date SD will be in that range."
   (let* ((greg (calendar-gregorian-from-absolute sd))
@@ -7955,7 +7980,7 @@ so that the date SD will be in that range."
 	(setq sd (+ (calendar-absolute-from-gregorian
 		     (list mg 1 yg))
 		    n -1))))
-     ((eq span 'week)
+     ((or (eq span 'week) (eq span 'fortnight))
       (let* ((nt (calendar-day-of-week
 		  (calendar-gregorian-from-absolute sd)))
 	     (d (if org-agenda-start-on-weekday
@@ -8374,7 +8399,7 @@ Point is in the buffer where the item originated.")
 	    (if (and confirm
 		     (not (y-or-n-p "Archive this subtree or entry? ")))
 		(error "Abort")
-	      (save-excursion
+	      (save-window-excursion
 		(goto-char pos)
 		(let ((org-agenda-buffer-name bufname-orig))
 		  (org-remove-subtree-entries-from-agenda))

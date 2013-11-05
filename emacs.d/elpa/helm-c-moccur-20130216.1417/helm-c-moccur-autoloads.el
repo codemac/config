@@ -3,8 +3,9 @@
 ;;; Code:
 
 
-;;;### (autoloads nil nil ("helm-c-moccur-pkg.el" "helm-c-moccur.el")
-;;;;;;  (20774 56229 761902))
+;;;### (autoloads nil nil ("../../../../.emacs.d/elpa/helm-c-moccur-20130216.1417/helm-c-moccur-pkg.el"
+;;;;;;  "../../../../.emacs.d/elpa/helm-c-moccur-20130216.1417/helm-c-moccur.el")
+;;;;;;  (21034 17618 79217 0))
 
 ;;;***
 

@@ -665,11 +665,13 @@ caption keyword."
 	      element info nil 'org-ascii--has-caption-p))
 	    (title-fmt (org-ascii--translate
 			(case (org-element-type element)
-			  (table "Table %d: %s")
-			  (src-block "Listing %d: %s"))
+			  (table "Table %d:")
+			  (src-block "Listing %d:"))
 			info)))
 	(org-ascii--fill-string
-	 (format title-fmt reference (org-export-data caption info))
+	 (concat (format title-fmt reference)
+		 " "
+		 (org-export-data caption info))
 	 (org-ascii--current-text-width element info) info)))))
 
 (defun org-ascii--build-toc (info &optional n keyword)
@@ -1655,8 +1657,7 @@ contextual information."
 	      (buffer-substring (point-min) (point))))
 	   (t (org-remove-indentation (org-element-property :value table))))
      ;; Possible add a caption string below.
-     (when (and caption (not org-ascii-caption-above))
-       (concat "\n" caption)))))
+     (and (not org-ascii-caption-above) caption))))
 
 
 ;;;; Table Cell
@@ -1672,25 +1673,35 @@ column.
 
 When `org-ascii-table-widen-columns' is non-nil, width cookies
 are ignored."
-  (or (and (not org-ascii-table-widen-columns)
-	   (org-export-table-cell-width table-cell info))
-      (let* ((max-width 0)
-	     (table (org-export-get-parent-table table-cell))
-	     (specialp (org-export-table-has-special-column-p table))
-	     (col (cdr (org-export-table-cell-address table-cell info))))
-	(org-element-map table 'table-row
-	  (lambda (row)
-	    (setq max-width
-		  (max (length
-			(org-export-data
-			 (org-element-contents
-			  (elt (if specialp (cdr (org-element-contents row))
-				 (org-element-contents row))
-			       col))
-			 info))
-		       max-width)))
-	  info)
-	max-width)))
+  (let* ((row (org-export-get-parent table-cell))
+	 (table (org-export-get-parent row))
+	 (col (let ((cells (org-element-contents row)))
+		(- (length cells) (length (memq table-cell cells)))))
+	 (cache
+	  (or (plist-get info :ascii-table-cell-width-cache)
+	      (plist-get (setq info
+			       (plist-put info :ascii-table-cell-width-cache
+					  (make-hash-table :test 'equal)))
+			 :ascii-table-cell-width-cache)))
+	 (key (cons table col)))
+    (or (gethash key cache)
+	(puthash
+	 key
+	 (or (and (not org-ascii-table-widen-columns)
+		  (org-export-table-cell-width table-cell info))
+	     (let* ((max-width 0))
+	       (org-element-map table 'table-row
+		 (lambda (row)
+		   (setq max-width
+			 (max (length
+			       (org-export-data
+				(org-element-contents
+				 (elt (org-element-contents row) col))
+				info))
+			      max-width)))
+		 info)
+	       max-width))
+	 cache))))
 
 (defun org-ascii-table-cell (table-cell contents info)
   "Transcode a TABLE-CELL object from Org to ASCII.
@@ -1890,23 +1901,8 @@ Export is done in a buffer named \"*Org ASCII Export*\", which
 will be displayed when `org-export-show-temporary-export-buffer'
 is non-nil."
   (interactive)
-  (if async
-      (org-export-async-start
-       (lambda (output)
-	 (with-current-buffer (get-buffer-create "*Org ASCII Export*")
-	   (erase-buffer)
-	   (insert output)
-	   (goto-char (point-min))
-	   (text-mode)
-	   (org-export-add-to-stack (current-buffer) 'ascii)))
-       `(org-export-as 'ascii ,subtreep ,visible-only ,body-only
-		       ',ext-plist))
-    (let ((outbuf (org-export-to-buffer
-		   'ascii "*Org ASCII Export*"
-		   subtreep visible-only body-only ext-plist)))
-      (with-current-buffer outbuf (text-mode))
-      (when org-export-show-temporary-export-buffer
-	(switch-to-buffer-other-window outbuf)))))
+  (org-export-to-buffer 'ascii "*Org ASCII Export*"
+    async subtreep visible-only body-only ext-plist (lambda () (text-mode))))
 
 ;;;###autoload
 (defun org-ascii-export-to-ascii
@@ -1938,15 +1934,9 @@ file-local settings.
 
 Return output file's name."
   (interactive)
-  (let ((outfile (org-export-output-file-name ".txt" subtreep)))
-    (if async
-	(org-export-async-start
-	 (lambda (f) (org-export-add-to-stack f 'ascii))
-	 `(expand-file-name
-	   (org-export-to-file
-	    'ascii ,outfile ,subtreep ,visible-only ,body-only ',ext-plist)))
-      (org-export-to-file
-       'ascii outfile subtreep visible-only body-only ext-plist))))
+  (let ((file (org-export-output-file-name ".txt" subtreep)))
+    (org-export-to-file 'ascii file
+      async subtreep visible-only body-only ext-plist)))
 
 ;;;###autoload
 (defun org-ascii-publish-to-ascii (plist filename pub-dir)

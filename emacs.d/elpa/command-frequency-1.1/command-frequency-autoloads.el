@@ -3,8 +3,9 @@
 ;;; Code:
 
 
-;;;### (autoloads nil nil ("command-frequency-pkg.el" "command-frequency.el")
-;;;;;;  (20820 31640 985424 0))
+;;;### (autoloads nil nil ("../../../../.emacs.d/elpa/command-frequency-1.1/command-frequency-pkg.el"
+;;;;;;  "../../../../.emacs.d/elpa/command-frequency-1.1/command-frequency.el")
+;;;;;;  (21034 17644 205257 0))
 
 ;;;***
 

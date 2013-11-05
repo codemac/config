@@ -2,7 +2,8 @@
 ;; -*- Mode: Emacs-Lisp -*-
 
 ;; Authors: Akihisa <akihisa@mail.ne.jp>
-;; Version: 2.71
+;; Version: 20120811.2127
+;; X-Original-Version: 2.71
 ;; Package-version: 2.71
 ;; Keywords: convenience
 ;; X-URL: http://www.bookshelf.jp/elc/color-moccur.el

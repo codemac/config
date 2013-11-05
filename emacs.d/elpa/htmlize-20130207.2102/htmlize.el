@@ -4,7 +4,8 @@
 
 ;; Author: Hrvoje Niksic <hniksic@xemacs.org>
 ;; Keywords: hypermedia, extensions
-;; Version: 1.47
+;; Version: 20130207.2102
+;; X-Original-Version: 1.47
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by

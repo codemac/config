@@ -3,8 +3,9 @@
 ;;; Code:
 
 
-;;;### (autoloads nil nil ("color-moccur-pkg.el" "color-moccur.el")
-;;;;;;  (20578 6453 488821))
+;;;### (autoloads nil nil ("../../../../.emacs.d/elpa/color-moccur-20120811.2127/color-moccur-pkg.el"
+;;;;;;  "../../../../.emacs.d/elpa/color-moccur-20120811.2127/color-moccur.el")
+;;;;;;  (21034 17647 228530 0))
 
 ;;;***
 

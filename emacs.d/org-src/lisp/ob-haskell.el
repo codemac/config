@@ -52,7 +52,8 @@
 (defvar org-babel-tangle-lang-exts)
 (add-to-list 'org-babel-tangle-lang-exts '("haskell" . "hs"))
 
-(defvar org-babel-default-header-args:haskell '())
+(defvar org-babel-default-header-args:haskell
+  '((:padlines . "no")))
 
 (defvar org-babel-haskell-lhs2tex-command "lhs2tex")
 
@@ -149,7 +150,7 @@ specifying a variable of the same value."
 (defvar org-src-preserve-indentation)
 (declare-function org-export-to-file "ox"
 		  (backend file
-			   &optional subtreep visible-only body-only ext-plist))
+			   &optional async subtreep visible-only body-only ext-plist))
 (defun org-babel-haskell-export-to-lhs (&optional arg)
   "Export to a .lhs file with all haskell code blocks escaped.
 When called with a prefix argument the resulting
