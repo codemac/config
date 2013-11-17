@@ -1725,6 +1725,13 @@ Functions borrowed from Sacha Chua.
             (tags "ERRAND"))
            ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
             (org-agenda-sorting-strategy '(user-defined-up))))
+          ("o" "Phone Agenda"
+           ((tags-todo "PHONE-BLOCKED=\"t\"/!-WAITING")
+            (tags-todo "PHONE-BLOCKED=\"t\"/!+WAITING")
+            (tags "PHONE+PROJECT")
+            (tags "PHONE"))
+           ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
+            (org-agenda-sorting-strategy '(user-defined-up))))
           ("p" "People Agenda"
            ((todo "-ERRAND-HOME-INTERNET-PROJECT-COMPUTER-PHONE"))
            ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
@@ -1751,7 +1758,7 @@ Functions borrowed from Sacha Chua.
   (setq org-clock-idle-time 10)
   
   (setq org-default-notes-files '("~/org/_notes/notes.org"))
-  (setq org-agenda-files (append (file-expand-wildcards "~/org/*.org") (file-expand-wildcards "~/org/_notes/*.org")))
+  (setq org-agenda-files '("~/org" "~/org/_notes"))
   (setq org-refile-targets '((nil :maxlevel . 5) (org-agenda-files :maxlevel . 5)))
   
   (setq org-mobile-directory "~/Dropbox/MobileOrg")

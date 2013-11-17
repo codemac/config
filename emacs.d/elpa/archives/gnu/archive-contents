@@ -84,7 +84,7 @@
 			 nil "Parse and browse f90 interfaces" single
 			 ((:url . "http://github.com/wence-/f90-iface/"))])
  (ggtags .
-	 [(0 7 0)
+	 [(0 7 3)
 	  nil "GNU Global source code tagging system" single
 	  ((:url . "https://github.com/leoliu/ggtags"))])
  (heap .
@@ -100,7 +100,7 @@
 	       nil "Major mode for Jgraph files" single
 	       ((:url . "http://elpa.gnu.org/packages/jgraph-mode.html"))])
  (js2-mode .
-	   [(20130619)
+	   [(20131106)
 	    ((emacs
 	      (24 1)))
 	    "Improved JavaScript editing mode" tar
@@ -162,7 +162,7 @@
 	    nil "Support for OWL Manchester Notation" single
 	    ((:url . "http://elpa.gnu.org/packages/omn-mode.html"))])
  (org .
-      [(20131028)
+      [(20131108)
        nil "Outline-based notes management and organizer" tar nil])
  (quarter-plane .
 		[(0 1)

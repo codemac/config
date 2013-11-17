@@ -42,8 +42,7 @@
  '(frame-background-mode (quote dark))
  '(haskell-hoogle-command "hoogle")
  '(indent-tabs-mode nil)
- '(notmuch-saved-searches (quote (("inbox" . "tag:inbox") ("unread" . "tag:unread") ("mars" . "folder:INBOX.mars -folder:INBOX.mars.volume +tag:unread"))))
- '(org-agenda-files (quote ("~/org/gtd.org" "~/org/fitness.org" "~/org/mars.org" "~/org/_notes/2012.org" "~/org/_notes/class2012pgm.org" "~/org/_notes/gifts.org" "~/org/_notes/nanowrimo2011.org" "~/org/_notes/notes.org" "~/org/_notes/oppression-of-tech.org" "~/org/_notes/steal.org" "~/org/_notes/webmac.org" "~/org/_notes/whoami.org")))
+ '(org-agenda-files (quote ("/Users/jmickey/org/gtd.org" "/Users/jmickey/org/fitness.org" "/Users/jmickey/org/from-mobile.org" "/Users/jmickey/org/mars.org" "/Users/jmickey/org/_notes/2012.org" "/Users/jmickey/org/_notes/2013.org" "/Users/jmickey/org/_notes/advanced_early_riser.org" "/Users/jmickey/org/_notes/class2012pgm.org" "/Users/jmickey/org/_notes/gifts.org" "/Users/jmickey/org/_notes/linux_plumbers2013.org" "/Users/jmickey/org/_notes/nanowrimo2011.org" "/Users/jmickey/org/_notes/notes.org" "/Users/jmickey/org/_notes/oppression-of-tech.org" "/Users/jmickey/org/_notes/recipes.org" "/Users/jmickey/org/_notes/steal.org" "/Users/jmickey/org/_notes/ubuntu-bootable.org" "/Users/jmickey/org/_notes/webmac.org" "/Users/jmickey/org/_notes/whoami.org")))
  '(safe-local-variable-values (quote ((yaml-indent-offset . 8) (after-save-hook archive-done-tasks))))
  '(yaml-indent-offset 8))
 (custom-set-faces
