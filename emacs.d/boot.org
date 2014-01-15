@@ -92,7 +92,10 @@ screen DPI's.
         (string-prefix-p "moc.ppaten" (apply 'string (reverse (string-to-list system-name)))))
     (add-to-list 'default-frame-alist '(font . "DejaVu Sans Mono-12:hinting=true:autohint=true")))
    ((equal system-name "penolpe")
+    (add-to-list 'default-frame-alist '(font . "DejaVu Sans Mono-9:hinting=true:autohint=true")))
+   (t
     (add-to-list 'default-frame-alist '(font . "DejaVu Sans Mono-9:hinting=true:autohint=true"))))
+  
 #+end_src
 * Environment
 ** Yes I can scroll left
@@ -284,15 +287,6 @@ Really useful for source code copying.. This is from [[http://stackoverflow.com/
 #+end_src
 * ELPA
 #+begin_src emacs-lisp
-  (require 'package)
-  
-  (add-to-list 'package-archives 
-               '("marmalade" .
-                 "http://marmalade-repo.org/packages/"))
-  (add-to-list 'package-archives
-               '("melpa" .
-                 "http://melpa.milkbox.net/packages/"))
-  (package-initialize)
 #+end_src
 * Color theme
 Yup, zenburn.
@@ -629,6 +623,39 @@ Mac fix for info installation location!
   (add-hook 'eshell-preoutput-filter-functions 'ansi-color-apply)
   
 #+end_src
+** BBDB - Big Brother DataBase
+Well integrated into Gnus, eventually just had to start using it!
+Borrowed this pretty heavily from somewhere, will document once I know
+what all these features really mean.
+#+begin_src emacs-lisp
+  (require 'bbdb)
+  ;; uber failure
+  (require 'message)
+  (bbdb-initialize 'mail 'message)
+  
+  (setq 
+   bbdb-offer-save 1                        ;; 1 means save-without-asking
+   bbdb-use-pop-up t                        ;; allow popups for addresses
+   bbdb-electric-p t                        ;; be disposable with SPC
+   bbdb-popup-target-lines  1               ;; very small
+   bbdb-dwim-net-address-allow-redundancy t ;; always use full name
+   bbdb-quiet-about-name-mismatches 2       ;; show name-mismatches 2 secs
+   bbdb-always-add-address t                ;; add new addresses to existing...
+   ;; ...contacts automatically
+   bbdb-canonicalize-redundant-nets-p t     ;; x@foo.bar.cx => x@bar.cx
+   bbdb-completion-type nil                 ;; complete on anything
+   bbdb-complete-name-allow-cycling t       ;; cycle through matches
+   ;; this only works partially
+   bbbd-message-caching-enabled t           ;; be fast
+   bbdb-use-alternate-names t               ;; use AKA
+   bbdb-elided-display t                    ;; single-line addresses
+   ;; auto-create addresses from mail
+   bbdb/mail-auto-create-p 'bbdb-ignore-some-messages-hook   
+   bbdb-ignore-some-messages-alist ;; don't ask about fake addresses
+   ;; NOTE: there can be only one entry per header (such as To, From)
+   ;; http://flex.ee.uec.ac.jp/texi/bbdb/bbdb_11.html
+   '(( "From" . "no.?reply\\|DAEMON\\|daemon\\|facebookmail\\|twitter")))
+#+end_src
 * External
 ** Emacs Features
 *** simple httpd
@@ -888,8 +915,8 @@ For some reason that does not include evil-local-mode.
 *** PlantUML
 Get the jarfile in the correct place...
 #+begin_src emacs-lisp
-  (setq plantuml-jar-path (expand-file-name "~/bin/plantuml.jar"))
-  (setenv "GRAPHVIZ_DOT" "/opt/local/bin/dot")
+  (setq plantuml-jar-path (expand-file-name "/opt/plantuml/plantuml.jar"))
+  (setenv "GRAPHVIZ_DOT" "/usr/bin/dot")
 #+end_src
 *** Scheme
 #+begin_src emacs-lisp
@@ -926,6 +953,73 @@ Uhh, go CL?
   (add-hook 'haskell-mode-hook 'turn-on-haskell-doc-mode)
   (add-hook 'haskell-mode-hook '(lambda () (linum-mode 1)))
   (setq haskell-hoogle-program "hoogle")
+#+end_src
+*** Go
+#+begin_src emacs-lisp
+  (autoload 'go-mode "go-mode" "Run ze gomode" nil)
+  (add-to-list 'auto-mode-alist '("\\.go$" . go-mode))
+#+end_src
+**** Enable flycheck
+#+begin_src emacs-lisp
+  (require 'flycheck)
+#+end_src
+**** Fix gofmt
+You'll see the commented section in this function. When the current
+go-mode.el calls =delete-windows-on outbuf= it closes pretty much any
+other window you have open. This gets old. Fast.
+#+begin_src emacs-lisp
+  (require 'go-mode)
+  (defun gofmt ()
+   "Pipe the current buffer through the external tool `gofmt`.
+  Replace the current buffer on success; display errors on failure."
+  
+   (interactive)
+   (let ((srcbuf (current-buffer)))
+     (with-temp-buffer
+       (let ((outbuf (current-buffer))
+             (errbuf (get-buffer-create "*Gofmt Errors*"))
+             (coding-system-for-read 'utf-8)    ;; use utf-8 with subprocesses
+             (coding-system-for-write 'utf-8))
+         (with-current-buffer errbuf (erase-buffer))
+         (with-current-buffer srcbuf
+           (save-restriction
+             (let (deactivate-mark)
+               (widen)
+               (if (= 0 (shell-command-on-region (point-min) (point-max) "gofmt"
+                                                 outbuf nil errbuf))
+                   ;; gofmt succeeded: replace the current buffer with outbuf,
+                   ;; restore the mark and point, and discard errbuf.
+                   (let ((old-mark (mark t)) (old-point (point)))
+                     (erase-buffer)
+                     (insert-buffer-substring outbuf)
+                     (goto-char (min old-point (point-max)))
+                     (if old-mark (push-mark (min old-mark (point-max)) t))
+                     (kill-buffer errbuf))
+  
+                 ;; gofmt failed: display the errors
+                 (display-buffer errbuf)))))
+  
+         ;; Collapse any window opened on outbuf if shell-command-on-region
+         ;; displayed it.
+         ;; NO! Don't do that< cm!
+         ;;(delete-windows-on outbuf)
+  ))))
+#+end_src
+**** Go hook
+#+begin_src emacs-lisp  
+  (defun cm/go-mode-hook ()
+    (interactive)
+    (linum-mode 1)
+    (setq imenu-generic-expression
+          '(("type" "^type *\\([^ \t\n\r\f]*\\)" 1)
+            ("func" "^func *\\(.*\\) {" 1)))
+    (imenu-add-to-menubar "Index")
+    (flycheck-mode 1)
+    (yas-minor-mode 1)
+    (add-hook 'before-save-hook #'gofmt-before-save)
+    (set (make-local-variable 'compile-command) "~/bin/emacs-work-compile"))
+  
+  (add-hook 'go-mode-hook 'cm/go-mode-hook)
 #+end_src
 *** Ruby
 Lisp has kind of taken over from Ruby. Whether that's Scheme or Common
@@ -1098,7 +1192,8 @@ unless you are using the default build systems (make, pdflatex, etc).
 #+begin_src emacs-lisp
   (autoload 'mode-compile "mode-compile"
      "Command to compile current buffer file based on the major mode" t)
-  (global-set-key "\C-cc" 'mode-compile)
+  ;(global-set-key "\C-cc" 'mode-compile)
+  (global-set-key "\C-cc" 'compile)
   (autoload 'mode-compile-kill "mode-compile"
    "Command to kill a compilation launched by `mode-compile'" t)
   (global-set-key "\C-ck" 'mode-compile-kill)
@@ -1295,23 +1390,24 @@ Really useful when you have a lot of code to write.
 **** Sending mail
 We're just borrowing the gnus settings here..
 #+begin_src emacs-lisp
-  (setq smtpmail-auth-credentials "~/.authinfo"
-        smtpmail-smtp-server "mail.netapp.com"
-        smtpmail-default-smtp-server "mail.netapp.com"
-        smtpmail-smtp-service 25
-        send-mail-function 'smtpmail-send-it
-        message-send-mail-function 'smtpmail-send-it
-        smtpmail-auth-supported '(login))
+  (setq smtpmail-auth-credentials cm/smtpmail-auth-credentials 
+        smtpmail-smtp-server cm/smtpmail-smtp-server
+        smtpmail-default-smtp-server cm/smtpmail-default-smtp-server
+        smtpmail-starttls-credentials cm/smtpmail-starttls-credentials
+        smtpmail-local-domain cm/smtpmail-local-domain
+        smtpmail-smtp-service cm/smtpmail-smtp-service
+        send-mail-function cm/send-mail-function
+        message-send-mail-function cm/message-send-mail-function)
   
-  (setq notmuch-fcc-dirs '((".*netapp.com" . "Sent Items")))
+  (setq notmuch-fcc-dirs 'cm/notmuch-fcc-dirs)
 #+end_src
 ***** queueing..
 #+begin_src emacs-lisp
   (setq smtpmail-queue-mail  nil  ;; start in non-queuing mode
         smtpmail-queue-dir   "~/mail/queue/cur")
 
-  (setq user-mail-address "jmickey@netapp.com")
-  (setq user-full-name "Jeff Mickey")
+  (setq user-mail-address 'cm/user-mail-address)
+  (setq user-full-name 'cm/user-full-name)
 #+end_src
 *** mu4e
 =mu4e= is a Maildir emacs mail mode. It's quite simple, but it's
@@ -1678,7 +1774,6 @@ Functions borrowed from Sacha Chua.
   (setq org-agenda-custom-commands
         '(("d" "Full Day Agenda"
            ((agenda)
-            (sacha/org-agenda-load)
             (tags "PROJECT/!WAITING" ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
                                       (org-agenda-sorting-strategy '(user-defined-up))))
             (todo "WAITING" ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
@@ -1758,7 +1853,7 @@ Functions borrowed from Sacha Chua.
   (setq org-clock-idle-time 10)
   
   (setq org-default-notes-files '("~/org/_notes/notes.org"))
-  (setq org-agenda-files '("~/org" "~/org/_notes"))
+  (setq org-agenda-files '("~/org/" "~/org/_notes/"))
   (setq org-refile-targets '((nil :maxlevel . 5) (org-agenda-files :maxlevel . 5)))
   
   (setq org-mobile-directory "~/Dropbox/MobileOrg")
@@ -1831,15 +1926,15 @@ Functions borrowed from Sacha Chua.
   (setq org-pretty-entities-include-sub-superscripts nil)
   (setq org-use-sub-superscripts nil)
   
-  (org-babel-load-file (expand-file-name
-                        "org-docco.org"
-                        (expand-file-name
-                         "scripts"
-                         (expand-file-name
-                          "contrib"
-                          (expand-file-name
-                           "org-src"
-                           dotfiles-dir)))))
+  ;(org-babel-load-file (expand-file-name
+  ;                      "org-docco.org"
+  ;                      (expand-file-name
+  ;                       "scripts"
+  ;                       (expand-file-name
+  ;                        "contrib"
+  ;                        (expand-file-name
+  ;                         "org-src"
+  ;                         dotfiles-dir)))))
 #+end_src
 **** org babel & export
 #+begin_src emacs-lisp  
@@ -2028,28 +2123,30 @@ How I deploy my personal website.
       (if (equal "Org-Capture" (frame-parameter nil 'name))
           (delete-frame)))
     (add-hook 'org-capture-after-finalize-hook 'cm-org-capture-other-frame-cleanup)
-    
-    ;; org capture!
-    (setq org-default-notes-file (concat org-directory "/gtd.org"))
-    (define-key global-map "\C-cr" 'org-capture)
-    (setq org-capture-templates
-          `(("t" "Todo" entry (file+headline "~/org/gtd.org" "Inbox") "* TODO %?\n  %U\n  %i\n  %a" :prepend t)
-            ("j" "Journal" entry (file ,(format-time-string "~/org/_editorial/%Y.%m.org")) "* %U %?\n\n  %i\n  %a" :prepend nil)
-            ("n" "Timed Notes" entry (file ,(format-time-string "~/org/_notes/%Y.org")) "* %U %?\n\n  %i\n  %a" :prepend nil)
-            ("w" "Work capture" entry (file "~/org/mars.org") "* %U %?\n\n  %i\n  %a" :prepend nil)
-            ("l" "Life Fitness" table-line (file+headline "~/org/fitness.org" "Fitness") ,(concat (format-time-string "| %Y.%m.%d-%H:%M |") " %^{Weight} | | %^{RHR} |") :table-line-pos "II-1")
-            ("x" "org-capture" entry (file+headline "~/org/_notes/www.org" "Archived Content") "* %^{Title}p: %:description\n\n  Source: %U %c\n\n  %i")))
-    
-    (defun gtd ()
-      (interactive)
-      (find-file "~/org/gtd.org"))
-    
-    ;; Set up my diary file
-    (setq diary-file "~/org/diary") ;; deal with the fact that it's in the org folder
-    
-    ;;
-    
-    (setq org-src-fontify-natively nil)
+#+end_src
+**** Org Capture
+#+begin_src emacs-lisp
+  ;; org capture!
+  (setq org-default-notes-file (concat org-directory "/gtd.org"))
+  (define-key global-map "\C-cr" 'org-capture)
+  (setq org-capture-templates
+        `(("t" "Todo" entry (file+headline "~/org/gtd.org" "Inbox") "* TODO %?\n  %U\n  %i\n  %a" :prepend t)
+          ("j" "Journal" entry (file ,(format-time-string "~/org/_editorial/%Y.%m.org")) "* %U %?\n\n  %i\n  %a" :prepend nil)
+          ("n" "Timed Notes" entry (file ,(format-time-string "~/org/_notes/%Y.org")) "* %U %?\n\n  %i\n  %a" :prepend nil)
+          ("w" "Work capture" entry (file "~/org/igneous.org") "* %U %?\n\n  %i\n  %a" :prepend nil)
+          ("l" "Life Fitness" table-line (file+headline "~/org/fitness.org" "Fitness") ,(concat (format-time-string "| %Y.%m.%d-%H:%M |") " %^{Weight} | | %^{RHR} |") :table-line-pos "II-1")
+          ("x" "org-capture" entry (file+headline "~/org/_notes/www.org" "Archived Content") "* %^{Title}p: %:description\n\n  Source: %U %c\n\n  %i")))
+  
+  (defun gtd ()
+    (interactive)
+    (find-file "~/org/gtd.org"))
+  
+  ;; Set up my diary file
+  (setq diary-file "~/org/diary") ;; deal with the fact that it's in the org folder
+  
+  ;;
+  
+  (setq org-src-fontify-natively nil)
 #+end_src
 *** W3M
 #+begin_src emacs-lisp
@@ -2288,13 +2385,11 @@ you are trying to edit anything.
 #+end_src
 *** SLIME
 #+begin_src emacs-lisp
-  (setq inferior-lisp-program "/opt/local/bin/sbcl")
+  (setq inferior-lisp-program "sbcl")
   (require 'slime-autoloads)
   (slime-setup '(slime-fancy))
-  (setq common-lisp-hyperspec-root "file:/Users/jmickey/zip/HyperSpec/")
-  (setq common-lisp-hyperspec-symbol-table "/Users/jmickey/zip/HyperSpec/Data/Map_Sym.txt")
-  (setq browse-url-browser-function '(("hyperspec" . w3m-browse-url)
-                                      ("." . browse-url-default-browser)))
+  (load (expand-file-name "/home/codemac/.quicklisp/slime-helper.el"))
+  
 #+end_src
 *** SQL
 Who needs a command line anyways..
@@ -2665,40 +2760,6 @@ only for strings that have that sequence of characters in order.
   (setq ido-enable-flex-matching t)
 #+end_src
 
-** BBDB - Big Brother DataBase
-Well integrated into Gnus, eventually just had to start using it!
-Borrowed this pretty heavily from somewhere, will document once I know
-what all these features really mean.
-#+begin_src emacs-lisp
-  ;; (require 'bbdb)
-  ;; (require 'bbdb-gnus)
-  ;; ;; uber failure
-  ;; (require 'message)
-  ;; (bbdb-initialize 'gnus 'message)
-  
-  ;; (setq 
-  ;;  bbdb-offer-save 1                        ;; 1 means save-without-asking
-  ;;  bbdb-use-pop-up t                        ;; allow popups for addresses
-  ;;  bbdb-electric-p t                        ;; be disposable with SPC
-  ;;  bbdb-popup-target-lines  1               ;; very small
-  ;;  bbdb-dwim-net-address-allow-redundancy t ;; always use full name
-  ;;  bbdb-quiet-about-name-mismatches 2       ;; show name-mismatches 2 secs
-  ;;  bbdb-always-add-address t                ;; add new addresses to existing...
-  ;;  ;; ...contacts automatically
-  ;;  bbdb-canonicalize-redundant-nets-p t     ;; x@foo.bar.cx => x@bar.cx
-  ;;  bbdb-completion-type nil                 ;; complete on anything
-  ;;  bbdb-complete-name-allow-cycling t       ;; cycle through matches
-  ;;  ;; this only works partially
-  ;;  bbbd-message-caching-enabled t           ;; be fast
-  ;;  bbdb-use-alternate-names t               ;; use AKA
-  ;;  bbdb-elided-display t                    ;; single-line addresses
-  ;;  ;; auto-create addresses from mail
-  ;;  bbdb/mail-auto-create-p 'bbdb-ignore-some-messages-hook   
-  ;;  bbdb-ignore-some-messages-alist ;; don't ask about fake addresses
-  ;;  ;; NOTE: there can be only one entry per header (such as To, From)
-  ;;  ;; http://flex.ee.uec.ac.jp/texi/bbdb/bbdb_11.html
-  ;;  '(( "From" . "no.?reply\\|DAEMON\\|daemon\\|facebookmail\\|twitter")))
-#+end_src
 ** Gnus
 Uh oh, here come the big guns.
 #+begin_src emacs-lisp

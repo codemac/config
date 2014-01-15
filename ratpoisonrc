@@ -1,0 +1,23 @@
+escape s-t
+defborder 0
+set padding 0 0 0 16
+defbarpadding 0 0
+
+unmanage stalonetray
+unmanage panel
+unmanage gimp
+set bargravity sw
+
+banish
+
+definekey top s-n next
+definekey top XF86AudioLowerVolume exec /home/codemac/bin/volume-down
+definekey top XF86AudioRaiseVolume exec /home/codemac/bin/volume-up
+definekey top XF86AudioMute exec amixer set Master toggle
+definekey top s-l exec slock
+
+definekey top XF86MonBrightnessDown exec /home/codemac/bin/backlight-down
+definekey top XF86MonBrightnessUp exec /home/codemac/bin/backlight-up
+
+definekey top XF86KbdBrightnessDown exec /home/codemac/bin/kbdbacklight-down
+definekey top XF86KbdBrightnessUp exec /home/codemac/bin/kbdbacklight-up

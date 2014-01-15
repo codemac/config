@@ -1,0 +1,6 @@
+background white
+grow_gravity E
+geometry 4x1+1376+884
+icon_gravity SE
+icon_size 16
+kludges fix_window_pos,force_icons_size

@@ -18,6 +18,7 @@ xmonad/xmonad-x86_64-linux
 *.elc
 emacs.d/emms
 emacs.d/boot.el
+emacs.d/bbdb
 emacs.d/org-clock-save.el
 emacs.d/tramp
 emacs.d/games/tetris-scores
@@ -26,6 +27,7 @@ emacs.d/eshell/history
 emacs.d/eshell/lastdir
 emacs.d/url/cookies
 emacs.d/bookmarks
+emacs.d/image-dired
 emacs.d/semanticdb
 emacs.d/.org-id-locations
 vim/.netrwhist

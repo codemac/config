@@ -8,17 +8,29 @@
 
 (setq dotfiles-dir (file-name-directory (or load-file-name (buffer-file-name))))
 
-(add-to-list 'load-path (expand-file-name
-                         "lisp" (expand-file-name
-                                 "org-src" dotfiles-dir)))
+;(add-to-list 'load-path (expand-file-name
+;                         "lisp" (expand-file-name
+;                                 "org-src" dotfiles-dir)))
 
-(add-to-list 'load-path (expand-file-name
-                         "lisp" (expand-file-name
-                                 "contrib" (expand-file-name
-                                            "org-src" dotfiles-dir))) t)
+;(;add-to-list 'load-path (expand-file-name
+;                         "lisp" (expand-file-name
+;                                 "contrib" (expand-file-name
+;                                            "org-src" dotfiles-dir))) t)
+(require 'package)
+
+(add-to-list 'package-archives 
+             '("marmalade" .
+               "http://marmalade-repo.org/packages/"))
+
+(add-to-list 'package-archives
+             '("melpa" .
+               "http://melpa.milkbox.net/packages/"))
+
+(add-to-list 'package-archives '("org" . "http://orgmode.org/elpa/") t)
+
+(package-initialize)
 
 ; load up the main file
-(require 'org-install)
 (require 'ob)
 (require 'org)
 (org-babel-load-file (expand-file-name "boot.org" dotfiles-dir))
@@ -42,7 +54,6 @@
  '(frame-background-mode (quote dark))
  '(haskell-hoogle-command "hoogle")
  '(indent-tabs-mode nil)
- '(org-agenda-files (quote ("/Users/jmickey/org/gtd.org" "/Users/jmickey/org/fitness.org" "/Users/jmickey/org/from-mobile.org" "/Users/jmickey/org/mars.org" "/Users/jmickey/org/_notes/2012.org" "/Users/jmickey/org/_notes/2013.org" "/Users/jmickey/org/_notes/advanced_early_riser.org" "/Users/jmickey/org/_notes/class2012pgm.org" "/Users/jmickey/org/_notes/gifts.org" "/Users/jmickey/org/_notes/linux_plumbers2013.org" "/Users/jmickey/org/_notes/nanowrimo2011.org" "/Users/jmickey/org/_notes/notes.org" "/Users/jmickey/org/_notes/oppression-of-tech.org" "/Users/jmickey/org/_notes/recipes.org" "/Users/jmickey/org/_notes/steal.org" "/Users/jmickey/org/_notes/ubuntu-bootable.org" "/Users/jmickey/org/_notes/webmac.org" "/Users/jmickey/org/_notes/whoami.org")))
  '(safe-local-variable-values (quote ((yaml-indent-offset . 8) (after-save-hook archive-done-tasks))))
  '(yaml-indent-offset 8))
 (custom-set-faces

@@ -1,4 +1,4 @@
-!# Most recent update: Wed Sep 21 14:22:57 2011
+!# Most recent update: Thu Jan  9 18:02:39 2014
 xterm*toolBar:	false
 xterm*utf8: 2
 ! yeah!console
@@ -560,7 +560,8 @@ xterm*color6:				#009999
 xterm*color14:				#00FFFF
 xterm*color7:				#BBBBBB
 xterm*color15:				#FFFFFF
-xterm*font:					-windows-dina-medium-r-normal--13-80-96-96-c-70-*-*
+!xterm*font:					-windows-dina-medium-r-normal--13-80-96-96-c-70-*-*
+xterm*faceName:                             xft:DejaVu Sans Mono-9:autohint=true
 xterm*foreground: #DDDDDD
 xterm*background: #000000
 xterm*cursorColor: yellow
