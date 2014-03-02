@@ -1399,15 +1399,16 @@ We're just borrowing the gnus settings here..
         send-mail-function cm/send-mail-function
         message-send-mail-function cm/message-send-mail-function)
   
-  (setq notmuch-fcc-dirs 'cm/notmuch-fcc-dirs)
+  (setq notmuch-fcc-dirs cm/notmuch-fcc-dirs)
+
 #+end_src
 ***** queueing..
 #+begin_src emacs-lisp
   (setq smtpmail-queue-mail  nil  ;; start in non-queuing mode
         smtpmail-queue-dir   "~/mail/queue/cur")
 
-  (setq user-mail-address 'cm/user-mail-address)
-  (setq user-full-name 'cm/user-full-name)
+  (setq user-mail-address cm/user-mail-address)
+  (setq user-full-name cm/user-full-name)
 #+end_src
 *** mu4e
 =mu4e= is a Maildir emacs mail mode. It's quite simple, but it's
