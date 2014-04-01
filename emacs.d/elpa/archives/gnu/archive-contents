@@ -48,7 +48,7 @@
 	       ((:url . "http://github.com/defunkt/coffee-mode")
 		(:keywords "coffeescript" "major" "mode"))])
  (company .
-	  [(0 7 2)
+	  [(0 7 3)
 	   nil "Modular in-buffer completion framework" tar
 	   ((:keywords "abbrev" "convenience" "matching")
 	    (:url . "http://company-mode.github.io/"))])
@@ -127,7 +127,7 @@
 	   ((:url . "http://elpa.gnu.org/packages/flylisp.html")
 	    (:keywords))])
  (ggtags .
-	 [(0 8 0)
+	 [(0 8 1)
 	  ((emacs
 	    (24))
 	   (cl-lib
@@ -230,7 +230,7 @@
 	    ((:url . "http://elpa.gnu.org/packages/omn-mode.html")
 	     (:keywords))])
  (org .
-      [(20140324)
+      [(20140331)
        nil "Outline-based notes management and organizer" tar nil])
  (quarter-plane .
 		[(0 1)

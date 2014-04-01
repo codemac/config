@@ -2743,13 +2743,17 @@ Now w/mopidy
 * Directory Specific Code
 ** Directory classes
 #+begin_src emacs-lisp
+  ;; check in all the time! (Need to learn to avoid master as well..)
   (defun cm/after-save-commit ()
-    (call-interactively 
-     (lambda (title)
-       (interactive "sCommit title: ")
-       (if (member (buffer-name) (projectile-project-buffer-names))
-           (shell-command (concat "git add " (buffer-file-name) " && git commit -m '" (buffer-file-name) ": " title "'"))))))
+    (if cm/gitty-files
+        (call-interactively 
+         (lambda (title)
+           (interactive "sCommit title: ")
+           (if (member (buffer-name) (projectile-project-buffer-names))
+               (shell-command (concat "git add " (buffer-file-name) " && git commit -m '" (buffer-file-name) ": " title "'")))))))
 
+  ;; set this variable in your .dir-locals.el so saving becomes enabled
+  (defvar cm/gitty-files nil)
 
   (defun cm/igneous-product-config ()
     ;; add an after-save-hook that runs git commit!
