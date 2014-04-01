@@ -8,14 +8,6 @@
 
 (setq dotfiles-dir (file-name-directory (or load-file-name (buffer-file-name))))
 
-;(add-to-list 'load-path (expand-file-name
-;                         "lisp" (expand-file-name
-;                                 "org-src" dotfiles-dir)))
-
-;(;add-to-list 'load-path (expand-file-name
-;                         "lisp" (expand-file-name
-;                                 "contrib" (expand-file-name
-;                                            "org-src" dotfiles-dir))) t)
 (require 'package)
 
 (add-to-list 'package-archives 
@@ -49,12 +41,22 @@
  '(auto-image-file-mode t)
  '(browse-url-firefox-new-window-is-tab t)
  '(browse-url-firefox-program "firefox")
+ '(comint-buffer-maximum-size 20000)
+ '(comint-completion-addsuffix t)
+ '(comint-get-old-input (lambda nil "") t)
+ '(comint-input-ignoredups t)
+ '(comint-input-ring-size 5000)
+ '(comint-move-point-for-output nil)
+ '(comint-prompt-read-only t)
+ '(comint-scroll-show-maximum-output t)
+ '(comint-scroll-to-bottom-on-input t)
  '(custom-safe-themes (quote ("4e72cb2841e4801ba202a120c1cffdf88f5512536e557d03b3626d890b52f201" "36a309985a0f9ed1a0c3a69625802f87dee940767c9e200b89cdebdb737e5b29" "bf7ed640479049f1d74319ed004a9821072c1d9331bc1147e01d22748c18ebdf" "1e7e097ec8cb1f8c3a912d7e1e0331caeed49fef6cff220be63bd2a6ba4cc365" default)))
  '(fci-rule-color "#383838")
  '(frame-background-mode (quote dark))
  '(haskell-hoogle-command "hoogle")
  '(indent-tabs-mode nil)
- '(safe-local-variable-values (quote ((yaml-indent-offset . 8) (after-save-hook archive-done-tasks))))
+ '(protect-buffer-bury-p nil)
+ '(safe-local-variable-values (quote ((eval cm/igneous-product-config) (yaml-indent-offset . 8) (after-save-hook archive-done-tasks))))
  '(yaml-indent-offset 8))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.

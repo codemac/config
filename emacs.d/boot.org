@@ -87,14 +87,14 @@ VPN settings are. Also, set different font sizes for the different
 screen DPI's.
 #+begin_src emacs-lisp
   (cond
-   ((or (string-prefix-p "phoenix-mta" system-name)
-        (string-prefix-p "vpn2ntap-" system-name)
-        (string-prefix-p "moc.ppaten" (apply 'string (reverse (string-to-list system-name)))))
-    (add-to-list 'default-frame-alist '(font . "DejaVu Sans Mono-12:hinting=true:autohint=true")))
-   ((equal system-name "penolpe")
-    (add-to-list 'default-frame-alist '(font . "DejaVu Sans Mono-9:hinting=true:autohint=true")))
-   (t
-    (add-to-list 'default-frame-alist '(font . "DejaVu Sans Mono-9:hinting=true:autohint=true"))))
+    ((or (string-prefix-p "phoenix-mta" system-name)
+         (string-prefix-p "vpn2ntap-" system-name)
+         (string-prefix-p "moc.ppaten" (apply 'string (reverse (string-to-list system-name)))))
+     (add-to-list 'default-frame-alist '(font . "DejaVu Sans Mono-12:hinting=true:autohint=true")))
+    ((equal system-name "penolpe")
+     (add-to-list 'default-frame-alist '(font . "DejaVu Sans Mono-9:hinting=true:autohint=true")))
+    (t
+     (set-frame-font "DejaVu Sans Mono-11:hinting=true:autohint=true")))
   
 #+end_src
 * Environment
@@ -484,6 +484,78 @@ Mac fix for info installation location!
 #+begin_src emacs-lisp
   (require 'pcmpl-git)
 #+end_src
+** Shell (using rakitzis' rc)
+#+begin_src emacs-lisp
+  (defun shell-new (name)
+    "Create a shell buffer named NAME."
+    (interactive "sShell Name: ")
+    (let* ((bn (concat "*shell:" name "*"))
+           (eb (get-buffer bn)))
+      (if eb
+          (switch-to-buffer eb)
+        (shell bn))))
+  
+  (set-default 'explicit-shell-file-name "/home/codemac/bin/rc")
+  
+  (require 'tramp)
+  
+  (custom-set-variables
+   '(comint-scroll-to-bottom-on-input t)  ; always insert at the bottom
+   '(comint-scroll-to-bottom-on-output nil) ; always add output at the bottom
+   '(comint-scroll-show-maximum-output t) ; scroll to show max possible output
+   '(comint-input-ignoredups t)           ; no duplicates in command history
+   '(comint-completion-addsuffix t)       ; insert space/slash after file completion
+   '(comint-buffer-maximum-size 20000)    ; max length of the buffer in lines
+   '(comint-prompt-read-only t)         ; if this is t, it breaks shell-command (we'll see about that)
+   '(comint-get-old-input (lambda () "")) ; what to run when i press enter on a
+                                          ; line above the current prompt
+   '(comint-input-ring-size 5000)         ; max shell history size
+   '(protect-buffer-bury-p nil)
+  )
+  
+  (setenv "PAGER" "cat")
+  
+  ;; truncate buffers continuously
+  (add-hook 'comint-output-filter-functions 'comint-truncate-buffer)
+  
+  ; interpret and use ansi color codes in shell output windows
+  (add-hook 'shell-mode-hook 'ansi-color-for-comint-mode-on)
+  
+  (defun set-scroll-conservatively ()
+    "Add to shell-mode-hook to prevent jump-scrolling on newlines in shell buffers."
+    (set (make-local-variable 'scroll-conservatively) 10))
+  (add-hook 'shell-mode-hook 'set-scroll-conservatively)
+  
+  ;; (defun enter-again-if-enter ()
+  ;;   "Make the return key select the current item in minibuf and shell history isearch.
+  ;; An alternate approach would be after-advice on isearch-other-meta-char."
+  ;;   (when (and (not isearch-mode-end-hook-quit)
+  ;;              (equal (this-command-keys-vector) [13])) ; == return
+  ;;     (cond ((active-minibuffer-window) (minibuffer-complete-and-exit))
+  ;;           ((member (buffer-name) my-shells) (comint-send-input)))))
+  ;; (add-hook 'isearch-mode-end-hook 'enter-again-if-enter)
+  
+  ;; (defadvice comint-previous-matching-input
+  ;;     (around suppress-history-item-messages activate)
+  ;;   "Suppress the annoying 'History item : NNN' messages from shell history isearch.
+  ;; If this isn't enough, try the same thing with
+  ;; comint-replace-by-expanded-history-before-point."
+  ;;   (let ((old-message (symbol-function 'message)))
+  ;;     (unwind-protect
+  ;;       (progn (fset 'message 'ignore) ad-do-it)
+  ;;     (fset 'message old-message))))
+  
+  ;; (defadvice comint-send-input (around go-to-end-of-multiline activate)
+  ;;   "When I press enter, jump to the end of the *buffer*, instead of the end of
+  ;; the line, to capture multiline input. (This only has effect if
+  ;; `comint-eol-on-send' is non-nil."
+  ;;   (flet ((end-of-line () (end-of-buffer)))
+  ;;     ad-do-it))
+  
+  ;; ;; not sure why, but comint needs to be reloaded from the source (*not*
+  ;; ;; compiled) elisp to make the above advise stick.
+  ;; (load "comint.el.gz")
+#+end_src
 ** Eshell
 #+begin_src emacs-lisp
   (autoload 'eshell "eshell" "")
@@ -656,7 +728,37 @@ what all these features really mean.
    ;; http://flex.ee.uec.ac.jp/texi/bbdb/bbdb_11.html
    '(( "From" . "no.?reply\\|DAEMON\\|daemon\\|facebookmail\\|twitter")))
 #+end_src
+** MML + org
+#+begin_src emacs-lisp
+  
+  (defun cm/org-mime-html-hook ()
+    (org-mime-change-element-style
+     "pre" (format "color: %s; background-color: %s; padding: 0.5em;"
+                   "#E6E1DC" "#232323"))
+    (org-mime-change-element-style
+     "blockquote" "border-left: 2px solid gray; padding-left: 4px;"))
+  
+  
+  (add-hook 'org-mime-html-hook 'cm/org-mime-html-hook)
+  
+  (add-hook 'message-mode-hook
+            (lambda ()
+              (local-set-key "\C-c\M-o" 'org-mime-htmlize)))
+  
+  (add-hook 'org-mode-hook
+            (lambda ()
+              (local-set-key "\C-c\M-o" 'org-mime-org-buffer-htmlize)))
+#+end_src
 * External
+** Projectile
+#+begin_src emacs-lisp
+  (require 'projectile)
+
+  ; this is the default, don't need to set it
+  ;(set projectile-indexing-method 'alien)
+
+  (projectile-global-mode)
+#+end_src
 ** Emacs Features
 *** simple httpd
 This is a mode that provides a full http server in elisp. It does
@@ -961,14 +1063,13 @@ Uhh, go CL?
 #+end_src
 **** Enable flycheck
 #+begin_src emacs-lisp
-  (require 'flycheck)
+  (autoload 'flycheck-mode "flycheck" "run ze flycheck" nil)
 #+end_src
 **** Fix gofmt
 You'll see the commented section in this function. When the current
 go-mode.el calls =delete-windows-on outbuf= it closes pretty much any
 other window you have open. This gets old. Fast.
 #+begin_src emacs-lisp
-  (require 'go-mode)
   (defun gofmt ()
    "Pipe the current buffer through the external tool `gofmt`.
   Replace the current buffer on success; display errors on failure."
@@ -1014,7 +1115,6 @@ other window you have open. This gets old. Fast.
           '(("type" "^type *\\([^ \t\n\r\f]*\\)" 1)
             ("func" "^func *\\(.*\\) {" 1)))
     (imenu-add-to-menubar "Index")
-    (flycheck-mode 1)
     (yas-minor-mode 1)
     (add-hook 'before-save-hook #'gofmt-before-save)
     (set (make-local-variable 'compile-command) "~/bin/emacs-work-compile"))
@@ -1410,6 +1510,14 @@ We're just borrowing the gnus settings here..
   (setq user-mail-address cm/user-mail-address)
   (setq user-full-name cm/user-full-name)
 #+end_src
+***** Message view
+#+begin_src emacs-lisp
+  (setq message-citation-line-format "* %f [%Y-%m-%d %H:%M]:")
+  (setq message-citation-line-function 'message-insert-formatted-citation-line)
+  (defun cm/message-mode-hook ()
+    (local-set-key (kbd "C-c M-o") 'org-mime-htmlize))
+  (add-hook 'message-mode-hook 'cm/message-mode-hook)
+#+end_src
 *** mu4e
 =mu4e= is a Maildir emacs mail mode. It's quite simple, but it's
 design goals fall right in the "super perfect" range, and I think it
@@ -1456,31 +1564,6 @@ This is very useful for when I ride the train.
 #+begin_src emacs-lisp
 ;  (setq smtpmail-queue-mail  nil  ;; start in non-queuing mode
 ;        smtpmail-queue-dir   "~/mail/queue/cur")
-#+end_src
-**** Message view
-#+begin_src emacs-lisp
-;  ;; enable inline images
-;  (setq mu4e-view-show-images t)
-;  ;; use imagemagick, if available
-;  (when (fboundp 'imagemagick-register-types)
-;    (imagemagick-register-types))
-;  
-;  (setq message-citation-line-format "* %f [%Y-%m-%d %H:%M]:")
-;  (setq message-citation-line-function 'message-insert-formatted-citation-line)
-;  
-;  ;; for w3m
-;  (setq mu4e-html2text-command "w3m -T 'text/html' -dump")
-;  ;; (setq mu4e-html2text-command "html2text -nobs -ascii -style pretty")
-;  (setq mu4e-view-prefer-html nil)
-;  
-;  (add-to-list 'mu4e-view-actions
-;               '("browser render" . mu4e-action-view-in-browser))
-;  
-;  (setq mu4e-text2speech-command "say")
-;  (add-to-list 'mu4e-view-actions
-;               '("speak message" . mu4e-action-message-to-speech))
-;  
-;  
 #+end_src
 **** Setting the default mail client
 #+begin_src emacs-lisp
@@ -1965,6 +2048,14 @@ Functions borrowed from Sacha Chua.
      (sh . t)
      (sql .t)))
   (setq org-confirm-babel-evaluate t)  ; nah, let's be safe
+  
+  (autoload 'org-mime-org-buffer-htmlize "org-mime" "org-mime-org-buffer-htmlize" t nil)
+  (defun cm/org-mime-send-buffer-hook ()
+    (defun org-export-grab-title-from-buffer ()
+      ""
+      "!! replace me !!"))
+  
+  (add-hook 'org-mime-send-buffer-hook 'cm/org-mime-send-buffer-hook)
 #+end_src
 **** Publishing
 How I deploy my personal website.
@@ -2133,6 +2224,7 @@ How I deploy my personal website.
   (setq org-capture-templates
         `(("t" "Todo" entry (file+headline "~/org/gtd.org" "Inbox") "* TODO %?\n  %U\n  %i\n  %a" :prepend t)
           ("j" "Journal" entry (file ,(format-time-string "~/org/_editorial/%Y.%m.org")) "* %U %?\n\n  %i\n  %a" :prepend nil)
+          ("c" "Add note to currently clocked task" entry (clock) "* %U %?\n%a\n\n%i")
           ("n" "Timed Notes" entry (file ,(format-time-string "~/org/_notes/%Y.org")) "* %U %?\n\n  %i\n  %a" :prepend nil)
           ("w" "Work capture" entry (file "~/org/igneous.org") "* %U %?\n\n  %i\n  %a" :prepend nil)
           ("l" "Life Fitness" table-line (file+headline "~/org/fitness.org" "Fitness") ,(concat (format-time-string "| %Y.%m.%d-%H:%M |") " %^{Weight} | | %^{RHR} |") :table-line-pos "II-1")
@@ -2597,6 +2689,73 @@ A wholly owned subsidiary of Cisco.
   (require 'tup-mode)
 #+end_src
     
+** EMMS - Emacs MultiMedia System
+Now w/mopidy
+#+begin_src emacs-lisp
+  (require 'emms-setup)
+  (emms-all)
+  (emms-default-players)
+#+end_src
+
+#+begin_src emacs-lisp :exports none
+  (require 'emms-setup)
+  (require 'emms-mode-line-icon)
+  (require 'emms-info-libtag)
+  (emms-default-players)
+  (setq emms-info-asynchronosly t)
+  (add-hook 'emms-player-started-hook 'emms-show)
+  (setq emms-show-format "NP: %s")
+  ;(setq emms-player-mpg321-parameters '("-o" "alsa"))
+  (setq emms-source-list '((emms-directory-tree "~/music/")))
+  ;(setq emms-player-mplayer-parameters (list "-slave" "-nortc" "-quiet" "-really-quiet"))
+  ;(emms-player-set emms-player-mplayer 'regex
+  ;                 "\\.ogg\\|\\.mp3\\|\\.wav\\|\\.mpg\\|\\.mpeg\\|\\.wmv\\|\\.wma\\|\\.mov\\|\\.avi\\|\\.divx\\|\\.ogm\\|\\.asf\\|\\.mkv\\|http://\\|mms://\\|\\.rm\\|\\.rmvb\\|\\.mp4\\|\\.flac\\|\\.vob\\|\\.m4a\\|\\.ape\\|\\.mpc")
+  ;
+  ;
+  (setq emms-mode-line-icon-before-format "["
+        emms-mode-line-format " %s]"
+        emms-mode-line-icon-color "lightgrey")
+  ;
+  ;;; Libtag support
+  (add-to-list 'emms-info-functions 'emms-info-libtag)
+  ;
+  ;;;; Stolen and adapted from TWB
+  (defun my-emms-info-track-description (track)
+   "Return a description of the current track."
+   (if (and (emms-track-get track 'info-artist)
+            (emms-track-get track 'info-title))
+       (let ((pmin (emms-track-get track 'info-playing-time-min))
+             (psec (emms-track-get track 'info-playing-time-sec))
+             (ptot (emms-track-get track 'info-playing-time))
+             (art  (emms-track-get track 'info-artist))
+             (tit  (emms-track-get track 'info-title)))
+         (cond ((and pmin psec) (format "%s - %s [%02d:%02d]" art tit pmin psec))
+               (ptot (format  "%s - %s [%02d:%02d]" art tit (/ ptot 60) (% ptot 60)))
+               (t (emms-track-simple-description track))))))
+
+  (setq emms-track-description-function 'my-emms-info-track-description)
+
+  ;;; last.fm
+  ;(setq emms-lastfm-username cm/lastfm-user-name
+  ;      emms-lastfm-password cm/lastfm-user-pass)
+  ;(emms-lastfm-enable)
+#+end_src
+* Directory Specific Code
+** Directory classes
+#+begin_src emacs-lisp
+  (defun cm/after-save-commit ()
+    (call-interactively 
+     (lambda (title)
+       (interactive "sCommit title: ")
+       (if (member (buffer-name) (projectile-project-buffer-names))
+           (shell-command (concat "git add " (buffer-file-name) " && git commit -m '" (buffer-file-name) ": " title "'"))))))
+
+
+  (defun cm/igneous-product-config ()
+    ;; add an after-save-hook that runs git commit!
+    (add-hook 'after-save-hook 'cm/after-save-commit))
+#+end_src
+** Directories
 * Disabled lisp
 #+begin_src emacs-lisp
   ; have to figure out how to comment multiple lines...
@@ -2619,54 +2778,6 @@ Turns out that occur actually handles this just fine..
 I.. don't use this anymore
 #+begin_src emacs-lisp
   ;(global-set-key (kbd "TAB") 'hippie-expand)
-#+end_src
-** EMMS - Emacs MultiMedia System
-This is disabled, Spotify won me over.
-#+begin_src emacs-lisp :exports none
-  ;(require 'emms-setup)
-  ;(require 'emms-mode-line-icon)
-  ;(require 'emms-info-libtag)
-  ;
-  ;(emms-devel)
-  ;(emms-default-players)
-  ;(setq emms-info-asynchronosly t)
-  ;(add-hook 'emms-player-started-hook 'emms-show)
-  ;(setq emms-show-format "NP: %s")
-  ;(setq emms-player-mpg321-parameters '("-o" "alsa"))
-  ;(setq emms-source-list '((emms-directory-tree "~/muse/")))
-  ;
-  ;(setq emms-player-mplayer-parameters (list "-slave" "-nortc" "-quiet" "-really-quiet"))
-  ;(emms-player-set emms-player-mplayer 'regex
-  ;                 "\\.ogg\\|\\.mp3\\|\\.wav\\|\\.mpg\\|\\.mpeg\\|\\.wmv\\|\\.wma\\|\\.mov\\|\\.avi\\|\\.divx\\|\\.ogm\\|\\.asf\\|\\.mkv\\|http://\\|mms://\\|\\.rm\\|\\.rmvb\\|\\.mp4\\|\\.flac\\|\\.vob\\|\\.m4a\\|\\.ape\\|\\.mpc")
-  ;
-  ;
-  ;(setq emms-mode-line-icon-before-format "["
-  ;      emms-mode-line-format " %s]"
-  ;      emms-mode-line-icon-color "lightgrey")
-  ;
-  ;;; Libtag support
-  ;(add-to-list 'emms-info-functions 'emms-info-libtag)
-  ;
-  ;;;; Stolen and adapted from TWB
-  ;;(defun my-emms-info-track-description (track)
-  ;;  "Return a description of the current track."
-  ;;  (if (and (emms-track-get track 'info-artist)
-  ;;           (emms-track-get track 'info-title))
-  ;;      (let ((pmin (emms-track-get track 'info-playing-time-min))
-  ;;            (psec (emms-track-get track 'info-playing-time-sec))
-  ;;            (ptot (emms-track-get track 'info-playing-time))
-  ;;            (art  (emms-track-get track 'info-artist))
-  ;;            (tit  (emms-track-get track 'info-title)))
-  ;;        (cond ((and pmin psec) (format "%s - %s [%02d:%02d]" art tit pmin psec))
-  ;;              (ptot (format  "%s - %s [%02d:%02d]" art tit (/ ptot 60) (% ptot 60)))
-  ;;              (t (emms-track-simple-description track))))))
-  ;
-  ;;(setq emms-track-description-function 'my-emms-info-track-description)
-  ;
-  ;;; last.fm
-  ;(setq emms-lastfm-username cm-lastfm-username
-  ;      emms-lastfm-password cm-lastfm-password)
-  ;(emms-lastfm-enable)
 #+end_src
 ** ECB - Emacs Code Browser
 #+begin_src emacs-lisp
@@ -2894,6 +3005,7 @@ settings that occur above. Much easier this way.
   (setq cursor-type 'box)
   ;(add-hook 'post-command-hook 'cm-cursor)
   ; oh god it flashes so much. Don't know how to do this better yet.
+  (blink-cursor-mode 0)
 #+end_src
 ** Server process
 Start a server if it's not started, and I'm not root.
