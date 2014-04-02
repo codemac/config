@@ -2749,8 +2749,10 @@ Now w/mopidy
         (call-interactively 
          (lambda (title)
            (interactive "sCommit title: ")
-           (if (member (buffer-name) (projectile-project-buffer-names))
-               (shell-command (concat "git add " (buffer-file-name) " && git commit -m '" (buffer-file-name) ": " title "'")))))))
+           (let* ((bfn (buffer-file-name))
+                  (gitroot (substring (shell-command-to-string "git rev-parse --show-toplevel") 0 -1))
+                  (shortname (car (split-string bfn (concat gitroot "/") t))))
+             (shell-command (concat "git add " bfn " && git commit -m '" shortname ": " title "'")))))))
 
   ;; set this variable in your .dir-locals.el so saving becomes enabled
   (defvar cm/gitty-files nil)

@@ -561,7 +561,7 @@ xterm*color14:				#00FFFF
 xterm*color7:				#BBBBBB
 xterm*color15:				#FFFFFF
 !xterm*font:					-windows-dina-medium-r-normal--13-80-96-96-c-70-*-*
-xterm*faceName:                             xft:DejaVu Sans Mono-9:autohint=true
+xterm*faceName:                             xft:DejaVu Sans Mono-11:hinting=true:autohint=true
 xterm*foreground: #DDDDDD
 xterm*background: #000000
 xterm*cursorColor: yellow
@@ -571,3 +571,4 @@ xterm*savelines: 100000
 
 !!
 vncviewer*grabKeyboard: true
+xterm*termName: xterm-256color
