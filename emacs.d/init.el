@@ -56,7 +56,7 @@
  '(haskell-hoogle-command "hoogle")
  '(indent-tabs-mode nil)
  '(protect-buffer-bury-p nil)
- '(safe-local-variable-values (quote ((eval cm/igneous-product-config) (yaml-indent-offset . 8) (after-save-hook archive-done-tasks))))
+ '(safe-local-variable-values (quote ((cm/gitty-files . t) (eval cm/igneous-product-config) (yaml-indent-offset . 8) (after-save-hook archive-done-tasks))))
  '(yaml-indent-offset 8))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
