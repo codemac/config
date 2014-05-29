@@ -1,0 +1,11 @@
+XF86Audio{Raise,Lower}Volume
+        /home/codemac/bin/volume-{up,down}
+
+XF86AudioMicMute
+        amixer set Capture toggle
+
+XF86AudioMute
+        amixer set Master toggle
+
+{_,shift + ,super + }XF86MonBrightness{Down,Up}
+         xbacklight {-dec 1,-dec 10,-set 0,-inc 1,-inc 10,-set 100}

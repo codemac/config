@@ -71,3 +71,4 @@ export LOGCHECK=300                    # check every 5 min for login/logout acti
 #WATCHFMT="[%B%t%b] %B%n%b has %a %B%l%b from %B%M%b"
 export WATCHFMT="%B->%b %n has just %a %(l:tty%l:%U-Ghost-%u)%(m: from %m:)"
 export REPORTTIME=10
+export _JAVA_OPTIONS=-Dawt.useSystemAAFontSettings=on

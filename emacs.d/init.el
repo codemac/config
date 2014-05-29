@@ -55,8 +55,10 @@
  '(frame-background-mode (quote dark))
  '(haskell-hoogle-command "hoogle")
  '(indent-tabs-mode nil)
+ '(org-agenda-files (quote ("/home/codemac/org/igneous.org" "/home/codemac/org/fitness.org" "/home/codemac/org/from-mobile.org" "/home/codemac/org/gtd.org" "/home/codemac/org/_notes/2012.org" "/home/codemac/org/_notes/2013.org" "/home/codemac/org/_notes/2014.org" "/home/codemac/org/_notes/advanced_early_riser.org" "/home/codemac/org/_notes/class2012pgm.org" "/home/codemac/org/_notes/gifts.org" "/home/codemac/org/_notes/linux_plumbers2013.org" "/home/codemac/org/_notes/nanowrimo2011.org" "/home/codemac/org/_notes/netlink.org" "/home/codemac/org/_notes/notes.org" "/home/codemac/org/_notes/oppression-of-tech.org" "/home/codemac/org/_notes/recipes.org" "/home/codemac/org/_notes/steal.org" "/home/codemac/org/_notes/ubuntu-bootable.org" "/home/codemac/org/_notes/webmac.org" "/home/codemac/org/_notes/whoami.org")))
  '(protect-buffer-bury-p nil)
  '(safe-local-variable-values (quote ((cm/gitty-files . t) (eval cm/igneous-product-config) (yaml-indent-offset . 8) (after-save-hook archive-done-tasks))))
+ '(warning-suppress-types (quote ((undo discard-info))))
  '(yaml-indent-offset 8))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.

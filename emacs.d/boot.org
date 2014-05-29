@@ -494,11 +494,17 @@ Mac fix for info installation location!
       (if eb
           (switch-to-buffer eb)
         (shell bn))))
-  
+
+  (defun shell-main ()
+    (interactive)
+    (shell-new "main"))
+
+  (global-set-key (kbd "<f7>") 'shell-main)
+
   (set-default 'explicit-shell-file-name "/home/codemac/bin/rc")
-  
+
   (require 'tramp)
-  
+
   (custom-set-variables
    '(comint-scroll-to-bottom-on-input t)  ; always insert at the bottom
    '(comint-scroll-to-bottom-on-output nil) ; always add output at the bottom
@@ -512,20 +518,20 @@ Mac fix for info installation location!
    '(comint-input-ring-size 5000)         ; max shell history size
    '(protect-buffer-bury-p nil)
   )
-  
+
   (setenv "PAGER" "cat")
-  
+
   ;; truncate buffers continuously
   (add-hook 'comint-output-filter-functions 'comint-truncate-buffer)
-  
+
   ; interpret and use ansi color codes in shell output windows
   (add-hook 'shell-mode-hook 'ansi-color-for-comint-mode-on)
-  
+
   (defun set-scroll-conservatively ()
     "Add to shell-mode-hook to prevent jump-scrolling on newlines in shell buffers."
     (set (make-local-variable 'scroll-conservatively) 10))
   (add-hook 'shell-mode-hook 'set-scroll-conservatively)
-  
+
   ;; (defun enter-again-if-enter ()
   ;;   "Make the return key select the current item in minibuf and shell history isearch.
   ;; An alternate approach would be after-advice on isearch-other-meta-char."
@@ -534,7 +540,7 @@ Mac fix for info installation location!
   ;;     (cond ((active-minibuffer-window) (minibuffer-complete-and-exit))
   ;;           ((member (buffer-name) my-shells) (comint-send-input)))))
   ;; (add-hook 'isearch-mode-end-hook 'enter-again-if-enter)
-  
+
   ;; (defadvice comint-previous-matching-input
   ;;     (around suppress-history-item-messages activate)
   ;;   "Suppress the annoying 'History item : NNN' messages from shell history isearch.
@@ -544,14 +550,14 @@ Mac fix for info installation location!
   ;;     (unwind-protect
   ;;       (progn (fset 'message 'ignore) ad-do-it)
   ;;     (fset 'message old-message))))
-  
+
   ;; (defadvice comint-send-input (around go-to-end-of-multiline activate)
   ;;   "When I press enter, jump to the end of the *buffer*, instead of the end of
   ;; the line, to capture multiline input. (This only has effect if
   ;; `comint-eol-on-send' is non-nil."
   ;;   (flet ((end-of-line () (end-of-buffer)))
   ;;     ad-do-it))
-  
+
   ;; ;; not sure why, but comint needs to be reloaded from the source (*not*
   ;; ;; compiled) elisp to make the above advise stick.
   ;; (load "comint.el.gz")
@@ -559,7 +565,7 @@ Mac fix for info installation location!
 ** Eshell
 #+begin_src emacs-lisp
   (autoload 'eshell "eshell" "")
-  
+
   (defun cm-eshell-prompt ()
     (concat user-login-name "@" system-name ":"
             ((lambda (p-lst)
@@ -579,7 +585,7 @@ Mac fix for info installation location!
                             "/")))
              (split-string (abbreviate-file-name (eshell/pwd)) "/"))
             " % "))
-  
+
   (defun eshell-new (name)
     "Create a shell buffer named NAME."
     (interactive "sEshell Name: ")
@@ -589,22 +595,22 @@ Mac fix for info installation location!
           (switch-to-buffer eb)
         (eshell)
         (rename-buffer bn))))
-  
+
   (defun eshell-main ()
     (interactive)
     (eshell-new "main"))
-  
-  (global-set-key (kbd "<f7>") 'eshell-main)
-  
+  ; thanks byron, now using rc
+  ;(global-set-key (kbd "<f7>") 'eshell-main)
+
   (defalias 'enew 'eshell-new)
-  
+
   (put 'eshell 'disabled "Use eshell-new instead!\n")
   (autoload 'ansi-color "ansi-color" t nil)
-  
+
   ;(defun cm-eshell-handle-ansi-color ()
   ;  (ansi-color-apply-on-region eshell-last-output-start
   ;                              eshell-last-output-end))
-  
+
   (setq eshell-directory-name "~/.emacs.d/eshell")
   (setq eshell-prompt-function 'cm-eshell-prompt)
   (setq eshell-prompt-regexp "^[^%#$\n]+ [%#$] ")
@@ -612,25 +618,25 @@ Mac fix for info installation location!
   (setenv "P4USER" "jmickey")
   (setenv "P4PORT" cm-ironport-p4port)
   (setenv "P4CONFIG" "P4ENV")
-  
+
   ;(defun eshell/mm (&rest args)
   ;  "A better version of my mm alias"
   ;  (interactive)
   ;  (eshell-parse-command "ssh marsarch \"cd $PWD\; " (eshell-flatten-list (append "\"" args))))
   (defun unbind-symbol (symbol)
     "Totally unbind SYMBOL.
-  
+
   This includes unbinding its function binding, its variable binding and its
   property list."
     (interactive "SSymbol: ")
     (fmakunbound symbol)
     (makunbound symbol)
     (setf (symbol-plist symbol) nil))
-  
+
   (defun eshell/asc (cmd &rest args)
     "Eshell async shell command, to get rid of double quotes"
     (interactive)
-  
+
     (let* ((asc-buffer-name (concat "*asc:" cmd "*"))
            (buffer (get-buffer-create (generate-new-buffer-name asc-buffer-name)))
            (directory default-directory))
@@ -659,8 +665,8 @@ Mac fix for info installation location!
         ;; Use the comint filter for proper handling of carriage motion
         ;; (see `comint-inhibit-carriage-motion'),.
         (set-process-filter proc 'comint-output-filter))))
-  
-  
+
+
   ;; Stolen from http://www.emacswiki.org/cgi-bin/wiki.pl/EshellEnhancedLS
   (eval-after-load "em-ls"
     '(progn
@@ -670,7 +676,7 @@ Mac fix for info installation location!
          (find-file (buffer-substring-no-properties
                      (previous-single-property-change point 'help-echo)
                      (next-single-property-change point 'help-echo))))
-  
+
        (defun pat-eshell-ls-find-file-at-mouse-click (event)
          "Middle click on Eshell's `ls' output to open files.
    From Patrick Anderson via the wiki."
@@ -682,7 +688,7 @@ Mac fix for info installation location!
          (define-key map (kbd "<return>") 'ted-eshell-ls-find-file-at-point)
          (define-key map (kbd "<mouse-2>") 'pat-eshell-ls-find-file-at-mouse-click)
          (defvar ted-eshell-ls-keymap map))
-  
+
        (defadvice eshell-ls-decorated-name (after ted-electrify-ls activate)
          "Eshell's `ls' now lets you click or RET on file names to open them."
          (add-text-properties 0 (length ad-return-value)
@@ -691,9 +697,9 @@ Mac fix for info installation location!
                                     'keymap ted-eshell-ls-keymap)
                               ad-return-value)
          ad-return-value)))
-  
+
   (add-hook 'eshell-preoutput-filter-functions 'ansi-color-apply)
-  
+
 #+end_src
 ** BBDB - Big Brother DataBase
 Well integrated into Gnus, eventually just had to start using it!
@@ -1278,6 +1284,19 @@ standard implementation, and mostly lifted from =sort-paragraphs= in
         (goto-char (point-min))
         (sort-subr reverse 'cm/gnu-line-next 'cm/gnu-line-end))))
 #+end_src
+***** TODO Fix up the idea of "creating" gnu lines
+#+begin_src emacs-lisp
+  ; this works well with my git-commit after save hook and rebasing
+  ;(defun cm/create-gnu-lines (reverse beg end)
+  ;  (interactive "P\nr")
+  ;  (save-excursion
+  ;    (save-restriction
+  ;      (narrow-to-region beg end)
+  ;      (goto-char (point-min))
+  ;      (
+  (fset 'cm/create-gnu-lines
+     "* \C-a\C-n\C-k\C-k\C-k\C-k")
+#+end_src
 I don't have a good keybinding for this yet, but I will figure
 something out :P
 *** Esperanto
@@ -1515,7 +1534,8 @@ We're just borrowing the gnus settings here..
   (setq message-citation-line-format "* %f [%Y-%m-%d %H:%M]:")
   (setq message-citation-line-function 'message-insert-formatted-citation-line)
   (defun cm/message-mode-hook ()
-    (local-set-key (kbd "C-c M-o") 'org-mime-htmlize))
+    (local-set-key (kbd "C-c M-o") 'org-mime-htmlize)
+    (orgstruct-mode 1))
   (add-hook 'message-mode-hook 'cm/message-mode-hook)
 #+end_src
 *** mu4e
@@ -2478,11 +2498,11 @@ you are trying to edit anything.
 #+end_src
 *** SLIME
 #+begin_src emacs-lisp
-  (setq inferior-lisp-program "sbcl")
-  (require 'slime-autoloads)
-  (slime-setup '(slime-fancy))
-  (load (expand-file-name "/home/codemac/.quicklisp/slime-helper.el"))
-  
+  ;(setq inferior-lisp-program "sbcl")
+  ;(require 'slime-autoloads)
+  ;(slime-setup '(slime-fancy))
+  ;(load (expand-file-name "/home/codemac/.quicklisp/slime-helper.el"))
+
 #+end_src
 *** SQL
 Who needs a command line anyways..
