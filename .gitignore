@@ -29,6 +29,7 @@ emacs.d/request
 emacs.d/semanticdb
 emacs.d/tramp
 emacs.d/url/cookies
+emacs.d/url/
 pentadactyl/info
 vim/.netrwhist
 xmonad/xmonad

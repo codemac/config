@@ -21,8 +21,8 @@ if [[ -f /opt/local/bin/python ]]; then
 fi
 
 export GOROOT=/usr/lib/go
-export GOPATH="$HOME/code/ig/go:$HOME/code/ig/vendor_go"
-export PATH=".:/opt/local/bin:/opt/local/sbin:/opt/java/bin:/opt/kde/bin:/Applications/Emacs.app/Contents/MacOS/bin:/Applications/Racket v5.2.1/bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/bin:/sbin:/usr/sbin:$PYTHONBIN:$HOME/bin:$HOME/hacks:$HOME/code/depot_tools:$HOME/.cabal/bin:/usr/software/bin:/usr/software/rats/bin:/home/codemac/code/ig/bin:/home/codemac/code/tools_ig/fritz:$PATH"
+export GOPATH="$HOME/code/go"
+export PATH="/opt/local/bin:/opt/local/sbin:/opt/java/bin:/opt/kde/bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/bin:/sbin:/usr/sbin:$PYTHONBIN:$HOME/bin:$HOME/.cabal/bin:$HOME/work/tools_ig/fritz:$HOME/code/go/bin:/opt/google-appengine-go:$PATH"
 export MOZILLA_FIVE_HOME=/opt/mozilla/bin/mozilla
 case ${OSTYPE} in
     darwin*)
@@ -33,12 +33,14 @@ case ${OSTYPE} in
     linux*)
 	export EDITOR=emacsclient
 	export GIT_EDITOR=emacsclient
+	export GNUPGHOME=/mnt/keys/gnupghome
 	;;
     *)
 	export EDITOR=emacsclient
 	export GIT_EDITOR=emacsclient
 	;;
 esac
+export GPG_TTY=`tty`
 #export MANPAGER="col -b | vim -c 'set ft=man nonu nomod nolist' -"
 export MANPAGER=most
 export MAIL=$HOME/mail/default
@@ -48,6 +50,10 @@ export GEM_HOME=$HOME/.gem
 export GEM_PATH=$HOME/.gem:/usr/lib/ruby/gems/1.9.1
 export BROWSER=firefox
 export CVS_RSH="ssh"
+
+
+# Fix this fucking bullshit. raster should work but depends on xshm which they can't seem to program right to save their fucking lives.
+export QT_GRAPHICSSYSTEM=native
 
 # watch for people
 watch=(notme)                   # watch for everybody but me

@@ -9,3 +9,65 @@ XF86AudioMute
 
 {_,shift + ,super + }XF86MonBrightness{Down,Up}
          xbacklight {-dec 1,-dec 10,-set 0,-inc 1,-inc 10,-set 100}
+         
+super + t ; x ; {x,f,e}
+      {xterm,firefox,emacs}
+
+super + t ; p
+      dmenu_run
+
+super + t ; g
+      xwinmosaic
+
+## i3 bindings!
+# comment out if not using i3.. I wish there was something conditional in sxhkd
+
+super + t ; c
+      i3-msg kill
+
+super + t ; {_,shift + }{Left,Down,Up,Right}
+      i3-msg {focus,move} {left,down,up,right}
+
+super + t ; h
+      i3-msg split h
+
+super + t ; v
+      i3-msg split v
+   
+super + t ; f
+      i3-msg fullscreen
+
+super + t ; {s,w,e}
+      i3-msg layout {stacking,tabbed,toggle split}
+      
+super + t ; shift + space
+      i3-msg floating toggle
+      
+super + t ; a
+      i3-msg focus parent
+
+super + t ; {_,shift + }t
+      i3-msg workspace {next_on_output,next}
+
+super + t ; super + {_,shift + }t
+      i3-msg workspace {next_on_output,next}
+
+super + t ; {0,1-9}
+      i3-msg workspace {10,1-9}
+
+super + t ; shift + {0,1-9}
+      i3-msg move container to workspace {10,1-9}
+
+super + t ; shift + {c,r}
+      i3-msg {reload,restart}
+
+super + t ; shift + e
+      i3-nagbar -t warning -m 'You pressed the exit shortcut. Do you really want to exit i3? This will end your X session.' -b 'Yes, exit i3' 'i3-msg exit'
+
+super + t ; b
+      i3-msg bar mode toggle
+
+super + t ; n
+      i3-msg border toggle
+
+# resize stuff is kept in i3 config

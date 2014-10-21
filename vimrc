@@ -1,4 +1,4 @@
-" Most recent update: Thu 24 Feb 2011 07:35:34 PM EST
+" Most recent update: Tue 22 Jul 2014 09:56:27 PM PDT
 
 """"""""""""""""""""""""""""""""""""""""""
 " GUI options, and colorscheme selection "
@@ -36,10 +36,7 @@ endfun
 """"""""""""
 " Settings "
 """"""""""""
-if has("win32")
-	let Tlist_Ctags_Cmd='C:\Progra~1\ctags\ctags.exe'
-	map <M-Space> :simalt ~<CR>
-elseif has("macunix")
+if has("macunix")
 	" the Carbon clipboard is screwed up, and messes up newlines
 	set cb=
 endif

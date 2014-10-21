@@ -572,3 +572,4 @@ xterm*savelines: 100000
 !!
 vncviewer*grabKeyboard: true
 xterm*termName: xterm-256color
+XTerm*metaSendsEscape: true
