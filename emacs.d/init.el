@@ -8,17 +8,14 @@
 
 (setq dotfiles-dir (file-name-directory (or load-file-name (buffer-file-name))))
 
+;; Use package management!
 (require 'package)
 
-(add-to-list 'package-archives 
-             '("marmalade" .
-               "http://marmalade-repo.org/packages/"))
-
-(add-to-list 'package-archives
-             '("melpa" .
-               "http://melpa.milkbox.net/packages/"))
-
-(add-to-list 'package-archives '("org" . "http://orgmode.org/elpa/") t)
+(setq package-archives
+      (append '(("org"       . "http://orgmode.org/elpa/")
+                ("melpa"     . "http://melpa.milkbox.net/packages/")
+                ("marmalade" . "http://marmalade-repo.org/packages/"))
+              package-archives))
 
 (package-initialize)
 
@@ -50,14 +47,16 @@
  '(comint-prompt-read-only t)
  '(comint-scroll-show-maximum-output t)
  '(comint-scroll-to-bottom-on-input t)
- '(custom-safe-themes (quote ("4e72cb2841e4801ba202a120c1cffdf88f5512536e557d03b3626d890b52f201" "36a309985a0f9ed1a0c3a69625802f87dee940767c9e200b89cdebdb737e5b29" "bf7ed640479049f1d74319ed004a9821072c1d9331bc1147e01d22748c18ebdf" "1e7e097ec8cb1f8c3a912d7e1e0331caeed49fef6cff220be63bd2a6ba4cc365" default)))
+ '(custom-safe-themes (quote ("3b819bba57a676edf6e4881bd38c777f96d1aa3b3b5bc21d8266fa5b0d0f1ebf" "4e72cb2841e4801ba202a120c1cffdf88f5512536e557d03b3626d890b52f201" "36a309985a0f9ed1a0c3a69625802f87dee940767c9e200b89cdebdb737e5b29" "bf7ed640479049f1d74319ed004a9821072c1d9331bc1147e01d22748c18ebdf" "1e7e097ec8cb1f8c3a912d7e1e0331caeed49fef6cff220be63bd2a6ba4cc365" default)))
  '(fci-rule-color "#383838")
  '(frame-background-mode (quote dark))
  '(haskell-hoogle-command "hoogle")
  '(indent-tabs-mode nil)
- '(org-agenda-files (quote ("/home/codemac/org/igneous.org" "/home/codemac/org/fitness.org" "/home/codemac/org/from-mobile.org" "/home/codemac/org/gtd.org" "/home/codemac/org/_notes/2012.org" "/home/codemac/org/_notes/2013.org" "/home/codemac/org/_notes/2014.org" "/home/codemac/org/_notes/advanced_early_riser.org" "/home/codemac/org/_notes/class2012pgm.org" "/home/codemac/org/_notes/gifts.org" "/home/codemac/org/_notes/linux_plumbers2013.org" "/home/codemac/org/_notes/nanowrimo2011.org" "/home/codemac/org/_notes/netlink.org" "/home/codemac/org/_notes/notes.org" "/home/codemac/org/_notes/oppression-of-tech.org" "/home/codemac/org/_notes/recipes.org" "/home/codemac/org/_notes/steal.org" "/home/codemac/org/_notes/ubuntu-bootable.org" "/home/codemac/org/_notes/webmac.org" "/home/codemac/org/_notes/whoami.org")))
  '(protect-buffer-bury-p nil)
- '(safe-local-variable-values (quote ((cm/gitty-files . t) (eval cm/igneous-product-config) (yaml-indent-offset . 8) (after-save-hook archive-done-tasks))))
+ '(safe-local-variable-values (quote ((eval cm/projectile-dirlocals-hook (quote mesa)) (cm/gitty-files . t) (eval cm/igneous-product-config) (yaml-indent-offset . 8) (after-save-hook archive-done-tasks))))
+ '(vc-annotate-background "#2B2B2B")
+ '(vc-annotate-color-map (quote ((20 . "#BC8383") (40 . "#CC9393") (60 . "#DFAF8F") (80 . "#D0BF8F") (100 . "#E0CF9F") (120 . "#F0DFAF") (140 . "#5F7F5F") (160 . "#7F9F7F") (180 . "#8FB28F") (200 . "#9FC59F") (220 . "#AFD8AF") (240 . "#BFEBBF") (260 . "#93E0E3") (280 . "#6CA0A3") (300 . "#7CB8BB") (320 . "#8CD0D3") (340 . "#94BFF3") (360 . "#DC8CC3"))))
+ '(vc-annotate-very-old-color "#DC8CC3")
  '(warning-suppress-types (quote ((undo discard-info))))
  '(yaml-indent-offset 8))
 (custom-set-faces

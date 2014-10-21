@@ -1,0 +1,40 @@
+2012-10-30  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	Clean up copyright notices.
+
+2011-07-30  Chong Yidong  <cyd@stupidchicken.com>
+
+	Add Texinfo files for muse package.
+
+2011-07-01  Chong Yidong  <cyd@stupidchicken.com>
+
+	Remove version numbers from filenames in packages/ dir.
+
+2011-06-30  Chong Yidong  <cyd@stupidchicken.com>
+
+	Remove version numbers in packages/ directory
+
+2011-01-09  Chong Yidong  <cyd@stupidchicken.com>
+
+	Make Muse's *-link faces inherit from the basic link face.
+	
+	* packages/muse-3.20/muse-colors.el (muse-link, muse-bad-link):
+	Inherit from link face.
+
+2010-11-20  Ted Zlatanov  <tzz@lifelogs.com>
+
+	* COPYING, ChangeLog, README, admin/org-synch.el,
+	admin/org-synch.sh, admin/package-update.sh: Initial import.
+	
+	* packages/archive-contents, packages/auctex-11.86,
+	packages/auctex-readme.txt, packages/company-0.5/,
+	packages/company-readme.txt, packages/elpa.rss,
+	packages/js2-mode-20090814.el, packages/js2-mode-readme.txt,
+	packages/muse-3.20/, packages/muse-readme.txt,
+	packages/org-readme.txt, packages/rainbow-mode-0.1.el,
+	packages/rainbow-mode-readme.txt: Renamed from the root directory.
+
+2010-11-18  ELPA admin
+
+	Initial repository contents
+

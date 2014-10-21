@@ -294,6 +294,34 @@ Yup, zenburn.
   (load-theme 'zenburn t)
 #+end_src
 * Builtin
+** Open files with root
+#+begin_src emacs-lisp
+  (defun cm/rename-tramp-buffer ()
+    (when (file-remote-p (buffer-file-name))
+      (rename-buffer
+       (format "%s:%s"
+               (file-remote-p (buffer-file-name) 'method)
+               (buffer-name)))))
+
+  (add-hook 'find-file-hook
+            'cm/rename-tramp-buffer)
+
+  (defadvice find-file (around th-find-file activate)
+    "Open FILENAME using tramp's sudo method if it's read-only."
+    (let ((thefile (ad-get-arg 0)))
+      (if (string-prefix-p "/etc" thefile)
+          (if (and (not (file-writable-p thefile))
+                   (y-or-n-p (concat "File "
+                                     thefile
+                                     " is read-only.  Open it as root? ")))
+              (cm/find-file-sudo thefile))))
+    ad-do-it)
+
+  (defun cm/find-file-sudo (file)
+    "Opens FILE with root privileges."
+    (interactive "F")
+    (set-buffer (find-file (concat "/sudo::" file))))
+#+end_src
 ** Occur, isearch, and all
 I like to launch occur from an isearch query. It's great when your
 muscle memory searches for a word, THEN you realize you want to see it
@@ -502,6 +530,7 @@ Mac fix for info installation location!
   (global-set-key (kbd "<f7>") 'shell-main)
 
   (set-default 'explicit-shell-file-name "/home/codemac/bin/rc")
+  (setq explicit-rc-args '("-l"))
 
   (require 'tramp)
 
@@ -525,7 +554,7 @@ Mac fix for info installation location!
   (add-hook 'comint-output-filter-functions 'comint-truncate-buffer)
 
   ; interpret and use ansi color codes in shell output windows
-  (add-hook 'shell-mode-hook 'ansi-color-for-comint-mode-on)
+  (add-hook 'shell-mode-hook 'ansi-color-for-comint-mode-filter)
 
   (defun set-scroll-conservatively ()
     "Add to shell-mode-hook to prevent jump-scrolling on newlines in shell buffers."
@@ -764,6 +793,14 @@ what all these features really mean.
   ;(set projectile-indexing-method 'alien)
 
   (projectile-global-mode)
+
+  (defun cm/projectile-dirlocals-hook (dir)
+    (cond ((equal dir 'mesa)
+           (setq process-environment
+                  (append '("GOPATH=/home/codemac/work/mesa/go"
+                            "GOBIN=/home/codemac/work/mesa/bin/linux_amd64"
+                            "IGROOT=/tmp/igroot")
+                          process-environment)))))
 #+end_src
 ** Emacs Features
 *** simple httpd
@@ -959,10 +996,57 @@ out semantically.
   ;(add-hook 'gnus-summary-mode-hook 'hl-line-fancy-highlight)
   ;(add-hook 'gnus-group-mode-hook 'hl-line-fancy-highlight)
 #+end_src
-** Major Modes
-*** Evil
+*** Ido
+Everyone should use Ido. (well, maybe helm)
 #+begin_src emacs-lisp
-  (require 'evil-autoloads)
+  (require 'ido)
+  (put 'ido-exit-minibuffer 'disabled nil)
+  ;(ido-mode t)
+#+end_src
+If the exact name isn't found, then flex matching will match against
+anything with the characters in the order you've typed. It matches
+only for strings that have that sequence of characters in order.
+#+begin_src emacs-lisp
+  (setq ido-enable-flex-matching t)
+#+end_src
+
+** Major Modes
+
+*** Markdown
+#+begin_src emacs-lisp
+  (autoload 'markdown-mode "markdown-mode" "Run ze markdownz" nil)
+  (add-to-list 'auto-mode-alist '("\\.\\(md\\|markdown\\)$" . markdown-mode))
+#+end_src
+*** Evil
+**** Activate Evil!
+     I have become one of them :/
+#+begin_src emacs-lisp
+  ;(require 'evil)
+  ;
+  ;(evil-mode 1)
+#+end_src
+**** Evil Ace Jump
+Let's me use ace jump e'erywhere
+#+begin_src emacs-lisp
+  ;(define-key evil-motion-state-map (kbd "SPC") #'evil-ace-jump-word-mode)
+  ;(define-key evil-motion-state-map (kbd "C-SPC") #'evil-ace-jump-char-mode)
+  ; 
+  ;(define-key evil-operator-state-map (kbd "SPC") #'evil-ace-jump-word-mode) ; similar to f
+  ;(define-key evil-operator-state-map (kbd "C-SPC") #'evil-ace-jump-char-mode) ; similar to t
+  ;(define-key evil-operator-state-map (kbd "M-SPC") #'evil-ace-jump-char-to-mode)
+  ; 
+  ;;; different jumps for different visual modes
+  ;(defadvice evil-visual-line (before spc-for-line-jump activate)
+  ;(define-key evil-motion-state-map (kbd "SPC") #'evil-ace-jump-word-mode))
+  ; 
+  ;(defadvice evil-visual-char (before spc-for-char-jump activate)
+  ;(define-key evil-motion-state-map (kbd "SPC") #'evil-ace-jump-word-mode))
+  ; 
+  ;(defadvice evil-visual-block (before spc-for-char-jump activate)
+  ;(define-key evil-motion-state-map (kbd "SPC") #'evil-ace-jump-word-mode))
+
+  ;(evil-set-initial-state 'shell-mode 'emacs)
+  ;(evil-set-initial-state 'org-mode 'emacs)
 #+end_src
 For some reason that does not include evil-local-mode.
 #+begin_src emacs-lisp
@@ -1121,7 +1205,6 @@ other window you have open. This gets old. Fast.
           '(("type" "^type *\\([^ \t\n\r\f]*\\)" 1)
             ("func" "^func *\\(.*\\) {" 1)))
     (imenu-add-to-menubar "Index")
-    (yas-minor-mode 1)
     (add-hook 'before-save-hook #'gofmt-before-save)
     (set (make-local-variable 'compile-command) "~/bin/emacs-work-compile"))
   
@@ -1189,7 +1272,6 @@ My C settings.
     (setq show-trailing-whitespace t)
     (setq c-tab-always-indent t)
     (linum-mode 1)
-    (yas-minor-mode 1)
     (setq comment-multi-line t)
     (local-set-key (kbd "C-c o") 'ff-find-other-file)
     ;; (gtags-mode 1) ; no more! going to helm!
@@ -1455,13 +1537,6 @@ Thank you Britt.
   
   (eval-after-load "gtags"
     '(my-gtags-settings))
-#+end_src
-*** Yasnippet
-Really useful when you have a lot of code to write.
-#+begin_src emacs-lisp
-  (autoload 'yas-minor-mode "yasnippet")
-  (autoload 'yas-global-mode "yasnippet")
-  ;  (yas-global-mode 1)
 #+end_src
 *** Android
 #+begin_src emacs-lisp
@@ -1955,12 +2030,11 @@ Functions borrowed from Sacha Chua.
   (setq org-clock-persist 'history)
   (org-clock-persistence-insinuate)
   (setq org-clock-idle-time 10)
-  
-  (setq org-default-notes-files '("~/org/_notes/notes.org"))
-  (setq org-agenda-files '("~/org/" "~/org/_notes/"))
+
+  (setq org-default-notes-files '("~/doc/org/_notes/notes.org"))
+  (setq org-agenda-files '("~/doc/org/" "~/doc/org/_notes/"))
   (setq org-refile-targets '((nil :maxlevel . 5) (org-agenda-files :maxlevel . 5)))
   
-  (setq org-mobile-directory "~/Dropbox/MobileOrg")
   (setq org-log-done t)
   (setq org-hide-leading-stars t)
   (setq org-return-follows-link t)
@@ -2097,7 +2171,7 @@ How I deploy my personal website.
   ;; - org-doc -- export all org documents
   (setq org-publish-project-alist
         '(("codemac-org"
-           :base-directory "~/org/_www/codemac.net"
+           :base-directory "~/doc/org/_www/codemac.net"
            :publishing-directory "/tmp/codemac.net"
            :recursive t
            :base-extension "org"
@@ -2110,14 +2184,14 @@ How I deploy my personal website.
            :style-include-default nil
            :table-of-contents t)
           ("codemac-static"
-           :base-directory "~/org/_www/codemac.net"
+           :base-directory "~/doc/org/_www/codemac.net"
            :publishing-directory "/tmp/codemac.net"
            :base-extension "css\\|pdf\\|png\\|jpg\\|gif\\|js\\|txt\\|mp3\\|ogg\\|swf"
            :publishing-function org-publish-attachment
            :recursive t)
           ("codemac" :components ("codemac-org" "codemac-static"))
           ("org-doc-org"
-           :base-directory "~/org/"
+           :base-directory "~/doc/org/"
            :publishing-directory "/tmp/published-org"
            :recursive t
            :section-numbers nil
@@ -2135,7 +2209,7 @@ How I deploy my personal website.
            :author-info nil
            :creator-info nil)
           ("org-doc-static"
-           :base-directory "~/org/"
+           :base-directory "~/doc/org/"
            :publishing-directory "/tmp/published-org"
            :base-extension "css\\|pdf\\|png\\|jpg\\|gif"
            :publishing-function org-publish-attachment
@@ -2239,23 +2313,24 @@ How I deploy my personal website.
 **** Org Capture
 #+begin_src emacs-lisp
   ;; org capture!
+  (setq org-directory "~/doc/org")
   (setq org-default-notes-file (concat org-directory "/gtd.org"))
   (define-key global-map "\C-cr" 'org-capture)
   (setq org-capture-templates
-        `(("t" "Todo" entry (file+headline "~/org/gtd.org" "Inbox") "* TODO %?\n  %U\n  %i\n  %a" :prepend t)
-          ("j" "Journal" entry (file ,(format-time-string "~/org/_editorial/%Y.%m.org")) "* %U %?\n\n  %i\n  %a" :prepend nil)
+        `(("t" "Todo" entry (file+headline "~/doc/org/gtd.org" "Inbox") "* TODO %?\n  %U\n  %i\n  %a" :prepend t)
+          ("j" "Journal" entry (file ,(format-time-string "~/doc/org/_editorial/%Y.%m.org")) "* %U %?\n\n  %i\n  %a" :prepend nil)
           ("c" "Add note to currently clocked task" entry (clock) "* %U %?\n%a\n\n%i")
-          ("n" "Timed Notes" entry (file ,(format-time-string "~/org/_notes/%Y.org")) "* %U %?\n\n  %i\n  %a" :prepend nil)
-          ("w" "Work capture" entry (file "~/org/igneous.org") "* %U %?\n\n  %i\n  %a" :prepend nil)
-          ("l" "Life Fitness" table-line (file+headline "~/org/fitness.org" "Fitness") ,(concat (format-time-string "| %Y.%m.%d-%H:%M |") " %^{Weight} | | %^{RHR} |") :table-line-pos "II-1")
-          ("x" "org-capture" entry (file+headline "~/org/_notes/www.org" "Archived Content") "* %^{Title}p: %:description\n\n  Source: %U %c\n\n  %i")))
+          ("n" "Timed Notes" entry (file ,(format-time-string "~/doc/org/_notes/%Y.org")) "* %U %?\n\n  %i\n  %a" :prepend nil)
+          ("w" "Work capture" entry (file "~/doc/org/igneous.org") "* %U %?\n\n  %i\n  %a" :prepend nil)
+          ("l" "Life Fitness" table-line (file+headline "~/doc/org/fitness.org" "Fitness") ,(concat (format-time-string "| %Y.%m.%d-%H:%M |") " %^{Weight} | | %^{RHR} |") :table-line-pos "II-1")
+          ("x" "org-capture" entry (file+headline "~/doc/org/_notes/www.org" "Archived Content") "* %^{Title}p: %:description\n\n  Source: %U %c\n\n  %i")))
   
   (defun gtd ()
     (interactive)
-    (find-file "~/org/gtd.org"))
+    (find-file "~/doc/org/gtd.org"))
   
   ;; Set up my diary file
-  (setq diary-file "~/org/diary") ;; deal with the fact that it's in the org folder
+  (setq diary-file "~/doc/org/diary") ;; deal with the fact that it's in the org folder
   
   ;;
   
@@ -2877,27 +2952,6 @@ Nice to have going along the top sometimes. Disabled, I never used it.
 #+begin_src emacs-lisp
   ; this is where the ending mark would be
 #+end_src
-** Anything
-*now disabled!*
-Anything? Anything! It's a different way of using emacs.. and I don't
-use it that much. We'll see if I ever start using it more.
-#+begin_src emacs-lisp
-  (autoload 'anything "anything" "" t)
-#+end_src
-** Ido
-Everyone should use Ido. (well, maybe helm)
-#+begin_src emacs-lisp
-  (require 'ido)
-  (put 'ido-exit-minibuffer 'disabled nil)
-  ;(ido-mode t)
-#+end_src
-If the exact name isn't found, then flex matching will match against
-anything with the characters in the order you've typed. It matches
-only for strings that have that sequence of characters in order.
-#+begin_src emacs-lisp
-  (setq ido-enable-flex-matching t)
-#+end_src
-
 ** Gnus
 Uh oh, here come the big guns.
 #+begin_src emacs-lisp
@@ -2918,61 +2972,6 @@ Uh oh, here come the big guns.
   ;; ;  (if (file-exists-p gnus-lock-filename)
   ;; ;  (error "Can't start gnus, Lock file exists %S" gnus-lock-filename)
   ;; (call-interactively 'gnus))
-#+end_src
-** Wanderlust
-  A great IMAP client, but I'm with the Gnus folks these days.
-#+begin_src emacs-lisp
-  ;; (autoload 'wl "wl" "Wanderlust" t)
-  ;; (autoload 'wl-other-frame "wl" "Wanderlust on new frame." t)
-  ;; (autoload 'wl-draft "wl-draft" "Write draft with Wanderlust." t)
-  
-  ;; ;; IMAP
-  ;; (setq elmo-imap4-default-server "imap.gmail.com")
-  ;; (setq elmo-imap4-default-user "codemac@gmail.com") 
-  ;; (setq elmo-imap4-default-authenticate-type 'clear) 
-  ;; (setq elmo-imap4-default-port '993)
-  ;; (setq elmo-imap4-default-stream-type 'ssl)
-  
-  ;; (setq elmo-imap4-use-modified-utf7 t) 
-  
-  ;; ;; SMTP
-  ;; (setq wl-smtp-connection-type 'starttls)
-  ;; (setq wl-smtp-posting-port 587)
-  ;; (setq wl-smtp-authenticate-type "plain")
-  ;; (setq wl-smtp-posting-user "codemac")
-  ;; (setq wl-smtp-posting-server "smtp.gmail.com")
-  ;; (setq wl-local-domain "gmail.com")
-  
-  ;; (setq wl-default-folder "%inbox")
-  ;; (setq wl-default-spec "%")
-  ;; (setq wl-draft-folder "%[Gmail]/Drafts") ; Gmail IMAP
-  ;; (setq wl-trash-folder "%[Gmail]/Trash")
-  
-  ;; (setq wl-folder-check-async t) 
-  
-  ;; (setq elmo-imap4-use-modified-utf7 t)
-  
-  ;; (autoload 'wl-user-agent-compose "wl-draft" nil t)
-  ;; (if (boundp 'mail-user-agent)
-  ;;     (setq mail-user-agent 'wl-user-agent))
-  ;; (if (fboundp 'define-mail-user-agent)
-  ;;     (define-mail-user-agent
-  ;;       'wl-user-agent
-  ;;       'wl-user-agent-compose
-  ;;       'wl-draft-send
-  ;;       'wl-draft-kill
-  ;;       'mail-send-hook))
-#+end_src
-** CUA mode
-I don't use CUA in that C-x/c/v make no sense to me when I'm using
-emacs. However, there is a nifty trick you can do to maintain the CUA
-rectangle editing functionality without the keybindings.
-
-Grabbed from [[http://www.reddit.com/r/emacs/comments/13ren4/ysk_that_you_can_paste_a_string_on_multiple_lines/c7f19ye][prakashk's comment on reddit]]. In it he references the
-[[http://emacs-fu.blogspot.com/2010/01/rectangles-and-cua.html][emacs-fu post]] on the same topic.
-#+begin_src emacs-lisp
-  ;; (setq cua-enable-cua-keys nil)
-  ;; (cua-mode t)
 #+end_src
 ** Command Frequency
 This can be useful to figure out what commands you do and don't use
