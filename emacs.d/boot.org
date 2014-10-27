@@ -1200,6 +1200,9 @@ other window you have open. This gets old. Fast.
 #+begin_src emacs-lisp  
   (defun cm/go-mode-hook ()
     (interactive)
+    (require 'go-oracle)
+    (setq go-oracle-command "/home/codemac/bin/oracle")
+    (go-oracle-mode)
     (linum-mode 1)
     (setq imenu-generic-expression
           '(("type" "^type *\\([^ \t\n\r\f]*\\)" 1)
@@ -1207,7 +1210,7 @@ other window you have open. This gets old. Fast.
     (imenu-add-to-menubar "Index")
     (add-hook 'before-save-hook #'gofmt-before-save)
     (set (make-local-variable 'compile-command) "~/bin/emacs-work-compile"))
-  
+
   (add-hook 'go-mode-hook 'cm/go-mode-hook)
 #+end_src
 *** Ruby
@@ -1216,17 +1219,7 @@ Lisp seems to be the current mental debate.
 #+begin_src emacs-lisp
   (autoload 'ruby-mode "ruby-mode"
     "Mode for editing ruby source files")
-  (autoload 'run-ruby "inf-ruby"
-    "Run an inferior Ruby process")
-  (autoload 'inf-ruby-keys "inf-ruby"
-    "Set local key defs for inf-ruby in ruby-mode")
-  
-  (add-hook 'ruby-mode-hook
-            '(lambda ()
-               (inf-ruby-keys)))
-  ;; If you have Emacs 19.2x or older, use rubydb2x                              
-  (autoload 'rubydb "rubydb3x" "Ruby debugger" t)
-  
+
   (add-hook 'ruby-mode-hook 'turn-on-font-lock)
   
   (add-to-list 'interpreter-mode-alist '("ruby" . ruby-mode))
@@ -1691,7 +1684,6 @@ Microblog, baby.
 *** Muse
 Good for person wikis, however I pretty much exclusively use =org-blog=/=org-export= now.
 #+begin_src emacs-lisp
-  (require 'muse-autoloads)
   (add-hook 'muse-mode-hook '(lambda ()
                                (footnote-mode 1)
                                (flyspell-mode 1)
