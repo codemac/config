@@ -32,7 +32,7 @@
 ;;
 ;;    docview:<file path>::<page number>
 ;;
-;; for example: [[docview:~/.elisp/org/doc/org.pdf::1][Org-Mode Manual]]
+;; for example: [[docview:~/.elisp/org/org.pdf::1][Org-Mode Manual]]
 ;;
 ;; Autocompletion for inserting links is supported; you will be
 ;; prompted for a file and a page number.

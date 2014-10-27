@@ -2023,8 +2023,8 @@ Functions borrowed from Sacha Chua.
   (org-clock-persistence-insinuate)
   (setq org-clock-idle-time 10)
 
-  (setq org-default-notes-files '("~/doc/org/_notes/notes.org"))
-  (setq org-agenda-files '("~/doc/org/" "~/doc/org/_notes/"))
+  (setq org-default-notes-files '("~/org/_notes/notes.org"))
+  (setq org-agenda-files '("~/org/" "~/doc/org/_notes/"))
   (setq org-refile-targets '((nil :maxlevel . 5) (org-agenda-files :maxlevel . 5)))
   
   (setq org-log-done t)
@@ -2163,7 +2163,7 @@ How I deploy my personal website.
   ;; - org-doc -- export all org documents
   (setq org-publish-project-alist
         '(("codemac-org"
-           :base-directory "~/doc/org/_www/codemac.net"
+           :base-directory "~/org/_www/codemac.net"
            :publishing-directory "/tmp/codemac.net"
            :recursive t
            :base-extension "org"
@@ -2176,14 +2176,14 @@ How I deploy my personal website.
            :style-include-default nil
            :table-of-contents t)
           ("codemac-static"
-           :base-directory "~/doc/org/_www/codemac.net"
+           :base-directory "~/org/_www/codemac.net"
            :publishing-directory "/tmp/codemac.net"
            :base-extension "css\\|pdf\\|png\\|jpg\\|gif\\|js\\|txt\\|mp3\\|ogg\\|swf"
            :publishing-function org-publish-attachment
            :recursive t)
           ("codemac" :components ("codemac-org" "codemac-static"))
           ("org-doc-org"
-           :base-directory "~/doc/org/"
+           :base-directory "~/org/"
            :publishing-directory "/tmp/published-org"
            :recursive t
            :section-numbers nil
@@ -2201,7 +2201,7 @@ How I deploy my personal website.
            :author-info nil
            :creator-info nil)
           ("org-doc-static"
-           :base-directory "~/doc/org/"
+           :base-directory "~/org/"
            :publishing-directory "/tmp/published-org"
            :base-extension "css\\|pdf\\|png\\|jpg\\|gif"
            :publishing-function org-publish-attachment
@@ -2305,24 +2305,24 @@ How I deploy my personal website.
 **** Org Capture
 #+begin_src emacs-lisp
   ;; org capture!
-  (setq org-directory "~/doc/org")
+  (setq org-directory "~/org")
   (setq org-default-notes-file (concat org-directory "/gtd.org"))
   (define-key global-map "\C-cr" 'org-capture)
   (setq org-capture-templates
-        `(("t" "Todo" entry (file+headline "~/doc/org/gtd.org" "Inbox") "* TODO %?\n  %U\n  %i\n  %a" :prepend t)
-          ("j" "Journal" entry (file ,(format-time-string "~/doc/org/_editorial/%Y.%m.org")) "* %U %?\n\n  %i\n  %a" :prepend nil)
+        `(("t" "Todo" entry (file+headline "~/org/gtd.org" "Inbox") "* TODO %?\n  %U\n  %i\n  %a" :prepend t)
+          ("j" "Journal" entry (file ,(format-time-string "~/org/_editorial/%Y.%m.org")) "* %U %?\n\n  %i\n  %a" :prepend nil)
           ("c" "Add note to currently clocked task" entry (clock) "* %U %?\n%a\n\n%i")
-          ("n" "Timed Notes" entry (file ,(format-time-string "~/doc/org/_notes/%Y.org")) "* %U %?\n\n  %i\n  %a" :prepend nil)
-          ("w" "Work capture" entry (file "~/doc/org/igneous.org") "* %U %?\n\n  %i\n  %a" :prepend nil)
-          ("l" "Life Fitness" table-line (file+headline "~/doc/org/fitness.org" "Fitness") ,(concat (format-time-string "| %Y.%m.%d-%H:%M |") " %^{Weight} | | %^{RHR} |") :table-line-pos "II-1")
-          ("x" "org-capture" entry (file+headline "~/doc/org/_notes/www.org" "Archived Content") "* %^{Title}p: %:description\n\n  Source: %U %c\n\n  %i")))
+          ("n" "Timed Notes" entry (file ,(format-time-string "~/org/_notes/%Y.org")) "* %U %?\n\n  %i\n  %a" :prepend nil)
+          ("w" "Work capture" entry (file "~/org/igneous.org") "* %U %?\n\n  %i\n  %a" :prepend nil)
+          ("l" "Life Fitness" table-line (file+headline "~/org/fitness.org" "Fitness") ,(concat (format-time-string "| %Y.%m.%d-%H:%M |") " %^{Weight} | | %^{RHR} |") :table-line-pos "II-1")
+          ("x" "org-capture" entry (file+headline "~/org/_notes/www.org" "Archived Content") "* %^{Title}p: %:description\n\n  Source: %U %c\n\n  %i")))
   
   (defun gtd ()
     (interactive)
-    (find-file "~/doc/org/gtd.org"))
+    (find-file "~/org/gtd.org"))
   
   ;; Set up my diary file
-  (setq diary-file "~/doc/org/diary") ;; deal with the fact that it's in the org folder
+  (setq diary-file "~/org/diary") ;; deal with the fact that it's in the org folder
   
   ;;
   
