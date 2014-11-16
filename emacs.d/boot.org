@@ -225,6 +225,13 @@ Oh my freaking god, just take my damn answer.
 #+begin_src emacs-lisp
   (fset 'yes-or-no-p 'y-or-n-p)
 #+end_src
+** Async Shell Command
+This makes sure that we pick a new buffer and just run with it,
+instead of checking if another process is running.
+
+#+begin_src emacs-lisp
+  (setq async-shell-command-buffer 'rename-buffer)
+#+end_src
 ** Convenient global keys
 God I love backword-kill-word. Also some bookmarks
 #+begin_src emacs-lisp
