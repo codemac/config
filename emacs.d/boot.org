@@ -791,6 +791,7 @@ what all these features really mean.
             (lambda ()
               (local-set-key "\C-c\M-o" 'org-mime-org-buffer-htmlize)))
 #+end_src
+** Gnus
 * External
 ** Projectile
 #+begin_src emacs-lisp
@@ -1612,64 +1613,6 @@ We're just borrowing the gnus settings here..
     (local-set-key (kbd "C-c M-o") 'org-mime-htmlize)
     (orgstruct-mode 1))
   (add-hook 'message-mode-hook 'cm/message-mode-hook)
-#+end_src
-*** mu4e
-=mu4e= is a Maildir emacs mail mode. It's quite simple, but it's
-design goals fall right in the "super perfect" range, and I think it
-has a huge opportunity to succeed. It is similar to notmuch.
-#+begin_src emacs-lisp
-;  (require 'mu4e)
-#+end_src
-**** Folders
-These match the Outlook ones..
-#+begin_src emacs-lisp
-;  (setq mu4e-maildir "~/mail"
-;        mu4e-sent-folder "/Sent Items"
-;        mu4e-drafts-folder "/Drafts"
-;        mu4e-trash-folder "/Deleted Items"
-;        mu4e-refile-folder "/archive")
-;  
-;  (setq mu4e-maildir-shortcuts
-;        '(("/INBOX" . ?i)))
-;  
-;  (setq mu4e-refile-folder 'cm-mu4e-refile-folder)
-;  
-#+end_src
-**** Retrieval and Indexing
-Let's update the maildirs once every 5 minutes
-#+begin_src emacs-lisp
-;  (setq mu4e-get-mail-command "offlineimap"
-;        mu4e-update-interval 200)
-#+end_src
-**** Sending mail
-We're just borrowing the gnus settings here..
-#+begin_src emacs-lisp
-;  (setq smtpmail-auth-credentials "~/.authinfo"
-;        smtpmail-smtp-server "mail.netapp.com"
-;        smtpmail-default-smtp-server "mail.netapp.com"
-;        smtpmail-smtp-service 25
-;        send-mail-function 'smtpmail-send-it
-;        message-send-mail-function 'smtpmail-send-it
-;        smtpmail-auth-supported '(login))
-;  
-;  (setq mu4e-sent-messages-behavior 'sent)
-#+end_src
-**** Queuing mail
-This is very useful for when I ride the train.
-#+begin_src emacs-lisp
-;  (setq smtpmail-queue-mail  nil  ;; start in non-queuing mode
-;        smtpmail-queue-dir   "~/mail/queue/cur")
-#+end_src
-**** Setting the default mail client
-#+begin_src emacs-lisp
-;  (setq mail-user-agent 'mu4e-user-agent)
-;  (setq user-mail-address "jmickey@netapp.com")
-;  (setq user-full-name "Jeff Mickey")
-#+end_src
-**** Org mode integration
-#+begin_src emacs-lisp
-;  (require 'org-mu4e)
-;  (setq org-mu4e-convert-to-html t)
 #+end_src
 *** Geiser
 Let's get our scheme on!
@@ -2986,6 +2929,64 @@ fix. I found that I never used the data though..
   ;; (command-frequency-autosave-mode 1)
 #+end_src
 
+** mu4e
+=mu4e= is a Maildir emacs mail mode. It's quite simple, but it's
+design goals fall right in the "super perfect" range, and I think it
+has a huge opportunity to succeed. It is similar to notmuch.
+#+begin_src emacs-lisp
+;  (require 'mu4e)
+#+end_src
+*** Folders
+These match the Outlook ones..
+#+begin_src emacs-lisp
+;  (setq mu4e-maildir "~/mail"
+;        mu4e-sent-folder "/Sent Items"
+;        mu4e-drafts-folder "/Drafts"
+;        mu4e-trash-folder "/Deleted Items"
+;        mu4e-refile-folder "/archive")
+;  
+;  (setq mu4e-maildir-shortcuts
+;        '(("/INBOX" . ?i)))
+;  
+;  (setq mu4e-refile-folder 'cm-mu4e-refile-folder)
+;  
+#+end_src
+*** Retrieval and Indexing
+Let's update the maildirs once every 5 minutes
+#+begin_src emacs-lisp
+;  (setq mu4e-get-mail-command "offlineimap"
+;        mu4e-update-interval 200)
+#+end_src
+*** Sending mail
+We're just borrowing the gnus settings here..
+#+begin_src emacs-lisp
+;  (setq smtpmail-auth-credentials "~/.authinfo"
+;        smtpmail-smtp-server "mail.netapp.com"
+;        smtpmail-default-smtp-server "mail.netapp.com"
+;        smtpmail-smtp-service 25
+;        send-mail-function 'smtpmail-send-it
+;        message-send-mail-function 'smtpmail-send-it
+;        smtpmail-auth-supported '(login))
+;  
+;  (setq mu4e-sent-messages-behavior 'sent)
+#+end_src
+*** Queuing mail
+This is very useful for when I ride the train.
+#+begin_src emacs-lisp
+;  (setq smtpmail-queue-mail  nil  ;; start in non-queuing mode
+;        smtpmail-queue-dir   "~/mail/queue/cur")
+#+end_src
+*** Setting the default mail client
+#+begin_src emacs-lisp
+;  (setq mail-user-agent 'mu4e-user-agent)
+;  (setq user-mail-address "jmickey@netapp.com")
+;  (setq user-full-name "Jeff Mickey")
+#+end_src
+*** Org mode integration
+#+begin_src emacs-lisp
+;  (require 'org-mu4e)
+;  (setq org-mu4e-convert-to-html t)
+#+end_src
 * Custom variables
 #+begin_src emacs-lisp
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; CUSTOM!
