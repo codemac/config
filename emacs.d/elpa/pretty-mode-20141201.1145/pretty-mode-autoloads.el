@@ -1,11 +1,10 @@
 ;;; pretty-mode-autoloads.el --- automatically extracted autoloads
 ;;
 ;;; Code:
-
+(add-to-list 'load-path (or (file-name-directory #$) (car load-path)))
 
-;;;### (autoloads (turn-on-pretty-mode turn-off-pretty-mode global-pretty-mode
-;;;;;;  pretty-mode) "pretty-mode" "pretty-mode.el" (21565 25586
-;;;;;;  205262 758000))
+;;;### (autoloads nil "pretty-mode" "pretty-mode.el" (21628 57445
+;;;;;;  663609 742000))
 ;;; Generated autoloads from pretty-mode.el
 
 (autoload 'pretty-mode "pretty-mode" "\
@@ -51,16 +50,9 @@ See `pretty-mode' for more information on Pretty mode.
 
 ;;;***
 
-;;;### (autoloads nil nil ("pretty-mode-pkg.el") (21565 25586 237539
-;;;;;;  433000))
-
-;;;***
-
-(provide 'pretty-mode-autoloads)
 ;; Local Variables:
 ;; version-control: never
 ;; no-byte-compile: t
 ;; no-update-autoloads: t
-;; coding: utf-8
 ;; End:
 ;;; pretty-mode-autoloads.el ends here

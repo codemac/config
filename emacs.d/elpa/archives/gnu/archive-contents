@@ -326,7 +326,7 @@
 	    ((:url . "http://elpa.gnu.org/packages/omn-mode.html")
 	     (:keywords))])
  (org .
-      [(20141124)
+      [(20141201)
        nil "Outline-based notes management and organizer" tar nil])
  (osc .
       [(0 1)
@@ -393,6 +393,11 @@
 	   nil "Implementation of Sokoban for Emacs." tar
 	   ((:keywords "games")
 	    (:url . "http://elpa.gnu.org/packages/sokoban.html"))])
+ (svg .
+      [(0 1)
+       nil "svg image creation functions" single
+       ((:url . "http://elpa.gnu.org/packages/svg.html")
+	(:keywords "image"))])
  (svg-clock .
 	    [(0 5)
 	     nil "Analog clock using Scalable Vector Graphics" single
