@@ -15,13 +15,6 @@
 (load-library "smtpmail")
 (load-library "nnmaildir")
 (require 'nnir)
-;(setq gnus-select-method '(nnimap "rtpmvexc1-prd.hq.netapp.com"
-;           (nnimap-address "rtpmvexc1-prd.hq.netapp.com")
-;           (nnimap-server-port 143)
-;		   (nnimap-nov-is-evil t)
-;		   (nnir-search-engine imap)
-;           (nnimap-authinfo-file "~/.imap-authinfo")
-;           ))
 
 ;(setq gnus-select-method '(nnmaildir "maildir"
 ;                                     (directory "~/mail")

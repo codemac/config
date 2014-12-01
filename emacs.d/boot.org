@@ -297,9 +297,18 @@ Really useful for source code copying.. This is from [[http://stackoverflow.com/
 #+end_src
 * Color theme
 Yup, zenburn.
+
+If zenburn isn't available, we should use wombat. So how do we detect
+that?
+
 #+begin_src emacs-lisp
-  (load-theme 'zenburn t)
+  (if (custom-theme-name-valid-p 'zenburn)
+      (load-theme 'zenburn t)
+    (load-theme 'wombat t))
+
 #+end_src
+
+For now we just check that the name is valid.
 * Builtin
 ** Open files with root
 #+begin_src emacs-lisp
@@ -2900,7 +2909,7 @@ Uh oh, here come the big guns.
   ;(defvar gnus-lock-filename)
   ;(setq gnus-lock-filename "~/.machine-lock-gnus-my")
   ;; (put 'gnus 'disabled t)
-  
+
   ;; (defun gf-touch (file)
   ;;   "Touches file"
   ;;   (save-excursion
@@ -2908,12 +2917,19 @@ Uh oh, here come the big guns.
   ;;       (find-file file)
   ;;       (write-file file)
   ;;       (kill-buffer (current-buffer)))))
-  
+
   ;; (defun gnusu (&rest args)
   ;;   (interactive "P")
   ;; ;  (if (file-exists-p gnus-lock-filename)
   ;; ;  (error "Can't start gnus, Lock file exists %S" gnus-lock-filename)
   ;; (call-interactively 'gnus))
+
+  (setq gnus-select-method 
+        '(nnmaildir "igneous" 
+                    (directory "~/mail")
+                    (directory-files nnheader-directory-files-safe)
+                    (get-new-mail nil)))
+
 #+end_src
 ** Command Frequency
 This can be useful to figure out what commands you do and don't use
