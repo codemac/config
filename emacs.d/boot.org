@@ -1,4 +1,4 @@
-#+TITLE: codemac emacs
+#+title: codemac emacs
 
 #+begin_quote 
 Emacs outshines all other editing software in approximately the same
@@ -831,7 +831,7 @@ default to serving =~/public_html=, so I turn that off here.
 #+end_src
 *** Pretty Mode
 #+begin_src emacs-lisp
-  (require 'pretty-mode-autoloads)
+  (autoload 'pretty-mode "pretty-mode" "Get ready for some λ!!" t nil)
 #+end_src
 *** Helm
 Helm is the new Anything. Helm will help steer you in the right
@@ -1594,25 +1594,62 @@ Thank you Britt.
 **** Sending mail
 We're just borrowing the gnus settings here..
 #+begin_src emacs-lisp
-  (setq smtpmail-auth-credentials cm/smtpmail-auth-credentials 
-        smtpmail-smtp-server cm/smtpmail-smtp-server
-        smtpmail-default-smtp-server cm/smtpmail-default-smtp-server
-        smtpmail-starttls-credentials cm/smtpmail-starttls-credentials
-        smtpmail-local-domain cm/smtpmail-local-domain
-        smtpmail-smtp-service cm/smtpmail-smtp-service
-        send-mail-function cm/send-mail-function
-        message-send-mail-function cm/message-send-mail-function)
-  
-  (setq notmuch-fcc-dirs cm/notmuch-fcc-dirs)
+  (setq smtpmail-auth-credentials "~/.authinfo")
+
+  (setq notmuch-fcc-dirs '((".*igneous.*" . "ig/sent")
+                           (".*codemac.net.*" . "cm/INBOX.Sent Items")))
 
 #+end_src
-***** queueing..
+The smtpmail-multi-accounts block has a strict ordering. By using ssl
+I get to avoid most of the complications. It goes, in order:
+
+1. =smtpmail-smtp-user=
+2. =smtpmail-smtp-server=
+3. =stmpmail-smtp-service= (port)
+4. =mail-specify-envelope-from= (not needed, especially if you're
+   using this.
+5. =smtpmail-stream-type= (ssl, starttls, or plain. USE SSL if you
+   want to live)
+6. starttls crap
+7. starttls crap
+8. =smtpmail-local-domain= (hostname to use as where it's sent from. I
+   set this usually to the hostname of the email provider.)
+  
+#+begin_src emacs-lisp
+  (setq smtpmail-multi-accounts '((igneous . ("jeffmickey@igneoussystems.com"
+                                              "smtp.gmail.com"
+                                              465
+                                              nil
+                                              ssl
+                                              nil
+                                              nil
+                                              "igneoussystems.com"))
+                                  (codemac . ("codemac@fastmail.com"
+                                              "mail.messagingengine.com"
+                                              465
+                                              nil
+                                              ssl
+                                              nil
+                                              nil
+                                              "codemac.net"))))
+
+  (setq smtpmail-multi-default-account 'codemac)
+  (setq smtpmail-multi-associations '(("jm@igneous.io\\|jeffmickey@igneoussystems.com" igneous)
+                                      ("j@codemac.net\\|jeff@archlinux.org\\|jm@vt.edu\\|jmickey@vt.edu" codemac)))
+
+  (setq send-mail-function 'smtpmail-multi-send-it)
+  (setq message-send-mail-function 'smtpmail-multi-send-it)
+
+#+end_src
+***** queueing
 #+begin_src emacs-lisp
   (setq smtpmail-queue-mail  nil  ;; start in non-queuing mode
         smtpmail-queue-dir   "~/mail/queue/cur")
 
-  (setq user-mail-address cm/user-mail-address)
-  (setq user-full-name cm/user-full-name)
+  (setq user-full-name "Jeff Mickey")
+  (setq user-mail-address "j@codemac.net")
+
+  (setq message-auto-save-directory "~/mail/cm/INBOX.Drafts/cur")
 #+end_src
 ***** Message view
 #+begin_src emacs-lisp
@@ -1663,11 +1700,12 @@ org-mouse in case I already have a pointing device. I imagine
 =org-mouse= will be more useful when I try and run emacs on a tablet.
 #+begin_src emacs-lisp
   (add-to-list 'auto-mode-alist '("\\.org$" . org-mode))
-  
+
   (require 'org-loaddefs)
   (require 'org)
   (require 'org-protocol)
   (require 'org-mouse)
+  (require 'org-notmuch)
 #+end_src
 **** Org Agenda
 These are some functions stolen from [[http://sachachua.com/][Sacha Chua]] to make some fun
@@ -2107,16 +2145,16 @@ How I deploy my personal website.
 #+begin_src emacs-lisp
   ;; Inline images in HTML instead of producting links to the image
   (setq org-export-html-inline-images t)
-  
+
   ;; Use org.css from the norang website for export document stylesheets
   ;(setq org-export-html-style-extra "<link rel=\"stylesheet\" href=\"http://doc.norang.ca/org.css\" type=\"text/css\" />")
   ;(setq org-export-html-style-include-default nil)
-  
+
   ;; Do not generate internal css formatting for HTML exports
   (setq org-export-htmlize-output-type nil)
   ;; Export with LaTeX fragments
   (setq org-export-with-LaTeX-fragments t)
-  
+
   ;; List of projects
   ;; - codemac.net -- My personal website
   ;; - org-doc -- export all org documents
@@ -2128,12 +2166,13 @@ How I deploy my personal website.
            :base-extension "org"
            :publishing-function org-html-publish-to-html
            :exclude-tags ("noexport" "todo")
-           :html-preamble "<div id=\"header\">&nbsp;</div>"
-           :html-postamble "<div class=\"pagedate\">%a &lt;%e&gt;, %d. %c.</div>"
+           :html-preamble ""
+           :html-postamble ""
            :style nil
            :section-numbers nil
            :style-include-default nil
-           :table-of-contents t)
+           :auto-sitemap t
+           :sitemap-filename "sitemap.html")
           ("codemac-static"
            :base-directory "~/org/_www/codemac.net"
            :publishing-directory "/tmp/codemac.net"
@@ -2167,7 +2206,7 @@ How I deploy my personal website.
            :recursive t
            :author nil)
           ("org-doc" :components ("org-doc-org" "org-doc-static"))))
-  
+
   (defun org-save-then-publish ()
     (interactive)
     (save-buffer)
@@ -2182,84 +2221,84 @@ How I deploy my personal website.
 #+end_src
 **** Link Types
 #+begin_src emacs-lisp
-    ;; org links!
-    (org-add-link-type "man" 'org-man-open)
-    (add-hook 'org-store-link-functions 'org-man-store-link)
-    
-    (defcustom org-man-command 'man
-      "The Emacs command to be used to display a man page."
-      :group 'org-link
-      :type '(choice (const man) (const woman)))
-    
-    (defun org-man-open (path)
-      "Visit the manpage on PATH.
-         PATH should be a topic that can be thrown at the man command."
-      (funcall org-man-command path))
-    
-    (defun org-man-store-link ()
-      "Store a link to a manpage."
-           (when (memq major-mode '(Man-mode woman-mode))
-             ;; This is a man page, we do make this link
-             (let* ((page (org-man-get-page-name))
-                    (link (concat "man:" page))
-                    (description (format "Manpage for %s" page)))
-               (org-store-link-props
-                :type "man"
-                :link link
-                :description description))))
-    
-    (defun org-man-get-page-name ()
-      "Extract the page name from the buffer name."
-      ;; This works for both `Man-mode' and `woman-mode'.
-      (if (string-match " \\(\\S-+\\)\\*" (buffer-name))
-          (match-string 1 (buffer-name))
-        (error "Cannot create link to this man page")))
-    
-    ;; cisco links
-    (defun org-link-type-cisco-open (path)
-      "path is the userid"
-      (shell-command (concat "open \"http://wwwin-tools.cisco.com/dir/details/" path "\"")))
-    
-    (org-add-link-type "cisco" 'org-link-type-cisco-open)
-    
-    (defun org-link-type-websec-open (path)
-      "path is the jira number"
-      (shell-command (concat "open \"https://jira.ironport.com/browse/WEBSEC-" path "\"")))
-    (org-add-link-type "websec" 'org-link-type-websec-open)
-    
-    (defun org-link-type-sas-open (path)
-      "path is the jira number"
-      (shell-command (concat "open \"https://jira.ironport.com/browse/ENGSAS-" path "\"")))
-    (org-add-link-type "engsas" 'org-link-type-sas-open)
-    
-    (defun org-link-type-netapp-open (path)
-      "path is username"
-      (shell-command (concat "open \"http://burtweb-prd.eng.netapp.com/burt/burt-bin/profile?user=" path "\"")))
-    (org-add-link-type "netapp" 'org-link-type-netapp-open)
-    
-    ;; capture for mac os x popup
-    (defun cm-org-capture-other-frame ()
-      "Create a new frame and run org-capture."
-      (interactive)
-      (make-frame '((name . "Org-Capture")
-                    (width . 120)
-                    (height . 20)
-                    (menu-bar-lines . 0)
-                    (tool-bar-lines . 0)
-                    (auto-lower . nil)
-                    (auto-raise . t)))
-      (select-frame-by-name "Org-Capture")
-      (if (condition-case nil
-              (progn (org-capture) t)
-            (error nil))
-          (delete-other-windows)
-        (cm-org-capture-other-frame-cleanup)))
-    
-    (defun cm-org-capture-other-frame-cleanup ()
-      "Close the Org-Capture frame."
-      (if (equal "Org-Capture" (frame-parameter nil 'name))
-          (delete-frame)))
-    (add-hook 'org-capture-after-finalize-hook 'cm-org-capture-other-frame-cleanup)
+  ;; org links!
+  (org-add-link-type "man" 'org-man-open)
+  (add-hook 'org-store-link-functions 'org-man-store-link)
+
+  (defcustom org-man-command 'man
+    "The Emacs command to be used to display a man page."
+    :group 'org-link
+    :type '(choice (const man) (const woman)))
+
+  (defun org-man-open (path)
+    "Visit the manpage on PATH.
+       PATH should be a topic that can be thrown at the man command."
+    (funcall org-man-command path))
+
+  (defun org-man-store-link ()
+    "Store a link to a manpage."
+         (when (memq major-mode '(Man-mode woman-mode))
+           ;; This is a man page, we do make this link
+           (let* ((page (org-man-get-page-name))
+                  (link (concat "man:" page))
+                  (description (format "Manpage for %s" page)))
+             (org-store-link-props
+              :type "man"
+              :link link
+              :description description))))
+
+  (defun org-man-get-page-name ()
+    "Extract the page name from the buffer name."
+    ;; This works for both `Man-mode' and `woman-mode'.
+    (if (string-match " \\(\\S-+\\)\\*" (buffer-name))
+        (match-string 1 (buffer-name))
+      (error "Cannot create link to this man page")))
+
+  ;; cisco links
+  (defun org-link-type-cisco-open (path)
+    "path is the userid"
+    (shell-command (concat "open \"http://wwwin-tools.cisco.com/dir/details/" path "\"")))
+
+  (org-add-link-type "cisco" 'org-link-type-cisco-open)
+
+  (defun org-link-type-websec-open (path)
+    "path is the jira number"
+    (shell-command (concat "open \"https://jira.ironport.com/browse/WEBSEC-" path "\"")))
+  (org-add-link-type "websec" 'org-link-type-websec-open)
+
+  (defun org-link-type-sas-open (path)
+    "path is the jira number"
+    (shell-command (concat "open \"https://jira.ironport.com/browse/ENGSAS-" path "\"")))
+  (org-add-link-type "engsas" 'org-link-type-sas-open)
+
+  (defun org-link-type-netapp-open (path)
+    "path is username"
+    (shell-command (concat "open \"http://burtweb-prd.eng.netapp.com/burt/burt-bin/profile?user=" path "\"")))
+  (org-add-link-type "netapp" 'org-link-type-netapp-open)
+
+  ;; capture for mac os x popup
+  (defun cm-org-capture-other-frame ()
+    "Create a new frame and run org-capture."
+    (interactive)
+    (make-frame '((name . "Org-Capture")
+                  (width . 120)
+                  (height . 20)
+                  (menu-bar-lines . 0)
+                  (tool-bar-lines . 0)
+                  (auto-lower . nil)
+                  (auto-raise . t)))
+    (select-frame-by-name "Org-Capture")
+    (if (condition-case nil
+            (progn (org-capture) t)
+          (error nil))
+        (delete-other-windows)
+      (cm-org-capture-other-frame-cleanup)))
+
+  (defun cm-org-capture-other-frame-cleanup ()
+    "Close the Org-Capture frame."
+    (if (equal "Org-Capture" (frame-parameter nil 'name))
+        (delete-frame)))
+  (add-hook 'org-capture-after-finalize-hook 'cm-org-capture-other-frame-cleanup)
 #+end_src
 **** Org Capture
 #+begin_src emacs-lisp
