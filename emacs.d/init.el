@@ -48,17 +48,21 @@
    (quote
     ("d677ef584c6dfc0697901a44b885cc18e206f05114c8a3b7fde674fce6180879" "3b819bba57a676edf6e4881bd38c777f96d1aa3b3b5bc21d8266fa5b0d0f1ebf" "4e72cb2841e4801ba202a120c1cffdf88f5512536e557d03b3626d890b52f201" "36a309985a0f9ed1a0c3a69625802f87dee940767c9e200b89cdebdb737e5b29" "bf7ed640479049f1d74319ed004a9821072c1d9331bc1147e01d22748c18ebdf" "1e7e097ec8cb1f8c3a912d7e1e0331caeed49fef6cff220be63bd2a6ba4cc365" default)))
  '(fci-rule-color "#383838")
+ '(frame-background-mode (quote dark))
  '(haskell-hoogle-command "hoogle")
  '(indent-tabs-mode nil)
  '(notmuch-hello-sections
    (quote
-    (notmuch-hello-insert-saved-searches notmuch-hello-insert-inbox notmuch-hello-insert-search notmuch-hello-insert-alltags notmuch-hello-insert-recent-searches notmuch-hello-insert-footer)))
+    (notmuch-hello-insert-saved-searches notmuch-hello-insert-search notmuch-hello-insert-inbox notmuch-hello-insert-alltags notmuch-hello-insert-recent-searches notmuch-hello-insert-footer)))
  '(notmuch-saved-searches
    (quote
     ((:name "inbox" :query "tag:inbox")
      (:name "unread" :query "tag:unread")
      (:name "inbox-igneous" :query "tag:igneous AND tag:inbox")
      (:name "inbox-codemac" :query "tag:codemac AND tag:inbox"))))
+ '(org-agenda-files
+   (quote
+    ("/home/codemac/org/gtd.org" "/home/codemac/org/_notes/2012.org" "/home/codemac/org/_notes/2013.org" "/home/codemac/org/_notes/2014.org" "/home/codemac/org/_notes/advanced_early_riser.org" "/home/codemac/org/_notes/class2012pgm.org" "/home/codemac/org/_notes/encryption.org" "/home/codemac/org/_notes/fitness.org" "/home/codemac/org/_notes/gifts.org" "/home/codemac/org/_notes/linux_plumbers2013.org" "/home/codemac/org/_notes/nanowrimo2011.org" "/home/codemac/org/_notes/netlink.org" "/home/codemac/org/_notes/notes.org" "/home/codemac/org/_notes/oppression-of-tech.org" "/home/codemac/org/_notes/recipes.org" "/home/codemac/org/_notes/steal.org" "/home/codemac/org/_notes/ubuntu-bootable.org" "/home/codemac/org/_notes/webmac.org" "/home/codemac/org/_notes/whoami.org" "/home/codemac/org/igneous.org")))
  '(protect-buffer-bury-p nil)
  '(safe-local-variable-values
    (quote
@@ -91,7 +95,7 @@
      (340 . "#94BFF3")
      (360 . "#DC8CC3"))))
  '(vc-annotate-very-old-color "#DC8CC3")
- '(warning-suppress-types (quote ((undo discard-info))))
+ '(warning-suppress-types (quote ((undo discard-info))) t)
  '(yaml-indent-offset 8))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.

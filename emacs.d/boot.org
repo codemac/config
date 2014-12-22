@@ -1655,10 +1655,16 @@ I get to avoid most of the complications. It goes, in order:
 #+begin_src emacs-lisp
   (setq message-citation-line-format "* %f [%Y-%m-%d %H:%M]:")
   (setq message-citation-line-function 'message-insert-formatted-citation-line)
+
   (defun cm/message-mode-hook ()
     (local-set-key (kbd "C-c M-o") 'org-mime-htmlize)
     (orgstruct-mode 1))
   (add-hook 'message-mode-hook 'cm/message-mode-hook)
+
+  (setq notmuch-wash-citation-lines-prefix 100)
+  (setq notmuch-wash-citation-lines-suffix 1)
+
+
 #+end_src
 *** Geiser
 Let's get our scheme on!
@@ -2326,6 +2332,15 @@ How I deploy my personal website.
   
   (setq org-src-fontify-natively nil)
 #+end_src
+**** Appt Reminders
+This creates the appt buffer so we get notifications about
+appointments in the org mode calendar. It's not perfect, but it does
+help with my forgetfulness.
+
+#+begin_src emacs-lisp
+  (appt-activate)
+  (org-agenda-to-appt)
+#+end_src
 *** W3M
 #+begin_src emacs-lisp
   (autoload 'w3m-browse-url "w3m-load" "" t)
@@ -2560,6 +2575,34 @@ you are trying to edit anything.
         '(lambda () 
            (interactive) 
            (jabber-send-presence "xa" "" 10)))))
+
+  ;;;; hipchat support
+  (setq ssl-program-name "gnutls-cli"
+        ssl-program-arguments '("--insecure" "-p" service host)
+        ssl-certificate-verification-policy 1)
+   
+  ;; Connect using jabber.el
+  ;; M-x jabber-connect <RET>
+   
+  ;; Config
+  (setq jabber-account-list '(("75698_604162@chat.hipchat.com")))
+  (defvar hipchat-number "75698")
+  (defvar hipchat-nickname "Jeff Mickey")
+
+  ;; Join a room
+  (defun hipchat-join (room)
+    (interactive "sRoom name: ")
+    (jabber-groupchat-join
+     (jabber-read-account)
+     (concat hipchat-number "_" room "@conf.hipchat.com")
+     hipchat-nickname
+     t))
+
+  ;; Mention nicknames in a way that HipChat clients will pickup
+  (defun hipchat-mention (nickname)
+    (interactive
+     (list (jabber-muc-read-nickname jabber-group "Nickname: ")))
+    (insert (concat "@\"" nickname "\" "))) 
 #+end_src
 *** SLIME
 #+begin_src emacs-lisp
@@ -2941,34 +2984,6 @@ Nice to have going along the top sometimes. Disabled, I never used it.
 ** End diasbled code
 #+begin_src emacs-lisp
   ; this is where the ending mark would be
-#+end_src
-** Gnus
-Uh oh, here come the big guns.
-#+begin_src emacs-lisp
-  ;(defvar gnus-lock-filename)
-  ;(setq gnus-lock-filename "~/.machine-lock-gnus-my")
-  ;; (put 'gnus 'disabled t)
-
-  ;; (defun gf-touch (file)
-  ;;   "Touches file"
-  ;;   (save-excursion
-  ;;     (unless (file-exists-p file)
-  ;;       (find-file file)
-  ;;       (write-file file)
-  ;;       (kill-buffer (current-buffer)))))
-
-  ;; (defun gnusu (&rest args)
-  ;;   (interactive "P")
-  ;; ;  (if (file-exists-p gnus-lock-filename)
-  ;; ;  (error "Can't start gnus, Lock file exists %S" gnus-lock-filename)
-  ;; (call-interactively 'gnus))
-
-  (setq gnus-select-method 
-        '(nnmaildir "igneous" 
-                    (directory "~/mail")
-                    (directory-files nnheader-directory-files-safe)
-                    (get-new-mail nil)))
-
 #+end_src
 ** Command Frequency
 This can be useful to figure out what commands you do and don't use
