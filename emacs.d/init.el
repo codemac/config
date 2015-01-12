@@ -51,6 +51,13 @@
  '(frame-background-mode (quote dark))
  '(haskell-hoogle-command "hoogle")
  '(indent-tabs-mode nil)
+ '(ledger-reports
+   (quote
+    (("equity" "ledger -f journal.ledger equity")
+     ("bal" "ledger -f %(ledger-file) bal")
+     ("reg" "ledger -f %(ledger-file) reg")
+     ("payee" "ledger -f %(ledger-file) reg @%(payee)")
+     ("account" "ledger -f %(ledger-file) reg %(account)"))))
  '(notmuch-hello-sections
    (quote
     (notmuch-hello-insert-saved-searches notmuch-hello-insert-search notmuch-hello-insert-inbox notmuch-hello-insert-alltags notmuch-hello-insert-recent-searches notmuch-hello-insert-footer)))
@@ -63,7 +70,7 @@
  '(org-agenda-files
    (quote
     ("/home/codemac/org/gtd.org" "/home/codemac/org/_notes/2012.org" "/home/codemac/org/_notes/2013.org" "/home/codemac/org/_notes/2014.org" "/home/codemac/org/_notes/advanced_early_riser.org" "/home/codemac/org/_notes/class2012pgm.org" "/home/codemac/org/_notes/encryption.org" "/home/codemac/org/_notes/fitness.org" "/home/codemac/org/_notes/gifts.org" "/home/codemac/org/_notes/linux_plumbers2013.org" "/home/codemac/org/_notes/nanowrimo2011.org" "/home/codemac/org/_notes/netlink.org" "/home/codemac/org/_notes/notes.org" "/home/codemac/org/_notes/oppression-of-tech.org" "/home/codemac/org/_notes/recipes.org" "/home/codemac/org/_notes/steal.org" "/home/codemac/org/_notes/ubuntu-bootable.org" "/home/codemac/org/_notes/webmac.org" "/home/codemac/org/_notes/whoami.org" "/home/codemac/org/igneous.org")))
- '(protect-buffer-bury-p nil)
+ '(protect-buffer-bury-p nil t)
  '(safe-local-variable-values
    (quote
     ((eval cm/projectile-dirlocals-hook

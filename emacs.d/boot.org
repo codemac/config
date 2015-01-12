@@ -564,8 +564,9 @@ I need to tie this into projectile, but for now have a way to create a
                                 (process-id
                                  (get-buffer-process
                                   (current-buffer)))))))
-            (when (file-directory-p directory)
-              (cd directory))))))
+            (if directory
+                (when (file-directory-p directory)
+                  (cd directory)))))))
 
   (define-minor-mode shell-procfs-dirtrack-mode
     "Track shell directory by inspecting procfs."
@@ -844,26 +845,64 @@ Helm is the new Anything. Helm will help steer you in the right
 direction!
 
 #+begin_src emacs-lisp
+  (require 'helm)
   (require 'helm-config)
-  (global-set-key (kbd "C-c h") 'helm-mini)
-  ; bad fuzzy matching, but I can manually replace random parts with ido!
-  (helm-mode 1)
-  ;(add-to-list 'helm-completing-read-handlers-alist '(find-file . ido))
 #+end_src
 
-Add support for mac os x spotlight:
+Configure helm to be used for =M-x=... well let's just use it for
+everything. Helm is GNU for emacs. Helm is borg. We are the helm. You
+will be assimilated.
+
+Mostly lifted from https://tuhdo.github.io/helm-intro.html (note that
+this page is *STUPID* slow in eww)
 #+begin_src emacs-lisp
-  ;; skip locate
-  (delete helm-c-source-locate helm-for-files-preferred-list)
-    
-  (when (eq system-type 'darwin)
-    (add-to-list 'helm-for-files-preferred-list 'helm-c-source-mac-spotlight))
+  (setq helm-split-window-in-side-p t
+        helm-ff-file-name-history-use-recentf t
+        helm-ff-search-library-in-sexp t
+        helm-move-to-line-cycle-in-source t
+        helm-scroll-amount 8
+        helm-ff-file-name-history-use-recentf t
+        helm-man-or-woman-function 'woman)
+
+  (global-set-key (kbd "M-x") 'helm-M-x)
+  (global-set-key (kbd "C-c h") 'helm-command-prefix)
+  (global-unset-key (kbd "C-x c"))
+  (define-key helm-map (kbd "<tab>") 'helm-execute-persistent-action)
+  (define-key helm-map (kbd "C-i") 'helm-execute-persistent-action)
+  (define-key helm-map (kbd "C-z")  'helm-select-action)
+  (global-set-key (kbd "M-y") 'helm-show-kill-ring)
+  (global-set-key (kbd "C-x b") 'helm-mini)
+  (global-set-key (kbd "C-x C-f") 'helm-find-files)
+  (global-set-key (kbd "C-c h o") 'helm-occur)
+  (global-set-key (kbd "C-h SPC") 'helm-all-mark-rings)
+  (global-set-key (kbd "C-c h x") 'helm-register)
+
+  (when (executable-find "curl")
+    (setq helm-google-suggest-use-curl-p t))
+
+  (helm-mode 1)
+
+  (delete helm-source-locate helm-for-files-preferred-list)
 #+end_src
-Fix helm-top to work on mac os x..
+**** Mac os x hacks
 #+begin_src emacs-lisp
   (when (eq system-type 'darwin)
-    (setq helm-c-top-command "COLUMNS=%s top -l 1"))
 #+end_src
+
+Get spotlight into list of the files that helm can inspect.
+#+begin_src emacs-lisp
+    (add-to-list 'helm-for-files-preferred-list 'helm-c-source-mac-spotlight)
+#+end_src
+
+Get top output that doesn't suck
+#+begin_src emacs-lisp
+    (setq helm-c-top-command "COLUMNS=%s top -l 1")
+#+end_src
+end of mac os x hacks
+#+begin_src emacs-lisp
+  )
+#+end_src
+**** Global Tags
 Yay gtags support for helm!
 #+begin_src emacs-lisp
   (require 'helm-gtags)
@@ -1019,20 +1058,6 @@ out semantically.
   ;(add-hook 'gnus-summary-mode-hook 'hl-line-fancy-highlight)
   ;(add-hook 'gnus-group-mode-hook 'hl-line-fancy-highlight)
 #+end_src
-*** Ido
-Everyone should use Ido. (well, maybe helm)
-#+begin_src emacs-lisp
-  (require 'ido)
-  (put 'ido-exit-minibuffer 'disabled nil)
-  ;(ido-mode t)
-#+end_src
-If the exact name isn't found, then flex matching will match against
-anything with the characters in the order you've typed. It matches
-only for strings that have that sequence of characters in order.
-#+begin_src emacs-lisp
-  (setq ido-enable-flex-matching t)
-#+end_src
-
 ** Major Modes
 
 *** Ledger
@@ -1636,8 +1661,13 @@ I get to avoid most of the complications. It goes, in order:
 
   (setq notmuch-wash-citation-lines-prefix 100)
   (setq notmuch-wash-citation-lines-suffix 1)
-
-
+#+end_src
+***** Keybindings
+For some reason the ~=~ sign is used for refresh in notmuch. This is
+horrifying.
+#+begin_src emacs-lisp
+  (eval-after-load 'notmuch
+    '(define-key notmuch-common-keymap "g" 'notmuch-refresh-this-buffer))
 #+end_src
 *** Geiser
 Let's get our scheme on!
@@ -3030,6 +3060,20 @@ This is very useful for when I ride the train.
 ;  (require 'org-mu4e)
 ;  (setq org-mu4e-convert-to-html t)
 #+end_src
+** Ido
+Everyone should use Ido. (well, maybe helm)
+#+begin_src emacs-lisp
+  ;(require 'ido)
+  ;(put 'ido-exit-minibuffer 'disabled nil)
+  ;(ido-mode t)
+#+end_src
+If the exact name isn't found, then flex matching will match against
+anything with the characters in the order you've typed. It matches
+only for strings that have that sequence of characters in order.
+#+begin_src emacs-lisp
+  ;(setq ido-enable-flex-matching t)
+#+end_src
+
 * Custom variables
 #+begin_src emacs-lisp
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; CUSTOM!
