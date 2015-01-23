@@ -1059,7 +1059,7 @@ out semantically.
   ;(add-hook 'gnus-group-mode-hook 'hl-line-fancy-highlight)
 #+end_src
 ** Major Modes
-
+   
 *** Ledger
 #+begin_src emacs-lisp
   (autoload 'ledger-mode "ledger-mode" "ledger-mode autoload" t nil)
@@ -1668,6 +1668,14 @@ horrifying.
 #+begin_src emacs-lisp
   (eval-after-load 'notmuch
     '(define-key notmuch-common-keymap "g" 'notmuch-refresh-this-buffer))
+
+  (global-set-key (kbd "C-c i w") '(lambda ()
+                                     (interactive)
+                                     (notmuch-search "tag:igneous AND tag:inbox" 'notmuch-search-oldest-first)))
+
+  (global-set-key (kbd "C-c i c") '(lambda ()
+                                     (interactive)
+                                     (notmuch-search "tag:codemac AND tag:inbox" 'notmuch-search-oldest-first)))
 #+end_src
 *** Geiser
 Let's get our scheme on!
@@ -1675,16 +1683,6 @@ Let's get our scheme on!
   (require 'geiser)
   ;; racket is great and all, but I need me some ffi, ice-9, and of course, gnu.
   (setq geiser-active-implementations '(guile))
-#+end_src
-*** Identica
-Microblog, baby.
-#+begin_src emacs-lisp
-  (autoload 'identica-mode "identica-mode" "" t)
-  (setq identica-username cm-identica-username
-        identica-password cm-identica-password)
-  
-  (global-set-key "\C-cip" 'identica-update-status-interactive)
-  (global-set-key "\C-cid" 'identica-direct-message-interactive)
 #+end_src
 *** Muse
 Good for person wikis, however I pretty much exclusively use =org-blog=/=org-export= now.
@@ -2675,6 +2673,57 @@ Who needs a command line anyways..
   (setq ispell-list-command "list")
   (setq ispell-extra-args '("--sug-mode=ultra"))
 #+end_src
+*** EMMS - Emacs MultiMedia System
+Now w/mopidy
+#+begin_src emacs-lisp
+  (require 'emms-setup)
+  (emms-all)
+  (emms-default-players)
+#+end_src
+
+#+begin_src emacs-lisp :exports none
+  (require 'emms-setup)
+  (require 'emms-mode-line-icon)
+  (require 'emms-info-libtag)
+  (emms-default-players)
+  (setq emms-info-asynchronosly t)
+  (add-hook 'emms-player-started-hook 'emms-show)
+  (setq emms-show-format "NP: %s")
+  ;(setq emms-player-mpg321-parameters '("-o" "alsa"))
+  (setq emms-source-list '((emms-directory-tree "~/music/")))
+  ;(setq emms-player-mplayer-parameters (list "-slave" "-nortc" "-quiet" "-really-quiet"))
+  ;(emms-player-set emms-player-mplayer 'regex
+  ;                 "\\.ogg\\|\\.mp3\\|\\.wav\\|\\.mpg\\|\\.mpeg\\|\\.wmv\\|\\.wma\\|\\.mov\\|\\.avi\\|\\.divx\\|\\.ogm\\|\\.asf\\|\\.mkv\\|http://\\|mms://\\|\\.rm\\|\\.rmvb\\|\\.mp4\\|\\.flac\\|\\.vob\\|\\.m4a\\|\\.ape\\|\\.mpc")
+  ;
+  ;
+  (setq emms-mode-line-icon-before-format "["
+        emms-mode-line-format " %s]"
+        emms-mode-line-icon-color "lightgrey")
+  ;
+  ;;; Libtag support
+  (add-to-list 'emms-info-functions 'emms-info-libtag)
+  ;
+  ;;;; Stolen and adapted from TWB
+  (defun my-emms-info-track-description (track)
+   "Return a description of the current track."
+   (if (and (emms-track-get track 'info-artist)
+            (emms-track-get track 'info-title))
+       (let ((pmin (emms-track-get track 'info-playing-time-min))
+             (psec (emms-track-get track 'info-playing-time-sec))
+             (ptot (emms-track-get track 'info-playing-time))
+             (art  (emms-track-get track 'info-artist))
+             (tit  (emms-track-get track 'info-title)))
+         (cond ((and pmin psec) (format "%s - %s [%02d:%02d]" art tit pmin psec))
+               (ptot (format  "%s - %s [%02d:%02d]" art tit (/ ptot 60) (% ptot 60)))
+               (t (emms-track-simple-description track))))))
+
+  (setq emms-track-description-function 'my-emms-info-track-description)
+
+  ;;; last.fm
+  ;(setq emms-lastfm-username cm/lastfm-user-name
+  ;      emms-lastfm-password cm/lastfm-user-pass)
+  ;(emms-lastfm-enable)
+#+end_src
 ** Custom
 *** Journal
 Old text file journaling stuff. It really was quite nice, but org mode
@@ -2820,57 +2869,6 @@ A wholly owned subsidiary of Cisco.
   (require 'tup-mode)
 #+end_src
     
-** EMMS - Emacs MultiMedia System
-Now w/mopidy
-#+begin_src emacs-lisp
-  (require 'emms-setup)
-  (emms-all)
-  (emms-default-players)
-#+end_src
-
-#+begin_src emacs-lisp :exports none
-  (require 'emms-setup)
-  (require 'emms-mode-line-icon)
-  (require 'emms-info-libtag)
-  (emms-default-players)
-  (setq emms-info-asynchronosly t)
-  (add-hook 'emms-player-started-hook 'emms-show)
-  (setq emms-show-format "NP: %s")
-  ;(setq emms-player-mpg321-parameters '("-o" "alsa"))
-  (setq emms-source-list '((emms-directory-tree "~/music/")))
-  ;(setq emms-player-mplayer-parameters (list "-slave" "-nortc" "-quiet" "-really-quiet"))
-  ;(emms-player-set emms-player-mplayer 'regex
-  ;                 "\\.ogg\\|\\.mp3\\|\\.wav\\|\\.mpg\\|\\.mpeg\\|\\.wmv\\|\\.wma\\|\\.mov\\|\\.avi\\|\\.divx\\|\\.ogm\\|\\.asf\\|\\.mkv\\|http://\\|mms://\\|\\.rm\\|\\.rmvb\\|\\.mp4\\|\\.flac\\|\\.vob\\|\\.m4a\\|\\.ape\\|\\.mpc")
-  ;
-  ;
-  (setq emms-mode-line-icon-before-format "["
-        emms-mode-line-format " %s]"
-        emms-mode-line-icon-color "lightgrey")
-  ;
-  ;;; Libtag support
-  (add-to-list 'emms-info-functions 'emms-info-libtag)
-  ;
-  ;;;; Stolen and adapted from TWB
-  (defun my-emms-info-track-description (track)
-   "Return a description of the current track."
-   (if (and (emms-track-get track 'info-artist)
-            (emms-track-get track 'info-title))
-       (let ((pmin (emms-track-get track 'info-playing-time-min))
-             (psec (emms-track-get track 'info-playing-time-sec))
-             (ptot (emms-track-get track 'info-playing-time))
-             (art  (emms-track-get track 'info-artist))
-             (tit  (emms-track-get track 'info-title)))
-         (cond ((and pmin psec) (format "%s - %s [%02d:%02d]" art tit pmin psec))
-               (ptot (format  "%s - %s [%02d:%02d]" art tit (/ ptot 60) (% ptot 60)))
-               (t (emms-track-simple-description track))))))
-
-  (setq emms-track-description-function 'my-emms-info-track-description)
-
-  ;;; last.fm
-  ;(setq emms-lastfm-username cm/lastfm-user-name
-  ;      emms-lastfm-password cm/lastfm-user-pass)
-  ;(emms-lastfm-enable)
-#+end_src
 * Directory Specific Code
 ** Directory classes
 #+begin_src emacs-lisp
@@ -3074,6 +3072,16 @@ only for strings that have that sequence of characters in order.
   ;(setq ido-enable-flex-matching t)
 #+end_src
 
+** Identica
+Microblog, baby.
+#+begin_src emacs-lisp
+  ;(autoload 'identica-mode "identica-mode" "" t)
+  ;(setq identica-username cm-identica-username
+  ;      identica-password cm-identica-password)
+  ;
+  ;(global-set-key "\C-cip" 'identica-update-status-interactive)
+  ;(global-set-key "\C-cid" 'identica-direct-message-interactive)
+#+end_src
 * Custom variables
 #+begin_src emacs-lisp
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; CUSTOM!
