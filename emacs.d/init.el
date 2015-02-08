@@ -11,12 +11,14 @@
 ;; Use package management!
 (require 'package)
 
-(setq package-archives
-      (append '(("org"       . "http://orgmode.org/elpa/")
-                ("melpa"     . "http://melpa.milkbox.net/packages/")
-                ("marmalade" . "http://marmalade-repo.org/packages/"))
-              package-archives))
-
+;; why the fuck aren't these https!
+(setq package-archives 
+      '(("org"          . "http://orgmode.org/elpa/")
+        ("melpa"        . "http://melpa.org/packages/")
+        ("melpa-stable" . "http://stable.melpa.org/packages/")
+        ("marmalade"    . "http://marmalade-repo.org/packages/")
+        ("gnu"          . "http://elpa.gnu.org/packages/")))
+      
 (package-initialize)
 
 ; load up the main file
