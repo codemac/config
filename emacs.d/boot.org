@@ -820,11 +820,32 @@ what all these features really mean.
 
   (defun cm/projectile-dirlocals-hook (dir)
     (cond ((equal dir 'mesa)
-           (setq process-environment
-                  (append '("GOPATH=/home/codemac/work/mesa/go"
-                            "GOBIN=/home/codemac/work/mesa/bin/linux_amd64"
-                            "IGROOT=/tmp/igroot")
-                          process-environment)))))
+           (progn
+             (make-local-variable 'process-environment)
+             (setq process-environment
+                   (append '("GOPATH=/home/codemac/work/mesa/go"
+                             "GOROOT=/usr/lib/go"
+                             "GOBIN=/home/codemac/work/mesa/bin/linux_amd64"
+                             "IGROOT=/tmp/igroot")
+                           process-environment))))
+          ((equal dir 'codego)
+           (progn
+             (make-local-variable 'process-environment)
+             (setq process-environment
+                   (append '("GOPATH=/home/codemac/code/go"
+                             "GOROOT=/usr/lib/go"
+                             "GOBIN=/home/codemac/bin")
+                           process-environment))))
+          ((equal dir 'igservices)
+           (progn
+             (make-local-variable 'process-environment)
+             (setq process-environment
+                   (append '("GOPATH=/home/codemac/work/services/external"
+                             "GOROOT=/usr/lib/go"
+                             "GOBIN=/home/codemac/bin")
+                           process-environment))))))
+
+
 #+end_src
 ** Emacs Features
 *** simple httpd

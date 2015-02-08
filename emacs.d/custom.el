@@ -19,7 +19,6 @@
    (quote
     ("d677ef584c6dfc0697901a44b885cc18e206f05114c8a3b7fde674fce6180879" "3b819bba57a676edf6e4881bd38c777f96d1aa3b3b5bc21d8266fa5b0d0f1ebf" "4e72cb2841e4801ba202a120c1cffdf88f5512536e557d03b3626d890b52f201" "36a309985a0f9ed1a0c3a69625802f87dee940767c9e200b89cdebdb737e5b29" "bf7ed640479049f1d74319ed004a9821072c1d9331bc1147e01d22748c18ebdf" "1e7e097ec8cb1f8c3a912d7e1e0331caeed49fef6cff220be63bd2a6ba4cc365" default)))
  '(epg-debug t)
- '(epg-debug-buffer "*epg-debug*" t)
  '(fci-rule-color "#383838")
  '(frame-background-mode (quote dark))
  '(haskell-hoogle-command "hoogle")
@@ -44,7 +43,9 @@
  '(protect-buffer-bury-p nil t)
  '(safe-local-variable-values
    (quote
-    ((eval modify-syntax-entry 43 "'")
+    ((eval cm/projectile-dirlocals-hook
+           (quote codego))
+     (eval modify-syntax-entry 43 "'")
      (eval modify-syntax-entry 36 "'")
      (eval modify-syntax-entry 126 "'")
      (bug-reference-bug-regexp . "<https?://\\(debbugs\\|bugs\\)\\.gnu\\.org/\\([0-9]+\\)>")
@@ -54,7 +55,7 @@
      (eval cm/igneous-product-config)
      (yaml-indent-offset . 8)
      (after-save-hook archive-done-tasks))))
- '(warning-suppress-types (quote ((undo discard-info))) t)
+ '(warning-suppress-types (quote ((undo discard-info))))
  '(yaml-indent-offset 8))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
