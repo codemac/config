@@ -4,8 +4,6 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(auto-image-file-mode t)
- '(browse-url-firefox-new-window-is-tab t)
- '(browse-url-firefox-program "firefox")
  '(comint-buffer-maximum-size 20000)
  '(comint-completion-addsuffix t)
  '(comint-get-old-input (lambda nil "") t)
@@ -17,12 +15,8 @@
  '(comint-scroll-to-bottom-on-input t)
  '(custom-safe-themes
    (quote
-    ("d677ef584c6dfc0697901a44b885cc18e206f05114c8a3b7fde674fce6180879" "3b819bba57a676edf6e4881bd38c777f96d1aa3b3b5bc21d8266fa5b0d0f1ebf" "4e72cb2841e4801ba202a120c1cffdf88f5512536e557d03b3626d890b52f201" "36a309985a0f9ed1a0c3a69625802f87dee940767c9e200b89cdebdb737e5b29" "bf7ed640479049f1d74319ed004a9821072c1d9331bc1147e01d22748c18ebdf" "1e7e097ec8cb1f8c3a912d7e1e0331caeed49fef6cff220be63bd2a6ba4cc365" default)))
- '(epg-debug t)
- '(fci-rule-color "#383838")
- '(frame-background-mode (quote dark))
+    ("8aebf25556399b58091e533e455dd50a6a9cba958cc4ebb0aab175863c25b9a4" "9dae95cdbed1505d45322ef8b5aa90ccb6cb59e0ff26fef0b8f411dfc416c552" "d677ef584c6dfc0697901a44b885cc18e206f05114c8a3b7fde674fce6180879" "3b819bba57a676edf6e4881bd38c777f96d1aa3b3b5bc21d8266fa5b0d0f1ebf" "4e72cb2841e4801ba202a120c1cffdf88f5512536e557d03b3626d890b52f201" "36a309985a0f9ed1a0c3a69625802f87dee940767c9e200b89cdebdb737e5b29" "bf7ed640479049f1d74319ed004a9821072c1d9331bc1147e01d22748c18ebdf" "1e7e097ec8cb1f8c3a912d7e1e0331caeed49fef6cff220be63bd2a6ba4cc365" default)))
  '(haskell-hoogle-command "hoogle")
- '(indent-tabs-mode nil)
  '(ledger-reports
    (quote
     (("equity" "ledger -f journal.ledger equity")
@@ -44,6 +38,8 @@
  '(safe-local-variable-values
    (quote
     ((eval cm/projectile-dirlocals-hook
+           (quote igservices))
+     (eval cm/projectile-dirlocals-hook
            (quote codego))
      (eval modify-syntax-entry 43 "'")
      (eval modify-syntax-entry 36 "'")
@@ -55,7 +51,8 @@
      (eval cm/igneous-product-config)
      (yaml-indent-offset . 8)
      (after-save-hook archive-done-tasks))))
- '(warning-suppress-types (quote ((undo discard-info))))
+ '(smtpmail-queue-mail nil)
+ '(warning-suppress-types (quote ((undo discard-info))) t)
  '(yaml-indent-offset 8))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.

@@ -935,4 +935,5 @@ set $SHOW_CONTEXT = 1
 set $SHOW_NEST_INSN=0
 set history save on
 set history filename ~/.gdb_history
+set disassembly-flavor intel
 #EOF

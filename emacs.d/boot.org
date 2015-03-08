@@ -163,7 +163,6 @@ Mac. Mostly these days, I'm on a Mac :/
 Get my site-lisp set up. Got rid of ye old pkg-init!
 #+begin_src emacs-lisp
   (add-to-list 'load-path "~/.emacs.d/site-lisp")
-  ;(add-to-list 'load-path "~/.emacs.d/pkg-init")
 #+end_src
 Also, load sub directories underneath site-lisp. This lets me copy
 random tar balls of elisp without having to worry how it's all
@@ -305,7 +304,7 @@ that?
   (if (custom-theme-name-valid-p 'zenburn)
       (load-theme 'zenburn t)
     (load-theme 'wombat t))
-
+;(load-theme 'wombat t)
 #+end_src
 
 For now we just check that the name is valid.
@@ -353,9 +352,6 @@ This was mostly taken from [[http://www.emacswiki.org/emacs/OccurFromIsearch][th
       (occur (if isearch-regexp isearch-string (regexp-quote isearch-string)))))
   
   (define-key isearch-mode-map (kbd "C-o") 'isearch-occur)
-  
-  
-
 #+end_src
 ** Ediff
 Split the Ediff window depending on the orientation/size of the emacs
@@ -400,21 +396,21 @@ this emacs config! Ideally I'll document all variables missing, this
 may or may not be always true though.
 #+begin_src emacs-lisp
   ;; irc
-  (defvar cm-freenode-password "nope" "The nickserv password for freenode.")
-  (defvar cm-oftc-password "nope" "The nickserv password for oftc.")
-  (defvar cm-what-password "nope" "The nickserv password for what.")
-  (defvar cm-rizon-password "nope" "The nickserv password for rizon.")
-  (defvar cm-bitlbee-password "nope" "The password for bitlbee!")
-  (defvar cm-irc-channel-alist '(("freenode" "#archlinux" "#emacs")
+  (defvar cm/freenode-password "nope" "The nickserv password for freenode.")
+  (defvar cm/oftc-password "nope" "The nickserv password for oftc.")
+  (defvar cm/what-password "nope" "The nickserv password for what.")
+  (defvar cm/rizon-password "nope" "The nickserv password for rizon.")
+  (defvar cm/bitlbee-password "nope" "The password for bitlbee!")
+  (defvar cm/irc-channel-alist '(("freenode" "#archlinux" "#emacs")
                                  ("oftc" "#ikiwiki"))
     "The channel list..")
-  (defvar cm-identica-username "nope" "The password for bitlbee!")
-  (defvar cm-identica-password "nope" "The password for bitlbee!")
-  (defvar cm-erc-keywords "nope" "The password for bitlbee!")
-  (defvar cm-rcirc-server-alist '() "The password for bitlbee!")
-  (defvar cm-ironport-p4port "" "p4port")
-  (defvar cm-mu4e-refile-folder (lambda (x) '()) "refile!")
-  (defvar cm-erc-track-exclude "" "track exclude")
+  (defvar cm/identica-username "nope" "The password for bitlbee!")
+  (defvar cm/identica-password "nope" "The password for bitlbee!")
+  (defvar cm/erc-keywords "nope" "The password for bitlbee!")
+  (defvar cm/rcirc-server-alist '() "The password for bitlbee!")
+  (defvar cm/ironport-p4port "" "p4port")
+  (defvar cm/mu4e-refile-folder (lambda (x) '()) "refile!")
+  (defvar cm/erc-track-exclude "" "track exclude")
 
   
   (let ((private-file "~/.emacs-priv.el"))
@@ -466,14 +462,14 @@ use. I haven't decided what the key binding should really be yet..
 ** Revert
 To revert a buffer easily, put the char back where I had it.
 #+begin_src emacs-lisp
-  (defun cm-revert-buffer ()
+  (defun cm/revert-buffer ()
     "save the current position to tmp, revert buffer, go back to tmp"
     (interactive)
     (let ((tmp (point)))
       (revert-buffer t)
       (goto-char tmp)))
   
-  (global-set-key [f8] 'cm-revert-buffer)
+  (global-set-key [f8] 'cm/revert-buffer)
 #+end_src
 ** Windmove
 Easy navigation around lots of splits. C-x o isn't that geographical.
@@ -533,7 +529,7 @@ Mac fix for info installation location!
 I need to tie this into projectile, but for now have a way to create a
 "main" buffer and then name other ones with =shell-new=.
 #+begin_src emacs-lisp
-  (defun shell-new (name)
+  (defun cm/shell-new (name)
     "Create a shell buffer named NAME."
     (interactive "sShell Name: ")
     (let* ((bn (concat "*shell:" name "*"))
@@ -542,12 +538,44 @@ I need to tie this into projectile, but for now have a way to create a
           (switch-to-buffer eb)
         (shell bn))))
 
-  (defun shell-main ()
-    (interactive)
-    (shell-new "main"))
+  (defun cm/current-shells ()
+    (require 'subr-x)
+    (delq nil
+          (mapcar
+           (lambda (x)
+             (if (string-prefix-p "*shell:" (buffer-name x))
+                 `(,(string-remove-prefix "*shell:" (string-remove-suffix "*" (buffer-name x))) ,x)))
+           (buffer-list))))
 
-  (global-set-key (kbd "<f7>") 'shell-main)
+  (defun cm/shell-find-or-new ()
+    "Find or create a shell with the given name"
+    (interactive)
+    (if (fboundp 'helm)
+        (let ((selected-shell (helm :prompt "Shell Name: "
+                                    :sources (cm/current-shells))))
+          (if (listp selected-shell)
+              (switch-to-buffer (car selected-shell))
+            (cm/shell-new selected-shell)))
+      
+      (let ((selected-shell (completing-read
+                             "Shell Name: "
+                             (current-shells))))
+        (cm/shell-new selected-shell))))
+
+  (defun cm/shell-main ()
+    (interactive)
+    (cm/shell-new "main"))
+
+  (defun cm/shell-projectile ()
+    (interactive)
+    (projectile-with-default-dir (projectile-project-root)
+      (cm/shell-new (projectile-project-name))))
+
+  (global-set-key (kbd "<f2>") 'cm/shell-find-or-new)
+  (global-set-key (kbd "<f7>") 'cm/shell-main)
+  (global-set-key (kbd "C-c p $") 'cm/shell-projectile)
 #+end_src
+
 *** Use a login shell 
 #+begin_src emacs-lisp
 
@@ -618,7 +646,7 @@ I need to tie this into projectile, but for now have a way to create a
 #+begin_src emacs-lisp
   (autoload 'eshell "eshell" "")
 
-  (defun cm-eshell-prompt ()
+  (defun cm/eshell-prompt ()
     (concat user-login-name "@" system-name ":"
             ((lambda (p-lst)
                (if (> (length p-lst) 4)
@@ -659,16 +687,16 @@ I need to tie this into projectile, but for now have a way to create a
   (put 'eshell 'disabled "Use eshell-new instead!\n")
   (autoload 'ansi-color "ansi-color" t nil)
 
-  ;(defun cm-eshell-handle-ansi-color ()
+  ;(defun cm/eshell-handle-ansi-color ()
   ;  (ansi-color-apply-on-region eshell-last-output-start
   ;                              eshell-last-output-end))
 
   (setq eshell-directory-name "~/.emacs.d/eshell")
-  (setq eshell-prompt-function 'cm-eshell-prompt)
+  (setq eshell-prompt-function 'cm/eshell-prompt)
   (setq eshell-prompt-regexp "^[^%#$\n]+ [%#$] ")
   (setenv "EDITOR" "emacsclient")
   (setenv "P4USER" "jmickey")
-  (setenv "P4PORT" cm-ironport-p4port)
+  (setenv "P4PORT" cm/ironport-p4port)
   (setenv "P4CONFIG" "P4ENV")
 
   ;(defun eshell/mm (&rest args)
@@ -808,6 +836,18 @@ what all these features really mean.
               (local-set-key "\C-c\M-o" 'org-mime-org-buffer-htmlize)))
 #+end_src
 ** Gnus
+** xdg-open!
+#+begin_src emacs-lisp
+  (defun cm/advise-browse-url-can-use-xdg-open (fun &rest args)
+    (let ((res (apply fun args)))
+      (if (not res)
+          (and (getenv "DISPLAY")
+               (executable-find "xdg-open")
+               (executable-find "nohup"))
+        res)))
+
+  (advice-add #'browse-url-can-use-xdg-open :around #'cm/advise-browse-url-can-use-xdg-open)
+#+end_src
 * External
 ** Projectile
 #+begin_src emacs-lisp
@@ -817,6 +857,10 @@ what all these features really mean.
   ;(set projectile-indexing-method 'alien)
 
   (projectile-global-mode)
+
+  ;; use helm-projectile
+  (setq projectile-completion-system 'helm)
+  (helm-projectile-on)
 
   (defun cm/projectile-dirlocals-hook (dir)
     (cond ((equal dir 'mesa)
@@ -1018,12 +1062,12 @@ Saves everything! Very useful for the epic emacs restarters (me)
   (desktop-save-mode 1)
   
   ;; auto-save emacs instance
-  (defun cm-desktop-save ()
+  (defun cm/desktop-save ()
     (interactive)
     (if (eq (desktop-owner) (emacs-pid))
         (desktop-save desktop-dirname)))
   
-  (add-hook 'auto-save-hook 'cm-desktop-save)
+  (add-hook 'auto-save-hook 'cm/desktop-save)
 #+end_src
 *** Browse Kill Ring
 Navigate visually through the entire kill ring.
@@ -1662,8 +1706,8 @@ I get to avoid most of the complications. It goes, in order:
 #+end_src
 ***** queueing
 #+begin_src emacs-lisp
-  (setq smtpmail-queue-mail  nil  ;; start in non-queuing mode
-        smtpmail-queue-dir   "~/mail/queue/cur")
+  (setq smtpmail-queue-mail  t  ;; start in non-queuing mode
+        smtpmail-queue-dir   "~/mail/queue")
 
   (setq user-full-name "Jeff Mickey")
   (setq user-mail-address "j@codemac.net")
@@ -1966,7 +2010,7 @@ Functions borrowed from Sacha Chua.
             ((time-less-p tb ta)
              +1)
             (t nil))))
-  
+
   (setq org-agenda-custom-commands
         '(("d" "Full Day Agenda"
            ((agenda)
@@ -1995,8 +2039,7 @@ Functions borrowed from Sacha Chua.
            ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
             (org-agenda-sorting-strategy '(user-defined-up))))
           ("w" "Work Agenda"
-           ((agenda)
-            (tags-todo "WORK-BLOCKED=\"t\"/!-WAITING")
+           ((tags-todo "WORK-BLOCKED=\"t\"/!-WAITING")
             (tags-todo "WORK-BLOCKED=\"t\"/!+WAITING")
             (tags "WORK+PROJECT")
             (tags "WORK"))
@@ -2305,7 +2348,7 @@ How I deploy my personal website.
   (org-add-link-type "netapp" 'org-link-type-netapp-open)
 
   ;; capture for mac os x popup
-  (defun cm-org-capture-other-frame ()
+  (defun cm/org-capture-other-frame ()
     "Create a new frame and run org-capture."
     (interactive)
     (make-frame '((name . "Org-Capture")
@@ -2320,13 +2363,13 @@ How I deploy my personal website.
             (progn (org-capture) t)
           (error nil))
         (delete-other-windows)
-      (cm-org-capture-other-frame-cleanup)))
+      (cm/org-capture-other-frame-cleanup)))
 
-  (defun cm-org-capture-other-frame-cleanup ()
+  (defun cm/org-capture-other-frame-cleanup ()
     "Close the Org-Capture frame."
     (if (equal "Org-Capture" (frame-parameter nil 'name))
         (delete-frame)))
-  (add-hook 'org-capture-after-finalize-hook 'cm-org-capture-other-frame-cleanup)
+  (add-hook 'org-capture-after-finalize-hook 'cm/org-capture-other-frame-cleanup)
 #+end_src
 **** Org Capture
 #+begin_src emacs-lisp
@@ -2369,9 +2412,10 @@ help with my forgetfulness.
 #+end_src
 *** RCIRC
 #+begin_src emacs-lisp
-  (autoload 'irc "rcirc" "" t)
-  ;; colors!
   (eval-after-load 'rcirc '(require 'rcirc-color))
+  (require 'rcirc)
+  ;; colors!
+
   
   (add-hook 'rcirc-markup-colors 'rcirc-markup-text-functions)
   
@@ -2427,9 +2471,88 @@ help with my forgetfulness.
   (setq rcirc-default-user-name "codemac")
   (setq rcirc-default-user-full-name "codemac")
   
-  (setq rcirc-server-alist cm-rcirc-server-alist)
-  
+  (setq rcirc-server-alist cm/rcirc-server-alist)
+  (setq rcirc-authinfo cm/rcirc-authinfo)
   (setq rcirc-startup-channels-alist '(("\\.freenode\\.net$" "#emacs")))
+  (setq rcirc-time-format "%Y-%m-%d %H:%M ")
+#+end_src
+**** Reconnect
+#+begin_src emacs-lisp
+  (defun-rcirc-command reconnect (arg)
+    "Reconnect the server process."
+    (interactive "i")
+    (if (buffer-live-p rcirc-server-buffer)
+        (with-current-buffer rcirc-server-buffer
+          (let ((reconnect-buffer (current-buffer))
+                (server (or rcirc-server rcirc-default-server))
+                (port (if (boundp 'rcirc-port) rcirc-port rcirc-default-port))
+                (nick (or rcirc-nick rcirc-default-nick))
+                channels)
+            (dolist (buf (buffer-list))
+              (with-current-buffer buf
+                (when (equal reconnect-buffer rcirc-server-buffer)
+                  (remove-hook 'change-major-mode-hook
+                               'rcirc-change-major-mode-hook)
+                  (let ((server-plist (cdr (assoc-string server rcirc-server-alist)))) 
+                    (when server-plist 
+                      (setq channels (plist-get server-plist :channels)))))))
+            (if process (delete-process process))
+            (rcirc-connect server port nick nil nil channels)))))
+
+  ;;; Attempt reconnection at increasing intervals when a connection is
+  ;;; lost.
+
+  (defvar rcirc-reconnect-attempts 0)
+
+  ;;;###autoload
+  (define-minor-mode rcirc-reconnect-mode
+    nil nil " Reconnect" nil
+    (if rcirc-reconnect-mode
+        (progn
+          (make-local-variable 'rcirc-reconnect-attempts)
+          (add-hook 'rcirc-sentinel-hooks
+                    'rcirc-reconnect-schedule nil t))
+      (remove-hook 'rcirc-sentinel-hooks
+                   'rcirc-reconnect-schedule t)))
+
+  (defun rcirc-reconnect-schedule (process &optional sentinel seconds)
+    (condition-case err
+        (when (and (eq 'closed (process-status process))
+                   (buffer-live-p (process-buffer process)))
+          (with-rcirc-process-buffer process
+            (unless seconds
+              (setq seconds (exp (1+ rcirc-reconnect-attempts))))
+            (rcirc-print
+             process "my-rcirc.el" "ERROR" rcirc-target
+             (format "scheduling reconnection attempt in %s second(s)." seconds) t)
+            (run-with-timer seconds nil 'rcirc-reconnect-perform-reconnect process)))
+      (error (rcirc-print process "RCIRC" "ERROR" nil
+                          (format "%S" err) t))))
+
+  (defun rcirc-reconnect-perform-reconnect (process)
+    (when (and (eq 'closed (process-status process))
+               (buffer-live-p (process-buffer process)))
+      (with-rcirc-process-buffer process
+        (when rcirc-reconnect-mode
+          (if (get-buffer-process (process-buffer process))
+              ;; user reconnected manually
+              (setq rcirc-reconnect-attempts 0)
+            (let ((msg (format "attempting reconnect to %s..."
+                               (process-name process))))
+              (rcirc-print process "my-rcirc.el" "ERROR" rcirc-target
+                           msg t))
+            ;; remove the prompt from buffers
+            (condition-case err
+                (progn
+                  (save-window-excursion
+                    (save-excursion
+                      (rcirc-cmd-reconnect nil)))
+                  (setq rcirc-reconnect-attempts 0))
+              ((quit error)
+               (incf rcirc-reconnect-attempts)
+               (rcirc-print process "my-rcirc.el" "ERROR" rcirc-target
+                            (format "reconnection attempt failed: %s" err)  t)
+               (rcirc-reconnect-schedule process))))))))
 #+end_src
 *** ERC
 What I generally end up using for irc, but weechat always tends to win
@@ -2456,13 +2579,13 @@ me over.
   ;; Ignore messages from the server that are not channel activity
   (setq erc-track-exclude-types '("JOIN" "NICK" "PART" "QUIT" "MODE"
                                   "324" "329" "332" "333" "353" "477"))
-  (setq erc-track-exclude cm-erc-track-exclude)
+  (setq erc-track-exclude cm/erc-track-exclude)
   
   (setq erc-header-line-format "%n on %t (%m,%l)")
   
   ;; Auto join the given channels
   (erc-autojoin-mode t)
-  (setq erc-autojoin-channels-alist cm-irc-channel-alist)
+  (setq erc-autojoin-channels-alist cm/irc-channel-alist)
   
   ;; Some other settings
   (setq erc-prompt 'my-erc-prompt)
@@ -2470,7 +2593,7 @@ me over.
   (setq erc-track-showcount t)
   (setq erc-auto-query 'bury)             ; Private messages go to a hidden buffer
   (setq erc-query-display 'buffer)        ; Reuse current buffer when sending private messages
-  (setq erc-keywords cm-erc-keywords)
+  (setq erc-keywords cm/erc-keywords)
   
   ;; Setup ERC buffers
   (defun my-erc-hook ()
@@ -2487,10 +2610,10 @@ me over.
   
   (defun my-erc-after-connect (server nick)
     (cond
-     ((string-match "localhost" server) (erc-message "PRIVMSG" (concat "&bitlbee identify " cm-bitlbee-password)))
-     ((string-match "freenode"  server) (erc-message "PRIVMSG" (concat "NickServ identify " cm-freenode-password)))
-     ((string-match "oftc"      server) (erc-message "PRIVMSG" (concat "nickserv identify " cm-oftc-password)))
-     ((string-match "what"      server) (erc-message "PRIVMSG" (concat "Drone enter #what.cd codemac " cm-what-password)))
+     ((string-match "localhost" server) (erc-message "PRIVMSG" (concat "&bitlbee identify " cm/bitlbee-password)))
+     ((string-match "freenode"  server) (erc-message "PRIVMSG" (concat "NickServ identify " cm/freenode-password)))
+     ((string-match "oftc"      server) (erc-message "PRIVMSG" (concat "nickserv identify " cm/oftc-password)))
+     ((string-match "what"      server) (erc-message "PRIVMSG" (concat "Drone enter #what.cd codemac " cm/what-password)))
   ))
   
   
@@ -2660,7 +2783,7 @@ Who needs a command line anyways..
   ;; stolen from http://www.reddit.com/r/emacs/comments/i05v3/emacs_and_pylint/c1ztm6x (user kanak on /r/emacs)
   (require 'flymake)
   
-  (setq *cm-flychecker-directory* "~/.emacs.d/flycheck")
+  (setq *cm/flychecker-directory* "~/.emacs.d/flycheck")
   
   (defmacro def-flymake-init (mode checker-file)
     "Writes a function called flymake-MODE-init which contains the usual boilerplate for a default flymake initialization."
@@ -2670,7 +2793,7 @@ Who needs a command line anyways..
          (local-file (file-relative-name 
                       temp-file 
                       (file-name-directory buffer-file-name)))) 
-    (list (expand-file-name ,checker-file *cm-flychecker-directory*) (list local-file)))))
+    (list (expand-file-name ,checker-file *cm/flychecker-directory*) (list local-file)))))
   
   (defmacro def-flymake-cleanup (mode extlist)
     "Writes a function called flymake-MODE-cleanup which removes files with specified extensions in current directory."
@@ -2702,7 +2825,7 @@ Now w/mopidy
   (emms-default-players)
 #+end_src
 
-#+begin_src emacs-lisp :exports none
+#+begin_src emacs-lisp
   (require 'emms-setup)
   (require 'emms-mode-line-icon)
   (require 'emms-info-libtag)
@@ -2710,40 +2833,40 @@ Now w/mopidy
   (setq emms-info-asynchronosly t)
   (add-hook 'emms-player-started-hook 'emms-show)
   (setq emms-show-format "NP: %s")
-  ;(setq emms-player-mpg321-parameters '("-o" "alsa"))
   (setq emms-source-list '((emms-directory-tree "~/music/")))
-  ;(setq emms-player-mplayer-parameters (list "-slave" "-nortc" "-quiet" "-really-quiet"))
-  ;(emms-player-set emms-player-mplayer 'regex
-  ;                 "\\.ogg\\|\\.mp3\\|\\.wav\\|\\.mpg\\|\\.mpeg\\|\\.wmv\\|\\.wma\\|\\.mov\\|\\.avi\\|\\.divx\\|\\.ogm\\|\\.asf\\|\\.mkv\\|http://\\|mms://\\|\\.rm\\|\\.rmvb\\|\\.mp4\\|\\.flac\\|\\.vob\\|\\.m4a\\|\\.ape\\|\\.mpc")
-  ;
-  ;
-  (setq emms-mode-line-icon-before-format "["
-        emms-mode-line-format " %s]"
-        emms-mode-line-icon-color "lightgrey")
-  ;
+  (setq emms-mode-line-icon-before-format ""
+        emms-mode-line-format " %s"
+        emms-mode-line-icon-color "blue")
+
+  (if (executable-find "find")
+      (setq emms-source-file-directory-tree-function 'emms-source-file-directory-tree-find))
+
   ;;; Libtag support
   (add-to-list 'emms-info-functions 'emms-info-libtag)
-  ;
-  ;;;; Stolen and adapted from TWB
-  (defun my-emms-info-track-description (track)
-   "Return a description of the current track."
-   (if (and (emms-track-get track 'info-artist)
-            (emms-track-get track 'info-title))
-       (let ((pmin (emms-track-get track 'info-playing-time-min))
-             (psec (emms-track-get track 'info-playing-time-sec))
-             (ptot (emms-track-get track 'info-playing-time))
-             (art  (emms-track-get track 'info-artist))
-             (tit  (emms-track-get track 'info-title)))
-         (cond ((and pmin psec) (format "%s - %s [%02d:%02d]" art tit pmin psec))
-               (ptot (format  "%s - %s [%02d:%02d]" art tit (/ ptot 60) (% ptot 60)))
-               (t (emms-track-simple-description track))))))
 
-  (setq emms-track-description-function 'my-emms-info-track-description)
+  ;;;; Stolen and adapted from TWB
+  (defun cm/emms-info-track-description (track)
+    "Return a description of the current track."
+    (let ((pmin (emms-track-get track 'info-playing-time-min))
+          (psec (emms-track-get track 'info-playing-time-sec))
+          (ptot (emms-track-get track 'info-playing-time))
+          (art  (emms-track-get track 'info-artist))
+          (tit  (emms-track-get track 'info-title)))
+      (cond ((and pmin psec) (format "%s - %s [%02d:%02d]" art tit pmin psec))
+            (ptot (format  "%s - %s [%02d:%02d]" art tit (/ ptot 60) (% ptot 60)))
+            ((or art tit) (if art (format "%s - %s" art tit) tit))
+            (t (emms-track-simple-description track)))))
+
+  (setq emms-track-description-function 'cm/emms-info-track-description)
 
   ;;; last.fm
   ;(setq emms-lastfm-username cm/lastfm-user-name
   ;      emms-lastfm-password cm/lastfm-user-pass)
   ;(emms-lastfm-enable)
+
+  ;; reserve a key namespace for emms
+  (global-set-key (kbd "C-c m p") 'emms-pause)
+  (global-set-key (kbd "C-c m m") 'emms-smart-browse)
 #+end_src
 ** Custom
 *** Journal
@@ -3040,7 +3163,7 @@ These match the Outlook ones..
 ;  (setq mu4e-maildir-shortcuts
 ;        '(("/INBOX" . ?i)))
 ;  
-;  (setq mu4e-refile-folder 'cm-mu4e-refile-folder)
+;  (setq mu4e-refile-folder 'cm/mu4e-refile-folder)
 ;  
 #+end_src
 *** Retrieval and Indexing
@@ -3097,33 +3220,13 @@ only for strings that have that sequence of characters in order.
 Microblog, baby.
 #+begin_src emacs-lisp
   ;(autoload 'identica-mode "identica-mode" "" t)
-  ;(setq identica-username cm-identica-username
-  ;      identica-password cm-identica-password)
+  ;(setq identica-username cm/identica-username
+  ;      identica-password cm/identica-password)
   ;
   ;(global-set-key "\C-cip" 'identica-update-status-interactive)
   ;(global-set-key "\C-cid" 'identica-direct-message-interactive)
 #+end_src
 * Custom variables
-#+begin_src emacs-lisp
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; CUSTOM!
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- )
-
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(auto-image-file-mode t)
- '(browse-url-firefox-new-window-is-tab t)
- '(browse-url-firefox-program "firefox")
- '(frame-background-mode (quote dark))
- '(indent-tabs-mode nil))
-#+end_src
 * Cursor color
 Change cursor color according to mode; inspired by
 http://www.emacswiki.org/emacs/ChangingCursorDynamically valid values
@@ -3133,7 +3236,7 @@ the docs for set-cursor-type.
 This is put at the very end so that way it can override any coloring
 settings that occur above. Much easier this way.
 #+begin_src emacs-lisp
-  (defun cm-cursor ()
+  (defun cm/cursor ()
     "change cursor color and type according to some minor modes."
     (cond
       (buffer-read-only
@@ -3141,12 +3244,13 @@ settings that occur above. Much easier this way.
       (t 
        (set-cursor-color "yellow")
        (setq cursor-type 'box))))
-  
-  (set-cursor-color "yellow")
+
+
   (setq cursor-type 'box)
-  ;(add-hook 'post-command-hook 'cm-cursor)
+  ;(add-hook 'post-command-hook 'cm/cursor)
   ; oh god it flashes so much. Don't know how to do this better yet.
   (blink-cursor-mode 0)
+  (set-cursor-color "#ffff00")
 #+end_src
 ** Server process
 Start a server if it's not started, and I'm not root.
@@ -3156,6 +3260,6 @@ Start a server if it's not started, and I'm not root.
     (unless (server-running-p)
       (server-start)))
   
-  (when (eq system-type 'darwin) (add-hook 'server-visit-hook 'raise-frame))
+  (add-hook 'server-visit-hook 'raise-frame)
 #+end_src
 
