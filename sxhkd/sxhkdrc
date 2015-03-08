@@ -40,7 +40,7 @@ super + t ; f
 super + t ; {s,w,e}
       i3-msg layout {stacking,tabbed,toggle split}
       
-super + t ; shift + space
+super + t ; l
       i3-msg floating toggle
       
 super + t ; a
@@ -69,5 +69,12 @@ super + t ; b
 
 super + t ; n
       i3-msg border toggle
-
+#
+# these are kept in i3 config as well;
+# super + t ; space
+#       i3-msg scratchpad show
+# 
+# super + t ; shift + space
+#       i3-msg move scratchpad
+# 
 # resize stuff is kept in i3 config
