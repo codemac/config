@@ -191,7 +191,7 @@
        [(1 94)
 	nil "Emacs-wget is an interface program of GNU wget on Emacs." tar])
  (weechat .
-	  [(0 2)
+	  [(0 2 1)
 	   ((s
 	     (1 3 1))
 	    (cl-lib
@@ -1364,7 +1364,7 @@
 	   [(0 0 1)
 	    nil "get stuff from pinboard" single])
  (picpocket .
-	    [(2)
+	    [(8)
 	     nil "Image viewer" single])
  (pickup .
 	 [(0 0 3)
@@ -1566,9 +1566,9 @@
 	      (1 6 8)))
 	    "Blog from Org mode to wordpress" tar])
  (org-trello .
-	     [(0 6 9 2)
+	     [(0 6 9 3)
 	      ((request-deferred
-		(0 1 0))
+		(0 2 0))
 	       (deferred
 		   (0 3 2))
 	       (s
@@ -1811,7 +1811,7 @@
 	     [(0 8 8)
 	      nil "Managing multiple terminal buffers in Emacs." single])
  (multi-project .
-		[(0 0 16)
+		[(0 0 17)
 		 nil "Easily work with multiple projects." single])
  (multi-eshell .
 	       [(0 0 1)
@@ -2813,7 +2813,7 @@
 	     [(0 1)
 	      nil "Major mode for editing git commit messages" single])
  (git-auto-commit-mode .
-		       [(4 3 0)
+		       [(4 3 2)
 			nil "Emacs Minor mode to automatically commit and push" single])
  (gist .
        [(1 2 1)
@@ -3794,7 +3794,7 @@
 	 [(0 1 1)
 	  nil "Table component for Emacs Lisp" single])
  (csharp-mode .
-	      [(0 8 8)
+	      [(0 8 9)
 	       nil "C# mode derived mode" tar])
  (cryptol-mode .
 	       [(0 1 0)

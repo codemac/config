@@ -37,21 +37,26 @@
  '(protect-buffer-bury-p nil t)
  '(safe-local-variable-values
    (quote
-    ((eval cm/projectile-dirlocals-hook
-           (quote igservices))
+    ((eval when
+	   (require
+	    (quote rainbow-mode)
+	    nil t)
+	   (rainbow-mode 1))
      (eval cm/projectile-dirlocals-hook
-           (quote codego))
+	   (quote igservices))
+     (eval cm/projectile-dirlocals-hook
+	   (quote codego))
      (eval modify-syntax-entry 43 "'")
      (eval modify-syntax-entry 36 "'")
      (eval modify-syntax-entry 126 "'")
      (bug-reference-bug-regexp . "<https?://\\(debbugs\\|bugs\\)\\.gnu\\.org/\\([0-9]+\\)>")
      (eval cm/projectile-dirlocals-hook
-           (quote mesa))
+	   (quote mesa))
      (cm/gitty-files . t)
      (eval cm/igneous-product-config)
      (yaml-indent-offset . 8)
      (after-save-hook archive-done-tasks))))
- '(smtpmail-queue-mail nil)
+ '(smtpmail-queue-mail nil t)
  '(warning-suppress-types (quote ((undo discard-info))) t)
  '(yaml-indent-offset 8))
 (custom-set-faces
