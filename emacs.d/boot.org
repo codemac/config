@@ -309,6 +309,10 @@ that?
 
 For now we just check that the name is valid.
 * Builtin
+** Disabled Functions
+#+begin_src emacs-lisp
+  (put 'downcase-region 'disabled nil)
+#+end_src
 ** Open files with root
 #+begin_src emacs-lisp
   (defun cm/rename-tramp-buffer ()
@@ -531,6 +535,14 @@ Mac fix for info installation location!
 I need to tie this into projectile, but for now have a way to create a
 "main" buffer and then name other ones with =shell-new=.
 #+begin_src emacs-lisp
+  ;; give shell advice to load dir-locals
+
+  (defun cm/advise-shell (&rest r)
+    (hack-dir-local-variables-non-file-buffer))
+
+  (advice-add #'shell :before #'cm/advise-shell)
+
+
   (defun cm/shell-new (name)
     "Create a shell buffer named NAME."
     (interactive "sShell Name: ")
@@ -580,9 +592,8 @@ I need to tie this into projectile, but for now have a way to create a
 
 *** Use a login shell 
 #+begin_src emacs-lisp
-
   (set-default 'explicit-shell-file-name "/home/codemac/bin/rc")
-  (setq explicit-rc-args '("-l"))
+;  (setq explicit-rc-args '("-l"))
 #+end_src
 *** Track the directory of the shell process
 #+begin_src emacs-lisp
@@ -899,7 +910,6 @@ This is a mode that provides a full http server in elisp. It does
 default to serving =~/public_html=, so I turn that off here.
 
 #+begin_src emacs-lisp
-  (require 'simple-httpd-autoloads)
   (setq httpd-root "")
   (setq httpd-serve-files nil)  
 #+end_src
@@ -1629,28 +1639,6 @@ Thank you Britt.
                (linum-mode 1)
                (setq show-trailing-whitespace t)))
 #+end_src
-*** Smex
-#+begin_src emacs-lisp
-  (require 'smex)
-  
-  ;; load smex lazily...
-  (global-set-key [(meta x)]
-                  (lambda ()
-                    (interactive)
-                    (or (boundp 'smex-cache)
-                        (smex-initialize))
-                    (global-set-key [(meta x)] 'smex)
-                    (smex)))
-  
-  ;; search just this major mode
-  (global-set-key [(shift meta x)]
-                  (lambda ()
-                    (interactive)
-                    (or (boundp 'smex-cache)
-                        (smex-initialize))
-                    (global-set-key [(shift meta x)] 'smex-major-mode-commands)
-                    (smex-major-mode-commands)))
-#+end_src
 ** Programs
 *** notmuch
 #+begin_src emacs-lisp
@@ -2106,7 +2094,7 @@ Functions borrowed from Sacha Chua.
   (setq org-agenda-skip-deadline-if-done t)
   (setq org-agenda-skip-scheduled-if-done t)
   (setq org-start-on-weekday nil)
-  (setq org-completion-use-ido t)
+;  (setq org-completion-use-ido t)
   (setq org-agenda-show-all-dates t)
   (setq org-reverse-note-order nil)
   (setq org-fontify-done-headline t)
@@ -2476,7 +2464,8 @@ help with my forgetfulness.
   (setq rcirc-server-alist cm/rcirc-server-alist)
   (setq rcirc-authinfo cm/rcirc-authinfo)
   (setq rcirc-startup-channels-alist '(("\\.freenode\\.net$" "#emacs")))
-  (setq rcirc-time-format "%Y-%m-%d %H:%M ")
+
+;  (setq rcirc-time-format "%H:%M ") ; << that format suckts, nvm.
 #+end_src
 **** Reconnect
 #+begin_src emacs-lisp
@@ -2660,96 +2649,102 @@ Directly use jabber with elisp! It's painfully slow, and the single
 threaded nature of emacs means it turns out to be quite a failure if
 you are trying to edit anything.
 #+begin_src emacs-lisp
-  (autoload 'jabber-connect-all "jabber" "" t)
-  ;; Show my status in the header along with theirs! woo!
-  (eval-after-load 'jabber
-    (progn
-      (setq jabber-chat-header-line-format
-            '(" " (:eval (jabber-jid-displayname jabber-chatting-with))
-              " " (:eval (jabber-jid-resource jabber-chatting-with)) "\t";
-              (:eval (let ((buddy (jabber-jid-symbol jabber-chatting-with)))
-                       (propertize
-                        (or
-                         (cdr (assoc (get buddy 'show) jabber-presence-strings))
-                         (get buddy 'show))
-                        'face
-                        (or (cdr (assoc (get buddy 'show) jabber-presence-faces))
-                            'jabber-roster-user-online))))
-              "\t" (:eval (get (jabber-jid-symbol jabber-chatting-with) 'status))
-              (:eval (unless (equal "" *jabber-current-show*)
-                       (concat "\t You're " *jabber-current-show*
-                               " (" *jabber-current-status* ")")))))
-      ;; Open urls!
-      (add-hook 'jabber-chat-mode-hook 'goto-address)
-      
-      ;; fun keybindings!
-      (defun my-jabber-chat-delete-or-bury ()
-        (interactive)
-        (if (eq 'jabber-chat-mode major-mode)
-            (condition-case e 
-                (delete-frame)
-              (error 
-               (if (string= "Attempt to delete the sole visible or iconified frame" 
-                            (cadr e))
-                   (bury-buffer))))))
-      
-  ;    (define-key jabber-chat-mode-map [escape] 'my-jabber-chat-delete-or-bury)
-      (define-key mode-specific-map "jr"
-        (lambda () 
-          (interactive) 
-          (switch-to-buffer "*-jabber-*")))
-      (define-key mode-specific-map "jc"
-        '(lambda () 
-           (interactive) 
-           (call-interactively 'jabber-connect)))
-      (define-key mode-specific-map "jd"
-        '(lambda () 
-           (interactive) 
-           (call-interactively 'jabber-disconnect)))
-      (define-key mode-specific-map "jj"
-        '(lambda () 
-           (interactive) 
-           (call-interactively 'jabber-chat-with)))
-      (define-key mode-specific-map "ja"
-        '(lambda () 
-           (interactive) 
-           (jabber-send-presence "away" "" 10)))
-      (define-key mode-specific-map "jo"
-        '(lambda () 
-           (interactive) 
-           (jabber-send-presence "" "" 10)))
-      (define-key mode-specific-map "jx"
-        '(lambda () 
-           (interactive) 
-           (jabber-send-presence "xa" "" 10)))))
+    (autoload 'jabber-connect-all "jabber" "" t)
+    ;; Show my status in the header along with theirs! woo!
+    (eval-after-load 'jabber
+      (progn
+        (setq jabber-chat-header-line-format
+              '(" " (:eval (jabber-jid-displayname jabber-chatting-with))
+                " " (:eval (jabber-jid-resource jabber-chatting-with)) "\t";
+                (:eval (let ((buddy (jabber-jid-symbol jabber-chatting-with)))
+                         (propertize
+                          (or
+                           (cdr (assoc (get buddy 'show) jabber-presence-strings))
+                           (get buddy 'show))
+                          'face
+                          (or (cdr (assoc (get buddy 'show) jabber-presence-faces))
+                              'jabber-roster-user-online))))
+                "\t" (:eval (get (jabber-jid-symbol jabber-chatting-with) 'status))
+                (:eval (unless (equal "" *jabber-current-show*)
+                         (concat "\t You're " *jabber-current-show*
+                                 " (" *jabber-current-status* ")")))))
+        ;; Open urls!
+        (add-hook 'jabber-chat-mode-hook 'goto-address)
+        
+        ;; fun keybindings!
+        (defun my-jabber-chat-delete-or-bury ()
+          (interactive)
+          (if (eq 'jabber-chat-mode major-mode)
+              (condition-case e 
+                  (delete-frame)
+                (error 
+                 (if (string= "Attempt to delete the sole visible or iconified frame" 
+                              (cadr e))
+                     (bury-buffer))))))
+        
+    ;    (define-key jabber-chat-mode-map [escape] 'my-jabber-chat-delete-or-bury)
+        (define-key mode-specific-map "jr"
+          (lambda () 
+            (interactive) 
+            (switch-to-buffer "*-jabber-*")))
+        (define-key mode-specific-map "jc"
+          '(lambda () 
+             (interactive) 
+             (call-interactively 'jabber-connect)))
+        (define-key mode-specific-map "jd"
+          '(lambda () 
+             (interactive) 
+             (call-interactively 'jabber-disconnect)))
+        (define-key mode-specific-map "jj"
+          '(lambda () 
+             (interactive) 
+             (call-interactively 'jabber-chat-with)))
+        (define-key mode-specific-map "ja"
+          '(lambda () 
+             (interactive) 
+             (jabber-send-presence "away" "" 10)))
+        (define-key mode-specific-map "jo"
+          '(lambda () 
+             (interactive) 
+             (jabber-send-presence "" "" 10)))
+        (define-key mode-specific-map "jx"
+          '(lambda () 
+             (interactive) 
+             (jabber-send-presence "xa" "" 10)))))
 
-  ;;;; hipchat support
-  (setq ssl-program-name "gnutls-cli"
-        ssl-program-arguments '("--insecure" "-p" service host)
-        ssl-certificate-verification-policy 1)
-   
-  ;; Connect using jabber.el
-  ;; M-x jabber-connect <RET>
-   
-  ;; Config
-  (setq jabber-account-list '(("75698_604162@chat.hipchat.com")))
-  (defvar hipchat-number "75698")
-  (defvar hipchat-nickname "Jeff Mickey")
+    ;;;; hipchat support
+    (setq ssl-program-name "gnutls-cli"
+          ssl-program-arguments '("--insecure" "-p" service host)
+          ssl-certificate-verification-policy 1)
+     
+    ;; Connect using jabber.el
+    ;; M-x jabber-connect <RET>
+     
+    ;; Config
+    (setq jabber-account-list '(("75698_604162@chat.hipchat.com")))
+    (defvar hipchat-number "75698")
+    (defvar hipchat-nickname "Jeff Mickey")
 
-  ;; Join a room
-  (defun hipchat-join (room)
-    (interactive "sRoom name: ")
-    (jabber-groupchat-join
-     (jabber-read-account)
-     (concat hipchat-number "_" room "@conf.hipchat.com")
-     hipchat-nickname
-     t))
+    ;; Join a room
+    (defun cm/hipchat-join (room)
+      (interactive "sRoom name: ")
+      (jabber-groupchat-join
+       (jabber-read-account)
+       (concat hipchat-number "_" room "@conf.hipchat.com")
+       hipchat-nickname
+       t))
 
-  ;; Mention nicknames in a way that HipChat clients will pickup
-  (defun hipchat-mention (nickname)
-    (interactive
-     (list (jabber-muc-read-nickname jabber-group "Nickname: ")))
-    (insert (concat "@\"" nickname "\" "))) 
+    ;; Mention nicknames in a way that HipChat clients will pickup
+    (defun hipchat-mention (nickname)
+      (interactive
+       (list (jabber-muc-read-nickname jabber-group "Nickname: ")))
+      (insert (concat "@\"" nickname "\" "))) 
+
+  (defvar cm/hipchat-rooms '())
+
+  (defun cm/hipchat-joinall ()
+    (interactive)
+    (rcirc-cmd-join (mapconcat 'identity cm/hipchat-rooms " ") (rcirc-buffer-process (get-buffer "&bitlbee@localhost")) nil))
 #+end_src
 *** SLIME
 #+begin_src emacs-lisp
@@ -3228,7 +3223,6 @@ Microblog, baby.
   ;(global-set-key "\C-cip" 'identica-update-status-interactive)
   ;(global-set-key "\C-cid" 'identica-direct-message-interactive)
 #+end_src
-* Custom variables
 * Cursor color
 Change cursor color according to mode; inspired by
 http://www.emacswiki.org/emacs/ChangingCursorDynamically valid values
