@@ -2818,48 +2818,24 @@ Who needs a command line anyways..
 Now w/mopidy
 #+begin_src emacs-lisp
   (require 'emms-setup)
-  (emms-all)
-  (emms-default-players)
-#+end_src
+  (emms-standard)
+  (require 'emms-browser)
+  (require 'emms-player-mpd)
+  (add-to-list 'emms-info-functions 'emms-info-mpd)
+  (add-to-list 'emms-player-list 'emms-player-mpd)
 
-#+begin_src emacs-lisp
-  (require 'emms-setup)
-  (require 'emms-mode-line-icon)
-  (require 'emms-info-libtag)
-  (emms-default-players)
+  (require 'emms-volume)
+  (setq emms-volume-change-function 'emms-volume-mpd-change)
+
   (setq emms-info-asynchronosly t)
   (add-hook 'emms-player-started-hook 'emms-show)
   (setq emms-show-format "NP: %s")
-  (setq emms-source-list '((emms-directory-tree "~/music/")))
   (setq emms-mode-line-icon-before-format ""
         emms-mode-line-format " %s"
         emms-mode-line-icon-color "blue")
 
   (if (executable-find "find")
       (setq emms-source-file-directory-tree-function 'emms-source-file-directory-tree-find))
-
-  ;;; Libtag support
-  (add-to-list 'emms-info-functions 'emms-info-libtag)
-
-  ;;;; Stolen and adapted from TWB
-  (defun cm/emms-info-track-description (track)
-    "Return a description of the current track."
-    (let ((pmin (emms-track-get track 'info-playing-time-min))
-          (psec (emms-track-get track 'info-playing-time-sec))
-          (ptot (emms-track-get track 'info-playing-time))
-          (art  (emms-track-get track 'info-artist))
-          (tit  (emms-track-get track 'info-title)))
-      (cond ((and pmin psec) (format "%s - %s [%02d:%02d]" art tit pmin psec))
-            (ptot (format  "%s - %s [%02d:%02d]" art tit (/ ptot 60) (% ptot 60)))
-            ((or art tit) (if art (format "%s - %s" art tit) tit))
-            (t (emms-track-simple-description track)))))
-
-  (setq emms-track-description-function 'cm/emms-info-track-description)
-
-  ;;; last.fm
-  ;(setq emms-lastfm-username cm/lastfm-user-name
-  ;      emms-lastfm-password cm/lastfm-user-pass)
-  ;(emms-lastfm-enable)
 
   ;; reserve a key namespace for emms
   (global-set-key (kbd "C-c m p") 'emms-pause)
