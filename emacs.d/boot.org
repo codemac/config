@@ -291,6 +291,32 @@ Really useful for source code copying.. This is from [[http://stackoverflow.com/
         (kill-new chunk)))
     (deactivate-mark))
 #+end_src
+** Use dired instead of the directory view.
+I never expect it, and when I get it it means I meant dired
+anyways. This means that how I hold down the control button doesn't
+matter.
+#+begin_src emacs-lisp
+  (global-set-key (kbd "C-x C-d") 'dired)
+#+end_src
+** Use rc escaping
+I've now set my login shell as rc, which means that now all kinds of
+arbitrary things break.
+
+Luckily, the =shell-quote-argument= function is really easy to write,
+because it really just is string replacement on the single quote. And
+unquoting isn't even a thing because rc doesn't fucking suck at life,
+it just passes on arguments. It's wonderful!
+#+begin_src emacs-lisp
+  (setq cm/using-rc t)
+
+  (defun cm/advise-shell-quote-argument (fun &rest args)
+    (if cm/using-rc
+        (concat "'" (replace-regexp-in-string "'" "''" (if (listp args) (car args) args) t t) "'")
+      (apply fun args)))
+
+  (advice-add #'shell-quote-argument :around #'cm/advise-shell-quote-argument)
+
+#+end_src
 * ELPA
 #+begin_src emacs-lisp
 #+end_src
@@ -874,6 +900,11 @@ what all these features really mean.
   ;; use helm-projectile
   (setq projectile-completion-system 'helm)
   (helm-projectile-on)
+  ; I dislike helm grep immensely (super slow!) and I don't use ack / ag
+  ; / etc. This disables C-c p s <g,a,s> and just does C-c p s like it
+  ; used to.
+  (define-key projectile-command-map (kbd "s")  'projectile-grep)
+  (setq projectile-use-git-grep t)
 
   (defun cm/projectile-dirlocals-hook (dir)
     (cond ((equal dir 'mesa)
@@ -941,6 +972,8 @@ this page is *STUPID* slow in eww)
         helm-ff-file-name-history-use-recentf t
         helm-man-or-woman-function 'woman)
 
+  (helm-mode 1)
+
   (global-set-key (kbd "M-x") 'helm-M-x)
   (global-set-key (kbd "C-c h") 'helm-command-prefix)
   (global-unset-key (kbd "C-x c"))
@@ -957,9 +990,14 @@ this page is *STUPID* slow in eww)
   (when (executable-find "curl")
     (setq helm-google-suggest-use-curl-p t))
 
-  (helm-mode 1)
-
   (delete helm-source-locate helm-for-files-preferred-list)
+
+  (add-to-list 'display-buffer-alist
+                      `(,(rx bos "*helm" (* not-newline) "*" eos)
+                           (display-buffer-in-side-window)
+                           (inhibit-same-window . t)
+                           (window-height . 0.4)))
+
 #+end_src
 **** Mac os x hacks
 #+begin_src emacs-lisp
@@ -2455,8 +2493,103 @@ help with my forgetfulness.
                         rcirc-default-full-name
                         channels))))
 
+#+end_src
+This means that the format of the join command no longer supports
+space separated channels - however - does now support keyed/passworded
+channels correctly. The format is: =#channela,#channelb ,passwordb=
+#+begin_src emacs-lisp
+  (eval-after-load 'rcirc
+    '(defun-rcirc-command join (channels)
+       "Join CHANNELS.
+  CHANNELS is a comma- or space-separated string of channel names."
+       (interactive "sJoin channels: ")
+       (let* ((chanpass (split-string channels " " t))
+              (split-channels (split-string (car chanpass) "," t))
+              (buffers (mapcar (lambda (ch)
+                                 (rcirc-get-buffer-create process ch))
+                               split-channels)))
+         (rcirc-send-string process (concat "JOIN " channels))
+         (when (not (eq (selected-window) (minibuffer-window)))
+           (dolist (b buffers) ;; order the new channel buffers in the buffer list
+             (switch-to-buffer b))))))
 
-  ;; Change user info
+  (eval-after-load 'rcirc
+    '(defun rcirc (arg)
+       "Connect to all servers in `rcirc-server-alist'.
+
+  Do not connect to a server if it is already connected.
+
+  If ARG is non-nil, instead prompt for connection parameters."
+       (interactive "P")
+       (if arg
+           (let* ((server (completing-read "IRC Server: "
+                                           rcirc-server-alist
+                                           nil nil
+                                           (caar rcirc-server-alist)
+                                           'rcirc-server-name-history))
+                  (server-plist (cdr (assoc-string server rcirc-server-alist)))
+                  (port (read-string "IRC Port: "
+                                     (number-to-string
+                                      (or (plist-get server-plist :port)
+                                          rcirc-default-port))
+                                     'rcirc-server-port-history))
+                  (nick (read-string "IRC Nick: "
+                                     (or (plist-get server-plist :nick)
+                                         rcirc-default-nick)
+                                     'rcirc-nick-name-history))
+                  (user-name (read-string "IRC Username: "
+                                          (or (plist-get server-plist :user-name)
+                                              rcirc-default-user-name)
+                                          'rcirc-user-name-history))
+                  (password (read-passwd "IRC Password: " nil
+                                         (plist-get server-plist :password)))
+                  (channels (read-string "IRC Channels: "
+                                         (plist-get server-plist :channels)))
+                  (encryption (rcirc-prompt-for-encryption server-plist)))
+             (rcirc-connect server port nick user-name
+                         rcirc-default-full-name
+                         channels password encryption))
+         ;; connect to servers in `rcirc-server-alist'
+         (let (connected-servers)
+        (dolist (c rcirc-server-alist)
+          (let ((server (car c))
+                (nick (or (plist-get (cdr c) :nick) rcirc-default-nick))
+                (port (or (plist-get (cdr c) :port) rcirc-default-port))
+                (user-name (or (plist-get (cdr c) :user-name)
+                               rcirc-default-user-name))
+                (full-name (or (plist-get (cdr c) :full-name)
+                               rcirc-default-full-name))
+                (channels (plist-get (cdr c) :channels))
+                (password (plist-get (cdr c) :password))
+                (encryption (plist-get (cdr c) :encryption))
+                contact)
+            (when server
+              (let (connected)
+                (dolist (p (rcirc-process-list))
+                  (when (string= server (process-name p))
+                    (setq connected p)))
+                (if (not connected)
+                    (condition-case e
+                        (rcirc-connect server port nick user-name
+                                       full-name channels password encryption)
+                      (quit (message "Quit connecting to %s" server)))
+                  (with-current-buffer (process-buffer connected)
+                    (setq contact (process-contact
+                                   (get-buffer-process (current-buffer)) :host))
+                    (setq connected-servers
+                          (cons (if (stringp contact) contact server)
+                                connected-servers))))))))
+        (when connected-servers
+          (message "Already connected to %s"
+                   (if (cdr connected-servers)
+                       (concat (mapconcat 'identity (butlast connected-servers) ", ")
+                               ", and "
+                               (car (last connected-servers)))
+                     (car connected-servers))))))))
+
+#+end_src
+
+#+begin_src
   (setq rcirc-default-nick "codemac")
   (setq rcirc-default-user-name "codemac")
   (setq rcirc-default-user-full-name "codemac")
@@ -2465,7 +2598,7 @@ help with my forgetfulness.
   (setq rcirc-authinfo cm/rcirc-authinfo)
   (setq rcirc-startup-channels-alist '(("\\.freenode\\.net$" "#emacs")))
 
-;  (setq rcirc-time-format "%H:%M ") ; << that format suckts, nvm.
+  ;  (setq rcirc-time-format "%H:%M ") ; << that format suckts, nvm.
 #+end_src
 **** Reconnect
 #+begin_src emacs-lisp
@@ -2818,48 +2951,24 @@ Who needs a command line anyways..
 Now w/mopidy
 #+begin_src emacs-lisp
   (require 'emms-setup)
-  (emms-all)
-  (emms-default-players)
-#+end_src
+  (emms-standard)
+  (require 'emms-browser)
+  (require 'emms-player-mpd)
+  (add-to-list 'emms-info-functions 'emms-info-mpd)
+  (add-to-list 'emms-player-list 'emms-player-mpd)
 
-#+begin_src emacs-lisp
-  (require 'emms-setup)
-  (require 'emms-mode-line-icon)
-  (require 'emms-info-libtag)
-  (emms-default-players)
+  (require 'emms-volume)
+  (setq emms-volume-change-function 'emms-volume-mpd-change)
+
   (setq emms-info-asynchronosly t)
   (add-hook 'emms-player-started-hook 'emms-show)
   (setq emms-show-format "NP: %s")
-  (setq emms-source-list '((emms-directory-tree "~/music/")))
   (setq emms-mode-line-icon-before-format ""
         emms-mode-line-format " %s"
         emms-mode-line-icon-color "blue")
 
   (if (executable-find "find")
       (setq emms-source-file-directory-tree-function 'emms-source-file-directory-tree-find))
-
-  ;;; Libtag support
-  (add-to-list 'emms-info-functions 'emms-info-libtag)
-
-  ;;;; Stolen and adapted from TWB
-  (defun cm/emms-info-track-description (track)
-    "Return a description of the current track."
-    (let ((pmin (emms-track-get track 'info-playing-time-min))
-          (psec (emms-track-get track 'info-playing-time-sec))
-          (ptot (emms-track-get track 'info-playing-time))
-          (art  (emms-track-get track 'info-artist))
-          (tit  (emms-track-get track 'info-title)))
-      (cond ((and pmin psec) (format "%s - %s [%02d:%02d]" art tit pmin psec))
-            (ptot (format  "%s - %s [%02d:%02d]" art tit (/ ptot 60) (% ptot 60)))
-            ((or art tit) (if art (format "%s - %s" art tit) tit))
-            (t (emms-track-simple-description track)))))
-
-  (setq emms-track-description-function 'cm/emms-info-track-description)
-
-  ;;; last.fm
-  ;(setq emms-lastfm-username cm/lastfm-user-name
-  ;      emms-lastfm-password cm/lastfm-user-pass)
-  ;(emms-lastfm-enable)
 
   ;; reserve a key namespace for emms
   (global-set-key (kbd "C-c m p") 'emms-pause)
