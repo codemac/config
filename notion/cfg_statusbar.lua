@@ -37,7 +37,7 @@ mod_statusbar.create{
     -- right, respectively, and %systray is a placeholder for system tray
     -- windows and icons.
     --
-    template="[ %date || load: %load ] %filler%systray",
+    template="[ %date || load: %load %battery ] %filler%systray",
     --template="[ %date || load:% %>load || mail:% %>mail_new/%>mail_total ] %filler%systray",
     --template="[ %date || load: %05load_1min || mail: %02mail_new/%02mail_total ] %filler%systray",
 }
@@ -68,6 +68,15 @@ mod_statusbar.launch_statusd{
         --update_interval=10*1000,
         --important_threshold=1.5,
         --critical_threshold=4.0,
+    },
+
+    battery={
+       info_data = { 'status', 'percentage', 'status' },
+       status_display = { full = " ", charging = "↑", discharging = "↓"},
+       info_format = "%s%.f%s",
+       content_format = "|| %s",
+       bat_no = 0,
+       blink_on_discharge = true,
     },
 
     -- Mail meter
