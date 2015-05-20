@@ -25,6 +25,7 @@ emacs.d/org-clock-save.el
 emacs.d/pkg-init/cm-netapp.el
 emacs.d/places
 emacs.d/projectile-bookmarks.eld
+emacs.d/recentf
 emacs.d/request
 emacs.d/semanticdb
 emacs.d/tramp
