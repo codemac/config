@@ -944,10 +944,6 @@ default to serving =~/public_html=, so I turn that off here.
   (setq httpd-root "")
   (setq httpd-serve-files nil)  
 #+end_src
-*** Pretty Mode
-#+begin_src emacs-lisp
-  (autoload 'pretty-mode "pretty-mode" "Get ready for some λ!!" t nil)
-#+end_src
 *** Helm
 Helm is the new Anything. Helm will help steer you in the right
 direction!
@@ -1289,12 +1285,14 @@ Get the jarfile in the correct place...
   (setenv "GRAPHVIZ_DOT" "/usr/bin/dot")
 #+end_src
 *** Scheme
+[[http://emacswiki.org/emacs/ParEdit][Paredit]] is an amazing minor mode for editing lisp, but it is a bit
+complex. I turn it on for scheme, but not elisp as usually when I'm
+hacking on elisp I want the lowest barrier to entry.
+
 #+begin_src emacs-lisp
   (add-hook 'scheme-mode-hook
             '(lambda ()
-               (require 'pretty-mode)
-               (paredit-mode 1)
-               (pretty-mode 1)))
+               (paredit-mode 1)))
 #+end_src
 *** Paredit
 #+begin_src emacs-lisp
@@ -2877,7 +2875,7 @@ you are trying to edit anything.
 
   (defun cm/hipchat-joinall ()
     (interactive)
-    (rcirc-cmd-join (mapconcat 'identity cm/hipchat-rooms " ") (rcirc-buffer-process (get-buffer "&bitlbee@localhost")) nil))
+    (rcirc-cmd-join (mapconcat 'identity cm/hipchat-rooms ",") (rcirc-buffer-process (get-buffer "&bitlbee@localhost")) nil))
 #+end_src
 *** SLIME
 #+begin_src emacs-lisp
