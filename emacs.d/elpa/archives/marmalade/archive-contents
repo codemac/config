@@ -895,7 +895,7 @@
 	   [(1 4)
 	    nil "pattern matching for elisp" single])
  (shackle .
-	  [(0 2 1)
+	  [(0 3 0)
 	   ((cl-lib
 	     (0 5)))
 	   "Enforce rules for popups" single])
@@ -1348,11 +1348,9 @@
 			 [(3 4 2 1)
 			  nil "pkg-info: Dummy package for unit tests" single])
  (pkg-info .
-	   [(0 5)
-	    ((dash
-	      (1 6 0))
-	     (epl
-	      (0 4)))
+	   [(0 6)
+	    ((epl
+	      (0 8)))
 	    "Information about packages" single])
  (pivotal-tracker .
 		  [(1 2 0)
@@ -1533,6 +1531,11 @@
  (otp .
       [(1 0)
        nil "a one-time password creator" single])
+ (osx-trash .
+	    [(0 1 1)
+	     ((emacs
+	       (24 1)))
+	     "System trash for OS X" tar])
  (osx-pseudo-daemon .
 		    [(1 0)
 		     nil "Daemon mode that plays nice with OSX." single])
@@ -1568,7 +1571,7 @@
 	      (1 6 8)))
 	    "Blog from Org mode to wordpress" tar])
  (org-trello .
-	     [(0 6 9 5)
+	     [(0 6 9 6)
 	      ((request-deferred
 		(0 2 0))
 	       (deferred
@@ -3397,7 +3400,7 @@
 	      [(1 1 2)
 	       nil "An E-prime checking mode for Emacs" single])
  (epl .
-      [(0 7)
+      [(0 8)
        ((cl-lib
 	 (0 3)))
        "Emacs Package Library" single])

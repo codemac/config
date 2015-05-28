@@ -2,7 +2,7 @@ deflogin on
 autodetach on
 
 startup_message off
-shell -zsh
+shell -$SHELL
 activity "active: %n (%t) [%w:%s]"
 bell "bell: %n (%t) [%w:%s]^G"
 vbell off
@@ -41,8 +41,8 @@ sorendition +b kG
 ##############################
 # Default apps
 screen -t root su
-screen zsh
-screen zsh
+screen $SHELL
+screen $SHELL
 #screen -t irc /home/codemac/bin/whichweechat
 
 select 1

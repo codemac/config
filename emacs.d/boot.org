@@ -317,6 +317,12 @@ it just passes on arguments. It's wonderful!
   (advice-add #'shell-quote-argument :around #'cm/advise-shell-quote-argument)
 
 #+end_src
+*** Support for rgrep as well
+This changes the =grep-find-template= so that quoting is used around
+the brackets that rc parses.
+#+begin_src emacs-lisp
+;;; TODO
+#+end_src
 * ELPA
 #+begin_src emacs-lisp
 #+end_src
@@ -2587,7 +2593,7 @@ channels correctly. The format is: =#channela,#channelb ,passwordb=
 
 #+end_src
 
-#+begin_src
+#+begin_src emacs-lisp
   (setq rcirc-default-nick "codemac")
   (setq rcirc-default-user-name "codemac")
   (setq rcirc-default-user-full-name "codemac")
