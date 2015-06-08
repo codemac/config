@@ -895,7 +895,7 @@
 	   [(1 4)
 	    nil "pattern matching for elisp" single])
  (shackle .
-	  [(0 3 0)
+	  [(0 6 0)
 	   ((cl-lib
 	     (0 5)))
 	   "Enforce rules for popups" single])
@@ -1362,7 +1362,7 @@
 	   [(0 0 1)
 	    nil "get stuff from pinboard" single])
  (picpocket .
-	    [(11)
+	    [(13)
 	     nil "Image viewer" single])
  (pickup .
 	 [(0 0 3)
@@ -2947,7 +2947,7 @@
 		(0 2 3)))
 	      "Utility functions for working with fonts" single])
  (fold-this .
-	    [(0 1 0)
+	    [(0 3 0)
 	     nil "Just fold this region please" single])
  (fold-dwim-org .
 		[(0 5)
@@ -3111,7 +3111,7 @@
 			(0 15)))
 		      "A flycheck checker for Haskell using hdevtools" single])
  (flycheck-haskell .
-		   [(0 6)
+		   [(0 7)
 		    ((flycheck
 		      (0 22))
 		     (haskell-mode
@@ -3188,7 +3188,7 @@
 	    [(0)
 	     nil "Resize a frame.  In particular, fit a frame to its buffers." single])
  (firestarter .
-	      [(0 1 3)
+	      [(0 1 4)
 	       nil "Execute (shell) commands on save" single])
  (fiplr .
 	[(0 1 3)
@@ -3776,7 +3776,7 @@
        [(2 10 0)
 	nil "A modern list library for Emacs" single])
  (dart-mode .
-	    [(0 12)
+	    [(0 13)
 	     ((cl-lib
 	       (0 5))
 	      (dash
@@ -3823,7 +3823,7 @@
 	 [(0 1 1)
 	  nil "Table component for Emacs Lisp" single])
  (csharp-mode .
-	      [(0 8 9)
+	      [(0 8 10)
 	       nil "C# mode derived mode" tar])
  (cryptol-mode .
 	       [(0 1 0)
@@ -4398,7 +4398,7 @@
 		  (1 11 5)))
 		"Space align various Clojure forms" single])
  (alchemist .
-	    [(0 14 0)
+	    [(0 16 1)
 	     ((emacs
 	       (24)))
 	     "Elixir tooling integration into Emacs" tar])

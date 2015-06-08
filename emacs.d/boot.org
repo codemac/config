@@ -437,7 +437,7 @@ may or may not be always true though.
   (defvar cm/what-password "nope" "The nickserv password for what.")
   (defvar cm/rizon-password "nope" "The nickserv password for rizon.")
   (defvar cm/bitlbee-password "nope" "The password for bitlbee!")
-  (defvar cm/irc-channel-alist '(("freenode" "#archlinux" "#emacs")
+  (defvar cm/rcirc-channel-alist '(("freenode" "#archlinux" "#emacs")
                                  ("oftc" "#ikiwiki"))
     "The channel list..")
   (defvar cm/identica-username "nope" "The password for bitlbee!")
@@ -448,7 +448,7 @@ may or may not be always true though.
   (defvar cm/mu4e-refile-folder (lambda (x) '()) "refile!")
   (defvar cm/erc-track-exclude "" "track exclude")
 
-  
+
   (let ((private-file "~/.emacs-priv.el"))
     (when (file-exists-p private-file)
       (load-file private-file)))
@@ -2444,342 +2444,316 @@ help with my forgetfulness.
 #+end_src
 *** RCIRC
 #+begin_src emacs-lisp
-  (eval-after-load 'rcirc '(require 'rcirc-color))
-  (require 'rcirc)
-  ;; colors!
-
-
-  (add-hook 'rcirc-markup-colors 'rcirc-markup-text-functions)
-
-  (defvar rcirc-color-vector ["black" "red" "green" "yellow" "blue" "magenta" "cyan" "white"]
-    "Vector of color names for the numbers 0-7.")
-
-  (defun rcirc-markup-colors (process sender response channel-buffer)
-    (while (re-search-forward "\C-c\\([0-7]\\)\\(.*?\\)\C-c" nil t)
-      (rcirc-add-face (match-beginning 0) (match-end 0)
-                      (cons 'foreground-color
-                            (aref rcirc-color-vector (string-to-number (match-string 1)))))
-      ;; start deleting at the end
-      (delete-region (1- (match-end 0)) (match-end 0))
-      (delete-region (match-beginning 0) (match-end 1))))
-
-  ;; Turn on logging everything to a special buffer, for debugging.
-  ;(setq rcirc-debug-flag t)
-  ;; scroll as little as possible
-  (add-hook 'rcirc-mode-hook
-            (lambda ()
-              (set
-               (make-local-variable 'scroll-conservatively)
-               8192)))
-
-  ;; add reconnect
-  (eval-after-load 'rcirc
-    '(defun-rcirc-command reconnect (arg)
-       "Reconnect the server process."
-       (interactive "i")
-       (unless process
-         (error "There's no process for this target"))
-       (let* ((server (car (process-contact process)))
-              (port (process-contact process :service))
-              (nick (rcirc-nick process))
-              channels query-buffers)
-         (dolist (buf (buffer-list))
-           (with-current-buffer buf
-             (when (eq process (rcirc-buffer-process))
-               (remove-hook 'change-major-mode-hook
-                            'rcirc-change-major-mode-hook)
-               (if (rcirc-channel-p rcirc-target)
-                   (setq channels (cons rcirc-target channels))
-                 (setq query-buffers (cons buf query-buffers))))))
-         (delete-process process)
-         (rcirc-connect server port nick
-                        rcirc-default-user-name
-                        rcirc-default-full-name
-                        channels))))
+  ; (eval-after-load 'rcirc '(require 'rcirc-color))
+  ; (require 'rcirc)
+  ; ;; colors!
+  ; 
+  ; 
+  ; (add-hook 'rcirc-markup-colors 'rcirc-markup-text-functions)
+  ; 
+  ; (defvar rcirc-color-vector ["black" "red" "green" "yellow" "blue" "magenta" "cyan" "white"]
+  ;   "Vector of color names for the numbers 0-7.")
+  ; 
+  ; (defun rcirc-markup-colors (process sender response channel-buffer)
+  ;   (while (re-search-forward "\C-c\\([0-7]\\)\\(.*?\\)\C-c" nil t)
+  ;     (rcirc-add-face (match-beginning 0) (match-end 0)
+  ;                     (cons 'foreground-color
+  ;                           (aref rcirc-color-vector (string-to-number (match-string 1)))))
+  ;     ;; start deleting at the end
+  ;     (delete-region (1- (match-end 0)) (match-end 0))
+  ;     (delete-region (match-beginning 0) (match-end 1))))
+  ; 
+  ; ;; Turn on logging everything to a special buffer, for debugging.
+  ; ;(setq rcirc-debug-flag t)
+  ; ;; scroll as little as possible
+  ; (add-hook 'rcirc-mode-hook
+  ;           (lambda ()
+  ;             (set
+  ;              (make-local-variable 'scroll-conservatively)
+  ;              8192)))
+  ; 
+  ; ;; add reconnect
+  ; (eval-after-load 'rcirc
+  ;   '(defun-rcirc-command reconnect (arg)
+  ;      "Reconnect the server process."
+  ;      (interactive "i")
+  ;      (unless process
+  ;        (error "There's no process for this target"))
+  ;      (let* ((server (car (process-contact process)))
+  ;             (port (process-contact process :service))
+  ;             (nick (rcirc-nick process))
+  ;             channels query-buffers)
+  ;        (dolist (buf (buffer-list))
+  ;          (with-current-buffer buf
+  ;            (when (eq process (rcirc-buffer-process))
+  ;              (remove-hook 'change-major-mode-hook
+  ;                           'rcirc-change-major-mode-hook)
+  ;              (if (rcirc-channel-p rcirc-target)
+  ;                  (setq channels (cons rcirc-target channels))
+  ;                (setq query-buffers (cons buf query-buffers))))))
+  ;        (delete-process process)
+  ;        (rcirc-connect server port nick
+  ;                       rcirc-default-user-name
+  ;                       rcirc-default-full-name
+  ;                       channels))))
 
 #+end_src
 This means that the format of the join command no longer supports
 space separated channels - however - does now support keyed/passworded
 channels correctly. The format is: =#channela,#channelb ,passwordb=
 #+begin_src emacs-lisp
-  (eval-after-load 'rcirc
-    '(defun-rcirc-command join (channels)
-       "Join CHANNELS.
-  CHANNELS is a comma- or space-separated string of channel names."
-       (interactive "sJoin channels: ")
-       (let* ((chanpass (split-string channels " " t))
-              (split-channels (split-string (car chanpass) "," t))
-              (buffers (mapcar (lambda (ch)
-                                 (rcirc-get-buffer-create process ch))
-                               split-channels)))
-         (rcirc-send-string process (concat "JOIN " channels))
-         (when (not (eq (selected-window) (minibuffer-window)))
-           (dolist (b buffers) ;; order the new channel buffers in the buffer list
-             (switch-to-buffer b))))))
-
-  (eval-after-load 'rcirc
-    '(defun rcirc (arg)
-       "Connect to all servers in `rcirc-server-alist'.
-
-  Do not connect to a server if it is already connected.
-
-  If ARG is non-nil, instead prompt for connection parameters."
-       (interactive "P")
-       (if arg
-           (let* ((server (completing-read "IRC Server: "
-                                           rcirc-server-alist
-                                           nil nil
-                                           (caar rcirc-server-alist)
-                                           'rcirc-server-name-history))
-                  (server-plist (cdr (assoc-string server rcirc-server-alist)))
-                  (port (read-string "IRC Port: "
-                                     (number-to-string
-                                      (or (plist-get server-plist :port)
-                                          rcirc-default-port))
-                                     'rcirc-server-port-history))
-                  (nick (read-string "IRC Nick: "
-                                     (or (plist-get server-plist :nick)
-                                         rcirc-default-nick)
-                                     'rcirc-nick-name-history))
-                  (user-name (read-string "IRC Username: "
-                                          (or (plist-get server-plist :user-name)
-                                              rcirc-default-user-name)
-                                          'rcirc-user-name-history))
-                  (password (read-passwd "IRC Password: " nil
-                                         (plist-get server-plist :password)))
-                  (channels (read-string "IRC Channels: "
-                                         (plist-get server-plist :channels)))
-                  (encryption (rcirc-prompt-for-encryption server-plist)))
-             (rcirc-connect server port nick user-name
-                         rcirc-default-full-name
-                         channels password encryption))
-         ;; connect to servers in `rcirc-server-alist'
-         (let (connected-servers)
-        (dolist (c rcirc-server-alist)
-          (let ((server (car c))
-                (nick (or (plist-get (cdr c) :nick) rcirc-default-nick))
-                (port (or (plist-get (cdr c) :port) rcirc-default-port))
-                (user-name (or (plist-get (cdr c) :user-name)
-                               rcirc-default-user-name))
-                (full-name (or (plist-get (cdr c) :full-name)
-                               rcirc-default-full-name))
-                (channels (plist-get (cdr c) :channels))
-                (password (plist-get (cdr c) :password))
-                (encryption (plist-get (cdr c) :encryption))
-                contact)
-            (when server
-              (let (connected)
-                (dolist (p (rcirc-process-list))
-                  (when (string= server (process-name p))
-                    (setq connected p)))
-                (if (not connected)
-                    (condition-case e
-                        (rcirc-connect server port nick user-name
-                                       full-name channels password encryption)
-                      (quit (message "Quit connecting to %s" server)))
-                  (with-current-buffer (process-buffer connected)
-                    (setq contact (process-contact
-                                   (get-buffer-process (current-buffer)) :host))
-                    (setq connected-servers
-                          (cons (if (stringp contact) contact server)
-                                connected-servers))))))))
-        (when connected-servers
-          (message "Already connected to %s"
-                   (if (cdr connected-servers)
-                       (concat (mapconcat 'identity (butlast connected-servers) ", ")
-                               ", and "
-                               (car (last connected-servers)))
-                     (car connected-servers))))))))
+  ; (eval-after-load 'rcirc
+  ;   '(defun-rcirc-command join (channels)
+  ;      "Join CHANNELS.
+  ; CHANNELS is a comma- or space-separated string of channel names."
+  ;      (interactive "sJoin channels: ")
+  ;      (let* ((chanpass (split-string channels " " t))
+  ;             (split-channels (split-string (car chanpass) "," t))
+  ;             (buffers (mapcar (lambda (ch)
+  ;                                (rcirc-get-buffer-create process ch))
+  ;                              split-channels)))
+  ;        (rcirc-send-string process (concat "JOIN " channels))
+  ;        (when (not (eq (selected-window) (minibuffer-window)))
+  ;          (dolist (b buffers) ;; order the new channel buffers in the buffer list
+  ;            (switch-to-buffer b))))))
+  ; 
+  ; (eval-after-load 'rcirc
+  ;   '(defun rcirc (arg)
+  ;      "Connect to all servers in `rcirc-server-alist'.
+  ; 
+  ; Do not connect to a server if it is already connected.
+  ; 
+  ; If ARG is non-nil, instead prompt for connection parameters."
+  ;      (interactive "P")
+  ;      (if arg
+  ;          (let* ((server (completing-read "IRC Server: "
+  ;                                          rcirc-server-alist
+  ;                                          nil nil
+  ;                                          (caar rcirc-server-alist)
+  ;                                          'rcirc-server-name-history))
+  ;                 (server-plist (cdr (assoc-string server rcirc-server-alist)))
+  ;                 (port (read-string "IRC Port: "
+  ;                                    (number-to-string
+  ;                                     (or (plist-get server-plist :port)
+  ;                                         rcirc-default-port))
+  ;                                    'rcirc-server-port-history))
+  ;                 (nick (read-string "IRC Nick: "
+  ;                                    (or (plist-get server-plist :nick)
+  ;                                        rcirc-default-nick)
+  ;                                    'rcirc-nick-name-history))
+  ;                 (user-name (read-string "IRC Username: "
+  ;                                         (or (plist-get server-plist :user-name)
+  ;                                             rcirc-default-user-name)
+  ;                                         'rcirc-user-name-history))
+  ;                 (password (read-passwd "IRC Password: " nil
+  ;                                        (plist-get server-plist :password)))
+  ;                 (channels (read-string "IRC Channels: "
+  ;                                        (plist-get server-plist :channels)))
+  ;                 (encryption (rcirc-prompt-for-encryption server-plist)))
+  ;            (rcirc-connect server port nick user-name
+  ;                        rcirc-default-full-name
+  ;                        channels password encryption))
+  ;        ;; connect to servers in `rcirc-server-alist'
+  ;        (let (connected-servers)
+  ;       (dolist (c rcirc-server-alist)
+  ;         (let ((server (car c))
+  ;               (nick (or (plist-get (cdr c) :nick) rcirc-default-nick))
+  ;               (port (or (plist-get (cdr c) :port) rcirc-default-port))
+  ;               (user-name (or (plist-get (cdr c) :user-name)
+  ;                              rcirc-default-user-name))
+  ;               (full-name (or (plist-get (cdr c) :full-name)
+  ;                              rcirc-default-full-name))
+  ;               (channels (plist-get (cdr c) :channels))
+  ;               (password (plist-get (cdr c) :password))
+  ;               (encryption (plist-get (cdr c) :encryption))
+  ;               contact)
+  ;           (when server
+  ;             (let (connected)
+  ;               (dolist (p (rcirc-process-list))
+  ;                 (when (string= server (process-name p))
+  ;                   (setq connected p)))
+  ;               (if (not connected)
+  ;                   (condition-case e
+  ;                       (rcirc-connect server port nick user-name
+  ;                                      full-name channels password encryption)
+  ;                     (quit (message "Quit connecting to %s" server)))
+  ;                 (with-current-buffer (process-buffer connected)
+  ;                   (setq contact (process-contact
+  ;                                  (get-buffer-process (current-buffer)) :host))
+  ;                   (setq connected-servers
+  ;                         (cons (if (stringp contact) contact server)
+  ;                               connected-servers))))))))
+  ;       (when connected-servers
+  ;         (message "Already connected to %s"
+  ;                  (if (cdr connected-servers)
+  ;                      (concat (mapconcat 'identity (butlast connected-servers) ", ")
+  ;                              ", and "
+  ;                              (car (last connected-servers)))
+  ;                    (car connected-servers))))))))
 
 #+end_src
 
 #+begin_src emacs-lisp
-  (setq rcirc-default-nick "codemac")
-  (setq rcirc-default-user-name "codemac")
-  (setq rcirc-default-user-full-name "codemac")
-
-  (setq rcirc-server-alist cm/rcirc-server-alist)
-  (setq rcirc-authinfo cm/rcirc-authinfo)
-  (setq rcirc-startup-channels-alist '(("\\.freenode\\.net$" "#emacs")))
-
-  ;  (setq rcirc-time-format "%H:%M ") ; << that format suckts, nvm.
+  ; (setq rcirc-default-nick "codemac")
+  ; (setq rcirc-default-user-name "codemac")
+  ; (setq rcirc-default-user-full-name "codemac")
+  ; 
+  ; (setq rcirc-server-alist cm/rcirc-server-alist)
+  ; (setq rcirc-authinfo cm/rcirc-authinfo)
+  ; (setq rcirc-startup-channels-alist '(("\\.freenode\\.net$" "#emacs")))
+  ; 
+  ; ;  (setq rcirc-time-format "%H:%M ") ; << that format suckts, nvm.
 #+end_src
 **** Reconnect
 #+begin_src emacs-lisp
-  (defun-rcirc-command reconnect (arg)
-    "Reconnect the server process."
-    (interactive "i")
-    (if (buffer-live-p rcirc-server-buffer)
-        (with-current-buffer rcirc-server-buffer
-          (let ((reconnect-buffer (current-buffer))
-                (server (or rcirc-server rcirc-default-server))
-                (port (if (boundp 'rcirc-port) rcirc-port rcirc-default-port))
-                (nick (or rcirc-nick rcirc-default-nick))
-                channels)
-            (dolist (buf (buffer-list))
-              (with-current-buffer buf
-                (when (equal reconnect-buffer rcirc-server-buffer)
-                  (remove-hook 'change-major-mode-hook
-                               'rcirc-change-major-mode-hook)
-                  (let ((server-plist (cdr (assoc-string server rcirc-server-alist)))) 
-                    (when server-plist 
-                      (setq channels (plist-get server-plist :channels)))))))
-            (if process (delete-process process))
-            (rcirc-connect server port nick rcirc-default-user-name rcirc-default-full-name channels)))))
-
-  ;;; Attempt reconnection at increasing intervals when a connection is
-  ;;; lost.
-
-  (defvar rcirc-reconnect-attempts 0)
-
-  ;;;###autoload
-  (define-minor-mode rcirc-reconnect-mode
-    nil nil " Reconnect" nil
-    (if rcirc-reconnect-mode
-        (progn
-          (make-local-variable 'rcirc-reconnect-attempts)
-          (add-hook 'rcirc-sentinel-hooks
-                    'rcirc-reconnect-schedule nil t))
-      (remove-hook 'rcirc-sentinel-hooks
-                   'rcirc-reconnect-schedule t)))
-
-  (defun rcirc-reconnect-schedule (process &optional sentinel seconds)
-    (condition-case err
-        (when (and (eq 'closed (process-status process))
-                   (buffer-live-p (process-buffer process)))
-          (with-rcirc-process-buffer process
-            (unless seconds
-              (setq seconds (exp (1+ rcirc-reconnect-attempts))))
-            (rcirc-print
-             process "my-rcirc.el" "ERROR" rcirc-target
-             (format "scheduling reconnection attempt in %s second(s)." seconds) t)
-            (run-with-timer seconds nil 'rcirc-reconnect-perform-reconnect process)))
-      (error (rcirc-print process "RCIRC" "ERROR" nil
-                          (format "%S" err) t))))
-
-  (defun rcirc-reconnect-perform-reconnect (process)
-    (when (and (eq 'closed (process-status process))
-               (buffer-live-p (process-buffer process)))
-      (with-rcirc-process-buffer process
-        (when rcirc-reconnect-mode
-          (if (get-buffer-process (process-buffer process))
-              ;; user reconnected manually
-              (setq rcirc-reconnect-attempts 0)
-            (let ((msg (format "attempting reconnect to %s..."
-                               (process-name process))))
-              (rcirc-print process "my-rcirc.el" "ERROR" rcirc-target
-                           msg t))
-            ;; remove the prompt from buffers
-            (condition-case err
-                (progn
-                  (save-window-excursion
-                    (save-excursion
-                      (rcirc-cmd-reconnect nil)))
-                  (setq rcirc-reconnect-attempts 0))
-              ((quit error)
-               (incf rcirc-reconnect-attempts)
-               (rcirc-print process "my-rcirc.el" "ERROR" rcirc-target
-                            (format "reconnection attempt failed: %s" err)  t)
-               (rcirc-reconnect-schedule process))))))))
+  ; (defun-rcirc-command reconnect (arg)
+  ;   "Reconnect the server process."
+  ;   (interactive "i")
+  ;   (if (buffer-live-p rcirc-server-buffer)
+  ;       (with-current-buffer rcirc-server-buffer
+  ;         (let ((reconnect-buffer (current-buffer))
+  ;               (server (or rcirc-server rcirc-default-server))
+  ;               (port (if (boundp 'rcirc-port) rcirc-port rcirc-default-port))
+  ;               (nick (or rcirc-nick rcirc-default-nick))
+  ;               channels)
+  ;           (dolist (buf (buffer-list))
+  ;             (with-current-buffer buf
+  ;               (when (equal reconnect-buffer rcirc-server-buffer)
+  ;                 (remove-hook 'change-major-mode-hook
+  ;                              'rcirc-change-major-mode-hook)
+  ;                 (let ((server-plist (cdr (assoc-string server rcirc-server-alist)))) 
+  ;                   (when server-plist 
+  ;                     (setq channels (plist-get server-plist :channels)))))))
+  ;           (if process (delete-process process))
+  ;           (rcirc-connect server port nick rcirc-default-user-name rcirc-default-full-name channels)))))
+  ; 
+  ; ;;; Attempt reconnection at increasing intervals when a connection is
+  ; ;;; lost.
+  ; 
+  ; (defvar rcirc-reconnect-attempts 0)
+  ; 
+  ; ;;;###autoload
+  ; (define-minor-mode rcirc-reconnect-mode
+  ;   nil nil " Reconnect" nil
+  ;   (if rcirc-reconnect-mode
+  ;       (progn
+  ;         (make-local-variable 'rcirc-reconnect-attempts)
+  ;         (add-hook 'rcirc-sentinel-hooks
+  ;                   'rcirc-reconnect-schedule nil t))
+  ;     (remove-hook 'rcirc-sentinel-hooks
+  ;                  'rcirc-reconnect-schedule t)))
+  ; 
+  ; (defun rcirc-reconnect-schedule (process &optional sentinel seconds)
+  ;   (condition-case err
+  ;       (when (and (eq 'closed (process-status process))
+  ;                  (buffer-live-p (process-buffer process)))
+  ;         (with-rcirc-process-buffer process
+  ;           (unless seconds
+  ;             (setq seconds (exp (1+ rcirc-reconnect-attempts))))
+  ;           (rcirc-print
+  ;            process "my-rcirc.el" "ERROR" rcirc-target
+  ;            (format "scheduling reconnection attempt in %s second(s)." seconds) t)
+  ;           (run-with-timer seconds nil 'rcirc-reconnect-perform-reconnect process)))
+  ;     (error (rcirc-print process "RCIRC" "ERROR" nil
+  ;                         (format "%S" err) t))))
+  ; 
+  ; (defun rcirc-reconnect-perform-reconnect (process)
+  ;   (when (and (eq 'closed (process-status process))
+  ;              (buffer-live-p (process-buffer process)))
+  ;     (with-rcirc-process-buffer process
+  ;       (when rcirc-reconnect-mode
+  ;         (if (get-buffer-process (process-buffer process))
+  ;             ;; user reconnected manually
+  ;             (setq rcirc-reconnect-attempts 0)
+  ;           (let ((msg (format "attempting reconnect to %s..."
+  ;                              (process-name process))))
+  ;             (rcirc-print process "my-rcirc.el" "ERROR" rcirc-target
+  ;                          msg t))
+  ;           ;; remove the prompt from buffers
+  ;           (condition-case err
+  ;               (progn
+  ;                 (save-window-excursion
+  ;                   (save-excursion
+  ;                     (rcirc-cmd-reconnect nil)))
+  ;                 (setq rcirc-reconnect-attempts 0))
+  ;             ((quit error)
+  ;              (incf rcirc-reconnect-attempts)
+  ;              (rcirc-print process "my-rcirc.el" "ERROR" rcirc-target
+  ;                           (format "reconnection attempt failed: %s" err)  t)
+  ;              (rcirc-reconnect-schedule process))))))))
 #+end_src
 *** ERC
 What I generally end up using for irc, but weechat always tends to win
 me over.
 #+begin_src emacs-lisp
-  (autoload 'erc "erc" "" t)
-  ;; some stuff stolen from pmade
-  ;; <http://pmade.com/svn/oss/rc/trunk/emacs/emacs.d/pmade/erc.el>
-  ;; Basic IRC Settings
   (setq erc-user-full-name "codemac")
   (setq erc-email-userid "j@codemac.net")
   (setq erc-nick "codemac")
-  
+
   ;; ERC Time stamps
-  (setq erc-timestamp-only-if-changed-flag nil)
+  (setq erc-timestamp-only-if-changed-flag t)
   (setq erc-timestamp-format "[%H:%M:%S] ")
   (setq erc-insert-timestamp-function 'erc-insert-timestamp-left)
-  
+
   ;; Auto-fill (static size so log files look decent)
   (setq erc-fill-column 100)
   (setq erc-fill-function 'erc-fill-static)
   (setq erc-fill-static-center 15)
-  
-  ;; Ignore messages from the server that are not channel activity
-  (setq erc-track-exclude-types '("JOIN" "NICK" "PART" "QUIT" "MODE"
-                                  "324" "329" "332" "333" "353" "477"))
-  (setq erc-track-exclude cm/erc-track-exclude)
-  
-  (setq erc-header-line-format "%n on %t (%m,%l)")
-  
+
   ;; Auto join the given channels
   (erc-autojoin-mode t)
-  (setq erc-autojoin-channels-alist cm/irc-channel-alist)
-  
+  (setq erc-autojoin-channels-alist cm/erc-autojoin-channels-alist)
+
   ;; Some other settings
-  (setq erc-prompt 'my-erc-prompt)
   (setq erc-max-buffer-size 20000)
   (setq erc-track-showcount t)
   (setq erc-auto-query 'bury)             ; Private messages go to a hidden buffer
-  (setq erc-query-display 'buffer)        ; Reuse current buffer when sending private messages
-  (setq erc-keywords cm/erc-keywords)
-  
+
   ;; Setup ERC buffers
-  (defun my-erc-hook ()
+  (defun cm/erc-hook ()
     "Correctly configure ERC buffers"
     (auto-fill-mode 0)                    ; disable auto fill
     (setq truncate-lines nil)            ; wrap lines
-    (require 'erc-highlight-nicknames)
     ;; Add some modules
     (add-to-list 'erc-modules 'scrolltobottom)
     (add-to-list 'erc-modules 'truncate)
-    (add-to-list 'erc-modules 'log)
-    (add-to-list 'erc-modules 'highlight-nicknames)
+    (add-to-list 'erc-modules 'hl-nicks)
     (erc-update-modules))
-  
-  (defun my-erc-after-connect (server nick)
-    (cond
-     ((string-match "localhost" server) (erc-message "PRIVMSG" (concat "&bitlbee identify " cm/bitlbee-password)))
-     ((string-match "freenode"  server) (erc-message "PRIVMSG" (concat "NickServ identify " cm/freenode-password)))
-     ((string-match "oftc"      server) (erc-message "PRIVMSG" (concat "nickserv identify " cm/oftc-password)))
-     ((string-match "what"      server) (erc-message "PRIVMSG" (concat "Drone enter #what.cd codemac " cm/what-password)))
-  ))
-  
-  
-  ;; Better Prompt
-  (defun my-erc-prompt ()
-    (if (and (boundp 'erc-default-recipients) (erc-default-target))
-        (erc-propertize (concat "[ " (erc-default-target) " ]") 'read-only t 'rear-nonsticky t 'front-nonsticky t)
-      (erc-propertize (concat "[ ERC ]") 'read-only t 'rear-nonsticky t 'front-nonsticky t)))
-  
-  ;; Load in some ERC extra modules (you must download these separately)
-  (autoload 'erc-highlight-nicknames "erc-hightlight-nicknames")
-  ;(require 'erc-highlight-nicknames)
-  (autoload 'erc-nicklist "erc-nicklist")
-  ;(require 'erc-nicklist)
-  (setq erc-nicklist-use-icons nil)
-  (setq erc-nicklist-voiced-position 'top)
-  
-  
-  
-  ;; Hook in
-  (add-hook 'erc-mode-hook 'my-erc-hook)
-  (add-hook 'erc-after-connect 'my-erc-after-connect)
-  
-  ;; Start a local bitlbee server
-  ;(require 'bitlbee)
-  ;(setq bitlbee-user-directory "~/.bitlbee")
-  ;(setq bitlbee-executable "/opt/local/sbin/bitlbee")
-  ;(bitlbee-start)
-  
-  ;; Give bitlbee a chance to bind to the local port
-  ;(sleep-for 1)
-  
-  
+
+  (defun cm/erc-begin ()
+    (interactive)
+    (erc-ssl :server "chat.freenode.net" :port 6697)
+    (erc :server "localhost"))
+
+  (add-hook 'erc-mode-hook 'cm/erc-hook)
+
 #+end_src
-*** Bitlbee
-A subprocess you can use as an irc<-> aim/jabber/im gateway
+**** Bitlbee Support
 #+begin_src emacs-lisp
-  (require 'bitlbee)
+  (defun bitlbee-netrc-identify ()
+    "Auto-identify for Bitlbee channels using authinfo or netrc.
+      
+     The entries that we look for in netrc or authinfo files have
+     their 'port' set to 'bitlbee', their 'login' or 'user' set to
+     the current nickname and 'server' set to the current IRC
+     server's name.  A sample value that works for authenticating
+     as user 'keramida' on server 'localhost' is:
+      
+     machine localhost port bitlbee login keramida password supersecret"
+    (interactive)
+    (when (string= (buffer-name) "&bitlbee")
+      (let* ((secret (plist-get (nth 0 (auth-source-search :max 1
+                                                           :host erc-server
+                                                           :user (erc-current-nick)
+                                                           :port "bitlbee"))
+                                :secret))
+             (password (if (functionp secret)
+                           (funcall secret)
+                         secret)))
+        (erc-message "PRIVMSG" (concat (erc-default-target) " " "identify" " " password) nil))))
+
+  ;; Enable the netrc authentication function for &biblbee channels.
+  (add-hook 'erc-join-hook 'bitlbee-netrc-identify)
 #+end_src
 *** Jabber
 Directly use jabber with elisp! It's painfully slow, and the single

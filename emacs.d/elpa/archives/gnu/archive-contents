@@ -1,8 +1,8 @@
 (1
  (ace-window .
-	     [(0 8 1)
+	     [(0 9 0)
 	      ((avy
-		(0 1 0)))
+		(0 2 0)))
 	      "Quickly switch windows." single
 	      ((:url . "https://github.com/abo-abo/ace-window")
 	       (:keywords "window" "location"))])
@@ -447,7 +447,7 @@
 	    ((:url . "http://elpa.gnu.org/packages/omn-mode.html")
 	     (:keywords))])
  (org .
-      [(20150525)
+      [(20150601)
        nil "Outline-based notes management and organizer" tar nil])
  (osc .
       [(0 1)
