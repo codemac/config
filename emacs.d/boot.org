@@ -2429,6 +2429,26 @@ How I deploy my personal website.
   
   (setq org-src-fontify-natively nil)
 #+end_src
+
+Also - remember to give everything an id number. This will really help
+any of my plans to get org mode todos into easier to consume formats.
+#+begin_src emacs-lisp
+(add-hook 'org-capture-prepare-finalize-hook 'org-id-get-create)
+#+end_src
+
+Finally, before I save a file, add the id's!
+#+begin_src emacs-lisp
+  (defun cm/org-add-ids-to-headlines-in-file ()
+    "Add ID properties to all headlines in the current file which
+  do not already have one."
+    (interactive)
+    (org-map-entries 'org-id-get-create))
+
+  (add-hook 'org-mode-hook
+            (lambda ()
+              (add-hook 'before-save-hook 'my/org-add-ids-to-headlines-in-file nil 'local)))
+#+end_src
+
 **** Appt Reminders
 This creates the appt buffer so we get notifications about
 appointments in the org mode calendar. It's not perfect, but it does
