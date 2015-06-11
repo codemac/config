@@ -2709,7 +2709,7 @@ me over.
   (setq erc-user-full-name "codemac")
   (setq erc-email-userid "j@codemac.net")
   (setq erc-nick "codemac")
-
+  (setq erc-prompt-for-password nil)
   ;; ERC Time stamps
   (setq erc-timestamp-only-if-changed-flag t)
   (setq erc-timestamp-format "[%H:%M:%S] ")
@@ -2719,6 +2719,9 @@ me over.
   (setq erc-fill-column 100)
   (setq erc-fill-function 'erc-fill-static)
   (setq erc-fill-static-center 15)
+  (setq erc-join-buffer 'bury)
+
+  (setq erc-track-exclude-types '("JOIN" "NICK" "PART" "QUIT"))
 
   ;; Auto join the given channels
   (erc-autojoin-mode t)
@@ -2773,7 +2776,7 @@ me over.
         (erc-message "PRIVMSG" (concat (erc-default-target) " " "identify" " " password) nil))))
 
   ;; Enable the netrc authentication function for &biblbee channels.
-  (add-hook 'erc-join-hook 'bitlbee-netrc-identify)
+  ;(add-hook 'erc-join-hook 'bitlbee-netrc-identify)
 #+end_src
 *** Jabber
 Directly use jabber with elisp! It's painfully slow, and the single
