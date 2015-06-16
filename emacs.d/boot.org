@@ -2113,7 +2113,7 @@ Functions borrowed from Sacha Chua.
 #+begin_src emacs-lisp  
   (setq org-stuck-projects
             '("-MAYBE-DONE" "TODO"))
-  
+
   (add-to-list 'auto-mode-alist '("\\.org$" . org-mode))
   (setq org-return-follows-link t)
   (global-set-key (kbd "C-c l") 'org-store-link)
@@ -2126,7 +2126,7 @@ Functions borrowed from Sacha Chua.
   (setq org-default-notes-files '("~/org/_notes/notes.org"))
   (setq org-agenda-files '("~/org/" "~/org/_notes/"))
   (setq org-refile-targets '((nil :maxlevel . 5) (org-agenda-files :maxlevel . 5)))
-  
+
   (setq org-log-done t)
   (setq org-hide-leading-stars t)
   (setq org-return-follows-link t)
@@ -2136,7 +2136,7 @@ Functions borrowed from Sacha Chua.
   (setq org-agenda-skip-deadline-if-done t)
   (setq org-agenda-skip-scheduled-if-done t)
   (setq org-start-on-weekday nil)
-;  (setq org-completion-use-ido t)
+  ;(setq org-completion-use-ido t)
   (setq org-agenda-show-all-dates t)
   (setq org-reverse-note-order nil)
   (setq org-fontify-done-headline t)
@@ -2147,11 +2147,12 @@ Functions borrowed from Sacha Chua.
   (setq org-outline-path-complete-in-steps nil) ;ido lol
   (setq org-refile-use-outline-path 'file)
   (setq org-use-speed-commands t)
+  (setq org-src-fontify-natively t)
   ;; less file local settings!
   (setq org-archive-location "_archive/%s_old::")
   (setq org-global-properties '(("Effort_ALL" . "0:10 0:20 0:30 0:40 0:50 1:00 2:00 3:00 4:00 5:00 6:00 7:00 8:00 9:00 10:00 11:00 12:00")))
   (setq org-columns-default-format "%TODO %50ITEM(Task) %17Effort(Estimated Effort){:} %CLOCKSUM")
-  
+
   (global-set-key (kbd "<f6>") 'org-clock-goto)
 #+end_src
 **** Tags and todo keywords
@@ -2731,7 +2732,33 @@ me over.
   (setq erc-max-buffer-size 20000)
   (setq erc-track-showcount t)
   (setq erc-auto-query 'bury)             ; Private messages go to a hidden buffer
+  (setq erc-autojoin-timing 'ident) ; wait for the delay (or ident resolution)
+  (setq erc-autojoin-delay 15)
 
+  (defun bitlbee-netrc-identify ()
+    "Auto-identify for Bitlbee channels using authinfo or netrc.
+    
+    The entries that we look for in netrc or authinfo files have
+    their 'port' set to 'bitlbee', their 'login' or 'user' set to
+    the current nickname and 'server' set to the current IRC
+    server's name.  A sample value that works for authenticating
+    as user 'keramida' on server 'localhost' is:
+    
+    machine localhost port bitlbee login keramida password supersecret"
+    (interactive)
+    (when (string= (buffer-name) "&bitlbee")
+      (let* ((secret (plist-get (nth 0 (auth-source-search :max 1
+							   :host erc-server
+							   :user (erc-current-nick)
+							   :port "bitlbee"))
+				:secret))
+	     (password (if (functionp secret)
+			   (funcall secret)
+			 secret)))
+	(erc-message "PRIVMSG" (concat (erc-default-target) " " "identify" " " password) nil))))
+  
+  ;; Enable the netrc authentication function for &biblbee channels.
+  (add-hook 'erc-join-hook 'bitlbee-netrc-identify)
   ;; Setup ERC buffers
   (defun cm/erc-hook ()
     "Correctly configure ERC buffers"
@@ -2745,10 +2772,11 @@ me over.
 
   (defun cm/erc-begin ()
     (interactive)
-    (erc-ssl :server "chat.freenode.net" :port 6697)
+    (erc-ssl :server "weber.freenode.net" :port 6697)
     (erc :server "localhost"))
 
   (add-hook 'erc-mode-hook 'cm/erc-hook)
+  (add-hook 'erc-join-hook 'bitlbee-netrc-identify)
 
 #+end_src
 **** Bitlbee Support

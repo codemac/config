@@ -1,6 +1,6 @@
 -- look at /etc/notion for descriptions
 META="Mod4+"
-ALTMETA=""
+ALTMETA="Mod4+"
 
 XTERM="xterm"
 
