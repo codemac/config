@@ -109,8 +109,8 @@ defbindings("WClientWin", {
          "programs' resizing problems."),
        kpress_wait(META.."L", "WClientWin.nudge(_)"),
 
-       bdoc("Kill client owning the client window."),
-       kpress("C", "WClientWin.kill(_)"),
+--       bdoc("Kill client owning the client window."),
+--       kpress("C", "WClientWin.kill(_)"),
 
        bdoc("Send next key press to the client window. "..
             "Some programs may not allow this by default."),
@@ -133,8 +133,10 @@ defbindings("WGroupCW", {
 -- contexts/objects always gets to handle the key press.
 
 defbindings("WMPlex", {
-    bdoc("Close current object."),
-    kpress_wait(META.."C", "WRegion.rqclose_propagate(_, _sub)"),
+	       submap(META.."K", {
+			 bdoc("Close current object."),
+			 kpress_wait(META.."C", "WRegion.rqclose_propagate(_, _sub)"),
+	       }),
 })
 
 -- Frames for transient windows ignore this bindmap
@@ -157,8 +159,8 @@ defbindings("WMPlex.toplevel", {
     bdoc("Query for command line to execute."),
     kpress(ALTMETA.."F3", "mod_query.query_exec(_)"),
 
-    bdoc("Query for Lua code to execute."),
-    kpress(META.."F3", "mod_query.query_lua(_)"),
+  --  bdoc("Query for Lua code to execute."),
+--    kpress(META.."F3", "mod_query.query_lua(_)"),
 
     bdoc("Query for host to connect to with SSH."),
     kpress(ALTMETA.."F4", "mod_query.query_ssh(_, ':ssh')"),

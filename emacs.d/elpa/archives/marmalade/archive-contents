@@ -895,7 +895,7 @@
 	   [(1 4)
 	    nil "pattern matching for elisp" single])
  (shackle .
-	  [(0 6 0)
+	  [(0 7 0)
 	   ((cl-lib
 	     (0 5)))
 	   "Enforce rules for popups" single])
@@ -1362,7 +1362,7 @@
 	   [(0 0 1)
 	    nil "get stuff from pinboard" single])
  (picpocket .
-	    [(13)
+	    [(14)
 	     nil "Image viewer" single])
  (pickup .
 	 [(0 0 3)
@@ -1571,7 +1571,7 @@
 	      (1 6 8)))
 	    "Blog from Org mode to wordpress" tar])
  (org-trello .
-	     [(0 6 9 6)
+	     [(0 7 0)
 	      ((request-deferred
 		(0 2 0))
 	       (deferred
@@ -2068,7 +2068,7 @@
 		     (1 2 0)))
 		   "completing-read over all files in Git" single])
  (magit .
-	[(1 4 1)
+	[(1 4 2)
 	 ((cl-lib
 	   (0 5))
 	  (git-commit-mode
@@ -2350,7 +2350,7 @@
 	 [(1 2)
 	  nil "major editing mode for Jasmin Java bytecode assembler files" single])
  (jammer .
-	 [(0 0 2)
+	 [(0 0 3)
 	  nil "Punish yourself for using Emacs inefficiently" single])
  (jam-mode .
 	   [(0 3)
@@ -2934,7 +2934,7 @@
 	 [(0 1 3)
 	  nil "Send text to http://fpaste.org" single])
  (form-feed .
-	    [(0 1 8)
+	    [(0 1 9)
 	     nil "Display ^L glyphs as horizontal lines" single])
  (fooddice .
 	   [(0 1)
@@ -3188,7 +3188,7 @@
 	    [(0)
 	     nil "Resize a frame.  In particular, fit a frame to its buffers." single])
  (firestarter .
-	      [(0 1 4)
+	      [(0 2 2)
 	       nil "Execute (shell) commands on save" single])
  (fiplr .
 	[(0 1 3)
@@ -3259,9 +3259,11 @@
        (2 2 0)))
      "Modern API for working with files and directories" single])
  (eyebrowse .
-	    [(0 4 5)
+	    [(0 6 5)
 	     ((dash
-	       (2 7 0)))
+	       (2 7 0))
+	      (emacs
+	       (24 3 1)))
 	     "Easy window config switching" single])
  (extend-dnd .
 	     [(0 5)
@@ -4368,6 +4370,9 @@
 	       ((emacs
 		 (24 1)))
 	       "Ansible documentation Minor Mode" single])
+ (annotate .
+	   [(0 2 2)
+	    nil "annotate files without changing them" single])
  (angular-snippets .
 		   [(0 2 3)
 		    ((s
@@ -4398,7 +4403,7 @@
 		  (1 11 5)))
 		"Space align various Clojure forms" single])
  (alchemist .
-	    [(0 16 1)
+	    [(1 0 1)
 	     ((emacs
 	       (24)))
 	     "Elixir tooling integration into Emacs" tar])
