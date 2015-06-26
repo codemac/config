@@ -185,6 +185,15 @@ who provided this original functionality for me.
                   (dirs-inside-directory "~/.emacs.d/site-lisp/"))
 #+end_src
 
+*** Guix Support
+This adds the load path of the guix profile of the current user. I'm
+currently using guix to manage packages for my local users.
+
+This probably works better in GuixSD - but the systemd / dmd crap and
+the icecat / firefox crap keeps me using arch as my base system.
+#+begin_src emacs-lisp
+  (add-to-list 'load-path "~/.guix-profile/share/emacs/site-lisp")
+#+end_src
 ** Emacs backup files
 I like putting these all in one place. It helps to not have them
 scattered accross my entire filesystem, and then they aren't pushed
@@ -2091,14 +2100,20 @@ Functions borrowed from Sacha Chua.
             (tags "ERRAND"))
            ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
             (org-agenda-sorting-strategy '(user-defined-up))))
-          ("o" "Phone Agenda"
+          ("p" "Phone Agenda"
            ((tags-todo "PHONE-BLOCKED=\"t\"/!-WAITING")
             (tags-todo "PHONE-BLOCKED=\"t\"/!+WAITING")
             (tags "PHONE+PROJECT")
             (tags "PHONE"))
            ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
             (org-agenda-sorting-strategy '(user-defined-up))))
-          ("p" "People Agenda"
+          ("o" "Project Agenda"
+           ((tags-todo "PROJECT-BLOCKED=\"t\"/!-WAITING")
+            (tags-todo "PROJECT-BLOCKED=\"t\"/!+WAITING")
+            (tags "PROJECT"))
+           ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
+            (org-agenda-sorting-strategy '(user-defined-up))))
+          ("l" "People Agenda"
            ((todo "-ERRAND-HOME-INTERNET-PROJECT-COMPUTER-PHONE"))
            ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
             (org-agenda-sorting-strategy '(user-defined-up))))
@@ -3384,6 +3399,7 @@ settings that occur above. Much easier this way.
   ; oh god it flashes so much. Don't know how to do this better yet.
   (blink-cursor-mode 0)
   (set-cursor-color "#ffff00")
+  (set-mouse-color "#ffff00")
 #+end_src
 ** Server process
 Start a server if it's not started, and I'm not root.

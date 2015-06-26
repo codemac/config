@@ -8,20 +8,20 @@ return {
         ["date_format"] = "%a %Y-%m-%d %H:%M",
     },
     ["battery"] = {
-        ["info_format"] = "%s%.f%s",
         ["blink_on_discharge"] = true,
         ["status_display"] = {
             ["discharging"] = "â\134\147",
-            ["charging"] = "â\134\145",
             ["full"] = " ",
+            ["charging"] = "â\134\145",
         },
-        ["content_format"] = "|| %s",
+        ["bat_no"] = 0,
         ["info_data"] = {
             [1] = "status",
             [2] = "percentage",
             [3] = "status",
         },
-        ["bat_no"] = 0,
+        ["content_format"] = "|| %s",
+        ["info_format"] = "%s%.f%s",
     },
 }
 
