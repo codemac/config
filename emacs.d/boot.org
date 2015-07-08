@@ -1782,6 +1782,9 @@ horrifying.
   (global-set-key (kbd "C-c i c") '(lambda ()
                                      (interactive)
                                      (notmuch-search "tag:codemac AND tag:inbox" 'notmuch-search-oldest-first)))
+  (global-set-key (kbd "C-c i i") '(lambda ()
+                                     (interactive)
+                                     (notmuch-search "tag:inbox" 'notmuch-search-oldest-first)))
 #+end_src
 *** Geiser
 Let's get our scheme on!
@@ -2742,6 +2745,9 @@ me over.
   (erc-autojoin-mode t)
   (setq erc-autojoin-channels-alist cm/erc-autojoin-channels-alist)
 
+  (setq erc-server-auto-reconnect t)
+  (setq erc-server-reconnect-attempts 5)
+  (setq erc-server-reconnect-timeout 5)
   ;; Some other settings
   (setq erc-max-buffer-size 20000)
   (setq erc-track-showcount t)
@@ -2762,15 +2768,15 @@ me over.
     (interactive)
     (when (string= (buffer-name) "&bitlbee")
       (let* ((secret (plist-get (nth 0 (auth-source-search :max 1
-							   :host erc-server
-							   :user (erc-current-nick)
-							   :port "bitlbee"))
-				:secret))
-	     (password (if (functionp secret)
-			   (funcall secret)
-			 secret)))
-	(erc-message "PRIVMSG" (concat (erc-default-target) " " "identify" " " password) nil))))
-  
+                                                           :host erc-server
+                                                           :user (erc-current-nick)
+                                                           :port "bitlbee"))
+                                :secret))
+             (password (if (functionp secret)
+                           (funcall secret)
+                         secret)))
+        (erc-message "PRIVMSG" (concat (erc-default-target) " " "identify" " " password) nil))))
+
   ;; Enable the netrc authentication function for &biblbee channels.
   (add-hook 'erc-join-hook 'bitlbee-netrc-identify)
   ;; Setup ERC buffers
