@@ -1785,6 +1785,8 @@ horrifying.
   (global-set-key (kbd "C-c i i") '(lambda ()
                                      (interactive)
                                      (notmuch-search "tag:inbox" 'notmuch-search-oldest-first)))
+
+  (global-set-key (kbd "C-c i s") 'notmuch-search)
 #+end_src
 *** Geiser
 Let's get our scheme on!
@@ -2144,6 +2146,9 @@ Functions borrowed from Sacha Chua.
   (setq org-default-notes-files '("~/org/_notes/notes.org"))
   (setq org-agenda-files '("~/org/" "~/org/_notes/"))
   (setq org-refile-targets '((nil :maxlevel . 5) (org-agenda-files :maxlevel . 5)))
+
+  (setq org-agenda-tags-column -90)
+  (setq org-tags-column -90)
 
   (setq org-log-done t)
   (setq org-hide-leading-stars t)
