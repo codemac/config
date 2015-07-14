@@ -334,7 +334,7 @@
 	       ((:url . "http://elpa.gnu.org/packages/jgraph-mode.html")
 		(:keywords "tex" "wp"))])
  (js2-mode .
-	   [(20150202)
+	   [(20150713)
 	    ((emacs
 	      (24 1))
 	     (cl-lib
@@ -452,7 +452,7 @@
 	    ((:url . "http://elpa.gnu.org/packages/omn-mode.html")
 	     (:keywords))])
  (org .
-      [(20150706)
+      [(20150713)
        nil "Outline-based notes management and organizer" tar nil])
  (osc .
       [(0 1)

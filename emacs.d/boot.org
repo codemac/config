@@ -912,15 +912,6 @@ what all these features really mean.
 
   (projectile-global-mode)
 
-  ;; use helm-projectile
-  (setq projectile-completion-system 'helm)
-  (helm-projectile-on)
-  ; I dislike helm grep immensely (super slow!) and I don't use ack / ag
-  ; / etc. This disables C-c p s <g,a,s> and just does C-c p s like it
-  ; used to.
-  (define-key projectile-command-map (kbd "s")  'projectile-grep)
-  (setq projectile-use-git-grep t)
-
   (defun cm/projectile-dirlocals-hook (dir)
     (cond ((equal dir 'mesa)
            (progn
@@ -985,6 +976,15 @@ this page is *STUPID* slow in eww)
 
   (helm-mode 1)
 
+  ;; use helm-projectile
+  (setq projectile-completion-system 'helm)
+  (helm-projectile-on)
+  ; I dislike helm grep immensely (super slow!) and I don't use ack / ag
+  ; / etc. This disables C-c p s <g,a,s> and just does C-c p s like it
+  ; used to.
+  (define-key projectile-command-map (kbd "s")  'projectile-grep)
+  (setq projectile-use-git-grep t)
+
   (global-set-key (kbd "M-x") 'helm-M-x)
   (global-set-key (kbd "C-c h") 'helm-command-prefix)
   (global-unset-key (kbd "C-x c"))
@@ -1002,13 +1002,6 @@ this page is *STUPID* slow in eww)
     (setq helm-google-suggest-use-curl-p t))
 
   (delete helm-source-locate helm-for-files-preferred-list)
-
-  (add-to-list 'display-buffer-alist
-                      `(,(rx bos "*helm" (* not-newline) "*" eos)
-                           (display-buffer-in-side-window)
-                           (inhibit-same-window . t)
-                           (window-height . 0.4)))
-
 #+end_src
 **** Mac os x hacks
 #+begin_src emacs-lisp
