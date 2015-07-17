@@ -334,6 +334,7 @@ the brackets that rc parses.
 #+end_src
 * ELPA
 #+begin_src emacs-lisp
+  (require 'use-package)
 #+end_src
 * Color theme
 Yup, zenburn.
@@ -564,8 +565,11 @@ we'll roll with this.
 Mac fix for info installation location!
 #+begin_src emacs-lisp
   (require 'info)
-  (setq Info-directory-list
-        (cons (expand-file-name "/opt/local/share/info/") Info-directory-list))
+  (when (eq system-type 'darwin)
+    (setq Info-directory-list
+          (cons
+           (expand-file-name "/opt/local/share/info/")
+           Info-directory-list)))
 #+end_src
 ** Pcomplete
 #+begin_src emacs-lisp
@@ -905,14 +909,12 @@ what all these features really mean.
 * External
 ** Projectile
 #+begin_src emacs-lisp
-  (require 'projectile)
-
-  ; this is the default, don't need to set it
-  ;(set projectile-indexing-method 'alien)
-
-  (projectile-global-mode)
-
-  (defun cm/projectile-dirlocals-hook (dir)
+  (use-package
+   projectile
+   :diminish projectile-mode
+   :config
+   (projectile-global-mode)
+   (defun cm/projectile-dirlocals-hook (dir)
     (cond ((equal dir 'mesa)
            (progn
              (make-local-variable 'process-environment)
@@ -937,7 +939,8 @@ what all these features really mean.
                    (append '("GOPATH=/home/codemac/work/services/external"
                              "GOROOT=/usr/lib/go"
                              "GOBIN=/home/codemac/bin")
-                           process-environment))))))
+                           process-environment)))))))
+
 
 
 #+end_src
@@ -947,8 +950,12 @@ This is a mode that provides a full http server in elisp. It does
 default to serving =~/public_html=, so I turn that off here.
 
 #+begin_src emacs-lisp
-  (setq httpd-root "")
-  (setq httpd-serve-files nil)  
+  (use-package
+   simple-httpd
+   :commands (httpd-start httpd-serve-directory)
+   :config
+   (setq httpd-root "")
+   (setq httpd-serve-files nil))
 #+end_src
 *** Helm
 Helm is the new Anything. Helm will help steer you in the right
@@ -1004,22 +1011,12 @@ this page is *STUPID* slow in eww)
   (delete helm-source-locate helm-for-files-preferred-list)
 #+end_src
 **** Mac os x hacks
+Get spotlight into list of the files that helm can inspect, and get
+top output that doesn't suck
 #+begin_src emacs-lisp
   (when (eq system-type 'darwin)
-#+end_src
-
-Get spotlight into list of the files that helm can inspect.
-#+begin_src emacs-lisp
     (add-to-list 'helm-for-files-preferred-list 'helm-c-source-mac-spotlight)
-#+end_src
-
-Get top output that doesn't suck
-#+begin_src emacs-lisp
-    (setq helm-c-top-command "COLUMNS=%s top -l 1")
-#+end_src
-end of mac os x hacks
-#+begin_src emacs-lisp
-  )
+    (setq helm-c-top-command "COLUMNS=%s top -l 1"))
 #+end_src
 **** Global Tags
 Yay gtags support for helm!
@@ -1140,64 +1137,36 @@ out semantically.
 #+end_src
 *** Ace Jump
 #+begin_src emacs-lisp
-  (require 'ace-jump-mode)
-  (define-key global-map (kbd "C-c SPC") 'ace-jump-mode)
+  (use-package
+   ace-jump-mode
+   :bind ("C-." . ace-jump-mode))
 #+end_src
 *** Hilight line
 #+begin_src emacs-lisp
-  ;; From emacs-wiki:
-  (defun shade-color (intensity)
-    "print the #rgb color of the background, dimmed according to intensity"
-    (interactive "nIntensity of the shade : ")
-    (apply 'format "#%02x%02x%02x"
-           (mapcar (lambda (x)
-                     (if (> (lsh x -8) intensity)
-                         (- (lsh x -8) intensity)
-                       0))
-                   (color-values (cdr (assoc 'background-color (frame-parameters)))))))
-  
   ;; Default hl
   (global-hl-line-mode t)
   (make-variable-buffer-local 'global-hl-line-mode)
-  ;(set-face-background hl-line-face (shade-color 08))  
-  
-  ;(defface hl-line-highlight-face
-  ;  '((t :inherit highlight))
-  ;  "Face for highlighting the current line with `hl-line-fancy-highlight'."
-  ;  :group 'hl-line)
-  
-  ;(defun hl-line-fancy-highlight ()
-  ;  (set (make-local-variable 'hl-line-face) 'hl-line-highlight-face)
-  ;  ;;    (set (make-local-variable 'line-move-visual) nil)
-  ;  ;;    (set (make-local-variable 'cursor-type) nil)
-  ;  (setq global-hl-line-mode nil)
-  ;  (hl-line-mode))
-  
-  ;(add-hook 'org-agenda-mode-hook 'hl-line-fancy-highlight)
-  ;(add-hook 'gnus-summary-mode-hook 'hl-line-fancy-highlight)
-  ;(add-hook 'gnus-group-mode-hook 'hl-line-fancy-highlight)
+
 #+end_src
 ** Major Modes
    
 *** Ledger
+I use ledger to track my finances. I have it align amounts and use ISO
+dates, but other than that pretty normal config
 #+begin_src emacs-lisp
-  (autoload 'ledger-mode "ledger-mode" "ledger-mode autoload" t nil)
-  (add-to-list 'auto-mode-alist '("\\.ledger$" . ledger-mode))
-#+end_src
-
-Align amounts correctly.
-#+begin_src emacs-lisp
-  (setq ledger-post-auto-adjust-amounts t)
-#+end_src
-
-Use a sane date format! holy crap..
-#+begin_src emacs-lisp
-  (setq ledger-use-iso-dates t)
+  (use-package
+   ledger-mode
+   :mode ("\\.ledger$"
+          "\\.journal$")
+   :init
+   (setq ledger-post-auto-adjust-amounts t)
+   (setq ledger-use-iso-dates t))
 #+end_src
 *** Markdown
 #+begin_src emacs-lisp
-  (autoload 'markdown-mode "markdown-mode" "Run ze markdownz" nil)
-  (add-to-list 'auto-mode-alist '("\\.\\(md\\|markdown\\)$" . markdown-mode))
+  (use-package
+   markdown-mode
+   :mode "\\.\\(md\\|markdown\\|mdwn\\)$")
 #+end_src
 *** Evil
 **** Activate Evil!
@@ -1412,7 +1381,6 @@ Lisp seems to be the current mental debate.
 *** C
 My C settings.
 #+begin_src emacs-lisp
-  (require 'cl)
   (require 'compile)
   
   (defun* get-closest-pathname (&optional (file "*akefile") (dir default-directory))
