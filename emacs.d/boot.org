@@ -333,8 +333,12 @@ the brackets that rc parses.
 ;;; TODO
 #+end_src
 * ELPA
+I organize my packages use with the amazing https://github.com/jwiegley/use-package
 #+begin_src emacs-lisp
-  (require 'use-package)
+  (eval-when-compile
+    (require 'use-package))
+  (require 'diminish)
+  (require 'bind-key)
 #+end_src
 * Color theme
 Yup, zenburn.
@@ -906,140 +910,7 @@ what all these features really mean.
 
   (advice-add #'browse-url-can-use-xdg-open :around #'cm/advise-browse-url-can-use-xdg-open)
 #+end_src
-* External
-** Projectile
-#+begin_src emacs-lisp
-  (use-package
-   projectile
-   :diminish projectile-mode
-   :config
-   (projectile-global-mode)
-   (defun cm/projectile-dirlocals-hook (dir)
-    (cond ((equal dir 'mesa)
-           (progn
-             (make-local-variable 'process-environment)
-             (setq process-environment
-                   (append '("GOPATH=/home/codemac/work/mesa/go"
-                             "GOROOT=/usr/lib/go"
-                             "GOBIN=/home/codemac/work/mesa/bin/linux_amd64"
-                             "IGROOT=/tmp/igroot")
-                           process-environment))))
-          ((equal dir 'codego)
-           (progn
-             (make-local-variable 'process-environment)
-             (setq process-environment
-                   (append '("GOPATH=/home/codemac/code/go"
-                             "GOROOT=/usr/lib/go"
-                             "GOBIN=/home/codemac/bin")
-                           process-environment))))
-          ((equal dir 'igservices)
-           (progn
-             (make-local-variable 'process-environment)
-             (setq process-environment
-                   (append '("GOPATH=/home/codemac/work/services/external"
-                             "GOROOT=/usr/lib/go"
-                             "GOBIN=/home/codemac/bin")
-                           process-environment)))))))
-
-
-
-#+end_src
-** Emacs Features
-*** simple httpd
-This is a mode that provides a full http server in elisp. It does
-default to serving =~/public_html=, so I turn that off here.
-
-#+begin_src emacs-lisp
-  (use-package
-   simple-httpd
-   :commands (httpd-start httpd-serve-directory)
-   :config
-   (setq httpd-root "")
-   (setq httpd-serve-files nil))
-#+end_src
-*** Helm
-Helm is the new Anything. Helm will help steer you in the right
-direction!
-
-#+begin_src emacs-lisp
-  (require 'helm)
-  (require 'helm-config)
-#+end_src
-
-Configure helm to be used for =M-x=... well let's just use it for
-everything. Helm is GNU for emacs. Helm is borg. We are the helm. You
-will be assimilated.
-
-Mostly lifted from https://tuhdo.github.io/helm-intro.html (note that
-this page is *STUPID* slow in eww)
-#+begin_src emacs-lisp
-  (setq helm-split-window-in-side-p t
-        helm-ff-file-name-history-use-recentf t
-        helm-ff-search-library-in-sexp t
-        helm-move-to-line-cycle-in-source t
-        helm-scroll-amount 8
-        helm-ff-file-name-history-use-recentf t
-        helm-man-or-woman-function 'woman)
-
-  (helm-mode 1)
-
-  ;; use helm-projectile
-  (setq projectile-completion-system 'helm)
-  (helm-projectile-on)
-  ; I dislike helm grep immensely (super slow!) and I don't use ack / ag
-  ; / etc. This disables C-c p s <g,a,s> and just does C-c p s like it
-  ; used to.
-  (define-key projectile-command-map (kbd "s")  'projectile-grep)
-  (setq projectile-use-git-grep t)
-
-  (global-set-key (kbd "M-x") 'helm-M-x)
-  (global-set-key (kbd "C-c h") 'helm-command-prefix)
-  (global-unset-key (kbd "C-x c"))
-  (define-key helm-map (kbd "<tab>") 'helm-execute-persistent-action)
-  (define-key helm-map (kbd "C-i") 'helm-execute-persistent-action)
-  (define-key helm-map (kbd "C-z")  'helm-select-action)
-  (global-set-key (kbd "M-y") 'helm-show-kill-ring)
-  (global-set-key (kbd "C-x b") 'helm-mini)
-  (global-set-key (kbd "C-x C-f") 'helm-find-files)
-  (global-set-key (kbd "C-c h o") 'helm-occur)
-  (global-set-key (kbd "C-h SPC") 'helm-all-mark-rings)
-  (global-set-key (kbd "C-c h x") 'helm-register)
-
-  (when (executable-find "curl")
-    (setq helm-google-suggest-use-curl-p t))
-
-  (delete helm-source-locate helm-for-files-preferred-list)
-#+end_src
-**** Mac os x hacks
-Get spotlight into list of the files that helm can inspect, and get
-top output that doesn't suck
-#+begin_src emacs-lisp
-  (when (eq system-type 'darwin)
-    (add-to-list 'helm-for-files-preferred-list 'helm-c-source-mac-spotlight)
-    (setq helm-c-top-command "COLUMNS=%s top -l 1"))
-#+end_src
-**** Global Tags
-Yay gtags support for helm!
-#+begin_src emacs-lisp
-  (require 'helm-gtags)
-  
-  (add-hook 'c-mode-hook (lambda () (helm-gtags-mode)))
-  
-  ;; customize
-  (setq helm-c-gtags-path-style 'absolute)
-  (setq helm-c-gtags-ignore-case t)
-  (setq helm-c-gtags-read-only nil)
-  
-  ;; key bindings
-  (add-hook 'helm-gtags-mode-hook
-            '(lambda ()
-               (local-set-key (kbd "C-c g t") 'helm-gtags-find-tag)
-               (local-set-key (kbd "C-c g r") 'helm-gtags-find-rtag)
-               (local-set-key (kbd "C-c g s") 'helm-gtags-find-symbol)
-               (local-set-key (kbd "C-c g f") 'helm-gtags-find-files)
-               (local-set-key (kbd "C-t") 'helm-gtags-pop-stack)))
-#+end_src
-*** Uniquify
+** Uniquify
 So useful, I think everyone should have this turned on.
 #+begin_src emacs-lisp
   (require 'uniquify)
@@ -1065,10 +936,112 @@ So useful, I think everyone should have this turned on.
     (uniquify-all-lines-region (point-min) (point-max)))
 #+end_src
 
+* External
+** Emacs Features
+*** simple httpd
+This is a mode that provides a full http server in elisp. It does
+default to serving =~/public_html=, so I turn that off here.
+
+#+begin_src emacs-lisp
+  (use-package
+   simple-httpd
+   :commands (httpd-start httpd-serve-directory)
+   :config
+   (setq httpd-root "")
+   (setq httpd-serve-files nil))
+#+end_src
+*** Helm
+Helm is the new Anything. Helm will help steer you in the right
+direction!
+
+Configure helm to be used for =M-x=... well let's just use it for
+everything. Helm is GNU for emacs. Helm is borg. We are the helm. You
+will be assimilated.
+
+Mostly lifted from https://tuhdo.github.io/helm-intro.html (note that
+this page is *STUPID* slow in eww)
+
+#+begin_src emacs-lisp
+  (use-package helm
+    :diminish helm-mode
+    :bind (("M-x" . helm-M-x)
+           ("M-y" . helm-show-kill-ring)
+           ("C-x b" . helm-mini)
+           ("C-x C-f" . helm-find-files)
+           ("C-h SPC" . helm-all-mark-rings))
+    :init
+    (require 'helm-config)
+    (global-set-key (kbd "C-c h") 'helm-command-prefix)
+    (helm-mode 1)
+    :config
+    (setq helm-split-window-in-side-p t
+          helm-ff-file-name-history-use-recentf t
+          helm-ff-search-library-in-sexp t
+          helm-move-to-line-cycle-in-source t
+          helm-scroll-amount 8
+          helm-ff-file-name-history-use-recentf t
+          helm-man-or-woman-function 'woman)
+    (when (executable-find "curl")
+      (setq helm-google-suggest-use-curl-p t))
+    (delete helm-source-locate helm-for-files-preferred-list)
+    
+    (when cm/using-rc
+        (setq helm-top-command "COLUNMS=%s top -b -n 1"))
+
+    ;; bindings I haven't figured out with :bind
+    (global-unset-key (kbd "C-x c"))
+    (define-key helm-map (kbd "<tab>") 'helm-execute-persistent-action)
+    (define-key helm-map (kbd "C-i") 'helm-execute-persistent-action)
+    (define-key helm-map (kbd "C-z")  'helm-select-action)
+    (global-set-key (kbd "C-c h o") 'helm-occur)
+    (global-set-key (kbd "C-c h x") 'helm-register))
+
+  ;; I dislike helm grep immensely (super slow!) and I don't use ack / ag
+  ;; / etc. This disables C-c p s <g,a,s> and just does C-c p s like it
+  ;; used to.
+
+  (use-package helm-projectile
+    :config
+    (setq projectile-completion-system 'helm)
+    (helm-projectile-on)
+    (define-key projectile-command-map (kbd "s")  'projectile-grep))
+
+
+#+end_src
+**** Mac os x hacks
+Get spotlight into list of the files that helm can inspect, and get
+top output that doesn't suck
+#+begin_src emacs-lisp
+  (when (eq system-type 'darwin)
+    (add-to-list 'helm-for-files-preferred-list 'helm-c-source-mac-spotlight)
+    (setq helm-c-top-command "COLUMNS=%s top -l 1"))
+#+end_src
+**** Global Tags
+Yay gtags support for helm!
+#+begin_src emacs-lisp
+  (use-package helm-gtags
+    :config
+    (add-hook 'c-mode-hook (lambda () (helm-gtags-mode)))
+    
+    ;; customize
+    (setq helm-c-gtags-path-style 'absolute)
+    (setq helm-c-gtags-ignore-case t)
+    (setq helm-c-gtags-read-only nil)
+    
+    ;; key bindings
+    (add-hook 'helm-gtags-mode-hook
+              '(lambda ()
+                 (local-set-key (kbd "C-c g t") 'helm-gtags-find-tag)
+                 (local-set-key (kbd "C-c g r") 'helm-gtags-find-rtag)
+                 (local-set-key (kbd "C-c g s") 'helm-gtags-find-symbol)
+                 (local-set-key (kbd "C-c g f") 'helm-gtags-find-files)
+                 (local-set-key (kbd "C-t") 'helm-gtags-pop-stack))))
+#+end_src
 *** Minimap
 Got jealous, had to have it in emacs. Not so useful after all...
 #+begin_src emacs-lisp
-  (autoload 'minimap "minimap" "minimap for code" t)
+  (use-package minimap
+    :commands minimap-create)
 #+end_src
 *** Word count
 NaNoWriMo!
@@ -1147,6 +1120,14 @@ out semantically.
   (global-hl-line-mode t)
   (make-variable-buffer-local 'global-hl-line-mode)
 
+#+end_src
+*** Projectile
+#+begin_src emacs-lisp
+  (use-package projectile
+    :diminish projectile-mode
+    :config
+    (projectile-global-mode)
+    (setq projectile-use-git-grep t))
 #+end_src
 ** Major Modes
    
@@ -1273,7 +1254,7 @@ hacking on elisp I want the lowest barrier to entry.
 #+end_src
 *** Paredit
 #+begin_src emacs-lisp
-  (require 'paredit)
+  (use-package paredit)
 #+end_src
 *** Common Lisp
 Uhh, go CL?
@@ -1366,6 +1347,17 @@ other window you have open. This gets old. Fast.
 
   (add-hook 'go-mode-hook 'cm/go-mode-hook)
 #+end_src
+**** Fuck GOPATH and everything in it
+So emacs doesn't handle project specific *environment
+variables*. Which sucks horribly, and I don't blame any of the project
+tools for not addressing it, as there are no great answers.
+
+The fact that the golang project has made it a prerequisite that so
+many are set, and that there are rarely cli overrides for them is
+really a fault of their own.
+#+begin_src
+
+#+end_src
 *** Ruby
 Lisp has kind of taken over from Ruby. Whether that's Scheme or Common
 Lisp seems to be the current mental debate.
@@ -1443,11 +1435,6 @@ Get some fancy graphs going. I mostly use R, but this is nice when /other/ peopl
   (autoload 'gnuplot-make-buffer "gnuplot" "open a buffer in gnuplot mode" t)
   (add-to-list 'auto-mode-alist '("\\.gp$" . gnuplot-mode))
 #+end_src
-*** EGG - Emacs' Got Git
-I don't use this anymore
-#+begin_src emacs-lisp
-  ;(require 'egg)
-#+end_src
 *** Magit
 Because I switched to Magit! Works well, and is fairly canonical at
 this point. I don't understand vc-mode that well yet, so I really just
@@ -1455,12 +1442,8 @@ use magit-status and magit-log.
 
 magit-log is missing the commiter annotation, I need to fix that.
 #+begin_src emacs-lisp
-  (require 'magit)
-#+end_src
-Add a commit signoff to every commit message.
-#+begin_src emacs-lisp
-  (eval-after-load 'magit 
-    (setq magit-commit-signoff t))
+  (use-package magit
+    :diminish magit-auto-revert-mode)
 #+end_src
 **** Custom Commit Message Formatting
 Sort files by spelling. I figure the internal ordering of each

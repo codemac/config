@@ -1,4 +1,17 @@
 (1
+ (flycheck-gdc .
+	       [(0 1)
+		((d-mode
+		  (20150317 117))
+		 (flycheck
+		  (20150317 2246)))
+		"Provides support for use of GDC as a Flycheck checker for Dlang." tar])
+ (flymake-gdc .
+	      [(0 1)
+	       nil "A flymake handler for d-mode files using the GDC compiler" tar])
+ (meta-presenter .
+		 [(20150501 410)
+		  nil "A simple multi-file presentation tool for Emacs" single])
  (zone-matrix .
 	      [(0 0 1)
 	       nil "Matrix themed Zone mode" tar])
@@ -503,7 +516,7 @@
 	    [(2012 4 7)
 	     nil "replace a word with a synonym looked up in a web service." single])
  (theme-looper .
-	       [(0 0 20150710)
+	       [(20150723 1104)
 		((cl-lib
 		  (0 5)))
 		"Loop thru the available color-themes" single])
@@ -1389,7 +1402,7 @@
 	   [(0 0 1)
 	    nil "get stuff from pinboard" single])
  (picpocket .
-	    [(14)
+	    [(16)
 	     nil "Image viewer" single])
  (pickup .
 	 [(0 0 3)
@@ -1815,7 +1828,7 @@
 	  [(20071215)
 	   nil "mode for Notation 3" single])
  (myterminal-controls .
-		      [(0 0 20150427)
+		      [(20150427 347)
 		       ((emacs
 			 (24))
 			(cl-lib
@@ -3828,13 +3841,13 @@
        [(2 11 0)
 	nil "A modern list library for Emacs" single])
  (dart-mode .
-	    [(0 13)
+	    [(0 14)
 	     ((cl-lib
 	       (0 5))
 	      (dash
 	       (2 10 0))
 	      (flycheck
-	       (0 24)))
+	       (0 23)))
 	     "Major mode for editing Dart files" single])
  (d-mode .
 	 [(2 0 4)
@@ -4457,8 +4470,10 @@
 		  (1 11 5)))
 		"Space align various Clojure forms" single])
  (alchemist .
-	    [(1 2 0)
-	     ((emacs
+	    [(1 3 1)
+	     ((elixir-mode
+	       (2 2 5))
+	      (emacs
 	       (24 4))
 	      (company
 	       (0 8 0)))
