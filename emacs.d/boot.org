@@ -374,7 +374,8 @@ For now we just check that the name is valid.
   (defadvice find-file (around th-find-file activate)
     "Open FILENAME using tramp's sudo method if it's read-only."
     (let ((thefile (ad-get-arg 0)))
-      (if (string-prefix-p "/etc" thefile)
+      (if (or (string-prefix-p "/etc" thefile)
+              (string-prefix-p "/boot" thefile))
           (if (and (not (file-writable-p thefile))
                    (y-or-n-p (concat "File "
                                      thefile
@@ -613,17 +614,10 @@ I need to tie this into projectile, but for now have a way to create a
   (defun cm/shell-find-or-new ()
     "Find or create a shell with the given name"
     (interactive)
-    (if (fboundp 'helm)
-        (let ((selected-shell (helm :prompt "Shell Name: "
-                                    :sources (cm/current-shells))))
-          (if (listp selected-shell)
-              (switch-to-buffer (car selected-shell))
-            (cm/shell-new selected-shell)))
-      
-      (let ((selected-shell (completing-read
-                             "Shell Name: "
-                             (current-shells))))
-        (cm/shell-new selected-shell))))
+    (let ((selected-shell (completing-read
+                           "Shell Name: "
+                           (cm/current-shells))))
+      (cm/shell-new selected-shell)))
 
   (defun cm/shell-main ()
     (interactive)
@@ -1281,33 +1275,39 @@ Uhh, go CL?
   (setq haskell-hoogle-program "hoogle")
 #+end_src
 *** Go
-#+begin_src emacs-lisp
-  (autoload 'go-mode "go-mode" "Run ze gomode" nil)
-  (add-to-list 'auto-mode-alist '("\\.go$" . go-mode))
-#+end_src
-**** Enable flycheck
-#+begin_src emacs-lisp
-  (autoload 'flycheck-mode "flycheck" "run ze flycheck" nil)
-#+end_src
-**** Fix gofmt
+**** Fuck GOPATH and everything in it
+So emacs doesn't handle project specific *environment
+variables*. Which sucks horribly, and I don't blame any of the project
+tools for not addressing it, as there are no great answers.
+
+The fact that the golang project has made it a prerequisite that so
+many are set, and that there are rarely cli overrides for them is
+really a fault of their own.
+
+**** Fix go-mode's gofmt
+
 You'll see the commented section in this function. When the current
 go-mode.el calls =delete-windows-on outbuf= it closes pretty much any
 other window you have open. This gets old. Fast.
+
 #+begin_src emacs-lisp
-  (defun gofmt ()
-   "Pipe the current buffer through the external tool `gofmt`.
+  (use-package go-mode
+    :mode "\\.go$"
+    :config
+    (defun gofmt ()
+      "Pipe the current buffer through the external tool `gofmt`.
   Replace the current buffer on success; display errors on failure."
-  
-   (interactive)
-   (let ((srcbuf (current-buffer)))
-     (with-temp-buffer
-       (let ((outbuf (current-buffer))
-             (errbuf (get-buffer-create "*Gofmt Errors*"))
-             (coding-system-for-read 'utf-8)    ;; use utf-8 with subprocesses
-             (coding-system-for-write 'utf-8))
-         (with-current-buffer errbuf (erase-buffer))
-         (with-current-buffer srcbuf
-           (save-restriction
+      
+      (interactive)
+      (let ((srcbuf (current-buffer)))
+        (with-temp-buffer
+          (let ((outbuf (current-buffer))
+                (errbuf (get-buffer-create "*Gofmt Errors*"))
+                (coding-system-for-read 'utf-8)    ;; use utf-8 with subprocesses
+                (coding-system-for-write 'utf-8))
+            (with-current-buffer errbuf (erase-buffer))
+            (with-current-buffer srcbuf
+              (save-restriction
              (let (deactivate-mark)
                (widen)
                (if (= 0 (shell-command-on-region (point-min) (point-max) "gofmt"
@@ -1320,44 +1320,32 @@ other window you have open. This gets old. Fast.
                      (goto-char (min old-point (point-max)))
                      (if old-mark (push-mark (min old-mark (point-max)) t))
                      (kill-buffer errbuf))
-  
+                 
                  ;; gofmt failed: display the errors
                  (display-buffer errbuf)))))
-  
-         ;; Collapse any window opened on outbuf if shell-command-on-region
-         ;; displayed it.
-         ;; NO! Don't do that< cm!
-         ;;(delete-windows-on outbuf)
-  ))))
-#+end_src
-**** Go hook
-#+begin_src emacs-lisp  
-  (defun cm/go-mode-hook ()
-    (interactive)
-    (require 'go-oracle)
-    (setq go-oracle-command "/home/codemac/bin/oracle")
-    (go-oracle-mode)
-    (linum-mode 1)
-    (setq imenu-generic-expression
-          '(("type" "^type *\\([^ \t\n\r\f]*\\)" 1)
-            ("func" "^func *\\(.*\\) {" 1)))
-    (imenu-add-to-menubar "Index")
-    (add-hook 'before-save-hook #'gofmt-before-save)
-    (set (make-local-variable 'compile-command) "~/bin/emacs-work-compile"))
+            
+            ;; Collapse any window opened on outbuf if shell-command-on-region
+            ;; displayed it.
+            ;; NO! Don't do that< cm!
+            ;;(delete-windows-on outbuf)
+            ))))
 
-  (add-hook 'go-mode-hook 'cm/go-mode-hook)
-#+end_src
-**** Fuck GOPATH and everything in it
-So emacs doesn't handle project specific *environment
-variables*. Which sucks horribly, and I don't blame any of the project
-tools for not addressing it, as there are no great answers.
+    (defun cm/go-mode-hook ()
+      (interactive)
+      (require 'go-oracle)
+      (setq go-oracle-command "/home/codemac/bin/oracle")
+      (go-oracle-mode)
+      (diminish 'go-oracle-mode)
+      (linum-mode 1)
+      (setq imenu-generic-expression
+            '(("type" "^type *\\([^ \t\n\r\f]*\\)" 1)
+              ("func" "^func *\\(.*\\) {" 1)))
+      (imenu-add-to-menubar "Index")
+      (add-hook 'before-save-hook #'gofmt-before-save))
 
-The fact that the golang project has made it a prerequisite that so
-many are set, and that there are rarely cli overrides for them is
-really a fault of their own.
-#+begin_src
-
+    (add-hook 'go-mode-hook 'cm/go-mode-hook))
 #+end_src
+
 *** Ruby
 Lisp has kind of taken over from Ruby. Whether that's Scheme or Common
 Lisp seems to be the current mental debate.

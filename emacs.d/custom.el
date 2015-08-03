@@ -37,7 +37,18 @@
  '(protect-buffer-bury-p nil t)
  '(safe-local-variable-values
    (quote
-    ((eval when
+    ((eval set
+	   (make-local-variable
+	    (quote gofmt-command))
+	   "/home/codemac/work/mesa/.gofmt.sh")
+     (eval set
+	   (make-local-variable
+	    (quote godef-command))
+	   "/home/codemac/work/mesa/.godef.sh")
+     (eval set
+	   (make-local-variable godef-command)
+	   "/home/codemac/work/mesa/.godef.sh")
+     (eval when
 	   (require
 	    (quote rainbow-mode)
 	    nil t)
@@ -56,7 +67,7 @@
      (eval cm/igneous-product-config)
      (yaml-indent-offset . 8)
      (after-save-hook archive-done-tasks))))
- '(smtpmail-queue-mail nil t)
+ '(smtpmail-queue-mail nil)
  '(warning-suppress-types (quote ((undo discard-info))) t)
  '(yaml-indent-offset 8))
 (custom-set-faces
