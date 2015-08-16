@@ -37,7 +37,7 @@
 		 nil "Indent and dedent Lisp code, automatically adjust close parens" tar
 		 ((:url . "http://elpa.gnu.org/packages/adjust-parens.html"))])
  (aggressive-indent .
-		    [(1 1)
+		    [(1 1 2)
 		     ((emacs
 		       (24 1))
 		      (names
@@ -65,7 +65,7 @@
 			((:url . "http://www.gnuvola.org/software/aa2u/")
 			 (:keywords "ascii" "unicode" "box-drawing"))])
  (auctex .
-	 [(11 88 6)
+	 [(11 88 7)
 	  nil "Integrated environment for *TeX*" tar
 	  ((:url . "http://www.gnu.org/software/auctex/"))])
  (aumix-mode .
@@ -227,6 +227,15 @@
 	     nil "Emacs Does Interactive Prolog" single
 	     ((:url . "http://elpa.gnu.org/packages/ediprolog.html")
 	      (:keywords "languages" "processes"))])
+ (el-search .
+	    [(0 0 2)
+	     ((emacs
+	       (25))
+	      (cl-lib
+	       (0)))
+	     "Expression based incremental search for emacs-lisp-mode" single
+	     ((:url . "http://elpa.gnu.org/packages/el-search.html")
+	      (:keywords "lisp"))])
  (eldoc-eval .
 	     [(0 1)
 	      nil "Enable eldoc support when minibuffer is in use." single
@@ -447,20 +456,27 @@
 	  ((:url . "http://elpa.gnu.org/packages/oauth2.html")
 	   (:keywords "comm"))])
  (omn-mode .
-	   [(1 0)
+	   [(1 1)
 	    nil "Support for OWL Manchester Notation" single
 	    ((:url . "http://elpa.gnu.org/packages/omn-mode.html")
 	     (:keywords))])
  (org .
-      [(20150727)
+      [(20150810)
        nil "Outline-based notes management and organizer" tar nil])
  (osc .
       [(0 1)
        nil "Open Sound Control protocol library" single
        ((:url . "http://elpa.gnu.org/packages/osc.html")
 	(:keywords "comm" "processes" "multimedia"))])
+ (other-frame-window .
+		     [(1 0 0)
+		      ((emacs
+			(24 4)))
+		      "Minor mode to enable global prefix keys for other frame/window buffer placement" single
+		      ((:url . "http://elpa.gnu.org/packages/other-frame-window.html")
+		       (:keywords "frame" "window"))])
  (pabbrev .
-	  [(4 2)
+	  [(4 2 1)
 	   nil "Predictive abbreviation expansion" single
 	   ((:url . "http://elpa.gnu.org/packages/pabbrev.html")
 	    (:keywords))])
@@ -530,14 +546,14 @@
 	   ((:keywords "games")
 	    (:url . "http://elpa.gnu.org/packages/sokoban.html"))])
  (sotlisp .
-	  [(1 1)
+	  [(1 2)
 	   ((emacs
 	     (24 1)))
 	   "Write lisp at the speed of thought." single
 	   ((:url . "https://github.com/Malabarba/speed-of-thought-lisp")
 	    (:keywords "convenience" "lisp"))])
  (spinner .
-	  [(1 3 1)
+	  [(1 4)
 	   nil "Add spinners and progress-bars to the mode-line for ongoing operations" single
 	   ((:url . "https://github.com/Malabarba/spinner.el")
 	    (:keywords "processes" "mode-line"))])
@@ -628,6 +644,13 @@
 	       nil "General interface for text checkers" single
 	       ((:url . "https://github.com/tlikonen/wcheck-mode")
 		(:keywords "text" "spell" "check" "languages" "ispell"))])
+ (wconf .
+	[(0 2 0)
+	 ((emacs
+	   (24 4)))
+	 "Minimal window layout manager" single
+	 ((:url . "https://github.com/ilohmar/wconf")
+	  (:keywords "windows" "frames" "layout"))])
  (web-server .
 	     [(0 1 1)
 	      ((emacs
