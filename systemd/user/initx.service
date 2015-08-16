@@ -1,0 +1,14 @@
+[Unit]
+Description=Various commands to initialize X11
+Requires=xorg@0.service
+After=xorg@0.service
+
+[Service]
+Type=oneshot
+EnvironmentFile=/home/codemac/.config/env-xorg
+ExecStart=/usr/bin/sh -c "/usr/bin/setxkbmap -device $(xinput | grep \"AT Translated Set 2 keyboard\" | sed -r \"s/^.*id=([0-9]+).*$/\1/\") -layout dvorak -option ctrl:swapcaps"
+ExecStart=/usr/bin/xsetroot -solid "#80a0af"
+ExecStart=/usr/bin/xset r rate 200 20
+
+[Install]
+WantedBy=main.target

@@ -1,0 +1,13 @@
+[Unit]
+Description=my window manager
+Requires=xorg@0.service initx.service
+After=initx.service
+
+[Service]
+EnvironmentFile=/home/codemac/.config/env-xorg
+#ExecStart=/usr/bin/i3
+ExecStart=/usr/bin/notion
+#ExecStart=/usr/bin/emacs
+
+[Install]
+WantedBy=main.target

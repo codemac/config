@@ -1,0 +1,6 @@
+[Unit]
+Description=OfflineImap Runner
+
+[Service]
+ExecStart=/home/codemac/bin/mailupd
+TimeoutSec=50

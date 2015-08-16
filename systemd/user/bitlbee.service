@@ -1,0 +1,8 @@
+[Unit]
+Description=BitlBee IRC/IM gateway
+
+[Service]
+ExecStart=/usr/bin/bitlbee -F -n -d /home/codemac/.config/bitlbee
+
+[Install]
+WantedBy=default.target

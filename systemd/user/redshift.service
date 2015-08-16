@@ -1,0 +1,13 @@
+[Unit]
+Description=Redshift
+After=xorg@0.service
+Requires=xorg@0.service
+
+[Service]
+ExecStart=/usr/bin/redshift
+Restart=always
+EnvironmentFile=/home/codemac/.config/env-xorg
+KillSignal=SIGKILL
+
+[Install]
+WantedBy=main.target

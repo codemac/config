@@ -1,0 +1,13 @@
+[Unit]
+Description=NetworkManager Applet
+Requires=xorg@0.service dbus.service
+After=xorg@0.service
+
+[Service]
+ExecStart=/usr/bin/nm-applet
+Restart=always
+EnvironmentFile=/home/codemac/.config/env-xorg
+KillSignal=SIGKILL
+
+[Install]
+WantedBy=main.target

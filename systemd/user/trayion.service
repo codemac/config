@@ -1,0 +1,10 @@
+[Unit]
+Description=trayion (dock for ion)
+After=xorg@0.service initx.service
+
+[Service]
+EnvironmentFile=/home/codemac/.config/env-xorg
+ExecStart=/usr/bin/trayion
+
+[Install]
+WantedBy=main.target

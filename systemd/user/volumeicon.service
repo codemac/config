@@ -1,0 +1,11 @@
+[Unit]
+Description=volume icon
+Requires=xorg@0.service dbus.service trayion.service 
+After=xorg@0.service trayion.service
+
+[Service]
+ExecStart=/usr/bin/volumeicon
+EnvironmentFile=/home/codemac/.config/env-xorg
+
+[Install]
+WantedBy=main.target

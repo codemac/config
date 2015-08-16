@@ -1,0 +1,13 @@
+[Unit]
+Description=Simple X11 HotKey Daemon
+Requires=xorg@0.service window-manager.service initx.service nm-applet.service
+After=xorg@0.service window-manager.service initx.service nm-applet.service
+
+[Service]
+ExecStart=/usr/bin/sxhkd
+Restart=always
+EnvironmentFile=/home/codemac/.config/env-xorg
+KillMode=process
+
+[Install]
+WantedBy=main.target

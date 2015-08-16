@@ -1,0 +1,9 @@
+[Unit]
+Description=OfflineImap Every 1m
+
+[Timer]
+OnBootSec=60
+OnUnitActiveSec=60
+
+[Install]
+WantedBy=timers.target

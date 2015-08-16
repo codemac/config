@@ -1,0 +1,10 @@
+[Unit]
+Description=Scribble to the Scrobble to the Wiggle to the Woggle
+Requires=mpd.service
+After=mpd.service
+
+[Service]
+ExecStart=/usr/bin/mpdscribble --no-daemon
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,15 @@
+[Unit]
+Description=GnuPG private key agent
+IgnoreOnIsolate=true
+
+[Service]
+Type=forking
+# let gpg fail if the directory can't be made. Most likely this is
+# because the directory already exists. Not a big deal.
+ExecStartPre=/bin/sh -c "/usr/bin/mkdir -p /run/user/1000/gnupg || exit 0"
+ExecStart=/usr/bin/gpg-agent --daemon --homedir=/mnt/keys/gnupghome
+ExecStop=/usr/bin/pkill gpg-agent
+Restart=on-abort
+
+[Install]
+WantedBy=default.target

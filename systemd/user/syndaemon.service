@@ -1,0 +1,10 @@
+[Unit]
+Description=Syndaemon
+
+[Service]
+ExecStart=/usr/bin/syndaemon -i 1.0 -R
+Restart=always
+EnvironmentFile=/home/codemac/.config/env-xorg
+
+[Install]
+WantedBy=main.target

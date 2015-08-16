@@ -1,0 +1,10 @@
+[Unit]
+Description=xbanish
+
+[Service]
+ExecStart=/usr/bin/xbanish
+Restart=always
+EnvironmentFile=/home/codemac/.config/env-xorg
+
+[Install]
+WantedBy=main.target

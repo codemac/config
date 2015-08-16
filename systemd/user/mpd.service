@@ -1,0 +1,12 @@
+[Unit]
+Description=Music Player Daemon
+
+[Service]
+ExecStart=/usr/bin/mpd --no-daemon
+
+# allow MPD to use real-time priority 50
+LimitRTPRIO=50
+LimitRTTIME=-1
+
+[Install]
+WantedBy=default.target
