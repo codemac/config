@@ -1719,8 +1719,14 @@ I get to avoid most of the complications. It goes, in order:
 For some reason the ~=~ sign is used for refresh in notmuch. This is
 horrifying.
 #+begin_src emacs-lisp
+  (defun cm/notmuch-archive-unread-all ()
+    (interactive)
+    (notmuch-search-tag-all '("-inbox" "-unread")))
+
   (eval-after-load 'notmuch
     '(define-key notmuch-common-keymap "g" 'notmuch-refresh-this-buffer))
+  (eval-after-load 'notmuch
+    '(define-key notmuch-common-keymap "A" 'cm/notmuch-archive-unread-all))
 
   (global-set-key (kbd "C-c i w") '(lambda ()
                                      (interactive)
@@ -2416,7 +2422,7 @@ Finally, before I save a file, add the id's!
 
   (add-hook 'org-mode-hook
             (lambda ()
-              (add-hook 'before-save-hook 'my/org-add-ids-to-headlines-in-file nil 'local)))
+              (add-hook 'before-save-hook 'cm/org-add-ids-to-headlines-in-file nil 'local)))
 #+end_src
 
 **** Appt Reminders
