@@ -3,8 +3,8 @@
 ;;; Code:
 (add-to-list 'load-path (or (file-name-directory #$) (car load-path)))
 
-;;;### (autoloads nil "mc-edit-lines" "mc-edit-lines.el" (21922 45530
-;;;;;;  139744 853000))
+;;;### (autoloads nil "mc-edit-lines" "mc-edit-lines.el" (21980 5056
+;;;;;;  269948 657000))
 ;;; Generated autoloads from mc-edit-lines.el
 
 (autoload 'mc/edit-lines "mc-edit-lines" "\
@@ -12,14 +12,7 @@ Add one cursor to each line of the active region.
 Starts from mark and moves in straight down or up towards the
 line point is on.
 
-What is done with lines which are not long enough is governed by
-`mc/edit-lines-empty-lines'.  The prefix argument ARG can be used
-to override this.  If ARG is a symbol (when called from Lisp),
-that symbol is used instead of `mc/edit-lines-empty-lines'.
-Otherwise, if ARG negative, short lines will be ignored.  Any
-other non-nil value will cause short lines to be padded.
-
-\(fn &optional ARG)" t nil)
+\(fn)" t nil)
 
 (autoload 'mc/edit-ends-of-lines "mc-edit-lines" "\
 Add one cursor to the end of each line in the active region.
@@ -33,23 +26,8 @@ Add one cursor to the beginning of each line in the active region.
 
 ;;;***
 
-;;;### (autoloads nil "mc-hide-unmatched-lines-mode" "mc-hide-unmatched-lines-mode.el"
-;;;;;;  (21922 45530 199744 992000))
-;;; Generated autoloads from mc-hide-unmatched-lines-mode.el
-
-(autoload 'mc-hide-unmatched-lines-mode "mc-hide-unmatched-lines-mode" "\
-Minor mode when enabled hides all lines where no cursors (and
-also hum/lines-to-expand below and above) To make use of this
-mode press \"C-'\" while multiple-cursor-mode is active. You can
-still edit lines while you are in mc-hide-unmatched-lines
-mode. To leave this mode press <return> or \"C-g\"
-
-\(fn &optional ARG)" t nil)
-
-;;;***
-
-;;;### (autoloads nil "mc-mark-more" "mc-mark-more.el" (21922 45530
-;;;;;;  236411 744000))
+;;;### (autoloads nil "mc-mark-more" "mc-mark-more.el" (21980 5056
+;;;;;;  369948 575000))
 ;;; Generated autoloads from mc-mark-more.el
 
 (autoload 'mc/mark-next-like-this "mc-mark-more" "\
@@ -134,11 +112,6 @@ Find and mark all the parts of the buffer matching the currently active region
 (autoload 'mc/mark-all-in-region "mc-mark-more" "\
 Find and mark all the parts in the region matching the given search
 
-\(fn BEG END &optional SEARCH)" t nil)
-
-(autoload 'mc/mark-all-in-region-regexp "mc-mark-more" "\
-Find and mark all the parts in the region matching the given regexp
-
 \(fn BEG END)" t nil)
 
 (autoload 'mc/mark-more-like-this-extended "mc-mark-more" "\
@@ -170,18 +143,6 @@ With prefix, it behaves the same as original `mc/mark-all-like-this'
 
 \(fn ARG)" t nil)
 
-(autoload 'mc/mark-all-dwim "mc-mark-more" "\
-Tries even harder to guess what you want to mark all of.
-
-If the region is active and spans multiple lines, it will behave
-as if `mc/mark-all-in-region'. With the prefix ARG, it will call
-`mc/edit-lines' instead.
-
-If the region is inactive or on a single line, it will behave like 
-`mc/mark-all-like-this-dwim'.
-
-\(fn ARG)" t nil)
-
 (autoload 'mc/mark-all-like-this-in-defun "mc-mark-more" "\
 Mark all like this in defun.
 
@@ -209,8 +170,8 @@ Mark the tag we're in and its pair for renaming.
 
 ;;;***
 
-;;;### (autoloads nil "mc-mark-pop" "mc-mark-pop.el" (21922 45530
-;;;;;;  179744 946000))
+;;;### (autoloads nil "mc-mark-pop" "mc-mark-pop.el" (21980 5056
+;;;;;;  313281 954000))
 ;;; Generated autoloads from mc-mark-pop.el
 
 (autoload 'mc/mark-pop "mc-mark-pop" "\
@@ -222,7 +183,7 @@ to the popped mark.
 ;;;***
 
 ;;;### (autoloads nil "mc-separate-operations" "mc-separate-operations.el"
-;;;;;;  (21922 45530 213078 357000))
+;;;;;;  (21980 5056 333281 938000))
 ;;; Generated autoloads from mc-separate-operations.el
 
 (autoload 'mc/insert-numbers "mc-separate-operations" "\
@@ -240,33 +201,10 @@ Insert increasing numbers for each cursor, starting at 0 or ARG.
 
 \(fn)" t nil)
 
-(autoload 'mc/vertical-align "mc-separate-operations" "\
-Aligns all cursors vertically with a given CHARACTER to the one with the
-highest colum number (the rightest).
-Might not behave as intended if more than one cursors are on the same line.
-
-\(fn CHARACTER)" t nil)
-
-(autoload 'mc/vertical-align-with-space "mc-separate-operations" "\
-Aligns all cursors with whitespace like `mc/vertical-align' does
-
-\(fn)" t nil)
-
-;;;***
-
-;;;### (autoloads nil "multiple-cursors-core" "multiple-cursors-core.el"
-;;;;;;  (21922 45530 129744 831000))
-;;; Generated autoloads from multiple-cursors-core.el
-
-(autoload 'multiple-cursors-mode "multiple-cursors-core" "\
-Mode while multiple cursors are active.
-
-\(fn &optional ARG)" t nil)
-
 ;;;***
 
 ;;;### (autoloads nil "rectangular-region-mode" "rectangular-region-mode.el"
-;;;;;;  (21922 45530 163078 241000))
+;;;;;;  (21980 5056 296615 301000))
 ;;; Generated autoloads from rectangular-region-mode.el
 
 (autoload 'set-rectangular-region-anchor "rectangular-region-mode" "\
@@ -277,15 +215,11 @@ an exceedingly quick way of adding multiple cursors to multiple lines.
 
 \(fn)" t nil)
 
-(autoload 'rectangular-region-mode "rectangular-region-mode" "\
-A mode for creating a rectangular region to edit
-
-\(fn &optional ARG)" t nil)
-
 ;;;***
 
-;;;### (autoloads nil nil ("mc-cycle-cursors.el" "multiple-cursors-pkg.el"
-;;;;;;  "multiple-cursors.el") (21922 45530 276221 267000))
+;;;### (autoloads nil nil ("mc-cycle-cursors.el" "multiple-cursors-core.el"
+;;;;;;  "multiple-cursors-pkg.el" "multiple-cursors.el") (21980 5056
+;;;;;;  425090 208000))
 
 ;;;***
 

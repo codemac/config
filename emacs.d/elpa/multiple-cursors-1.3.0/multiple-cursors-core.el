@@ -29,8 +29,6 @@
 
 (require 'rect)
 
-(defvar mc--read-char)
-
 (defface mc/cursor-face
   '((t (:inverse-video t)))
   "The face used for fake cursors"
@@ -132,6 +130,7 @@ highlights the entire width of the window."
                                   mark-ring
                                   mark-active
                                   yank-undo-function
+                                  kill-ring-yank-pointer
                                   autopair-action
                                   autopair-wrap-action
                                   er/history)
@@ -176,37 +175,9 @@ highlights the entire width of the window."
   "Returns a unique cursor id"
   (incf mc--current-cursor-id))
 
-(defvar mc--max-cursors-original nil
-  "This variable maintains the original maximum number of cursors.
-When `mc/create-fake-cursor-at-point' is called and
-`mc/max-cursors' is overridden, this value serves as a backup so
-that `mc/max-cursors' can take on a new value.  When
-`mc/remove-fake-cursors' is called, the values are reset.")
-
-(defcustom mc/max-cursors nil
-  "Safety ceiling for the number of active cursors.
-If your emacs slows down or freezes when using too many cursors,
-customize this value appropriately.
-
-Cursors will be added until this value is reached, at which point
-you can either temporarily override the value or abort the
-operation entirely.
-
-If this value is nil, there is no ceiling."
-  :type '(integer)
-  :group 'multiple-cursors)
-
 (defun mc/create-fake-cursor-at-point (&optional id)
   "Add a fake cursor and possibly a fake active region overlay based on point and mark.
 Saves the current state in the overlay to be restored later."
-  (unless mc--max-cursors-original
-    (setq mc--max-cursors-original mc/max-cursors))
-  (when mc/max-cursors
-    (unless (< (mc/num-cursors) mc/max-cursors)
-      (if (yes-or-no-p (format "%d active cursors. Continue? " (mc/num-cursors)))
-          (setq mc/max-cursors (read-number "Enter a new, temporary maximum: "))
-        (mc/remove-fake-cursors)
-        (error "Aborted: too many cursors"))))
   (let ((overlay (mc/make-cursor-overlay-at-point)))
     (overlay-put overlay 'mc-id (or id (mc/create-cursor-id)))
     (overlay-put overlay 'type 'fake-cursor)
@@ -260,8 +231,6 @@ cursor with updated info."
 ;; Intercept some reading commands so you won't have to
 ;; answer them for every single cursor
 
-(defvar mc--read-char nil)
-(defvar multiple-cursors-mode nil)
 (defadvice read-char (around mc-support activate)
   (if (not multiple-cursors-mode)
       ad-do-it
@@ -269,7 +238,6 @@ cursor with updated info."
       (setq mc--read-char ad-do-it))
     (setq ad-return-value mc--read-char)))
 
-(defvar mc--read-quoted-char nil)
 (defadvice read-quoted-char (around mc-support activate)
   (if (not multiple-cursors-mode)
       ad-do-it
@@ -410,10 +378,7 @@ the original cursor, to inform about the lack of support."
 Do not use to conclude editing with multiple cursors. For that
 you should disable multiple-cursors-mode."
   (mc/for-each-fake-cursor
-   (mc/remove-fake-cursor cursor))
-  (when mc--max-cursors-original
-    (setq mc/max-cursors mc--max-cursors-original))
-  (setq mc--max-cursors-original nil))
+   (mc/remove-fake-cursor cursor)))
 
 (defun mc/keyboard-quit ()
   "Deactivate mark if there are any active, otherwise exit multiple-cursors-mode."
@@ -455,11 +420,11 @@ The entries are returned in the order they are found in the buffer."
 (defun mc--maybe-set-killed-rectangle ()
   "Add the latest kill-ring entry for each cursor to killed-rectangle.
 So you can paste it in later with `yank-rectangle'."
-  (let ((entries (let (mc/max-cursors) (mc--kill-ring-entries))))
+  (let ((entries (mc--kill-ring-entries)))
     (unless (mc--all-equal entries)
       (setq killed-rectangle entries))))
 
-(defvar mc/unsupported-minor-modes '(company-mode auto-complete-mode flyspell-mode jedi-mode)
+(defvar mc/unsupported-minor-modes '(auto-complete-mode flyspell-mode)
   "List of minor-modes that does not play well with multiple-cursors.
 They are temporarily disabled when multiple-cursors are active.")
 
@@ -490,7 +455,6 @@ They are temporarily disabled when multiple-cursors are active.")
   :group 'multiple-cursors)
 (put 'mc/mode-line 'risky-local-variable t)
 
-;;;###autoload
 (define-minor-mode multiple-cursors-mode
   "Mode while multiple cursors are active."
   nil mc/mode-line mc/keymap
@@ -555,7 +519,7 @@ from being executed if in multiple-cursors-mode."
            (overlay-put cursor 'kill-ring kill-ring)
            (overlay-put cursor 'kill-ring-yank-pointer kill-ring-yank-pointer)))))))
 
-(defvar mc/list-file (locate-user-emacs-file ".mc-lists.el")
+(defvar mc/list-file "~/.emacs.d/.mc-lists.el"
   "The position of the file that keeps track of your preferences
 for running commands with multiple cursors.")
 
@@ -628,9 +592,6 @@ for running commands with multiple cursors.")
                                      mc/skip-to-next-like-this
                                      mc/skip-to-previous-like-this
                                      rrm/switch-to-multiple-cursors
-                                     mc-hide-unmatched-lines-mode
-                                     hum/keyboard-quit
-                                     hum/unhide-invisible-overlays
                                      save-buffer
                                      ido-exit-minibuffer
                                      exit-minibuffer
@@ -718,8 +679,6 @@ for running commands with multiple cursors.")
                                         py-electric-backspace
                                         c-electric-backspace
                                         org-delete-backward-char
-                                        cperl-electric-backspace
-                                        python-indent-dedent-line-backspace
                                         paredit-backward-delete
                                         autopair-backspace
                                         just-one-space
@@ -729,7 +688,6 @@ for running commands with multiple cursors.")
                                         exchange-point-and-mark
                                         cua-set-mark
                                         cua-replace-region
-                                        cua-delete-region
                                         move-end-of-line
                                         beginning-of-line
                                         move-beginning-of-line

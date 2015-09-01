@@ -1,7 +1,4 @@
 (1
- (async .
-	[(1 4)
-	 nil "Asynchronous processing in Emacs" tar])
  (zone-matrix .
 	      [(0 0 1)
 	       nil "Matrix themed Zone mode" tar])
@@ -137,7 +134,7 @@
    [(1 1)
     nil "Poor-man's namespaces for elisp" single])
  (with-editor .
-   [(2 2 0)
+   [(2 2 1)
     ((emacs
       (24 4))
      (async
@@ -1603,7 +1600,7 @@
 	      (1 6 8)))
 	    "Blog from Org mode to wordpress" tar])
  (org-trello .
-	     [(0 7 3)
+	     [(0 7 4)
 	      ((request-deferred
 		(0 2 0))
 	       (deferred
@@ -2103,7 +2100,7 @@
 		       (1 0 0)))
 		     "simple keybindings for Magit" single])
  (magit-popup .
-	      [(2 2 0)
+	      [(2 2 1)
 	       ((emacs
 		 (24 4))
 		(async
@@ -2124,7 +2121,7 @@
 		     (1 2 0)))
 		   "completing-read over all files in Git" single])
  (magit .
-	[(2 2 0)
+	[(2 2 1)
 	 ((emacs
 	   (24 4))
 	  (async
@@ -2132,11 +2129,11 @@
 	  (dash
 	   (2 11 0))
 	  (with-editor
-	      (2 2 0))
+	      (2 2 1))
 	  (git-commit
-	   (2 2 0))
+	   (2 2 1))
 	  (magit-popup
-	   (2 2 0)))
+	   (2 2 1)))
 	 "A Git porcelain inside Emacs" tar])
  (mactag .
 	 [(0 0 1)
@@ -2886,13 +2883,13 @@
 	       (2 9 0)))
 	     "draft git commit messages" single])
  (git-commit .
-	     [(2 2 0)
+	     [(2 2 1)
 	      ((emacs
 		(24 4))
 	       (dash
 		(2 11 0))
 	       (with-editor
-		   (2 2 0)))
+		   (2 2 1)))
 	      "Edit Git commit messages" single])
  (git-auto-commit-mode .
 		       [(4 4 0)
@@ -3714,6 +3711,9 @@
 		  (pcache
 		   (0 2 3)))
 		 "Set faces based on available fonts" single])
+ (dxr .
+      [(2 1)
+       nil "Convenient access to a DXR server" single])
  (durendal .
 	   [(0 2)
 	    ((clojure-mode
@@ -4435,6 +4435,9 @@
 		 ((popup
 		   (0 5)))
 		 "Auto Completion for GNU Emacs" tar])
+ (async .
+	[(1 4)
+	 nil "Asynchronous processing in Emacs" tar])
  (assemblage-theme .
 		   [(20130715 621)
 		    nil "a dark theme for Emacs 24" single])
@@ -4504,7 +4507,7 @@
 		  (1 11 5)))
 		"Space align various Clojure forms" single])
  (alchemist .
-	    [(1 4 0)
+	    [(1 5 0)
 	     ((elixir-mode
 	       (2 2 5))
 	      (dash

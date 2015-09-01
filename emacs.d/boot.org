@@ -9,14 +9,26 @@ brighter; it simply makes everything else vanish.
 #+end_quote
 
 * Introduction
+  :PROPERTIES:
+  :ID:       3214fd7e-44bf-4519-86ec-1f347de21d32
+  :END:
 The goal of this init.org file is to document my emacs configuration
 in a readable manner for those who would like to borrow from it. We'll
 see how this goes!
 * Org initialization
+  :PROPERTIES:
+  :ID:       10b789e5-616b-4d30-a27a-1c4bdd57c08c
+  :END:
 Unfortuantely, emacs can't read directly from org mode files just yet,
 so you have to check [[file:init.el][init.el]] for more information! DRY!
 * User Interface
+  :PROPERTIES:
+  :ID:       174da1e1-650e-41f1-a5de-48a0e77b8538
+  :END:
 ** Emacs look
+   :PROPERTIES:
+   :ID:       0eb756bc-30b7-4bef-8d0c-a5d67d43b619
+   :END:
 #+begin_src emacs-lisp
   (if (boundp 'menu-bar-mode)
       (menu-bar-mode -1))
@@ -71,6 +83,9 @@ And of course, transparency!
     (transparency 100))
 #+end_src
 *** Modeline management
+    :PROPERTIES:
+    :ID:       cbf11e79-808e-4e25-8071-0ccdd748052a
+    :END:
 #+begin_src emacs-lisp  
   ;; Turn on the clock!
   (setq display-time-day-and-date t)
@@ -82,6 +97,9 @@ And of course, transparency!
   
 #+end_src
 ** System sepecific settings
+   :PROPERTIES:
+   :ID:       9af79705-bbb1-4b52-bfe7-0e05831d87b0
+   :END:
 Had to do some funky stuff to get around how shitty Mac OS X default
 VPN settings are. Also, set different font sizes for the different
 screen DPI's.
@@ -98,11 +116,20 @@ screen DPI's.
   
 #+end_src
 * Environment
+  :PROPERTIES:
+  :ID:       75fc0c8b-e66b-4f0f-ad21-72adef4fd23e
+  :END:
 ** Yes I can scroll left
+   :PROPERTIES:
+   :ID:       4ac2d83a-08d8-437d-8937-e8775ae454b9
+   :END:
 #+begin_src emacs-lisp
   (put 'scroll-left 'disabled nil)
 #+end_src
 ** Dvorak
+   :PROPERTIES:
+   :ID:       662be27f-102a-42dd-8a9e-c9b7269fc129
+   :END:
 The dvorak keyboard layout is really advantageous to those of us who
 write emails all day (read: me). However, it does create some problem
 with things like =C-x= in Emacs. In dvorak, =x= is =b= on the
@@ -135,6 +162,9 @@ Also, let's get angry about using C-x until I'm used to it actually being C-t.
 #+end_src
 
 ** Shell paths
+   :PROPERTIES:
+   :ID:       0e40240f-a2c3-4c03-b55d-d66e5cc0ce44
+   :END:
 Setting paths correctly depending on whether or not I'm on a
 Mac. Mostly these days, I'm on a Mac :/
 #+begin_src emacs-lisp
@@ -160,6 +190,9 @@ Mac. Mostly these days, I'm on a Mac :/
 #+end_src
 
 ** Emacs load paths
+   :PROPERTIES:
+   :ID:       746a0b8d-ef35-4cff-81d7-e8d2c3d49d8c
+   :END:
 Get my site-lisp set up. Got rid of ye old pkg-init!
 #+begin_src emacs-lisp
   (add-to-list 'load-path "~/.emacs.d/site-lisp")
@@ -186,6 +219,9 @@ who provided this original functionality for me.
 #+end_src
 
 *** Guix Support
+    :PROPERTIES:
+    :ID:       3b701aeb-81ae-4f4a-ab79-1f4633c9ebf5
+    :END:
 This adds the load path of the guix profile of the current user. I'm
 currently using guix to manage packages for my local users.
 
@@ -195,6 +231,9 @@ the icecat / firefox crap keeps me using arch as my base system.
   (add-to-list 'load-path "~/.guix-profile/share/emacs/site-lisp")
 #+end_src
 ** Emacs backup files
+   :PROPERTIES:
+   :ID:       5f120dba-6abc-4e26-b11f-ea4769945a2c
+   :END:
 I like putting these all in one place. It helps to not have them
 scattered accross my entire filesystem, and then they aren't pushed
 out onto NFS mounted directories.
@@ -229,11 +268,17 @@ appears this as changed significantly..
   (setq backup-directory-alist (list (cons "." backup-dir)))
 #+end_src
 ** Yes or no, let's do y/p
+   :PROPERTIES:
+   :ID:       8a6a8bc1-7cd0-4016-9381-a04bca6592cf
+   :END:
 Oh my freaking god, just take my damn answer.
 #+begin_src emacs-lisp
   (fset 'yes-or-no-p 'y-or-n-p)
 #+end_src
 ** Async Shell Command
+   :PROPERTIES:
+   :ID:       8e9761de-a184-4c69-9143-610d16291567
+   :END:
 This makes sure that we pick a new buffer and just run with it,
 instead of checking if another process is running.
 
@@ -241,6 +286,9 @@ instead of checking if another process is running.
   (setq async-shell-command-buffer 'rename-buffer)
 #+end_src
 ** Convenient global keys
+   :PROPERTIES:
+   :ID:       b3d4ed04-e17a-45f4-a21e-e51071f1f505
+   :END:
 God I love backword-kill-word. Also some bookmarks
 #+begin_src emacs-lisp
   (global-set-key "\C-w" 'backward-kill-word)
@@ -276,10 +324,16 @@ God I love backword-kill-word. Also some bookmarks
     'my-backward-kill-word)
 #+end_src
 ** Narrow regions
+   :PROPERTIES:
+   :ID:       69621834-2ad9-460e-b2f2-e698bee359a8
+   :END:
 #+begin_src emacs-lisp
   (put 'narrow-to-region 'disabled nil)
 #+end_src
 ** kill with linum
+   :PROPERTIES:
+   :ID:       debaee9f-a2d7-4545-b366-bc583870c1da
+   :END:
 Really useful for source code copying.. This is from [[http://stackoverflow.com/questions/12165205/how-to-copy-paste-a-region-from-emacs-buffer-with-line-file-reference][stack overflow]].
 
 #+begin_src emacs-lisp
@@ -301,6 +355,9 @@ Really useful for source code copying.. This is from [[http://stackoverflow.com/
     (deactivate-mark))
 #+end_src
 ** goto-line should work on first M-g
+   :PROPERTIES:
+   :ID:       66fbcae2-109f-4a0d-9d68-7474fb30c92a
+   :END:
 taken from http://blog.akinori.org/2013/05/27/m-g-vs-goto-line/
 
 #+begin_src emacs-lisp
@@ -317,6 +374,9 @@ taken from http://blog.akinori.org/2013/05/27/m-g-vs-goto-line/
 #+end_src
 
 ** Use dired instead of the directory view.
+   :PROPERTIES:
+   :ID:       6ed4dffb-c6ce-46b1-90b8-76c735285063
+   :END:
 I never expect it, and when I get it it means I meant dired
 anyways. This means that how I hold down the control button doesn't
 matter.
@@ -324,6 +384,9 @@ matter.
   (global-set-key (kbd "C-x C-d") 'dired)
 #+end_src
 ** Use rc escaping
+   :PROPERTIES:
+   :ID:       e039c4cd-5660-419a-80ca-c9fbb80be5d6
+   :END:
 I've now set my login shell as rc, which means that now all kinds of
 arbitrary things break.
 
@@ -343,12 +406,18 @@ it just passes on arguments. It's wonderful!
 
 #+end_src
 *** Support for rgrep as well
+    :PROPERTIES:
+    :ID:       27803a70-fbb5-491f-a962-e183b14af385
+    :END:
 This changes the =grep-find-template= so that quoting is used around
 the brackets that rc parses.
 #+begin_src emacs-lisp
 ;;; TODO
 #+end_src
 * ELPA
+  :PROPERTIES:
+  :ID:       75916850-2b29-435f-8f66-2d17704fe83d
+  :END:
 I organize my packages use with the amazing https://github.com/jwiegley/use-package
 #+begin_src emacs-lisp
   (eval-when-compile
@@ -357,6 +426,9 @@ I organize my packages use with the amazing https://github.com/jwiegley/use-pack
   (require 'bind-key)
 #+end_src
 * Color theme
+  :PROPERTIES:
+  :ID:       884f8d9a-73d2-422d-9344-4b752eb1e352
+  :END:
 Yup, zenburn.
 
 If zenburn isn't available, we should use wombat. So how do we detect
@@ -371,11 +443,20 @@ that?
 
 For now we just check that the name is valid.
 * Builtin
+  :PROPERTIES:
+  :ID:       7fc227dc-419d-435a-bbe3-3ca707d2c234
+  :END:
 ** Disabled Functions
+   :PROPERTIES:
+   :ID:       eef4557b-bf86-4d40-bd7a-a7860f7d2777
+   :END:
 #+begin_src emacs-lisp
   (put 'downcase-region 'disabled nil)
 #+end_src
 ** Open files with root
+   :PROPERTIES:
+   :ID:       0e0b7076-92fc-45a0-a89d-e1051988c44d
+   :END:
 #+begin_src emacs-lisp
   (defun cm/rename-tramp-buffer ()
     (when (file-remote-p (buffer-file-name))
@@ -405,6 +486,9 @@ For now we just check that the name is valid.
     (set-buffer (find-file (concat "/sudo::" file))))
 #+end_src
 ** Occur, isearch, and all
+   :PROPERTIES:
+   :ID:       7e4874a8-093c-4ac3-9441-5f8dd8103b39
+   :END:
 I like to launch occur from an isearch query. It's great when your
 muscle memory searches for a word, THEN you realize you want to see it
 all in one buffer. Rock the =C-c C-e= in occur mode and you can edit
@@ -421,6 +505,9 @@ This was mostly taken from [[http://www.emacswiki.org/emacs/OccurFromIsearch][th
   (define-key isearch-mode-map (kbd "C-o") 'isearch-occur)
 #+end_src
 ** Ediff
+   :PROPERTIES:
+   :ID:       90322ca4-3bef-4beb-92fb-036d3792660e
+   :END:
 Split the Ediff window depending on the orientation/size of the emacs
 frame. I've found this very convenient.
 #+begin_src emacs-lisp
@@ -430,6 +517,9 @@ frame. I've found this very convenient.
                                         (split-window-vertically arg))))
 #+end_src
 ** Useful window functions
+   :PROPERTIES:
+   :ID:       6fdd1fc3-0b07-4d30-b351-289529bfa72c
+   :END:
 from :
 http://www.emacswiki.org/emacs/Rick_Bielawski
 #+begin_src emacs-lisp
@@ -458,6 +548,9 @@ http://www.emacswiki.org/emacs/Rick_Bielawski
       (goto-char buf-point)))
 #+end_src
 ** Private stuff
+   :PROPERTIES:
+   :ID:       e0b91792-b154-44f6-837c-25e8bf526f72
+   :END:
 Just an easy way to put passwords, and other sensitive data outside of
 this emacs config! Ideally I'll document all variables missing, this
 may or may not be always true though.
@@ -485,11 +578,17 @@ may or may not be always true though.
       (load-file private-file)))
 #+end_src
 ** Printing
+   :PROPERTIES:
+   :ID:       bad1e0c5-424a-40d2-839b-c2efb24e66af
+   :END:
 #+begin_src emacs-lisp
   ;(require 'lpr)
   (setq lpr-command "gtklp")
 #+end_src
 ** Sticky buffer
+   :PROPERTIES:
+   :ID:       6c124562-896f-460c-bc65-a8dbea21f347
+   :END:
 Inspired by [[http://www.reddit.com/r/emacs/comments/gjqki/is_there_any_way_to_tell_emacs_to_not/c1o26uk][a reddit comment]].
 #+begin_src emacs-lisp
   (defadvice pop-to-buffer (before cancel-other-window first)
@@ -513,6 +612,9 @@ Inspired by [[http://www.reddit.com/r/emacs/comments/gjqki/is_there_any_way_to_t
   (global-set-key [f11] 'toggle-window-dedicated)
 #+end_src
 ** Narrow to indirect buffer
+   :PROPERTIES:
+   :ID:       4636f0d8-0f7c-4e5b-b146-6b9c13a1422c
+   :END:
 There was a [[http://demonastery.org/2013/04/emacs-narrow-to-region-indirect/][blog post]] on [[http://www.reddit.com/r/emacs/comments/1clte0/narrowtoregionindirect_for_emacs/][reddit]] about this, and It's too good to not
 use. I haven't decided what the key binding should really be yet. Al
 #+begin_src emacs-lisp
@@ -529,6 +631,9 @@ use. I haven't decided what the key binding should really be yet. Al
   (global-set-key (kbd "C-x n i") 'cm/narrow-to-region-indirect)
 #+end_src
 ** Revert
+   :PROPERTIES:
+   :ID:       7d79056d-8843-4cc0-a6c2-3628609e8c19
+   :END:
 To revert a buffer easily, put the char back where I had it.
 #+begin_src emacs-lisp
   (defun cm/revert-buffer ()
@@ -541,6 +646,9 @@ To revert a buffer easily, put the char back where I had it.
   (global-set-key [f8] 'cm/revert-buffer)
 #+end_src
 ** Windmove
+   :PROPERTIES:
+   :ID:       a4484933-7915-4419-bef5-2aed3e288ab8
+   :END:
 Easy navigation around lots of splits. C-x o isn't that geographical.
 #+begin_src emacs-lisp
   (global-set-key [M-left] 'windmove-left)
@@ -549,6 +657,9 @@ Easy navigation around lots of splits. C-x o isn't that geographical.
   (global-set-key [M-down] 'windmove-down)
 #+end_src
 ** Dired
+   :PROPERTIES:
+   :ID:       5ad3253d-9cd5-4b61-b2fb-e6c788e63751
+   :END:
 This is what is sent to ls. I'm usually on a *nix-like userspace, so
 ls usually exists. On windows emacs uses some ls elisp, I'm not sure
 if these settings work for that.
@@ -562,6 +673,9 @@ setting lets dired know that this is the case.
     (setq dired-ls-F-marks-symlinks t))
 #+end_src
 *** Disabled: set dired to reuse buffers
+    :PROPERTIES:
+    :ID:       d5fddb2a-1cfc-423b-960a-eeb2d14894d0
+    :END:
 Every time you hit enter, instead of opening a new buffer, it'll reuse
 the buffer. I've found I don't like using this, but it was very useful
 when I first started using emacs, less so later.
@@ -583,6 +697,9 @@ we'll roll with this.
   ;;     (lambda () (interactive) (find-alternate-file "..")))))
 #+end_src
 ** Info
+   :PROPERTIES:
+   :ID:       cee7c2a5-33d5-43cb-abf3-de5174e78f95
+   :END:
 Mac fix for info installation location!
 #+begin_src emacs-lisp
   (require 'info)
@@ -593,11 +710,20 @@ Mac fix for info installation location!
            Info-directory-list)))
 #+end_src
 ** Pcomplete
+   :PROPERTIES:
+   :ID:       0e0b04db-4a10-473d-9a12-a19190b1878e
+   :END:
 #+begin_src emacs-lisp
   (require 'pcmpl-git)
 #+end_src
 ** Shell (using rakitzis' rc)
+   :PROPERTIES:
+   :ID:       bf047787-944d-4eff-a8c1-dfef5f1ac63a
+   :END:
 *** Shell Session Management
+    :PROPERTIES:
+    :ID:       6d275e25-9de3-4c12-8765-fd96be7d209c
+    :END:
 I need to tie this into projectile, but for now have a way to create a
 "main" buffer and then name other ones with =shell-new=.
 #+begin_src emacs-lisp
@@ -607,7 +733,6 @@ I need to tie this into projectile, but for now have a way to create a
     (hack-dir-local-variables-non-file-buffer))
 
   (advice-add #'shell :before #'cm/advise-shell)
-
 
   (defun cm/shell-new (name)
     "Create a shell buffer named NAME."
@@ -650,11 +775,17 @@ I need to tie this into projectile, but for now have a way to create a
 #+end_src
 
 *** Use a login shell 
+    :PROPERTIES:
+    :ID:       1f6334ef-51f3-417d-acc6-c578c2a9223b
+    :END:
 #+begin_src emacs-lisp
   (set-default 'explicit-shell-file-name "/home/codemac/bin/rc")
 ;  (setq explicit-rc-args '("-l"))
 #+end_src
 *** Track the directory of the shell process
+    :PROPERTIES:
+    :ID:       7ffc7964-0afc-4ca1-8b1d-7f1b0da0b35d
+    :END:
 #+begin_src emacs-lisp
   (defun shell-procfs-dirtrack (str)
     (prog1 str
@@ -715,6 +846,9 @@ I need to tie this into projectile, but for now have a way to create a
 
 #+end_src
 ** Eshell
+   :PROPERTIES:
+   :ID:       494935b4-92ef-4ed1-899e-bbc3ec474ba2
+   :END:
 #+begin_src emacs-lisp
   (autoload 'eshell "eshell" "")
 
@@ -854,6 +988,9 @@ I need to tie this into projectile, but for now have a way to create a
 
 #+end_src
 ** BBDB - Big Brother DataBase
+   :PROPERTIES:
+   :ID:       47557249-431f-4cca-a9a8-4c78f7d8741f
+   :END:
 Well integrated into Gnus, eventually just had to start using it!
 Borrowed this pretty heavily from somewhere, will document once I know
 what all these features really mean.
@@ -887,6 +1024,9 @@ what all these features really mean.
    '(( "From" . "no.?reply\\|DAEMON\\|daemon\\|facebookmail\\|twitter")))
 #+end_src
 ** MML + org
+   :PROPERTIES:
+   :ID:       3dda2f51-5402-48ab-9607-b713149fd10d
+   :END:
 #+begin_src emacs-lisp
   
   (defun cm/org-mime-html-hook ()
@@ -908,7 +1048,13 @@ what all these features really mean.
               (local-set-key "\C-c\M-o" 'org-mime-org-buffer-htmlize)))
 #+end_src
 ** Gnus
+   :PROPERTIES:
+   :ID:       3835aa31-4277-4684-8543-8b98179ff2e6
+   :END:
 ** xdg-open!
+   :PROPERTIES:
+   :ID:       82df16a5-026b-415d-9aae-c63b16630174
+   :END:
 #+begin_src emacs-lisp
   (defun cm/advise-browse-url-can-use-xdg-open (fun &rest args)
     (let ((res (apply fun args)))
@@ -921,6 +1067,9 @@ what all these features really mean.
   (advice-add #'browse-url-can-use-xdg-open :around #'cm/advise-browse-url-can-use-xdg-open)
 #+end_src
 ** Uniquify
+   :PROPERTIES:
+   :ID:       42385a4e-6d56-4be3-b351-c6a4dacdef32
+   :END:
 So useful, I think everyone should have this turned on.
 #+begin_src emacs-lisp
   (require 'uniquify)
@@ -946,8 +1095,17 @@ So useful, I think everyone should have this turned on.
     (uniquify-all-lines-region (point-min) (point-max)))
 #+end_src
 * External
+  :PROPERTIES:
+  :ID:       d6a73715-3861-4816-9c49-0b3a2e493fa2
+  :END:
 ** Emacs Features
+   :PROPERTIES:
+   :ID:       2fbe45d4-05c6-4eec-98c4-4569aaacf9f5
+   :END:
 *** simple httpd
+    :PROPERTIES:
+    :ID:       4f1c60ce-0986-45bd-b5dc-4dc596675e68
+    :END:
 This is a mode that provides a full http server in elisp. It does
 default to serving =~/public_html=, so I turn that off here.
 
@@ -960,6 +1118,9 @@ default to serving =~/public_html=, so I turn that off here.
    (setq httpd-serve-files nil))
 #+end_src
 *** Helm
+    :PROPERTIES:
+    :ID:       9e11b4e9-8161-41e8-8e1f-0dabd83a8145
+    :END:
 Helm is the new Anything. Helm will help steer you in the right
 direction!
 
@@ -1018,6 +1179,9 @@ this page is *STUPID* slow in eww)
 
 #+end_src
 **** Mac os x hacks
+     :PROPERTIES:
+     :ID:       ca5c4755-da49-491b-ae37-6255407b5598
+     :END:
 Get spotlight into list of the files that helm can inspect, and get
 top output that doesn't suck
 #+begin_src emacs-lisp
@@ -1026,6 +1190,9 @@ top output that doesn't suck
     (setq helm-c-top-command "COLUMNS=%s top -l 1"))
 #+end_src
 **** Global Tags
+     :PROPERTIES:
+     :ID:       17f2f463-4bb3-4901-86e6-2acb32572dbf
+     :END:
 Yay gtags support for helm!
 #+begin_src emacs-lisp
   (use-package helm-gtags
@@ -1047,12 +1214,18 @@ Yay gtags support for helm!
                  (local-set-key (kbd "C-t") 'helm-gtags-pop-stack))))
 #+end_src
 *** Minimap
+    :PROPERTIES:
+    :ID:       f41de103-ff8a-4327-9974-9648cec029fe
+    :END:
 Got jealous, had to have it in emacs. Not so useful after all...
 #+begin_src emacs-lisp
   (use-package minimap
     :commands minimap-create)
 #+end_src
 *** Word count
+    :PROPERTIES:
+    :ID:       bf701e19-c3b1-4df8-8ea2-3bc377fc9d98
+    :END:
 NaNoWriMo!
 #+begin_src emacs-lisp
   (autoload 'word-count-mode "word-count"
@@ -1060,6 +1233,9 @@ NaNoWriMo!
   (global-set-key "\M-+" 'word-count-mode)
 #+end_src
 *** IBuffer
+    :PROPERTIES:
+    :ID:       0ebd6cb6-2216-4b38-9e05-569d1fa85fde
+    :END:
 Incredibly useful way to browse your buffers.
 #+begin_src emacs-lisp
   (require 'ibuffer)
@@ -1088,6 +1264,9 @@ Incredibly useful way to browse your buffers.
   (define-key ibuffer-mode-map (kbd "s p") 'ibuffer-do-sort-by-filename-or-dired)
 #+end_src
 *** Desktop
+    :PROPERTIES:
+    :ID:       a920b9cb-92ec-4652-a937-bb296f32bad6
+    :END:
 Saves everything! Very useful for the epic emacs restarters (me)
 #+begin_src emacs-lisp
   (require 'desktop)
@@ -1103,6 +1282,9 @@ Saves everything! Very useful for the epic emacs restarters (me)
   (add-hook 'auto-save-hook 'cm/desktop-save)
 #+end_src
 *** Browse Kill Ring
+    :PROPERTIES:
+    :ID:       6287094b-d31c-42d9-b125-870943a9e90d
+    :END:
 Navigate visually through the entire kill ring.
 #+begin_src emacs-lisp
   (autoload 'browse-kill-ring "browse-kill-ring" "")
@@ -1111,6 +1293,9 @@ Navigate visually through the entire kill ring.
 #+end_src
 
 *** Expand region
+    :PROPERTIES:
+    :ID:       4cc35189-c58c-42ef-8e80-aae7f2ac00e6
+    :END:
 If you have a region selected, typing =C-== will expand the selection
 out semantically.
 #+begin_src emacs-lisp
@@ -1118,12 +1303,18 @@ out semantically.
   (global-set-key (kbd "C-=") 'er/expand-region)
 #+end_src
 *** Ace Jump
+    :PROPERTIES:
+    :ID:       c32057a8-724c-479d-8f20-d3c7b7e2ea7e
+    :END:
 #+begin_src emacs-lisp
   (use-package
    ace-jump-mode
    :bind ("C-." . ace-jump-mode))
 #+end_src
 *** Hilight line
+    :PROPERTIES:
+    :ID:       f7ae60f6-a98c-4bd2-9453-45a5a4f96fa2
+    :END:
 #+begin_src emacs-lisp
   ;; Default hl
   (global-hl-line-mode t)
@@ -1131,6 +1322,9 @@ out semantically.
 
 #+end_src
 *** Projectile
+    :PROPERTIES:
+    :ID:       b8c6fcd8-02a8-4e74-9a7d-f55ced1f2e2a
+    :END:
 #+begin_src emacs-lisp
   (use-package projectile
     :diminish projectile-mode
@@ -1139,8 +1333,14 @@ out semantically.
     (setq projectile-use-git-grep t))
 #+end_src
 ** Major Modes
+   :PROPERTIES:
+   :ID:       04fe1433-561d-453a-a3c7-3ec248df0175
+   :END:
    
 *** Ledger
+    :PROPERTIES:
+    :ID:       22c83662-0e53-427a-99e8-70e640a87229
+    :END:
 I use ledger to track my finances. I have it align amounts and use ISO
 dates, but other than that pretty normal config
 #+begin_src emacs-lisp
@@ -1153,13 +1353,22 @@ dates, but other than that pretty normal config
    (setq ledger-use-iso-dates t))
 #+end_src
 *** Markdown
+    :PROPERTIES:
+    :ID:       577a0ae4-15dc-4f23-8010-4a2c884afe73
+    :END:
 #+begin_src emacs-lisp
   (use-package
    markdown-mode
    :mode "\\.\\(md\\|markdown\\|mdwn\\)$")
 #+end_src
 *** Evil
+    :PROPERTIES:
+    :ID:       b85dc1f9-cbe3-40ff-b9a4-17b84e98cb18
+    :END:
 **** Activate Evil!
+     :PROPERTIES:
+     :ID:       0323ddc8-4107-4bef-868b-8636fbf95fcb
+     :END:
      I have become one of them :/
 #+begin_src emacs-lisp
   ;(require 'evil)
@@ -1167,6 +1376,9 @@ dates, but other than that pretty normal config
   ;(evil-mode 1)
 #+end_src
 **** Evil Ace Jump
+     :PROPERTIES:
+     :ID:       8b7dc631-4a6c-497f-ae58-6879fac697b2
+     :END:
 Let's me use ace jump e'erywhere
 #+begin_src emacs-lisp
   ;(define-key evil-motion-state-map (kbd "SPC") #'evil-ace-jump-word-mode)
@@ -1195,6 +1407,9 @@ For some reason that does not include evil-local-mode.
     (autoload 'evil-local-mode "evil" "Toggle evil in single buffer" t))
 #+end_src
 *** Valgrind
+    :PROPERTIES:
+    :ID:       1a583879-2d47-4e92-88d8-b47ecaf28dd1
+    :END:
 #+begin_src emacs-lisp
   ; Based on compile.el included with Emacs
   ; and ideas from http://tromey.com/blog/?p=342
@@ -1246,12 +1461,18 @@ For some reason that does not include evil-local-mode.
     (compilation-start command t))
 #+end_src
 *** PlantUML
+    :PROPERTIES:
+    :ID:       5c8d9180-9215-438c-8d91-c4348e01c7f4
+    :END:
 Get the jarfile in the correct place...
 #+begin_src emacs-lisp
   (setq plantuml-jar-path (expand-file-name "/opt/plantuml/plantuml.jar"))
   (setenv "GRAPHVIZ_DOT" "/usr/bin/dot")
 #+end_src
 *** Scheme
+    :PROPERTIES:
+    :ID:       33d797c6-9e42-4cc8-a04d-8af3d0e2d3ba
+    :END:
 [[http://emacswiki.org/emacs/ParEdit][Paredit]] is an amazing minor mode for editing lisp, but it is a bit
 complex. I turn it on for scheme, but not elisp as usually when I'm
 hacking on elisp I want the lowest barrier to entry.
@@ -1262,15 +1483,24 @@ hacking on elisp I want the lowest barrier to entry.
                (paredit-mode 1)))
 #+end_src
 *** Paredit
+    :PROPERTIES:
+    :ID:       f2621984-6644-4efc-8154-0c2ab06b5bb8
+    :END:
 #+begin_src emacs-lisp
   (use-package paredit)
 #+end_src
 *** Common Lisp
+    :PROPERTIES:
+    :ID:       5803e34a-7304-429a-ba92-f69e14623941
+    :END:
 Uhh, go CL?
 #+begin_src emacs-lisp
   (require 'cl)
 #+end_src
 *** Markdown
+    :PROPERTIES:
+    :ID:       8e52bfd7-4fd2-4076-8a03-faddfa0941b3
+    :END:
 #+begin_src emacs-lisp
   (autoload 'markdown-mode "markdown-mode.el"
     "Major mode for editing Markdown files" t)
@@ -1282,6 +1512,9 @@ Uhh, go CL?
   (add-to-list 'auto-mode-alist '("\\.mdwn$" . markdown-mode))
 #+end_src
 *** Haskell
+    :PROPERTIES:
+    :ID:       c7b6733c-7939-4988-a533-1be0b7d68c06
+    :END:
 #+begin_src emacs-lisp
   (add-to-list 'auto-mode-alist '("\\.hs$" . haskell-mode))
   (add-hook 'haskell-mode-hook 'turn-on-haskell-indent)
@@ -1290,7 +1523,13 @@ Uhh, go CL?
   (setq haskell-hoogle-program "hoogle")
 #+end_src
 *** Go
+    :PROPERTIES:
+    :ID:       b10a04b5-9b60-4a6f-97d8-ad7ad6394dbb
+    :END:
 **** Fuck GOPATH and everything in it
+     :PROPERTIES:
+     :ID:       c441d182-f0d9-4f8b-a938-1c6ebf45e20a
+     :END:
 So emacs doesn't handle project specific *environment
 variables*. Which sucks horribly, and I don't blame any of the project
 tools for not addressing it, as there are no great answers.
@@ -1300,6 +1539,9 @@ many are set, and that there are rarely cli overrides for them is
 really a fault of their own.
 
 **** Fix go-mode's gofmt
+     :PROPERTIES:
+     :ID:       8eafd986-81f9-4b2d-9db5-46c886fdf06a
+     :END:
 
 You'll see the commented section in this function. When the current
 go-mode.el calls =delete-windows-on outbuf= it closes pretty much any
@@ -1312,7 +1554,7 @@ other window you have open. This gets old. Fast.
     (defun gofmt ()
       "Pipe the current buffer through the external tool `gofmt`.
   Replace the current buffer on success; display errors on failure."
-      
+    
       (interactive)
       (let ((srcbuf (current-buffer)))
         (with-temp-buffer
@@ -1335,10 +1577,10 @@ other window you have open. This gets old. Fast.
                      (goto-char (min old-point (point-max)))
                      (if old-mark (push-mark (min old-mark (point-max)) t))
                      (kill-buffer errbuf))
-                 
+               
                  ;; gofmt failed: display the errors
                  (display-buffer errbuf)))))
-            
+          
             ;; Collapse any window opened on outbuf if shell-command-on-region
             ;; displayed it.
             ;; NO! Don't do that< cm!
@@ -1350,6 +1592,7 @@ other window you have open. This gets old. Fast.
       (require 'go-oracle)
       (setq go-oracle-command "/home/codemac/bin/oracle")
       (go-oracle-mode)
+      (subword-mode 1)
       (diminish 'go-oracle-mode)
       (linum-mode 1)
       (setq imenu-generic-expression
@@ -1362,6 +1605,9 @@ other window you have open. This gets old. Fast.
 #+end_src
 
 *** Ruby
+    :PROPERTIES:
+    :ID:       0d05cf49-73f2-40f2-b607-45795c1a9650
+    :END:
 Lisp has kind of taken over from Ruby. Whether that's Scheme or Common
 Lisp seems to be the current mental debate.
 #+begin_src emacs-lisp
@@ -1374,6 +1620,9 @@ Lisp seems to be the current mental debate.
   (add-to-list 'auto-mode-alist '("\\.rb$" . ruby-mode))
 #+end_src
 *** C
+    :PROPERTIES:
+    :ID:       4d420720-231b-491a-848f-d384b6cdc2cd
+    :END:
 My C settings.
 #+begin_src emacs-lisp
   (require 'compile)
@@ -1432,6 +1681,9 @@ My C settings.
   (add-hook 'c-mode-hook 'my-c-hook)
 #+end_src
 *** GNU Plot
+    :PROPERTIES:
+    :ID:       c8bff85d-6ad0-4580-a461-49eb7910b574
+    :END:
 Get some fancy graphs going. I mostly use R, but this is nice when /other/ people use gnuplot.
 #+begin_src emacs-lisp
   (autoload 'gnuplot-mode "gnuplot" "gnuplot major mode" t)
@@ -1439,6 +1691,9 @@ Get some fancy graphs going. I mostly use R, but this is nice when /other/ peopl
   (add-to-list 'auto-mode-alist '("\\.gp$" . gnuplot-mode))
 #+end_src
 *** Magit
+    :PROPERTIES:
+    :ID:       84c9b972-5967-4c5e-b096-b00511a56dc2
+    :END:
 Because I switched to Magit! Works well, and is fairly canonical at
 this point. I don't understand vc-mode that well yet, so I really just
 use magit-status and magit-log.
@@ -1449,6 +1704,9 @@ magit-log is missing the commiter annotation, I need to fix that.
     :diminish magit-auto-revert-mode)
 #+end_src
 **** Custom Commit Message Formatting
+     :PROPERTIES:
+     :ID:       ea200f52-b363-4450-82c9-4f970a4c4254
+     :END:
 Sort files by spelling. I figure the internal ordering of each
 paragraph should be fine. I'm still working on a cm/gnu-fill-paragraph
 that works on these commit message regions.
@@ -1498,6 +1756,9 @@ standard implementation, and mostly lifted from =sort-paragraphs= in
         (sort-subr reverse 'cm/gnu-line-next 'cm/gnu-line-end))))
 #+end_src
 ***** TODO Fix up the idea of "creating" gnu lines
+      :PROPERTIES:
+      :ID:       b803e11d-489a-40e5-a495-faee9a5cf4a0
+      :END:
 #+begin_src emacs-lisp
   ; this works well with my git-commit after save hook and rebasing
   ;(defun cm/create-gnu-lines (reverse beg end)
@@ -1513,11 +1774,17 @@ standard implementation, and mostly lifted from =sort-paragraphs= in
 I don't have a good keybinding for this yet, but I will figure
 something out :P
 *** Esperanto
+    :PROPERTIES:
+    :ID:       5ff50b28-b29e-41f1-858c-3481b8a7c07d
+    :END:
 This is heavily borrowed from the spanish mode, works wonders.
 #+begin_src emacs-lisp
   (load-library "esperanto")
 #+end_src
 *** Mode Compile
+    :PROPERTIES:
+    :ID:       7008c9ba-111a-46fb-afb7-d8b2750a6616
+    :END:
 Friendlier compilation support, tries to guess what the compilation
 command should be. I haven't found this to be incredibly helpful
 unless you are using the default build systems (make, pdflatex, etc).
@@ -1531,6 +1798,9 @@ unless you are using the default build systems (make, pdflatex, etc).
   (global-set-key "\C-ck" 'mode-compile-kill)
 #+end_src
 *** YAML
+    :PROPERTIES:
+    :ID:       b37acdb0-1ecd-43e5-a92a-5380a5553263
+    :END:
 More ruby days.
 #+begin_src emacs-lisp
   (autoload 'yaml-mode "yaml-mode" "Yaml editing mode" t)
@@ -1540,6 +1810,9 @@ More ruby days.
 #+end_src
 
 *** HAML
+    :PROPERTIES:
+    :ID:       25c5fc08-8ed9-4c8e-9c9a-374e3e705d5a
+    :END:
 No seriously, I wrote lots of Ruby.
 #+begin_src emacs-lisp
   (autoload 'haml-mode "haml-mode" "" t)
@@ -1550,6 +1823,9 @@ No seriously, I wrote lots of Ruby.
   (add-to-list 'auto-mode-alist '("\\.sass$" . sass-mode))
 #+end_src
 *** Tramp
+    :PROPERTIES:
+    :ID:       e8416c36-fe80-4ec2-831b-69134111cc35
+    :END:
 #+begin_src emacs-lisp
   (require 'tramp-loaddefs)
   (require 'tramp)
@@ -1559,6 +1835,9 @@ No seriously, I wrote lots of Ruby.
       (setq tramp-verbose 6)))
 #+end_src
 *** GNU Global
+    :PROPERTIES:
+    :ID:       17fec222-08cc-4942-bd94-f9d4fb788c25
+    :END:
 Thank you Britt.
 #+begin_src emacs-lisp
   (require 'gtags-autoloads)
@@ -1622,15 +1901,24 @@ Thank you Britt.
     '(my-gtags-settings))
 #+end_src
 *** Android
+    :PROPERTIES:
+    :ID:       acc7d0e7-3f18-40f2-9b60-28389ee05743
+    :END:
 #+begin_src emacs-lisp
   (autoload 'android-mode "android-mode.el" "Android minor mode" t)
   (autoload 'android "/opt/android-sdk/tools/lib/android.el" "Google provided android emacs" t)
 #+end_src
 *** Smart tab
+    :PROPERTIES:
+    :ID:       0015eb36-2e29-44f8-8fec-12696fa5070f
+    :END:
 #+begin_src emacs-lisp
   (require 'smart-tab)
 #+end_src
 *** Python
+    :PROPERTIES:
+    :ID:       19ef428e-9397-4ebe-9f0a-d2c75bdb4c13
+    :END:
 #+begin_src emacs-lisp
   (add-hook 'python-mode-hook
             '(lambda ()
@@ -1638,11 +1926,20 @@ Thank you Britt.
                (setq show-trailing-whitespace t)))
 #+end_src
 ** Programs
+   :PROPERTIES:
+   :ID:       cb65de78-396a-4243-8bd8-4132d982e360
+   :END:
 *** notmuch
+    :PROPERTIES:
+    :ID:       705f65b0-cd4f-4c2f-a7da-dc340505dbbc
+    :END:
 #+begin_src emacs-lisp
   (require 'notmuch)
 #+end_src
 **** Sending mail
+     :PROPERTIES:
+     :ID:       58944cd4-e6a8-4053-8b9f-b51cd3e8bf34
+     :END:
 We're just borrowing the gnus settings here..
 #+begin_src emacs-lisp
   (setq smtpmail-auth-credentials "~/.authinfo")
@@ -1693,6 +1990,9 @@ I get to avoid most of the complications. It goes, in order:
 
 #+end_src
 ***** queueing
+      :PROPERTIES:
+      :ID:       f884dff3-0e19-41e1-969b-8911fcc05f68
+      :END:
 #+begin_src emacs-lisp
   (setq smtpmail-queue-mail  t  ;; start in non-queuing mode
         smtpmail-queue-dir   "~/mail/queue")
@@ -1703,6 +2003,9 @@ I get to avoid most of the complications. It goes, in order:
   (setq message-auto-save-directory "~/mail/cm/INBOX.Drafts/cur")
 #+end_src
 ***** Message view
+      :PROPERTIES:
+      :ID:       609c8599-feea-4606-8444-3a243b306e2c
+      :END:
 #+begin_src emacs-lisp
   (setq message-citation-line-format "* %f [%Y-%m-%d %H:%M]:")
   (setq message-citation-line-function 'message-insert-formatted-citation-line)
@@ -1716,6 +2019,9 @@ I get to avoid most of the complications. It goes, in order:
   (setq notmuch-wash-citation-lines-suffix 1)
 #+end_src
 ***** Keybindings
+      :PROPERTIES:
+      :ID:       dd303b47-13d6-48df-bb7f-93a81ac25edc
+      :END:
 For some reason the ~=~ sign is used for refresh in notmuch. This is
 horrifying.
 #+begin_src emacs-lisp
@@ -1742,6 +2048,9 @@ horrifying.
   (global-set-key (kbd "C-c i s") 'notmuch-search)
 #+end_src
 *** Geiser
+    :PROPERTIES:
+    :ID:       10f9438e-5499-4cac-8d6f-6fe2ceec10d2
+    :END:
 Let's get our scheme on!
 #+begin_src emacs-lisp
   (require 'geiser)
@@ -1749,6 +2058,9 @@ Let's get our scheme on!
   (setq geiser-active-implementations '(guile))
 #+end_src
 *** Muse
+    :PROPERTIES:
+    :ID:       33123e64-e792-45bc-8260-9ea8a40ca039
+    :END:
 Good for person wikis, however I pretty much exclusively use =org-blog=/=org-export= now.
 #+begin_src emacs-lisp
   (add-hook 'muse-mode-hook '(lambda ()
@@ -1763,8 +2075,14 @@ Good for person wikis, however I pretty much exclusively use =org-blog=/=org-exp
 #+end_src
 
 *** Org
+    :PROPERTIES:
+    :ID:       2a2bc3dc-a714-4bd9-adb1-c262ffcd5f62
+    :END:
 Holy god. Let it begin.
 **** Initialize org mode
+     :PROPERTIES:
+     :ID:       9c315d7c-fa8f-4e3c-843c-a9c37b06486f
+     :END:
 I add a =*.org= regex to the =auto-mode-alist=, start up org-protocol
 so I can use my Firefox bookmark and emacsclient integration, and
 org-mouse in case I already have a pointing device. I imagine
@@ -1779,6 +2097,9 @@ org-mouse in case I already have a pointing device. I imagine
   (require 'org-notmuch)
 #+end_src
 **** Org Agenda
+     :PROPERTIES:
+     :ID:       9fdf73e8-52bf-4c3a-b0da-86280d3929fe
+     :END:
 These are some functions stolen from [[http://sachachua.com/][Sacha Chua]] to make some fun
 agenda stuff. The org-agenda-load is especially nice when you use lots
 of schedule events, you can figure out just how busy you've really
@@ -1899,6 +2220,9 @@ decided you are.
       (list total-scheduled total-unscheduled total-gap))))
 #+end_src
 **** Org Clock
+     :PROPERTIES:
+     :ID:       fbb22f25-0f77-44c8-ab44-47187909d25a
+     :END:
 This adds automatic task clocking. It's incredibly useful to figure
 out how long tasks took that you start and stop.
 #+begin_src emacs-lisp  
@@ -1975,12 +2299,18 @@ Functions borrowed from Sacha Chua.
 #+end_src
 
 **** Run an auto archiving script after saves. *This currently does not work!*
+     :PROPERTIES:
+     :ID:       3f3818a7-f12d-4a2c-9ac2-9c2f527b5ca8
+     :END:
 #+begin_src emacs-lisp  
   (setq safe-local-variable-values (quote ((after-save-hook archive-done-tasks))))
   
   (defalias 'archive-done-tasks 'org-my-archive-done-tasks)
 #+end_src
 **** Receipt Agenda
+     :PROPERTIES:
+     :ID:       86b9b44b-96cd-47c3-8fd5-3086cb77c05b
+     :END:
 #+begin_src emacs-lisp
   (defun org-receipt-agenda (match)
     (setq org-agenda-include-all-todo nil
@@ -1991,6 +2321,9 @@ Functions borrowed from Sacha Chua.
     )
 #+end_src
 **** Custom agendas
+     :PROPERTIES:
+     :ID:       16aafc16-4240-4a4a-98f6-92186bc07d14
+     :END:
 #+begin_src emacs-lisp  
   (defun my-agenda-sort-by-inactive-timestamp (a b)
     "Sort by interactive timestamp. Oldest first, items without any ts at the bottom."
@@ -2083,6 +2416,9 @@ Functions borrowed from Sacha Chua.
            ((org-receipt-agenda)))))
 #+end_src
 **** Useful setq's
+     :PROPERTIES:
+     :ID:       8bb80482-a3c3-4e9b-bc23-27fdfdf4d14c
+     :END:
 #+begin_src emacs-lisp  
   (setq org-stuck-projects
             '("-MAYBE-DONE" "TODO"))
@@ -2131,6 +2467,9 @@ Functions borrowed from Sacha Chua.
   (global-set-key (kbd "<f6>") 'org-clock-goto)
 #+end_src
 **** Tags and todo keywords
+     :PROPERTIES:
+     :ID:       49034a34-2766-4962-bd53-676f2d108704
+     :END:
 #+begin_src emacs-lisp
   (setq org-tag-alist '((:startgroup)
                         ("HOME" . ?h)
@@ -2154,6 +2493,9 @@ Functions borrowed from Sacha Chua.
   ;      '(("netapp" "" nil t)
 #+end_src
 **** org export
+     :PROPERTIES:
+     :ID:       8eedeae4-7a30-4dfe-94ff-93827481d847
+     :END:
 #+begin_src emacs-lisp
   (require 'pandoc-mode)
   ;; mediawiki + pandoc hack
@@ -2183,6 +2525,9 @@ Functions borrowed from Sacha Chua.
   ;                         dotfiles-dir)))))
 #+end_src
 **** org babel & export
+     :PROPERTIES:
+     :ID:       f6ce34e2-98fe-4916-aead-07bd1e3d1a1f
+     :END:
 #+begin_src emacs-lisp  
   (setq org-ditaa-jar-path "/usr/local/Cellar/ditaa/0.9/ditaa0_9.jar")
   (setq org-plantuml-jar-path plantuml-jar-path)
@@ -2220,6 +2565,9 @@ Functions borrowed from Sacha Chua.
   (add-hook 'org-mime-send-buffer-hook 'cm/org-mime-send-buffer-hook)
 #+end_src
 **** Publishing
+     :PROPERTIES:
+     :ID:       338bb160-77e1-4a63-ab6c-c80aab220da8
+     :END:
 How I deploy my personal website.
 #+begin_src emacs-lisp
   ;; Inline images in HTML instead of producting links to the image
@@ -2293,12 +2641,18 @@ How I deploy my personal website.
     (org-publish-current-project))
 #+end_src
 **** Misc Funcs
+     :PROPERTIES:
+     :ID:       ef5ab78f-e0b9-4e28-b1b1-256a1253ec39
+     :END:
 #+begin_src emacs-lisp
     (defun org-insert-datetime ()
       (interactive)
       (insert (format-time-string "%Y-%m-%d %a %H:%M %z")))
 #+end_src
 **** Link Types
+     :PROPERTIES:
+     :ID:       dab4061f-b05e-4689-ba82-82ab90ce1d69
+     :END:
 #+begin_src emacs-lisp
   ;; org links!
   (org-add-link-type "man" 'org-man-open)
@@ -2380,6 +2734,9 @@ How I deploy my personal website.
   (add-hook 'org-capture-after-finalize-hook 'cm/org-capture-other-frame-cleanup)
 #+end_src
 **** Org Capture
+     :PROPERTIES:
+     :ID:       47a9dc31-f51e-4ee3-b06f-44848cbe9a04
+     :END:
 #+begin_src emacs-lisp
   ;; org capture!
   (setq org-directory "~/org")
@@ -2426,6 +2783,9 @@ Finally, before I save a file, add the id's!
 #+end_src
 
 **** Appt Reminders
+     :PROPERTIES:
+     :ID:       ac746ebc-a17c-443d-9430-876cd1330c57
+     :END:
 This creates the appt buffer so we get notifications about
 appointments in the org mode calendar. It's not perfect, but it does
 help with my forgetfulness.
@@ -2435,10 +2795,16 @@ help with my forgetfulness.
   (org-agenda-to-appt)
 #+end_src
 *** W3M
+    :PROPERTIES:
+    :ID:       79e3e87f-f769-4325-ac15-450572f79a6a
+    :END:
 #+begin_src emacs-lisp
   (autoload 'w3m-browse-url "w3m-load" "" t)
 #+end_src
 *** RCIRC
+    :PROPERTIES:
+    :ID:       63cf268e-8426-426f-a6fe-62492899d659
+    :END:
 #+begin_src emacs-lisp
   ; (eval-after-load 'rcirc '(require 'rcirc-color))
   ; (require 'rcirc)
@@ -2601,6 +2967,9 @@ channels correctly. The format is: =#channela,#channelb ,passwordb=
   ; ;  (setq rcirc-time-format "%H:%M ") ; << that format suckts, nvm.
 #+end_src
 **** Reconnect
+     :PROPERTIES:
+     :ID:       3eab2e32-f8ff-4dba-a3c2-fe0c198c21b2
+     :END:
 #+begin_src emacs-lisp
   ; (defun-rcirc-command reconnect (arg)
   ;   "Reconnect the server process."
@@ -2679,6 +3048,9 @@ channels correctly. The format is: =#channela,#channelb ,passwordb=
   ;              (rcirc-reconnect-schedule process))))))))
 #+end_src
 *** ERC
+    :PROPERTIES:
+    :ID:       5ba53dbe-b88d-44e9-8121-462325ca2422
+    :END:
 What I generally end up using for irc, but weechat always tends to win
 me over.
 #+begin_src emacs-lisp
@@ -2713,31 +3085,7 @@ me over.
   (setq erc-autojoin-timing 'ident) ; wait for the delay (or ident resolution)
   (setq erc-autojoin-delay 15)
 
-  (defun bitlbee-netrc-identify ()
-    "Auto-identify for Bitlbee channels using authinfo or netrc.
-    
-    The entries that we look for in netrc or authinfo files have
-    their 'port' set to 'bitlbee', their 'login' or 'user' set to
-    the current nickname and 'server' set to the current IRC
-    server's name.  A sample value that works for authenticating
-    as user 'keramida' on server 'localhost' is:
-    
-    machine localhost port bitlbee login keramida password supersecret"
-    (interactive)
-    (when (string= (buffer-name) "&bitlbee")
-      (let* ((secret (plist-get (nth 0 (auth-source-search :max 1
-                                                           :host erc-server
-                                                           :user (erc-current-nick)
-                                                           :port "bitlbee"))
-                                :secret))
-             (password (if (functionp secret)
-                           (funcall secret)
-                         secret)))
-        (erc-message "PRIVMSG" (concat (erc-default-target) " " "identify" " " password) nil))))
-
-  ;; Enable the netrc authentication function for &biblbee channels.
-  (add-hook 'erc-join-hook 'bitlbee-netrc-identify)
-  ;; Setup ERC buffers
+    ;; Setup ERC buffers
   (defun cm/erc-hook ()
     "Correctly configure ERC buffers"
     (auto-fill-mode 0)                    ; disable auto fill
@@ -2750,7 +3098,7 @@ me over.
 
   (defun cm/erc-begin ()
     (interactive)
-    (erc-ssl :server "weber.freenode.net" :port 6697)
+    (erc-ssl :server "chat.freenode.net" :port 6697)
     (erc :server "localhost"))
 
   (add-hook 'erc-mode-hook 'cm/erc-hook)
@@ -2758,16 +3106,19 @@ me over.
 
 #+end_src
 **** Bitlbee Support
+     :PROPERTIES:
+     :ID:       65b67613-38e8-418f-9abc-9a93e86e441e
+     :END:
 #+begin_src emacs-lisp
   (defun bitlbee-netrc-identify ()
     "Auto-identify for Bitlbee channels using authinfo or netrc.
-      
+    
      The entries that we look for in netrc or authinfo files have
      their 'port' set to 'bitlbee', their 'login' or 'user' set to
      the current nickname and 'server' set to the current IRC
      server's name.  A sample value that works for authenticating
      as user 'keramida' on server 'localhost' is:
-      
+    
      machine localhost port bitlbee login keramida password supersecret"
     (interactive)
     (when (string= (buffer-name) "&bitlbee")
@@ -2785,6 +3136,9 @@ me over.
   ;(add-hook 'erc-join-hook 'bitlbee-netrc-identify)
 #+end_src
 *** Jabber
+    :PROPERTIES:
+    :ID:       cf368eef-c121-411f-ad2c-1560d4a0882f
+    :END:
 Directly use jabber with elisp! It's painfully slow, and the single
 threaded nature of emacs means it turns out to be quite a failure if
 you are trying to edit anything.
@@ -2887,6 +3241,9 @@ you are trying to edit anything.
     (rcirc-cmd-join (mapconcat 'identity cm/hipchat-rooms ",") (rcirc-buffer-process (get-buffer "&bitlbee@localhost")) nil))
 #+end_src
 *** SLIME
+    :PROPERTIES:
+    :ID:       bb361611-de0c-480f-8919-e1ed77b583e0
+    :END:
 #+begin_src emacs-lisp
   ;(setq inferior-lisp-program "sbcl")
   ;(require 'slime-autoloads)
@@ -2895,6 +3252,9 @@ you are trying to edit anything.
 
 #+end_src
 *** SQL
+    :PROPERTIES:
+    :ID:       b4967d83-57f9-4cb9-879f-f3a395509419
+    :END:
 Who needs a command line anyways..
 #+begin_src emacs-lisp
   (defun sql-make-smart-buffer-name ()
@@ -2916,6 +3276,9 @@ Who needs a command line anyways..
               (sql-rename-buffer)))
 #+end_src
 *** Flymake
+    :PROPERTIES:
+    :ID:       b379d31d-a542-496b-ad6b-31817952e93d
+    :END:
 #+begin_src emacs-lisp
   ;; stolen from http://www.reddit.com/r/emacs/comments/i05v3/emacs_and_pylint/c1ztm6x (user kanak on /r/emacs)
   (require 'flymake)
@@ -2955,6 +3318,9 @@ Who needs a command line anyways..
   (setq ispell-extra-args '("--sug-mode=ultra"))
 #+end_src
 *** EMMS - Emacs MultiMedia System
+    :PROPERTIES:
+    :ID:       0e42f65c-aca2-4cbb-9633-1d8cedaefaa8
+    :END:
 Now w/mopidy
 #+begin_src emacs-lisp
   (require 'emms-setup)
@@ -2982,7 +3348,13 @@ Now w/mopidy
   (global-set-key (kbd "C-c m m") 'emms-smart-browse)
 #+end_src
 ** Custom
+   :PROPERTIES:
+   :ID:       3897ecf3-7d82-47a2-b736-abf8204a83b4
+   :END:
 *** Journal
+    :PROPERTIES:
+    :ID:       f11177ea-8f27-467c-bcc1-ee237fa6c0be
+    :END:
 Old text file journaling stuff. It really was quite nice, but org mode
 once again ate my soul.
 #+begin_src emacs-lisp
@@ -3015,6 +3387,9 @@ once again ate my soul.
     (flyspell-mode 1))
 #+end_src
 *** Blog
+    :PROPERTIES:
+    :ID:       5f6385d7-5212-4463-b3e8-df47357a4d69
+    :END:
 Some helper functions for publishing with ikiwiki
 #+begin_src emacs-lisp
   (defun blog-insert-meta ()
@@ -3051,6 +3426,9 @@ Some helper functions for publishing with ikiwiki
     (blog-insert-meta))  
 #+end_src
 *** IronPort
+    :PROPERTIES:
+    :ID:       93a9fa67-ac11-4cc7-9a69-a0517086bc67
+    :END:
 A wholly owned subsidiary of Cisco.
 #+begin_src emacs-lisp
   (defun ip-p4-cmd (command)
@@ -3122,11 +3500,17 @@ A wholly owned subsidiary of Cisco.
     (sql-connect-preset (ido-completing-read "Connect to: " (ip-sql-get-names ip-sql-connection-alist))))
 #+end_src
 *** Tup
+    :PROPERTIES:
+    :ID:       b14441a2-77bc-4444-bcda-db6ef2ea9331
+    :END:
 #+begin_src emacs-lisp
   (require 'tup-mode)
 #+end_src
 
 * EXWM
+  :PROPERTIES:
+  :ID:       cfaf9b3f-9ab8-449e-ac79-1d671655f1aa
+  :END:
 I manage my windows in X with emacs.
 
 
@@ -3251,7 +3635,13 @@ Well, at least I'm trying
 #+end_src 
     
 * Directory Specific Code
+  :PROPERTIES:
+  :ID:       2fbd3ec2-ed82-414f-9bf9-bfecad2a9db5
+  :END:
 ** Directory classes
+   :PROPERTIES:
+   :ID:       50d34be2-13f5-43c5-8b0a-e1dfbd05fc16
+   :END:
 #+begin_src emacs-lisp
   ;; check in all the time! (Need to learn to avoid master as well..)
   (defun cm/after-save-commit ()
@@ -3272,12 +3662,21 @@ Well, at least I'm trying
     (add-hook 'after-save-hook 'cm/after-save-commit))
 #+end_src
 ** Directories
+   :PROPERTIES:
+   :ID:       f6cd9ef5-406e-40db-824b-3e8a2631420a
+   :END:
 * Disabled lisp
+  :PROPERTIES:
+  :ID:       0daffd72-11cb-4c40-9803-d8052e4d3009
+  :END:
 #+begin_src emacs-lisp
   ; have to figure out how to comment multiple lines...
 #+end_src
 
 ** All edit in occur
+   :PROPERTIES:
+   :ID:       afa1fcb9-1dbe-41d1-ad68-2362ba5d4b76
+   :END:
 Turns out that occur actually handles this just fine..
 
 #+begin_src emacs-lisp
@@ -3291,15 +3690,24 @@ Turns out that occur actually handles this just fine..
   ;; (define-key isearch-mode-map (kbd "C-e") 'isearch-all)
 #+end_src
 ** Hippe tab
+   :PROPERTIES:
+   :ID:       715b10ba-f8ac-4cb2-a242-3d2a6fff0a37
+   :END:
 I.. don't use this anymore
 #+begin_src emacs-lisp
   ;(global-set-key (kbd "TAB") 'hippie-expand)
 #+end_src
 ** ECB - Emacs Code Browser
+   :PROPERTIES:
+   :ID:       200c1819-7436-4f11-a439-b0d1aa07f528
+   :END:
 #+begin_src emacs-lisp
   ;(require 'ecb-autoloads)
 #+end_src
 ** xcscope
+   :PROPERTIES:
+   :ID:       18e348cb-787b-4994-ae29-25b7a78b9169
+   :END:
 Gotta love cscope. Using GNU Global now.
 #+begin_src emacs-lisp
   ;(require 'xcscope)
@@ -3313,6 +3721,9 @@ Gotta love cscope. Using GNU Global now.
   ;(add-hook 'python-mode-hook (function cscope:hook))
 #+end_src
 ** acscope
+   :PROPERTIES:
+   :ID:       a1cc38e6-519f-4a58-909d-856907e9f78c
+   :END:
 Another way of handling cscope, though I rarely built cscope db's locally, so this was rarely used.
 #+begin_src emacs-lisp
   ;(require 'ascope)
@@ -3349,11 +3760,17 @@ Another way of handling cscope, though I rarely built cscope db's locally, so th
   ;;(define-key cscope:map "\C-csD" 'cscope-dired-directory))
 #+end_src
 ** Perspective
+   :PROPERTIES:
+   :ID:       0174a769-874a-4b50-a5ce-dd09c03521a0
+   :END:
 #+begin_src emacs-lisp
   ;(require 'perspective)
   ;(persp-mode)
 #+end_src
 ** Tabbar
+   :PROPERTIES:
+   :ID:       d4497aba-dae0-42df-85de-6e8388337d7e
+   :END:
 Nice to have going along the top sometimes. Disabled, I never used it.
 #+begin_src emacs-lisp
   ;(require 'tabbar)
@@ -3364,10 +3781,16 @@ Nice to have going along the top sometimes. Disabled, I never used it.
 #+end_src
 
 ** End diasbled code
+   :PROPERTIES:
+   :ID:       cb8445c2-04c4-4fa4-980f-4037e747ba3f
+   :END:
 #+begin_src emacs-lisp
   ; this is where the ending mark would be
 #+end_src
 ** Command Frequency
+   :PROPERTIES:
+   :ID:       9c53a156-0cb0-4367-9a19-24d6056f4ba4
+   :END:
 This can be useful to figure out what commands you do and don't use
 all the time, so you can figure out what keybindings you need to
 fix. I found that I never used the data though..
@@ -3382,6 +3805,9 @@ fix. I found that I never used the data though..
 #+end_src
 
 ** mu4e
+   :PROPERTIES:
+   :ID:       67b2693a-b95f-47fc-8db4-92a9b669a177
+   :END:
 =mu4e= is a Maildir emacs mail mode. It's quite simple, but it's
 design goals fall right in the "super perfect" range, and I think it
 has a huge opportunity to succeed. It is similar to notmuch.
@@ -3389,6 +3815,9 @@ has a huge opportunity to succeed. It is similar to notmuch.
 ;  (require 'mu4e)
 #+end_src
 *** Folders
+    :PROPERTIES:
+    :ID:       14769157-82d3-40b0-8aea-f0a614e746ee
+    :END:
 These match the Outlook ones..
 #+begin_src emacs-lisp
 ;  (setq mu4e-maildir "~/mail"
@@ -3404,12 +3833,18 @@ These match the Outlook ones..
 ;  
 #+end_src
 *** Retrieval and Indexing
+    :PROPERTIES:
+    :ID:       a8d53e13-c716-4cd3-9028-8c53cfc67139
+    :END:
 Let's update the maildirs once every 5 minutes
 #+begin_src emacs-lisp
 ;  (setq mu4e-get-mail-command "offlineimap"
 ;        mu4e-update-interval 200)
 #+end_src
 *** Sending mail
+    :PROPERTIES:
+    :ID:       1f68110e-5f40-47e1-afda-a325af1662f2
+    :END:
 We're just borrowing the gnus settings here..
 #+begin_src emacs-lisp
 ;  (setq smtpmail-auth-credentials "~/.authinfo"
@@ -3423,23 +3858,35 @@ We're just borrowing the gnus settings here..
 ;  (setq mu4e-sent-messages-behavior 'sent)
 #+end_src
 *** Queuing mail
+    :PROPERTIES:
+    :ID:       8360c965-6186-4e05-9330-2ed9ec58bf1b
+    :END:
 This is very useful for when I ride the train.
 #+begin_src emacs-lisp
 ;  (setq smtpmail-queue-mail  nil  ;; start in non-queuing mode
 ;        smtpmail-queue-dir   "~/mail/queue/cur")
 #+end_src
 *** Setting the default mail client
+    :PROPERTIES:
+    :ID:       4ebb9da5-b997-4cb8-ba4a-c1c7bfc2a970
+    :END:
 #+begin_src emacs-lisp
 ;  (setq mail-user-agent 'mu4e-user-agent)
 ;  (setq user-mail-address "jmickey@netapp.com")
 ;  (setq user-full-name "Jeff Mickey")
 #+end_src
 *** Org mode integration
+    :PROPERTIES:
+    :ID:       34a985b7-f503-4301-809e-d36bc140fcfd
+    :END:
 #+begin_src emacs-lisp
 ;  (require 'org-mu4e)
 ;  (setq org-mu4e-convert-to-html t)
 #+end_src
 ** Ido
+   :PROPERTIES:
+   :ID:       72b1beb3-ca21-4ef1-8741-30fac3e98ca8
+   :END:
 Everyone should use Ido. (well, maybe helm)
 #+begin_src emacs-lisp
   ;(require 'ido)
@@ -3454,6 +3901,9 @@ only for strings that have that sequence of characters in order.
 #+end_src
 
 ** Identica
+   :PROPERTIES:
+   :ID:       357a3a6d-12b9-471b-a48b-c801eb7103ea
+   :END:
 Microblog, baby.
 #+begin_src emacs-lisp
   ;(autoload 'identica-mode "identica-mode" "" t)
@@ -3464,6 +3914,9 @@ Microblog, baby.
   ;(global-set-key "\C-cid" 'identica-direct-message-interactive)
 #+end_src
 * Cursor color
+  :PROPERTIES:
+  :ID:       ec982e34-e2a7-429f-b2e0-9a4a7957ba1c
+  :END:
 Change cursor color according to mode; inspired by
 http://www.emacswiki.org/emacs/ChangingCursorDynamically valid values
 are t, nil, box, hollow, bar, (bar . WIDTH), hbar, (hbar. HEIGHT); see
@@ -3490,6 +3943,9 @@ settings that occur above. Much easier this way.
   (set-mouse-color "#ffff00")
 #+end_src
 ** Server process
+   :PROPERTIES:
+   :ID:       41e76b1a-d666-472b-a77e-b62478546956
+   :END:
 Start a server if it's not started, and I'm not root.
 #+begin_src emacs-lisp
   ;(unless (string-equal "root" (getenv "USER"))
