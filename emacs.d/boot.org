@@ -3100,7 +3100,7 @@ me over.
 
   (defun cm/erc-begin ()
     (interactive)
-    (erc-ssl :server "chat.freenode.net" :port 6697)
+    (erc-ssl :server "weber.freenode.net" :port 6697)
     (erc :server "localhost"))
 
   (add-hook 'erc-mode-hook 'cm/erc-hook)

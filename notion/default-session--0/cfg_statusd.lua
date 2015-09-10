@@ -4,24 +4,24 @@ return {
     },
     ["mail"] = {
     },
-    ["date"] = {
-        ["date_format"] = "%a %Y-%m-%d %H:%M",
-    },
     ["battery"] = {
+        ["bat_no"] = 0,
         ["info_data"] = {
             [1] = "status",
             [2] = "percentage",
             [3] = "status",
         },
-        ["blink_on_discharge"] = true,
-        ["bat_no"] = 0,
+        ["info_format"] = "%s%.f%s",
         ["status_display"] = {
             ["full"] = " ",
-            ["discharging"] = "â\134\147",
             ["charging"] = "â\134\145",
+            ["discharging"] = "â\134\147",
         },
-        ["info_format"] = "%s%.f%s",
+        ["blink_on_discharge"] = true,
         ["content_format"] = "|| %s",
+    },
+    ["date"] = {
+        ["date_format"] = "%a %Y-%m-%d %H:%M",
     },
 }
 
