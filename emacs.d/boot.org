@@ -344,7 +344,7 @@ God I love backword-kill-word. Also some bookmarks
   ;; get subword's map
   (require 'subword)
   (define-key subword-mode-map
-    n[remap backward-kill-word] 'cm/backward-kill-subword)
+    [remap backward-kill-word] 'cm/backward-kill-subword)
 #+end_src
 ** Narrow regions
    :PROPERTIES:
