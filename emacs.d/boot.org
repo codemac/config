@@ -1936,7 +1936,8 @@ Thank you Britt.
     :ID:       705f65b0-cd4f-4c2f-a7da-dc340505dbbc
     :END:
 #+begin_src emacs-lisp
-  (require 'notmuch)
+  (unless (require 'notmuch nil t)
+    (message "Notmuch could not be loaded, should disable sending mail"))
 #+end_src
 **** Sending mail
      :PROPERTIES:
