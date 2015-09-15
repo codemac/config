@@ -295,21 +295,21 @@ God I love backword-kill-word. Also some bookmarks
 #+begin_src emacs-lisp
   (global-set-key "\C-w" 'backward-kill-word)
   (global-set-key "\C-x\C-k" 'kill-region)
-  
+
   ;; not really using this..
   ;(global-set-key [f5] 'bookmark-bmenu-list)
   ;(global-set-key [f6] 'bookmark-set)
   ;(global-set-key [f7] 'bookmark-jump)
-  
-  (defun my-backward-kill-word (&optional arg)
-    "Replacement for the backward-kill-word command
+
+  (defun cm/backward-kill (killwordf &optional arg)
+      "Replacement for the backward-kill-word command
   If the region is active, then invoke kill-region.  Otherwise, use
   the following custom backward-kill-word procedure.
   If the previous word is on the same line, then kill the previous
   word.  Otherwise, if the previous word is on a prior line, then kill
   to the beginning of the line.  If point is already at the beginning
   of the line, then kill to the end of the previous line.
-  
+
   With argument ARG and region inactive, do this that many times."
     (interactive "p")
     (if (use-region-p)
@@ -318,12 +318,33 @@ God I love backword-kill-word. Also some bookmarks
         (dotimes (count arg)
           (if (bolp)
               (delete-backward-char 1)
-            (kill-region (max (save-excursion (backward-word)(point))
+            (kill-region (max (save-excursion
+                                (funcall killwordf arg)
+                                (point))
                               (line-beginning-position))
                          (point)))))))
-  
-  (define-key (current-global-map) [remap backward-kill-word]
-    'my-backward-kill-word)
+
+  ;; handle subword / superword modes as well!
+  (defun cm/backward-kill-subword (&optional arg)
+    (interactive "p")
+    (cm/backward-kill 'subword-backward-kill arg))
+
+  ; I don't think this is necessary, but we'll see
+  ;(defun cm/backward-kill-superword (&optional arg)
+  ;  (interactive "p")
+  ;  (cm/backward-kill 'superword-backward-kill arg))
+
+  (defun cm/backward-kill-word (&optional arg)
+    (interactive "p")
+    (cm/backward-kill 'backward-kill-word arg))
+
+  (define-key (current-global-map)
+    [remap backward-kill-word] 'cm/backward-kill-word)
+
+  ;; get subword's map
+  (require 'subword)
+  (define-key subword-mode-map
+    n[remap backward-kill-word] 'cm/backward-kill-subword)
 #+end_src
 ** Narrow regions
    :PROPERTIES:
@@ -3101,7 +3122,7 @@ me over.
 
   (defun cm/erc-begin ()
     (interactive)
-    (erc-ssl :server "weber.freenode.net" :port 6697)
+    (erc-ssl :server "chat.freenode.net" :port 6697)
     (erc :server "localhost"))
 
   (add-hook 'erc-mode-hook 'cm/erc-hook)
