@@ -173,6 +173,10 @@ defbindings("WMPlex.toplevel", {
     kpress(ALTMETA.."F6",
            "mod_query.query_runfile(_, 'run-mailcap --action=view')"),
 
+    bdoc("Run XRandR auto to detect screens"),
+    kpress(ALTMETA.."F7",
+	   "mod_query.exec_on_merr(_, 'xrandr --auto')"),
+
     bdoc("Query for workspace to go to or create a new one."),
     kpress(ALTMETA.."F9", "mod_query.query_workspace(_)"),
 

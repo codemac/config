@@ -455,7 +455,7 @@
 	     [(12)
 	      nil "A theme loosely based on Tron: Legacy colors" single])
  (transmission .
-	       [(0 4 1)
+	       [(0 5)
 		((emacs
 		  (24 4))
 		 (let-alist
@@ -1029,7 +1029,7 @@
 	(0 0 3)))
 	    "s operations for buffers" single])
  (s .
-    [(1 9 0)
+    [(1 10 0)
      nil "The long lost Emacs string manipulation library." single])
  (rw-language-and-country-codes .
 				[(0 1)
@@ -2994,7 +2994,7 @@
 	 [(0 1 3)
 	  nil "Send text to http://fpaste.org" single])
  (form-feed .
-	    [(0 1 9)
+	    [(0 2 1)
 	     nil "Display ^L glyphs as horizontal lines" single])
  (fooddice .
 	   [(0 1)
@@ -3713,7 +3713,7 @@
 		   (0 2 3)))
 		 "Set faces based on available fonts" single])
  (dxr .
-      [(2 1)
+      [(2 2)
        nil "Convenient access to a DXR server" single])
  (durendal .
 	   [(0 2)
@@ -4479,7 +4479,7 @@
 		 (24 1)))
 	       "Ansible documentation Minor Mode" single])
  (annotate .
-	   [(0 2 3)
+	   [(0 4 0)
 	    nil "annotate files without changing them" single])
  (angular-snippets .
 		   [(0 2 3)

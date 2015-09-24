@@ -802,7 +802,7 @@ I need to tie this into projectile, but for now have a way to create a
     :ID:       1f6334ef-51f3-417d-acc6-c578c2a9223b
     :END:
 #+begin_src emacs-lisp
-  (set-default 'explicit-shell-file-name "/home/codemac/bin/rc")
+  (set-default 'explicit-shell-file-name "/home/codemac/.guix-profile/bin/rc")
 ;  (setq explicit-rc-args '("-l"))
 #+end_src
 *** Track the directory of the shell process
@@ -1956,6 +1956,9 @@ Thank you Britt.
     :PROPERTIES:
     :ID:       705f65b0-cd4f-4c2f-a7da-dc340505dbbc
     :END:
+I'm not a fan that this isn't a simple =use-package= thing, but the
+notmuch emacs implementation generally has to match the notmuch
+binary - and it's easier to just use whatever my distro packages.
 #+begin_src emacs-lisp
   (require 'notmuch)
 #+end_src
@@ -2038,8 +2041,11 @@ I get to avoid most of the complications. It goes, in order:
     (orgstruct-mode 1))
   (add-hook 'message-mode-hook 'cm/message-mode-hook)
 
-  (setq notmuch-wash-citation-lines-prefix 100)
-  (setq notmuch-wash-citation-lines-suffix 1)
+  ;; set these to something damn high I hate elided messages 
+  (setq notmuch-wash-citation-lines-prefix 1024)
+  (setq notmuch-wash-citation-lines-suffix 1024)
+  (setq notmuch-wash-signature-lines-max 0)
+  (setq notmuch-wash-wrap-lines-length fill-column)
 #+end_src
 ***** Keybindings
       :PROPERTIES:
@@ -2057,18 +2063,13 @@ horrifying.
   (eval-after-load 'notmuch
     '(define-key notmuch-common-keymap "A" 'cm/notmuch-archive-unread-all))
 
-  (global-set-key (kbd "C-c i w") '(lambda ()
-                                     (interactive)
-                                     (notmuch-search "tag:igneous AND tag:inbox" 'notmuch-search-oldest-first)))
+  (setq notmuch-saved-searches
+        '((:name "inbox"         :query "tag:inbox"                 :key "i" :sort-order 'oldest-first)
+          (:name "unread"        :query "tag:unread"                :key "u" :sort-order 'newest-first)
+          (:name "inbox-igneous" :query "tag:igneous AND tag:inbox" :key "w" :sort-order 'oldest-first)
+          (:name "inbox-codemac" :query "tag:codemac AND tag:inbox" :key "c" :sort-order 'oldest-first)))
 
-  (global-set-key (kbd "C-c i c") '(lambda ()
-                                     (interactive)
-                                     (notmuch-search "tag:codemac AND tag:inbox" 'notmuch-search-oldest-first)))
-  (global-set-key (kbd "C-c i i") '(lambda ()
-                                     (interactive)
-                                     (notmuch-search "tag:inbox" 'notmuch-search-oldest-first)))
-
-  (global-set-key (kbd "C-c i s") 'notmuch-search)
+  (global-set-key (kbd "C-c i") 'notmuch-jump-search)
 #+end_src
 *** Geiser
     :PROPERTIES:
@@ -2076,7 +2077,8 @@ horrifying.
     :END:
 Let's get our scheme on!
 #+begin_src emacs-lisp
-  (require 'geiser)
+  (add-to-list 'load-path "~/.guix-profile/share/emacs/site-lisp")
+  (require 'geiser-install)
   ;; racket is great and all, but I need me some ffi, ice-9, and of course, gnu.
   (setq geiser-active-implementations '(guile))
 #+end_src
@@ -2384,46 +2386,39 @@ Functions borrowed from Sacha Chua.
            ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
             (org-agenda-sorting-strategy '(user-defined-up))))
           ("v" "INTERNET agenda"
-           ((tags-todo "INTERNET-BLOCKED=\"t\"/!-WAITING")
-            (tags-todo "INTERNET-BLOCKED=\"t\"/!+WAITING"))
+           ((tags-todo "INTERNET-BLOCKED=\"t\"/!-WAITING"))
            ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
             (org-agenda-sorting-strategy '(user-defined-up))))
           ("c" "COMPUTER agenda"
-           ((tags-todo "COMPUTER-BLOCKED=\"t\"/!-WAITING")
-            (tags-todo "COMPUTER-BLOCKED=\"t\"/!+WAITING"))
+           ((tags-todo "COMPUTER-BLOCKED=\"t\"/!-WAITING"))
            ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
             (org-agenda-sorting-strategy '(user-defined-up))))
           ("w" "Work Agenda"
            ((tags-todo "WORK-BLOCKED=\"t\"/!-WAITING")
-            (tags-todo "WORK-BLOCKED=\"t\"/!+WAITING")
             (tags "WORK+PROJECT")
             (tags "WORK"))
            ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
             (org-agenda-sorting-strategy '(user-defined-up))))
           ("h" "Home Agenda"
            ((tags-todo "HOME-BLOCKED=\"t\"/!-WAITING")
-            (tags-todo "HOME-BLOCKED=\"t\"/!+WAITING")
             (tags "HOME+PROJECT")
             (tags "HOME"))
            ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
             (org-agenda-sorting-strategy '(user-defined-up))))
           ("r" "Errand Agenda"
            ((tags-todo "ERRAND-BLOCKED=\"t\"/!-WAITING")
-            (tags-todo "ERRAND-BLOCKED=\"t\"/!+WAITING")
             (tags "ERRAND+PROJECT")
             (tags "ERRAND"))
            ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
             (org-agenda-sorting-strategy '(user-defined-up))))
           ("p" "Phone Agenda"
            ((tags-todo "PHONE-BLOCKED=\"t\"/!-WAITING")
-            (tags-todo "PHONE-BLOCKED=\"t\"/!+WAITING")
             (tags "PHONE+PROJECT")
             (tags "PHONE"))
            ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
             (org-agenda-sorting-strategy '(user-defined-up))))
           ("o" "Project Agenda"
-           ((tags-todo "PROJECT-BLOCKED=\"t\"/!-WAITING")
-            (tags-todo "PROJECT-BLOCKED=\"t\"/!+WAITING")
+           ((tags-todo "PROJECT/!-WAITING")
             (tags "PROJECT"))
            ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
             (org-agenda-sorting-strategy '(user-defined-up))))
@@ -2552,10 +2547,14 @@ Functions borrowed from Sacha Chua.
      :ID:       f6ce34e2-98fe-4916-aead-07bd1e3d1a1f
      :END:
 #+begin_src emacs-lisp  
-  (setq org-ditaa-jar-path "/usr/local/Cellar/ditaa/0.9/ditaa0_9.jar")
+  (if cm/using-rc
+      (setq org-babel-default-header-args:ditaa '((:results . "file")
+                                                  (:exports . "results")
+                                                  (:java . "'-Dfile.encoding=UTF-8'"))))
+  (setq org-ditaa-jar-path "/usr/share/java/ditaa/ditaa-0_9.jar")
   (setq org-plantuml-jar-path plantuml-jar-path)
   (add-hook 'org-babel-after-execute-hook 'org-display-inline-images)
-  
+
   (org-babel-do-load-languages 
    'org-babel-load-languages
    `((emacs-lisp . t)
@@ -2578,13 +2577,13 @@ Functions borrowed from Sacha Chua.
      (sh . t)
      (sql .t)))
   (setq org-confirm-babel-evaluate t)  ; nah, let's be safe
-  
+
   (autoload 'org-mime-org-buffer-htmlize "org-mime" "org-mime-org-buffer-htmlize" t nil)
   (defun cm/org-mime-send-buffer-hook ()
     (defun org-export-grab-title-from-buffer ()
       ""
       "!! replace me !!"))
-  
+
   (add-hook 'org-mime-send-buffer-hook 'cm/org-mime-send-buffer-hook)
 #+end_src
 **** Publishing
@@ -2792,13 +2791,15 @@ any of my plans to get org mode todos into easier to consume formats.
 (add-hook 'org-capture-prepare-finalize-hook 'org-id-get-create)
 #+end_src
 
-Finally, before I save a file, add the id's!
+Finally, before I save a file, add the id's! This is way too much, so
+I've commented it out for now
 #+begin_src emacs-lisp
   (defun cm/org-add-ids-to-headlines-in-file ()
     "Add ID properties to all headlines in the current file which
   do not already have one."
     (interactive)
-    (org-map-entries 'org-id-get-create))
+     ;;(org-map-entries 'org-id-get-create))
+    )
 
   (add-hook 'org-mode-hook
             (lambda ()
