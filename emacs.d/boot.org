@@ -1960,7 +1960,8 @@ I'm not a fan that this isn't a simple =use-package= thing, but the
 notmuch emacs implementation generally has to match the notmuch
 binary - and it's easier to just use whatever my distro packages.
 #+begin_src emacs-lisp
-  (require 'notmuch)
+  (unless (require 'notmuch nil t)
+    (message "Notmuch could not be loaded, should disable sending mail"))
 #+end_src
 **** Sending mail
      :PROPERTIES:
