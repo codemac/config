@@ -28,12 +28,6 @@
  '(notmuch-hello-sections
    (quote
     (notmuch-hello-insert-saved-searches notmuch-hello-insert-search notmuch-hello-insert-inbox notmuch-hello-insert-alltags notmuch-hello-insert-recent-searches notmuch-hello-insert-footer)))
- '(notmuch-saved-searches
-   (quote
-    ((:name "inbox" :query "tag:inbox")
-     (:name "unread" :query "tag:unread")
-     (:name "inbox-igneous" :query "tag:igneous AND tag:inbox")
-     (:name "inbox-codemac" :query "tag:codemac AND tag:inbox"))))
  '(protect-buffer-bury-p nil t)
  '(safe-local-variable-values
    (quote

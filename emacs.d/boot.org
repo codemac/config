@@ -2046,7 +2046,7 @@ I get to avoid most of the complications. It goes, in order:
   (setq notmuch-wash-citation-lines-prefix 1024)
   (setq notmuch-wash-citation-lines-suffix 1024)
   (setq notmuch-wash-signature-lines-max 0)
-  (setq notmuch-wash-wrap-lines-length fill-column)
+  (setq notmuch-wash-wrap-lines-length (if (< fill-column 100) 100 fill-column))
 #+end_src
 ***** Keybindings
       :PROPERTIES:
