@@ -435,7 +435,7 @@ it just passes on arguments. It's wonderful!
 This changes the =grep-find-template= so that quoting is used around
 the brackets that rc parses.
 #+begin_src emacs-lisp
-;;; TODO
+  (grep-apply-setting 'grep-find-template "find . <X> -type f <F> -exec grep <C> -nH -e <R> '{}' '+'")
 #+end_src
 * ELPA
   :PROPERTIES:
