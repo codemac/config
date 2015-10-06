@@ -2,7 +2,7 @@
 Description=Sound Service
 
 [Service]
-EnvironmentFile=/home/codemac/.config/env-xorg
+EnvironmentFile=/home/codemac/config/env-xorg
 ExecStart=/home/codemac/.guix-profile/bin/pulseaudio --daemonize=no
 Restart=on-failure
 

@@ -2028,13 +2028,15 @@ I get to avoid most of the complications. It goes, in order:
 
   (setq user-full-name "Jeff Mickey")
   (setq user-mail-address "j@codemac.net")
-
-  (setq message-auto-save-directory "~/mail/cm/INBOX.Drafts/cur")
 #+end_src
 ***** Message view
       :PROPERTIES:
       :ID:       609c8599-feea-4606-8444-3a243b306e2c
       :END:
+The vast majority of this is around setting up drafts handling in
+notmuch to be sync'd over IMAP. =notmuch= doesn't handle this for us,
+and this is an amalgamation of things I found online. It currently
+works with the cyrus IMAP server.
 #+begin_src emacs-lisp
   (setq message-citation-line-format "* %f [%Y-%m-%d %H:%M]:")
   (setq message-citation-line-function 'message-insert-formatted-citation-line)
@@ -2049,6 +2051,106 @@ I get to avoid most of the complications. It goes, in order:
   (setq notmuch-wash-citation-lines-suffix 1024)
   (setq notmuch-wash-signature-lines-max 0)
   (setq notmuch-wash-wrap-lines-length (if (< fill-column 100) 100 fill-column))
+
+  ;; how to get these things to not suck
+  (setq message-draft-headers '(From References Subject Date (optional . In-Reply-To) Message-ID (optional . User-Agent)))
+  (setq message-generate-headers-first t) ;; would love to do this without Date
+  (setq message-auto-save-directory "~/mail/cm/INBOX.Drafts/cur")
+
+  (defun cm/draft-insert-mail-header-separator ()
+    "Insert `mail-header-separator' in the first empty line of the message.
+  `message-mode' needs this line to know where the headers end and
+  the body starts. Note, in `mu4e-compose-mode', we use
+  `before-save-hook' and `after-save-hook' to ensure that this
+  separator is never written to the message file. Also see
+  `mu4e-remove-mail-header-separator'."
+    ;; we set this here explicitly, since (as it has happened) a wrong
+    ;; value for this (such as "") breaks address completion and other things
+    (set (make-local-variable 'mail-header-separator)
+      (purecopy "--text follows this line--"))
+    (put 'mail-header-separator 'permanent-local t)
+    (save-excursion
+      ;; make sure there's not one already
+      (cm/draft-remove-mail-header-separator)
+      (let ((sepa (propertize mail-header-separator
+                    'intangible t
+                    ;; don't make this read-only, message-mode
+                    ;; seems to require it being writable in some cases
+                    ;;'read-only "Can't touch this"
+                    'rear-nonsticky t
+                    'font-lock-face 'message-separator)))
+        (widen)
+        ;; search for the first empty line
+        (goto-char (point-min))
+        (if (search-forward-regexp "^$" nil t)
+            (replace-match sepa)
+            (progn ;; no empty line? then prepend one
+              (goto-char (point-max))
+              (insert "\n" sepa))))))
+
+  (defun cm/draft-remove-mail-header-separator ()
+    "Remove `mail-header-separator; we do this before saving a
+  file (and restore it afterwards), to ensure that the separator
+  never hits the disk. Also see `mu4e-draft-insert-mail-header-separator."
+    (interactive)
+    (save-excursion
+      (widen)
+      (goto-char (point-min))
+      ;; remove the --text follows this line-- separator
+      (when (search-forward-regexp (concat "^" mail-header-separator) nil t)
+        (let ((inhibit-read-only t))
+          (replace-match "")))))
+
+  (defun cm/notmuch-message-setup ()
+    "Configures a bunch of hooks for notmuch message windows"
+    (message-add-action `(message "debug: done exit actions") 'exit)
+    (message-add-action `(message "debug: done postpone actions") 'postpone)
+    (message-add-action `(message "debug: done kill actions") 'kill)
+    (message-add-action 'notmuch-message-postpone-keep 'postpone)
+    (message-add-action 'notmuch-message-postpone-cleanup 'exit))
+
+  (add-hook 'message-mode-hook 'cm/notmuch-message-setup)
+  (add-hook 'message-mode-hook
+            (lambda ()
+              (add-hook 'after-save-hook 'cm/draft-insert-mail-header-separator nil 'make-it-local)
+              (add-hook 'before-save-hook 'cm/draft-remove-mail-header-separator nil 'make-it-local)))
+
+  (defun notmuch-message-postpone-cleanup ()
+    "Remove autosave and postponed messages for that buffer"
+    (message "debug: postpone cleanup hook")
+    (message "deleting draft file: %s" notmuch-draft-filename)
+    (if (file-exists-p notmuch-draft-filename)
+        (progn
+          (kill-buffer)
+          (delete-file notmuch-draft-filename)
+          (if (file-exists-p notmuch-draft-filename)
+              (message "failed to delete file %s" notmuch-draft-filename)
+            (message "debug: file deleted"))
+          )
+      (message "draft file %s doesn't exist" notmuch-draft-filename)))
+
+  (defun notmuch-message-postpone-keep ()
+    "Moves the previous buffer into the postponed folder and then kill it"
+    (save-excursion
+      (set-buffer (last-buffer))
+      (cm/draft-remove-mail-header-separator)
+      (notmuch-maildir-fcc-write-buffer-to-maildir "~/mail/cm/INBOX.Drafts" t)
+      (kill-buffer)))
+
+  (defun notmuch-show-resume-message ()
+    "Resume a postponed message."
+    (interactive)
+    (setq tmpfilename (notmuch-show-get-filename))
+    (notmuch-show-view-raw-message)
+    (setq buffer-file-name tmpfilename)
+    (message "debug: set buffer file name to %s" buffer-file-name)
+    (setq notmuch-draft-filename buffer-file-name)
+    (make-local-variable 'notmuch-draft-filename)
+    (message "debug: set draft file name to %s" notmuch-draft-filename)
+    (message-mode)
+    (cm/draft-insert-mail-header-separator))
+
+  (define-key notmuch-show-mode-map "e" 'notmuch-show-resume-message)
 #+end_src
 ***** Keybindings
       :PROPERTIES:
@@ -2070,7 +2172,9 @@ horrifying.
         '((:name "inbox"         :query "tag:inbox"                 :key "i" :sort-order 'oldest-first)
           (:name "unread"        :query "tag:unread"                :key "u" :sort-order 'newest-first)
           (:name "inbox-igneous" :query "tag:igneous AND tag:inbox" :key "w" :sort-order 'oldest-first)
-          (:name "inbox-codemac" :query "tag:codemac AND tag:inbox" :key "c" :sort-order 'oldest-first)))
+          (:name "inbox-codemac" :query "tag:codemac AND tag:inbox" :key "c" :sort-order 'oldest-first)
+          (:name "drafts"        :query "tag:draft"                 :key "d" :sort-order 'newest-first)
+          (:name "sent"          :query "tag:sent"                  :key "t")))
 
   (global-set-key (kbd "C-c i") 'notmuch-jump-search)
 #+end_src
@@ -3378,6 +3482,12 @@ Now w/mopidy
    :PROPERTIES:
    :ID:       3897ecf3-7d82-47a2-b736-abf8204a83b4
    :END:
+*** Guix
+#+begin_src emacs-lisp
+  ;; load up guix if guix is installed!
+
+  (require 'guix-init nil t)
+#+end_src
 *** Journal
     :PROPERTIES:
     :ID:       f11177ea-8f27-467c-bcc1-ee237fa6c0be
@@ -3545,17 +3655,6 @@ Well, at least I'm trying
 #+begin_src emacs-lisp
   ;; Shrink fringes to 1 pixel
   (fringe-mode 1)
-
-  ;; You may want Emacs to show you the time
-  ;(setq display-time-default-load-average nil)
-  ;(display-time-mode t)
-
-
-  ;; You are strongly encouraged to enable `ido-mode' (or something similar) to
-  ;; alter to default behavior of 'C-x b', or you will take great pains to switch
-  ;; to or back from a floating frame (remember 'C-x 5 o' if you refuse this
-  ;; proposal however)
-  ;;(ido-mode 1)
 
   ;; Load EXWM
   (require 'exwm)
@@ -3975,11 +4074,11 @@ settings that occur above. Much easier this way.
    :END:
 Start a server if it's not started, and I'm not root.
 #+begin_src emacs-lisp
-  ;(unless (string-equal "root" (getenv "USER"))
+  (unless (string-equal "root" (getenv "USER"))
   ;; Only start server mode if it isn't started already
-   ; (unless (server-running-p)
-    ;  (server-start)))
-  
-  ;(add-hook 'server-visit-hook 'raise-frame)
+    (unless (server-running-p)
+      (server-start)))
+
+  (add-hook 'server-visit-hook 'raise-frame)
 #+end_src
 

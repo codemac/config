@@ -6,7 +6,7 @@ After=xorg@0.service window-manager.service initx.service
 [Service]
 ExecStart=/usr/bin/cbatticon -i standard -u 30 -l 15 -r 2 %i
 Restart=always
-EnvironmentFile=/home/codemac/.config/env-xorg
+EnvironmentFile=/home/codemac/config/env-xorg
 
 [Install]
 WantedBy=main.target

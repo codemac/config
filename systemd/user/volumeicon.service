@@ -5,7 +5,7 @@ After=xorg@0.service trayion.service
 
 [Service]
 ExecStart=/usr/bin/volumeicon
-EnvironmentFile=/home/codemac/.config/env-xorg
+EnvironmentFile=/home/codemac/config/env-xorg
 
 [Install]
 WantedBy=main.target
