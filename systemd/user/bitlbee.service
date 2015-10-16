@@ -3,7 +3,7 @@ Description=BitlBee IRC/IM gateway
 
 [Service]
 Type=simple
-EnvironmentFile=/home/codemac/config/env-xorg
+EnvironmentFile=/home/codemac/config/env-guix
 ExecStart=/home/codemac/.guix-profile/sbin/bitlbee -D -n -v -d /home/codemac/.config/bitlbee -i ::1 -P /run/user/1000/bitlbee.pid
 Restart=always
 

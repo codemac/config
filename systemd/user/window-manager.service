@@ -4,7 +4,7 @@ Requires=xorg@0.service initx.service
 After=initx.service
 
 [Service]
-EnvironmentFile=/home/codemac/config/env-xorg
+EnvironmentFile=/home/codemac/config/env-guix
 #ExecStart=/usr/bin/i3
 ExecStart=/usr/bin/notion
 #ExecStart=/usr/bin/emacs

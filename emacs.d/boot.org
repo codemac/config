@@ -1357,6 +1357,14 @@ out semantically.
     (projectile-global-mode)
     (setq projectile-use-git-grep t))
 #+end_src
+*** Multiple Cursors
+#+begin_src emacs-lisp
+  (use-package multiple-cursors
+    :bind (("C->" . mc/mark-next-like-this)
+           ("C-<" . mc/mark-previous-like-this)
+           ("C-c C->" . mc/mark-all-like-this)))
+#+end_src
+
 ** Major Modes
    :PROPERTIES:
    :ID:       04fe1433-561d-453a-a3c7-3ec248df0175
@@ -3229,11 +3237,18 @@ me over.
 
   (defun cm/erc-begin ()
     (interactive)
-    (erc-ssl :server "chat.freenode.net" :port 6697)
     (erc :server "localhost"))
+
+  (defun cm/erc-begin-freenode ()
+    (interactive)
+    (erc-ssl :server "chat.freenoden.net" :port 6697))
 
   (add-hook 'erc-mode-hook 'cm/erc-hook)
   (add-hook 'erc-join-hook 'bitlbee-netrc-identify)
+
+  ;; set up keys for erc
+
+
 
 #+end_src
 **** Bitlbee Support

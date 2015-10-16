@@ -5,7 +5,7 @@ After=xorg@0.service
 
 [Service]
 Type=oneshot
-EnvironmentFile=/home/codemac/config/env-xorg
+EnvironmentFile=/home/codemac/config/env-arch
 ExecStart=/usr/bin/sh -c "/usr/bin/setxkbmap -device $(xinput | grep \"AT Translated Set 2 keyboard\" | sed -r \"s/^.*id=([0-9]+).*$/\1/\") -layout dvorak -option ctrl:swapcaps"
 ExecStart=/usr/bin/xsetroot -solid "#80a0af"
 ExecStart=/usr/bin/xset r rate 200 20

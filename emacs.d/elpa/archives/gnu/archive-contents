@@ -37,18 +37,16 @@
 		 nil "Indent and dedent Lisp code, automatically adjust close parens" tar
 		 ((:url . "http://elpa.gnu.org/packages/adjust-parens.html"))])
  (aggressive-indent .
-		    [(1 2)
+		    [(1 4)
 		     ((emacs
 		       (24 1))
-		      (names
-		       (20150125 9))
 		      (cl-lib
 		       (0 5)))
 		     "Minor mode to aggressively keep your code always indented" single
 		     ((:url . "http://github.com/Malabarba/aggressive-indent-mode")
 		      (:keywords "indent" "lisp" "maint" "tools"))])
  (ahungry-theme .
-		[(1 0 10)
+		[(1 0 12)
 		 ((emacs
 		   (24)))
 		 "Ahungry color theme for Emacs.  Make sure to (load-theme 'ahungry)." tar
@@ -176,6 +174,11 @@
 	    "Remove visual distractions and focus on writing" single
 	    ((:url . "http://elpa.gnu.org/packages/darkroom.html")
 	     (:keywords "convenience" "emulations"))])
+ (dash .
+       [(2 12 0)
+	nil "A modern list library for Emacs" tar
+	((:keywords "lists")
+	 (:url . "http://elpa.gnu.org/packages/dash.html"))])
  (dbus-codegen .
 	       [(0 1)
 		((cl-lib
@@ -433,6 +436,13 @@
 	 "Retrieve and decode METAR weather information" single
 	 ((:url . "http://elpa.gnu.org/packages/metar.html")
 	  (:keywords "comm"))])
+ (midi-kbd .
+	   [(0 2)
+	    ((emacs
+	      (25)))
+	    "Create keyboard events from Midi input" single
+	    ((:url . "http://elpa.gnu.org/packages/midi-kbd.html")
+	     (:keywords "convenience" "hardware" "multimedia"))])
  (minibuffer-line .
 		  [(0 1)
 		   nil "Display status info in the minibuffer window" single
@@ -449,11 +459,11 @@
 	((:keywords "hypermedia")
 	 (:url . "http://mwolson.org/projects/EmacsMuse.html"))])
  (nameless .
-	   [(0 5)
+	   [(0 5 1)
 	    ((emacs
 	      (24 4)))
 	    "Hide package namespace in your emacs-lisp code" single
-	    ((:url . "http://elpa.gnu.org/packages/nameless.html")
+	    ((:url . "https://github.com/Malabarba/nameless")
 	     (:keywords "convenience" "lisp"))])
  (names .
 	[(20150723 0)
@@ -463,7 +473,7 @@
 	   (0 5)))
 	 "Namespaces for emacs-lisp. Avoid name clobbering without hiding symbols." tar
 	 ((:keywords "extensions" "lisp")
-	  (:url . "http://github.com/Bruce-Connor/names"))])
+	  (:url . "https://github.com/Bruce-Connor/names"))])
  (nhexl-mode .
 	     [(0 1)
 	      nil "Minor mode to edit files via hex-dump format" single
@@ -494,7 +504,7 @@
 	    ((:url . "http://elpa.gnu.org/packages/omn-mode.html")
 	     (:keywords))])
  (org .
-      [(20150929)
+      [(20151005)
        nil "Outline-based notes management and organizer" tar nil])
  (osc .
       [(0 1)
@@ -534,7 +544,7 @@
 	 ((:url . "http://www.dr-qubit.org/emacs.php")
 	  (:keywords "extensions" "data structures" "queue"))])
  (rainbow-mode .
-	       [(0 11)
+	       [(0 12)
 		nil "Colorize color names in buffers" single
 		((:url . "http://elpa.gnu.org/packages/rainbow-mode.html")
 		 (:keywords "faces"))])
@@ -543,6 +553,13 @@
 		 nil "Interactively list/edit registers" single
 		 ((:url . "http://elpa.gnu.org/packages/register-list.html")
 		  (:keywords "register"))])
+ (rich-minority .
+		[(1 0)
+		 ((cl-lib
+		   (0 5)))
+		 "Clean-up and Beautify the list of minor-modes." single
+		 ((:url . "https://github.com/Malabarba/rich-minority")
+		  (:keywords "mode-line" "faces"))])
  (rudel .
 	[(0 3)
 	 nil "A collaborative editing framework for Emacs" tar
@@ -579,7 +596,7 @@
 	   ((:keywords "games")
 	    (:url . "http://elpa.gnu.org/packages/sokoban.html"))])
  (sotlisp .
-	  [(1 4)
+	  [(1 4 1)
 	   ((emacs
 	     (24 1)))
 	   "Write lisp at the speed of thought." single
@@ -590,6 +607,13 @@
 	   nil "Add spinners and progress-bars to the mode-line for ongoing operations" single
 	   ((:url . "https://github.com/Malabarba/spinner.el")
 	    (:keywords "processes" "mode-line"))])
+ (stream .
+	 [(1 0)
+	  ((emacs
+	    (25 1)))
+	  "Implementation of streams" single
+	  ((:url . "http://elpa.gnu.org/packages/stream.html")
+	   (:keywords "stream" "laziness" "sequences"))])
  (svg .
       [(0 1)
        ((emacs

@@ -93,7 +93,7 @@
 	  (1 3)))
 	"View xkcd from Emacs" single])
  (xbm-life .
-	   [(0 1)
+	   [(0 1 1)
 	    nil "A XBM version of Conway's Game of Life" single])
  (wxwidgets-help .
 		 [(0 0 3)
@@ -1931,7 +1931,7 @@
 	   [(0 0 4)
 	    nil "Multi-networks peer-to-peer client." tar])
  (minitest .
-	   [(0 5)
+	   [(0 9 1)
 	    ((dash
 	      (1 0 0)))
 	    "An Emacs mode for ruby minitest files" single])
@@ -3343,7 +3343,7 @@
        (2 2 0)))
      "Modern API for working with files and directories" single])
  (eyebrowse .
-	    [(0 6 6)
+	    [(0 6 7)
 	     ((dash
 	       (2 7 0))
 	      (emacs
@@ -3613,9 +3613,9 @@
 		(24 1)))
 	      "web interface to Elfeed" tar])
  (elfeed .
-	 [(1 1 2)
+	 [(1 2 0)
 	  ((emacs
-	    (24 1)))
+	    (24 3)))
 	  "an Emacs Atom/RSS feed reader" tar])
  (elein .
 	[(0 2 2)
@@ -4479,7 +4479,7 @@
 		 (24 1)))
 	       "Ansible documentation Minor Mode" single])
  (annotate .
-	   [(0 4 0)
+	   [(0 4 4)
 	    nil "annotate files without changing them" single])
  (angular-snippets .
 		   [(0 2 3)
