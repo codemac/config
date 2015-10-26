@@ -1127,21 +1127,6 @@ So useful, I think everyone should have this turned on.
    :PROPERTIES:
    :ID:       2fbe45d4-05c6-4eec-98c4-4569aaacf9f5
    :END:
-*** simple httpd
-    :PROPERTIES:
-    :ID:       4f1c60ce-0986-45bd-b5dc-4dc596675e68
-    :END:
-This is a mode that provides a full http server in elisp. It does
-default to serving =~/public_html=, so I turn that off here.
-
-#+begin_src emacs-lisp
-  (use-package
-   simple-httpd
-   :commands (httpd-start httpd-serve-directory)
-   :config
-   (setq httpd-root "")
-   (setq httpd-serve-files nil))
-#+end_src
 *** Helm
     :PROPERTIES:
     :ID:       9e11b4e9-8161-41e8-8e1f-0dabd83a8145
@@ -1364,7 +1349,14 @@ out semantically.
            ("C-<" . mc/mark-previous-like-this)
            ("C-c C->" . mc/mark-all-like-this)))
 #+end_src
+*** fill column indicator (fci)
+This draws a vertical line at the fill column. Nice for languages
+without things like =gofmt=.
 
+#+begin_src emacs-lisp
+  (use-package fill-column-indicator
+    :commands (fci-mode))
+#+end_src
 ** Major Modes
    :PROPERTIES:
    :ID:       04fe1433-561d-453a-a3c7-3ec248df0175
@@ -1552,7 +1544,6 @@ Uhh, go CL?
   (add-to-list 'auto-mode-alist '("\\.hs$" . haskell-mode))
   (add-hook 'haskell-mode-hook 'turn-on-haskell-indent)
   (add-hook 'haskell-mode-hook 'turn-on-haskell-doc-mode)
-  (add-hook 'haskell-mode-hook '(lambda () (linum-mode 1)))
   (setq haskell-hoogle-program "hoogle")
 #+end_src
 *** Go
@@ -1627,7 +1618,6 @@ other window you have open. This gets old. Fast.
       (go-oracle-mode)
       (subword-mode 1)
       (diminish 'go-oracle-mode)
-      (linum-mode 1)
       (setq imenu-generic-expression
             '(("type" "^type *\\([^ \t\n\r\f]*\\)" 1)
               ("func" "^func *\\(.*\\) {" 1)))
@@ -1955,8 +1945,22 @@ Thank you Britt.
 #+begin_src emacs-lisp
   (add-hook 'python-mode-hook
             '(lambda ()
-               (linum-mode 1)
                (setq show-trailing-whitespace t)))
+#+end_src
+*** simple httpd
+    :PROPERTIES:
+    :ID:       4f1c60ce-0986-45bd-b5dc-4dc596675e68
+    :END:
+This is a mode that provides a full http server in elisp. It does
+default to serving =~/public_html=, so I turn that off here.
+
+#+begin_src emacs-lisp
+  (use-package
+   simple-httpd
+   :commands (httpd-start httpd-serve-directory)
+   :config
+   (setq httpd-root "")
+   (setq httpd-serve-files nil))
 #+end_src
 ** Programs
    :PROPERTIES:
@@ -3227,12 +3231,13 @@ me over.
     ;; Setup ERC buffers
   (defun cm/erc-hook ()
     "Correctly configure ERC buffers"
-    (auto-fill-mode 0)                    ; disable auto fill
-    (setq truncate-lines nil)            ; wrap lines
-    ;; Add some modules
+    (auto-fill-mode 0)
+    (setq truncate-lines nil)
+
     (add-to-list 'erc-modules 'scrolltobottom)
     (add-to-list 'erc-modules 'truncate)
     (add-to-list 'erc-modules 'hl-nicks)
+    (add-to-list 'erc-modules 'image)
     (erc-update-modules))
 
   (defun cm/erc-begin ()
@@ -3241,7 +3246,7 @@ me over.
 
   (defun cm/erc-begin-freenode ()
     (interactive)
-    (erc-ssl :server "chat.freenoden.net" :port 6697))
+    (erc-ssl :server "chat.freenode.net" :port 6697))
 
   (add-hook 'erc-mode-hook 'cm/erc-hook)
   (add-hook 'erc-join-hook 'bitlbee-netrc-identify)

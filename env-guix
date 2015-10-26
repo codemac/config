@@ -1,0 +1,11 @@
+DISPLAY=:0
+GNUPGHOME=/mnt/keys/gnupghome
+PATH=/home/codemac/.guix-profile/bin:/home/codemac/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin
+GUIX_PACKAGE_PATH=/home/codemac/code/guix-pkgs/src
+GUIX_LOCPATH=/home/codemac/.guix-profile/lib/locale
+LANGUAGE=en_US.UTF-8
+MOZ_USE_OMTC=1
+GUILE_LOAD_PATH=/home/codemac/.guix-profile/share/guile/site/2.0
+GUILE_LOAD_COMPILED_PATH=/home/codemac/.guix-profile/share/guile/site/2.0
+INFOPATH=/home/codemac/.guix-profile/share/info
+PERL5LIB=/home/codemac/.guix-profile/lib/perl5/site_perl

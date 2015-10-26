@@ -1,0 +1,13 @@
+[Unit]
+Description=User resume actions
+After=xorg@0.service suspend.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=/home/codemac/config/env-arch
+ExecStart=/usr/sbin/xrandr --auto
+ExecStart=/usr/sbin/xset -dpms
+ExecStart=/usr/sbin/xset s off
+
+[Install]
+WantedBy=suspend.target

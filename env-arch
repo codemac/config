@@ -1,0 +1,5 @@
+DISPLAY=:0
+GNUPGHOME=/mnt/keys/gnupghome
+PATH=/home/codemac/bin:/bin
+LANGUAGE=en_US.UTF-8
+MOZ_USE_OMTC=1
