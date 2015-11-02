@@ -1,0 +1,7 @@
+[Unit]
+Description=calendarsync runner
+
+[Service]
+Type=oneshot
+ExecStart=/home/codemac/bin/calendarsync
+TimeoutSec=600s
