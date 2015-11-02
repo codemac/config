@@ -1,4 +1,9 @@
 (1
+ (zone-nyan .
+	    [(0 0 1)
+	     ((esxml
+	       (0 3 1)))
+	     "Zone out with nyan cat" single])
  (zone-matrix .
 	      [(0 0 1)
 	       nil "Matrix themed Zone mode" tar])
@@ -134,13 +139,13 @@
    [(1 1)
     nil "Poor-man's namespaces for elisp" single])
  (with-editor .
-   [(2 2 2)
+   [(2 3 0)
     ((emacs
       (24 4))
      (async
-      (1 4))
+      (1 5))
      (dash
-      (2 11 0)))
+      (2 12 1)))
     "Use the Emacsclient as $EDITOR" tar])
  (wisp-mode .
 	    [(0 2 1)
@@ -455,13 +460,11 @@
 	     [(12)
 	      nil "A theme loosely based on Tron: Legacy colors" single])
  (transmission .
-	       [(0 5)
+	       [(0 6)
 		((emacs
 		  (24 4))
 		 (let-alist
-		  (1 0 3))
-		 (seq
-		  (1 5)))
+		  (1 0 3)))
 		"Interface to a Transmission session" single])
  (tracking .
 	   [(1 6)
@@ -2103,13 +2106,13 @@
 		       (1 0 0)))
 		     "simple keybindings for Magit" single])
  (magit-popup .
-	      [(2 2 2)
+	      [(2 3 0)
 	       ((emacs
 		 (24 4))
 		(async
-		 (1 4))
+		 (1 5))
 		(dash
-		 (2 11 0)))
+		 (2 12 1)))
 	       "Define prefix-infix-suffix command combos" tar])
  (magit-gh-pulls .
 		 [(0 3)
@@ -2124,19 +2127,19 @@
 		     (1 2 0)))
 		   "completing-read over all files in Git" single])
  (magit .
-	[(2 2 2)
+	[(2 3 0)
 	 ((emacs
 	   (24 4))
 	  (async
-	   (1 4))
+	   (1 5))
 	  (dash
-	   (2 11 0))
+	   (2 12 1))
 	  (with-editor
-	      (2 2 2))
+	      (2 3 0))
 	  (git-commit
-	   (2 2 2))
+	   (2 3 0))
 	  (magit-popup
-	   (2 2 2)))
+	   (2 3 0)))
 	 "A Git porcelain inside Emacs" tar])
  (mactag .
 	 [(0 0 1)
@@ -2886,13 +2889,13 @@
 	       (2 9 0)))
 	     "draft git commit messages" single])
  (git-commit .
-	     [(2 2 2)
+	     [(2 3 0)
 	      ((emacs
 		(24 4))
 	       (dash
-		(2 11 0))
+		(2 12 1))
 	       (with-editor
-		   (2 2 2)))
+		   (2 3 0)))
 	      "Edit Git commit messages" single])
  (git-auto-commit-mode .
 		       [(4 4 0)
@@ -4440,7 +4443,7 @@
 		   (0 5)))
 		 "Auto Completion for GNU Emacs" tar])
  (async .
-	[(1 4)
+	[(1 5)
 	 nil "Asynchronous processing in Emacs" tar])
  (assemblage-theme .
 		   [(20130715 621)

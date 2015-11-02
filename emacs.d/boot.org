@@ -664,10 +664,16 @@ To revert a buffer easily, put the char back where I had it.
   (defun cm/revert-buffer ()
     "save the current position to tmp, revert buffer, go back to tmp"
     (interactive)
-    (let ((tmp (point)))
-      (revert-buffer t)
-      (goto-char tmp)))
-  
+    (cm/revert-specific-buffer (current-buffer)))
+
+  (defun cm/revert-specific-buffer (buf)
+    "save the current position to tmp, revert buffer, go back to tmp"
+    (interactive "bBuffer: ")
+    (with-current-buffer buf
+      (let ((tmp (point)))
+        (revert-buffer t)
+        (goto-char tmp))))
+
   (global-set-key [f8] 'cm/revert-buffer)
 #+end_src
 ** Windmove
@@ -1578,7 +1584,7 @@ other window you have open. This gets old. Fast.
     (defun gofmt ()
       "Pipe the current buffer through the external tool `gofmt`.
   Replace the current buffer on success; display errors on failure."
-    
+  
       (interactive)
       (let ((srcbuf (current-buffer)))
         (with-temp-buffer
@@ -1601,10 +1607,10 @@ other window you have open. This gets old. Fast.
                      (goto-char (min old-point (point-max)))
                      (if old-mark (push-mark (min old-mark (point-max)) t))
                      (kill-buffer errbuf))
-               
+             
                  ;; gofmt failed: display the errors
                  (display-buffer errbuf)))))
-          
+        
             ;; Collapse any window opened on outbuf if shell-command-on-region
             ;; displayed it.
             ;; NO! Don't do that< cm!
@@ -1724,7 +1730,10 @@ use magit-status and magit-log.
 magit-log is missing the commiter annotation, I need to fix that.
 #+begin_src emacs-lisp
   (use-package magit
-    :diminish magit-auto-revert-mode)
+    :init
+    ;; super incredibly slow thing that would be good in theory but
+    ;; implementation is not there.
+    (setq magit-revert-buffers nil))
 #+end_src
 **** Custom Commit Message Formatting
      :PROPERTIES:
