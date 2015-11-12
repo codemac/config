@@ -21,6 +21,46 @@ see how this goes!
   :END:
 Unfortuantely, emacs can't read directly from org mode files just yet,
 so you have to check [[file:init.el][init.el]] for more information! DRY!
+* Security
+There was a very elucidating and concerning [[https://glyph.twistedmatrix.com/2015/11/editor-malware.html][blog post]] that showed how
+tls is configured in emacs. This is some code to turn on tls
+verification and try to do our best. This can probably be worked
+around by an APT, but this is best effort for now.
+
+First we find the host's ssl certs. For every host this should be
+configured manually, as detection can lead to other trust bugs.
+#+begin_src emacs-lisp
+  (setq
+   cm/machine-trust-file
+   (cond
+    ((string-prefix-p "nevada" system-name) "/etc/ssl/cert.pem")
+    (t (error "No tls trust set for this host! Add exception or find cert.pem you trust"))))
+#+end_src
+
+The default value for =tls-program= this is:
+
+#+begin_example
+("gnutls-cli --insecure -p %p %h" "gnutls-cli --insecure -p %p %h --protocols ssl3" "openssl s_client -connect %h:%p -no_ssl2 -ign_eof")
+#+end_example
+
+But notice all that =--insecure=.. this is what we get rid of!
+
+Now that we have a =cm/machine-trust-file= we set up our tls-program
+correctly.
+
+#+begin_src emacs-lisp
+  (setq tls-program
+        (concat "gnutls-cli --x509cafile " cm/machine-trust-file " -p %p %h"))
+#+end_src
+
+If emacs is compiled to link against gnutls, it usually totally
+different variables and set up, because go fuck yourself users, you
+gotta configure tls super manually.
+
+#+begin_src emacs-lisp
+  (setq gnutls-verify-error t)
+  (setq gnutls-trustfiles (list cm/machine-trust-file))
+#+end_src
 * User Interface
   :PROPERTIES:
   :ID:       174da1e1-650e-41f1-a5de-48a0e77b8538
@@ -113,7 +153,9 @@ screen DPI's.
      (add-to-list 'default-frame-alist '(font . "DejaVu Sans Mono-9:hinting=true:autohint=true")))
     (t
      (set-frame-font "DejaVu Sans Mono-11:hinting=true:autohint=true")))
-  
+
+  (when (member "symbola" (font-family-list))
+    (set-fontset-font t 'unicode "Symbola" nil 'prepend))
 #+end_src
 * Environment
   :PROPERTIES:
@@ -1158,6 +1200,9 @@ this page is *STUPID* slow in eww)
     :init
     (require 'helm-config)
     (global-set-key (kbd "C-c h") 'helm-command-prefix)
+    (when cm/using-rc
+        (setq helm-top-command "COLUNMS=%s top -b -n 1"))
+
     (helm-mode 1)
     :config
     (setq helm-split-window-in-side-p t
@@ -1171,9 +1216,6 @@ this page is *STUPID* slow in eww)
       (setq helm-google-suggest-use-curl-p t))
     (delete helm-source-locate helm-for-files-preferred-list)
     
-    (when cm/using-rc
-        (setq helm-top-command "COLUNMS=%s top -b -n 1"))
-
     ;; bindings I haven't figured out with :bind
     (global-unset-key (kbd "C-x c"))
     (define-key helm-map (kbd "<tab>") 'helm-execute-persistent-action)
@@ -1346,7 +1388,35 @@ out semantically.
     :diminish projectile-mode
     :config
     (projectile-global-mode)
-    (setq projectile-use-git-grep t))
+    (setq projectile-use-git-grep t)
+
+    ;; this replaces the old `projectile-compile-project' to use the
+    ;; project name in the compilation buffer. Let's me run all ze
+    ;; compilations!
+    (defun cm/projectile-compile-project (arg &optional dir)
+      "Run project compilation command, using the project name
+
+  Normally you'll be prompted for a compilation command, unless
+  variable `compilation-read-command'.  You can force the prompt
+  with a prefix ARG."
+      (interactive "P")
+      (let* ((project-root (if dir
+                               dir
+                             (projectile-project-root)))
+             (default-directory project-root)
+             (default-cmd (projectile-compilation-command project-root))
+             (compilation-cmd (if (or compilation-read-command arg)
+                                  (projectile-read-command "Compile command: "
+                                                           default-cmd)
+                                default-cmd)))
+        (puthash project-root compilation-cmd projectile-compilation-cmd-map)
+        (save-some-buffers (not compilation-ask-about-save)
+                           (lambda ()
+                             (projectile-project-buffer-p (current-buffer)
+                                                          project-root)))
+        (compilation-start compilation-cmd nil '(lambda (x) (concat "*compilation:" (projectile-project-name) "*")))))
+
+    (advice-add 'projectile-compile-project :override #'cm/projectile-compile-project))
 #+end_src
 *** Multiple Cursors
 #+begin_src emacs-lisp
@@ -1581,56 +1651,24 @@ other window you have open. This gets old. Fast.
   (use-package go-mode
     :mode "\\.go$"
     :config
-    (defun gofmt ()
-      "Pipe the current buffer through the external tool `gofmt`.
-  Replace the current buffer on success; display errors on failure."
-  
-      (interactive)
-      (let ((srcbuf (current-buffer)))
-        (with-temp-buffer
-          (let ((outbuf (current-buffer))
-                (errbuf (get-buffer-create "*Gofmt Errors*"))
-                (coding-system-for-read 'utf-8)    ;; use utf-8 with subprocesses
-                (coding-system-for-write 'utf-8))
-            (with-current-buffer errbuf (erase-buffer))
-            (with-current-buffer srcbuf
-              (save-restriction
-             (let (deactivate-mark)
-               (widen)
-               (if (= 0 (shell-command-on-region (point-min) (point-max) "gofmt"
-                                                 outbuf nil errbuf))
-                   ;; gofmt succeeded: replace the current buffer with outbuf,
-                   ;; restore the mark and point, and discard errbuf.
-                   (let ((old-mark (mark t)) (old-point (point)))
-                     (erase-buffer)
-                     (insert-buffer-substring outbuf)
-                     (goto-char (min old-point (point-max)))
-                     (if old-mark (push-mark (min old-mark (point-max)) t))
-                     (kill-buffer errbuf))
-             
-                 ;; gofmt failed: display the errors
-                 (display-buffer errbuf)))))
-        
-            ;; Collapse any window opened on outbuf if shell-command-on-region
-            ;; displayed it.
-            ;; NO! Don't do that< cm!
-            ;;(delete-windows-on outbuf)
-            ))))
-
-    (defun cm/go-mode-hook ()
-      (interactive)
-      (require 'go-oracle)
-      (setq go-oracle-command "/home/codemac/bin/oracle")
-      (go-oracle-mode)
-      (subword-mode 1)
-      (diminish 'go-oracle-mode)
-      (setq imenu-generic-expression
-            '(("type" "^type *\\([^ \t\n\r\f]*\\)" 1)
-              ("func" "^func *\\(.*\\) {" 1)))
-      (imenu-add-to-menubar "Index")
-      (add-hook 'before-save-hook #'gofmt-before-save))
-
     (add-hook 'go-mode-hook 'cm/go-mode-hook))
+
+  (defun cm/go-mode-hook ()
+    (interactive)
+    (require 'go-oracle)
+    (setq go-oracle-command "/home/codemac/bin/oracle")
+    (go-oracle-mode)
+    (subword-mode 1)
+    (diminish 'subword-mode)
+    (setq fill-column 80)
+    (fci-mode)
+    (diminish 'go-oracle-mode)
+    (setq imenu-generic-expression
+          '(("type" "^type *\\([^ \t\n\r\f]*\\)" 1)
+            ("func" "^func *\\(.*\\) {" 1)))
+    (imenu-add-to-menubar "Index")
+    (font-lock-mode -1)
+    (add-hook 'before-save-hook #'gofmt-before-save))
 #+end_src
 
 *** Ruby
@@ -1733,7 +1771,8 @@ magit-log is missing the commiter annotation, I need to fix that.
     :init
     ;; super incredibly slow thing that would be good in theory but
     ;; implementation is not there.
-    (setq magit-revert-buffers nil))
+    (setq magit-revert-buffers nil)
+    (setq magit-push-always-verify nil))
 #+end_src
 **** Custom Commit Message Formatting
      :PROPERTIES:
@@ -3206,6 +3245,10 @@ channels correctly. The format is: =#channela,#channelb ,passwordb=
 What I generally end up using for irc, but weechat always tends to win
 me over.
 #+begin_src emacs-lisp
+  (require 'erc)
+#+end_src
+
+#+begin_src emacs-lisp
   (setq erc-user-full-name "codemac")
   (setq erc-email-userid "j@codemac.net")
   (setq erc-nick "codemac")
@@ -3251,7 +3294,7 @@ me over.
 
   (defun cm/erc-begin ()
     (interactive)
-    (erc :server "localhost"))
+    (erc :server "localhost" :port 6667))
 
   (defun cm/erc-begin-freenode ()
     (interactive)
@@ -3261,8 +3304,6 @@ me over.
   (add-hook 'erc-join-hook 'bitlbee-netrc-identify)
 
   ;; set up keys for erc
-
-
 
 #+end_src
 **** Bitlbee Support

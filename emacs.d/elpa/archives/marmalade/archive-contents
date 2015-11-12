@@ -1,6 +1,6 @@
 (1
  (zone-nyan .
-	    [(0 0 1)
+	    [(0 1 1)
 	     ((esxml
 	       (0 3 1)))
 	     "Zone out with nyan cat" single])
@@ -139,7 +139,7 @@
    [(1 1)
     nil "Poor-man's namespaces for elisp" single])
  (with-editor .
-   [(2 3 0)
+   [(2 3 1)
     ((emacs
       (24 4))
      (async
@@ -2106,7 +2106,7 @@
 		       (1 0 0)))
 		     "simple keybindings for Magit" single])
  (magit-popup .
-	      [(2 3 0)
+	      [(2 3 1)
 	       ((emacs
 		 (24 4))
 		(async
@@ -2127,7 +2127,7 @@
 		     (1 2 0)))
 		   "completing-read over all files in Git" single])
  (magit .
-	[(2 3 0)
+	[(2 3 1)
 	 ((emacs
 	   (24 4))
 	  (async
@@ -2135,11 +2135,11 @@
 	  (dash
 	   (2 12 1))
 	  (with-editor
-	      (2 3 0))
+	      (2 3 1))
 	  (git-commit
-	   (2 3 0))
+	   (2 3 1))
 	  (magit-popup
-	   (2 3 0)))
+	   (2 3 1)))
 	 "A Git porcelain inside Emacs" tar])
  (mactag .
 	 [(0 0 1)
@@ -2889,13 +2889,13 @@
 	       (2 9 0)))
 	     "draft git commit messages" single])
  (git-commit .
-	     [(2 3 0)
+	     [(2 3 1)
 	      ((emacs
 		(24 4))
 	       (dash
 		(2 12 1))
 	       (with-editor
-		   (2 3 0)))
+		   (2 3 1)))
 	      "Edit Git commit messages" single])
  (git-auto-commit-mode .
 		       [(4 4 0)
@@ -3305,7 +3305,7 @@
 	      (1 4)))
 	    "finalizers for Emacs Lisp" tar])
  (fill-column-indicator .
-			[(1 86)
+			[(1 87)
 			 nil "Graphically indicate the fill column" single])
  (file-format .
 	      [(0 0 4)

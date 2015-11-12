@@ -1,0 +1,12 @@
+;;; -*- mode: scheme; -*-
+;; ^^ yes, mcron doesn't take .scm for some reason
+
+(define (run-with-timeout prog timeoutsecs))
+
+;;
+;; calendar sync job. should run once every 10 minutes. Would love to
+;; get this entirely implemented in guile
+;;
+(job '(next-minute '(0 10 20 30 40 50))
+     ;;
+     )

@@ -4,7 +4,6 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(auto-image-file-mode t)
- '(comint-buffer-maximum-size 20000)
  '(comint-completion-addsuffix t)
  '(comint-get-old-input (lambda nil "") t)
  '(comint-input-ignoredups t)
