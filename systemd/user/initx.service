@@ -6,9 +6,21 @@ After=xorg@0.service
 [Service]
 Type=oneshot
 EnvironmentFile=/home/codemac/config/env-arch
-ExecStart=/usr/bin/sh -c "/usr/bin/setxkbmap -device $(xinput | grep \"AT Translated Set 2 keyboard\" | sed -r \"s/^.*id=([0-9]+).*$/\1/\") -layout dvorak -option ctrl:swapcaps"
-ExecStart=/usr/bin/xsetroot -solid "#80a0af"
-ExecStart=/usr/bin/xset r rate 200 20
+
+#
+# Socket based activation is FUBAR in xorg 1.18. This sleep runs
+# before the other commands so that later units that depend on initx
+# with the After= directive can try to reach xorg. Otherwise the
+# screen locks up with notion not being able to start.
+#
+# I cannot wait much longer for my dmd overlords. Socket based
+# activation is silly for my user-level stuff.
+#
+ExecStart=/bin/sleep 5
+
+ExecStart=/bin/sh -c "/bin/setxkbmap -device $(xinput list 'AT Translated Set 2 keyboard' | cut -d= -f2 | cut -f 1) -layout dvorak -option ctrl:swapcaps"
+ExecStart=/bin/xsetroot -solid "#80a0af"
+ExecStart=/bin/xset r rate 200 20
 
 [Install]
 WantedBy=main.target

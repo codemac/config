@@ -9,3 +9,7 @@ GUILE_LOAD_PATH=/home/codemac/.guix-profile/share/guile/site/2.0
 GUILE_LOAD_COMPILED_PATH=/home/codemac/.guix-profile/share/guile/site/2.0
 INFOPATH=/home/codemac/.guix-profile/share/info
 PERL5LIB=/home/codemac/.guix-profile/lib/perl5/site_perl
+
+SSL_CERT_DIR=/home/codemac/.guix-profile/etc/ssl/certs
+SSL_CERT_FILE=$SSL_CERT_DIR/ca-certificates.crt
+GIT_SSL_CAINFO=$SSL_CERT_FILE
