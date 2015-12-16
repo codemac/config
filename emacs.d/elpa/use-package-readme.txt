@@ -6,4 +6,3 @@ utility my total load time is just under 1 second, with no loss of
 functionality!
 
 Please see README.md from the same repository for documentation.
-
