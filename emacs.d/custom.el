@@ -7,7 +7,6 @@
  '(comint-completion-addsuffix t)
  '(comint-get-old-input (lambda nil "") t)
  '(comint-input-ignoredups t)
- '(comint-input-ring-size 5000)
  '(comint-move-point-for-output nil)
  '(comint-prompt-read-only t)
  '(comint-scroll-show-maximum-output t)

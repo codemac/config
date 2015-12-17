@@ -7,7 +7,7 @@ Type=forking
 # let gpg fail if the directory can't be made. Most likely this is
 # because the directory already exists. Not a big deal.
 ExecStartPre=/bin/sh -c "/usr/bin/mkdir -p /run/user/1000/gnupg || exit 0"
-ExecStart=/home/codemac/.guix-profile/bin/gpg-agent --daemon --homedir=/mnt/keys/gnupghome
+ExecStart=/home/codemac/.guix-profile/bin/gpg-agent --daemon --homedir=/mnt/keys/gnupghome --pinentry-program=/home/codemac/.guix-profile/bin/pinentry-gtk-2
 ExecStop=/usr/bin/pkill gpg-agent
 Restart=on-abort
 

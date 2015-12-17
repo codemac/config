@@ -13,3 +13,5 @@ PERL5LIB=/home/codemac/.guix-profile/lib/perl5/site_perl
 SSL_CERT_DIR=/home/codemac/.guix-profile/etc/ssl/certs
 SSL_CERT_FILE=$SSL_CERT_DIR/ca-certificates.crt
 GIT_SSL_CAINFO=$SSL_CERT_FILE
+PKG_CONFIG_PATH=/home/codemac/.guix-profile/lib/pkgconfig
+GOPATH=/home/codemac/work/mesa/go

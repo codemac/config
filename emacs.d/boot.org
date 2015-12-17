@@ -460,7 +460,8 @@ because it really just is string replacement on the single quote. And
 unquoting isn't even a thing because rc doesn't fucking suck at life,
 it just passes on arguments. It's wonderful!
 #+begin_src emacs-lisp
-  (setq cm/using-rc t)
+  (defvar cm/using-rc t
+    "Set to true when I'm using rc as my main shell")
 
   (defun cm/advise-shell-quote-argument (fun &rest args)
     (if cm/using-rc
@@ -468,8 +469,6 @@ it just passes on arguments. It's wonderful!
       (apply fun args)))
 
   (advice-add #'shell-quote-argument :around #'cm/advise-shell-quote-argument)
-
-  (advice-add #'comint-quote-filename :around #'cm/advise-shell-quote-argument)
 
 #+end_src
 *** Support for rgrep as well
@@ -904,6 +903,9 @@ I need to tie this into projectile, but for now have a way to create a
         comint-input-ring-size 5000           ; max shell history size
         protect-buffer-bury-p nil)
 
+  ;; make sure that comint in shell mode doesn't try to quote file
+  ;; names! this is annoying as fuck!
+  (setq shell-file-name-quote-list nil)
   (setenv "PAGER" "cat")
   (setenv "MANPAGER" "cat")
 
@@ -1639,16 +1641,6 @@ tools for not addressing it, as there are no great answers.
 The fact that the golang project has made it a prerequisite that so
 many are set, and that there are rarely cli overrides for them is
 really a fault of their own.
-
-**** Fix go-mode's gofmt
-     :PROPERTIES:
-     :ID:       8eafd986-81f9-4b2d-9db5-46c886fdf06a
-     :END:
-
-You'll see the commented section in this function. When the current
-go-mode.el calls =delete-windows-on outbuf= it closes pretty much any
-other window you have open. This gets old. Fast.
-
 #+begin_src emacs-lisp
   (use-package go-mode
     :mode "\\.go$"
@@ -1661,6 +1653,7 @@ other window you have open. This gets old. Fast.
     (setq go-oracle-command "/home/codemac/bin/oracle")
     (go-oracle-mode)
     (subword-mode 1)
+    (go-eldoc-setup)
     (diminish 'subword-mode)
     (setq fill-column 80)
     (fci-mode)
@@ -2608,7 +2601,7 @@ Functions borrowed from Sacha Chua.
      :END:
 #+begin_src emacs-lisp  
   (setq org-stuck-projects
-            '("-MAYBE-DONE" "TODO"))
+            '("+PROJECT/-NVM-DONE-WAITING" ("NEXT" "TODO")))
 
   (add-to-list 'auto-mode-alist '("\\.org$" . org-mode))
   (setq org-return-follows-link t)
