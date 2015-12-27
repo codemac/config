@@ -2,7 +2,8 @@
 META="Mod4+"
 ALTMETA="Mod4+"
 
-XTERM="xterm"
+-- xterm set up to be by default .. utf8-y
+XTERM="uxterm"
 
 ioncore.set{
     dblclick_delay=250,

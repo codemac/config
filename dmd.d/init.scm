@@ -3,53 +3,60 @@
 ;; Services known to dmd:
 ;; Add new services (defined using 'make <service>') to dmd here by
 ;; providing them as arguments to 'register-services'.
+(define (make-system-constructor command)
+  (lambda _
+    (run-command command)))
+ 
+(define (make-system-destructor command)
+  (lambda _
+    (not (run-command command))))
 
+(make <service>
+  #:provides '(x)
+  #:requires '()
+  #:start (make-forkexec-constructor
+	   '("Xorg" ":0" "-nolisten" "tcp" "-noreset" "-verbose" "2" "vt1"))
+  #:stop (make-kill-destructor))
 
-(define x
-  (make <service>
-    #:provides '(x11 xorg x)
-    #:requires '()
-    #:start (make-forkexec-constructor
-	     '("/usr/bin/Xorg :0 -nolisten tcp -noreset -verbose 2 \"vt1\""))
-    #:stop (make-kill-destructor)))
+(make <service>
+  #:provides '(emacs)
+  #:requires '()
+  #:start (make-system-constructor '("emacs" "--daemon"))
+  #:stop (make-system-destructor '("emacsclient" "--eval" "(kill-emacs)")))
 
-(define sxhkd
-  (make <service>
-    #:provides '(sxhkd hotkeys)
-    #:requires '(x)
-    #:start (make-forkexec-constructor
-	     '("/usr/bin/sxhkd"))
-    #:stop (make-kill-destructor)))
+(make <service>
+  #:provides '(sxhkd)
+  #:requires '(x)
+  #:start (make-forkexec-constructor
+	   '("sxhkd"))
+  #:stop (make-kill-destructor))
 
-(define xterm
-  (make <service>
-    #:provides '(xterm)
-    #:requires '()
-    #:start (make-forkexec-constructor
-	     '("/usr/bin/xterm"))
-    #:stop (make-kill-destructor)))
+(make <service>
+  #:provides '(syndaemon)
+  #:requires '(x)
+  #:start (make-system-constructor '("syndaemon" "-i" "1.0" "-R"))
+  #:stop (make-kill-destructor))
 
-(define bitlbee
-  (make <service>
-    #:provides '(bitlbee)
-    #:requires '()
-    #:start (make-forkexec-constructor
-	     '("/usr/bin/bitlbee" "-F" "-n" "-d" "/home/codemac/.config/bitlbee"))
-    #:stop (make-kill-destructor)))
+(make <service>
+  #:provides '(bitlbee)
+  #:requires '()
+  #:start (make-forkexec-constructor
+	   '("bitlbee" "-F" "-n" "-d" "/home/codemac/.config/bitlbee"))
+  #:stop (make-kill-destructor))
 
 (define (cbattsvc batnum)
   (make <service>
-    #:provides `(,(string->symbol (string-append "cbatticon_" batnum)))
-    #:requires '()
+    #:provides (list (string->symbol (string-append "cbatticon_" batnum)))
+    #:requires '(x)
     #:start (make-forkexec-constructor
-	     `("/usr/bin/cbatticon" "-i" "standard" "-u" "30" "-l" "15" "-r" "2" ,batnum))
+	     `("cbatticon" "-i" "standard" "-u" "30" "-l" "15" "-r" "2" ,batnum))
     #:stop (make-kill-destructor)))
 
 ;; TODO find every battery in /sys and auto generate this list! Also
 ;; consider making it take an "ordering" so we can determine what
 ;; order that dmd launches them in.
-(define cbatt0 (cbattsvc "BAT0"))
-(define cbatt1 (cbattsvc "BAT1"))
+(cbattsvc "BAT0")
+(cbattsvc "BAT1")
 
 ;; gpg doesn't have a 'foreground' mode. So what I do instead is a
 ;; silly hack, I run gpg-agent and then check what the pid is that is
@@ -57,8 +64,6 @@
 ;; shenanigans, this is a surefire way of finding gpg-agent. If
 ;; gpg-agent dies, I restart it.
 
-(define (initialize-cgroup-tracking)
-  (mkdir "/sys/fs/cgroup/user-dmd"))
 (define (gpgagent-start)
   (let ((gpgpid (fork+exec-command '("/usr/bin/gpg-agent" "--homedir=/mnt/keys/gnupghome"))))
     ; find /run/user/1000/S.gpg-agent
@@ -69,21 +74,27 @@
 (define (make-system-cgroup-constructor))
 
 (define (make-kill-cgroup-destructor))
-(define gpgagent
-  (make <service>
-    #:provides '(gpg gpg2 gpgagent)
-    #:requires '()
-    #:start (make-system-constructor
-	     '("/usr/bin/gpg-agent" "--homedir=/mnt/keys/gnupghome"))
-    #:stop (make-kill-destructor)))
 
-(register-services x sxhkd xterm bitlbee gpgagent cbatt0 cbatt1)
+(make <service>
+  #:provides '(gpgagent)
+  #:requires '()
+  #:start (make-system-constructor
+	   '("gpg-agent" "--homedir=/mnt/keys/gnupghome"))
+  #:stop (make-kill-destructor))
 
-(initialize-cgroup-tracking)
 ;; Send dmd into the background
 (action 'dmd 'daemonize)
 
 ;; Services to start when dmd starts:
 ;; Add the name of each service that should be started to the list
 ;; below passed to 'for-each'.
-(for-each start '(xterm))
+(for-each start
+	  '(xterm
+	    gpgagent
+	    cbatticon_BAT0
+	    cbatticon_BAT1
+	    bitlbee
+	    sxhkd
+	    emacs
+	    x
+	    ))

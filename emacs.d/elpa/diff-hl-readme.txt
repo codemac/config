@@ -1,6 +1,6 @@
-`diff-hl-mode' highlights uncommitted changes on the left side of
-the window (using the fringe, by default), allows you to jump
-between the hunks and revert them selectively.
+`diff-hl-mode' highlights uncommitted changes on the side of the
+window (using the fringe, by default), allows you to jump between
+the hunks and revert them selectively.
 
 Provided commands:
 
