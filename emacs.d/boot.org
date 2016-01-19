@@ -34,6 +34,7 @@ configured manually, as detection can lead to other trust bugs.
    cm/machine-trust-file
    (cond
     ((string-prefix-p "nevada" system-name) "/home/codemac/.guix-profile/etc/ssl/certs/ca-certificates.crt")
+    ((string-prefix-p "nordic" system-name) "/etc/ssl/certs/ca-certificates.crt")
     (t (error "No tls trust set for this host! Add exception or find cert.pem you trust"))))
 #+end_src
 
@@ -635,6 +636,7 @@ may or may not be always true though.
   (defvar cm/identica-username "nope" "The password for bitlbee!")
   (defvar cm/identica-password "nope" "The password for bitlbee!")
   (defvar cm/erc-keywords "nope" "The password for bitlbee!")
+  (defvar cm/erc-autojoin-channels-alist '("#emacs") "the default list for erc chan.")
   (defvar cm/rcirc-server-alist '() "The password for bitlbee!")
   (defvar cm/ironport-p4port "" "p4port")
   (defvar cm/mu4e-refile-folder (lambda (x) '()) "refile!")
@@ -2239,8 +2241,9 @@ horrifying.
     :END:
 Let's get our scheme on!
 #+begin_src emacs-lisp
-  (add-to-list 'load-path "~/.guix-profile/share/emacs/site-lisp")
-  (require 'geiser-install)
+  (unless (not (file-exists-p "~/.guix-profile/share/emacs/site-lisp"))
+    (add-to-list 'load-path "~/.guix-profile/share/emacs/site-lisp")
+    (require 'geiser-install))
   ;; racket is great and all, but I need me some ffi, ice-9, and of course, gnu.
   (setq geiser-active-implementations '(guile))
 #+end_src
