@@ -10,7 +10,9 @@ vbell_msg "[[[ ding ]]]"
 termcapinfo xterm|xterms|xterm-color|screen|xs|rxvt ti@:te@
 
 terminfo rxvt-unicode 'Co#256:AB=\E[48;5;%dm:AF=\E[38;5;%dm'
-term screen
+terminfo xterm-256color 'Co#256:AB=\E[48;5;%dm:AF=\E[38;5;%dm'
+term screen-256color
+#term xterm-256color
 defscrollback 10000
 nonblock on
 defutf8 on
