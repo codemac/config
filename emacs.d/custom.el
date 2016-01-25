@@ -32,6 +32,14 @@
     ((eval set
 	   (make-local-variable
 	    (quote gofmt-command))
+	   "/home/codemac/work/mesa.container_delete/.gofmt.sh")
+     (eval set
+	   (make-local-variable
+	    (quote godef-command))
+	   "/home/codemac/work/mesa.container_delete/.godef.sh")
+     (eval set
+	   (make-local-variable
+	    (quote gofmt-command))
 	   "/home/codemac/work/mesa/.gofmt.sh")
      (eval set
 	   (make-local-variable
@@ -60,7 +68,7 @@
      (yaml-indent-offset . 8)
      (after-save-hook archive-done-tasks))))
  '(smtpmail-queue-mail nil)
- '(warning-suppress-types (quote ((undo discard-info))) t)
+ '(warning-suppress-types (quote ((undo discard-info))))
  '(yaml-indent-offset 8))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.

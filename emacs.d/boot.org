@@ -1653,7 +1653,6 @@ really a fault of their own.
     (setq go-oracle-command "/home/codemac/bin/oracle")
     (go-oracle-mode)
     (subword-mode 1)
-    (go-eldoc-setup)
     (diminish 'subword-mode)
     (setq fill-column 80)
     (fci-mode)
@@ -2026,7 +2025,7 @@ binary - and it's easier to just use whatever my distro packages.
      :END:
 We're just borrowing the gnus settings here..
 #+begin_src emacs-lisp
-  (setq smtpmail-auth-credentials "~/.authinfo")
+  (setq smtpmail-auth-credentials "~/.authinfo.gpg") ;; is this needed?
 
   (setq notmuch-fcc-dirs '((".*igneous.*" . "ig/sent")
                            (".*codemac.net.*" . "cm/INBOX.Sent Items")))
@@ -2501,11 +2500,9 @@ Functions borrowed from Sacha Chua.
 #+begin_src emacs-lisp
   (defun org-receipt-agenda (match)
     (setq org-agenda-include-all-todo nil
-                  org-agenda-ndays 7
-                  org-agenda-show-all-dates t
-                  )
-    (org-agenda-list)
-    )
+          org-agenda-ndays 7
+          org-agenda-show-all-dates t)
+    (org-agenda-list))
 #+end_src
 **** Custom agendas
      :PROPERTIES:
@@ -2639,7 +2636,12 @@ Functions borrowed from Sacha Chua.
   (setq org-outline-path-complete-in-steps nil) ;ido lol
   (setq org-refile-use-outline-path 'file)
   (setq org-use-speed-commands t)
+  (setq org-export-with-sub-superscripts nil)
+  (setq org-pretty-entities-include-sub-superscripts nil)
+  (setq org-use-sub-superscripts nil)
+
   ;; less file local settings!
+  ;; actually - let's do more file-local settings. Remove these asap.
   (setq org-archive-location "_archive/%s_old::")
   (setq org-global-properties '(("Effort_ALL" . "0:10 0:20 0:30 0:40 0:50 1:00 2:00 3:00 4:00 5:00 6:00 7:00 8:00 9:00 10:00 11:00 12:00")))
   (setq org-columns-default-format "%TODO %50ITEM(Task) %17Effort(Estimated Effort){:} %CLOCKSUM")
@@ -2689,10 +2691,6 @@ Functions borrowed from Sacha Chua.
       (pandoc-set-write "mediawiki")
       (pandoc-run-pandoc nil)
       (pandoc-view-output)))
-  
-  (setq org-export-with-sub-superscripts nil)
-  (setq org-pretty-entities-include-sub-superscripts nil)
-  (setq org-use-sub-superscripts nil)
   
   ;(org-babel-load-file (expand-file-name
   ;                      "org-docco.org"
@@ -2951,21 +2949,6 @@ Also - remember to give everything an id number. This will really help
 any of my plans to get org mode todos into easier to consume formats.
 #+begin_src emacs-lisp
 (add-hook 'org-capture-prepare-finalize-hook 'org-id-get-create)
-#+end_src
-
-Finally, before I save a file, add the id's! This is way too much, so
-I've commented it out for now
-#+begin_src emacs-lisp
-  (defun cm/org-add-ids-to-headlines-in-file ()
-    "Add ID properties to all headlines in the current file which
-  do not already have one."
-    (interactive)
-     ;;(org-map-entries 'org-id-get-create))
-    )
-
-  (add-hook 'org-mode-hook
-            (lambda ()
-              (add-hook 'before-save-hook 'cm/org-add-ids-to-headlines-in-file nil 'local)))
 #+end_src
 
 **** Appt Reminders
