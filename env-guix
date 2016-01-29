@@ -1,6 +1,6 @@
 DISPLAY=:0
 GNUPGHOME=/mnt/keys/gnupghome
-PATH=/home/codemac/.guix-profile/bin:/home/codemac/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin
+PATH=/home/codemac/.guix-profile/bin:/home/codemac/.guix-profile/sbin:/home/codemac/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin
 GUIX_PACKAGE_PATH=/home/codemac/code/guix-pkgs/src
 GUIX_LOCPATH=/home/codemac/.guix-profile/lib/locale
 LANGUAGE=en_US.UTF-8
