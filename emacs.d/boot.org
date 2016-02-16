@@ -2611,7 +2611,20 @@ Functions borrowed from Sacha Chua.
   (setq org-clock-persist 'history)
   (org-clock-persistence-insinuate)
   (setq org-clock-idle-time 10)
-
+  (setq org-mobile-directory "~/org/.mobileorg-staging")
+  (add-hook 'org-mobile-post-push-hook
+            (lambda ()
+              (progn
+                (shell-command "cd /home/codemac/org/.mobileorg-staging && echo 'mput *' | cadaver https://dav.messagingengine.com/codemac.fastmail.com/files/org")
+                (shell-command "cd /home/codemac/org/.mobileorg-staging/_notes && echo 'mput *' | cadaver https://dav.messagingengine.com/codemac.fastmail.com/files/org/_notes"))))
+  (add-hook 'org-mobile-pre-pull-hook
+            (lambda ()
+              (progn
+                (shell-command "cd /home/codemac/org/.mobileorg-staging && find . -type f -exec rm '{}' ';'")
+                (shell-command "cd /home/codemac/org/.mobileorg-staging && echo 'mget *' | cadaver https://dav.messagingengine.com/codemac.fastmail.com/files/org")
+                (shell-command "cd /home/codemac/org/.mobileorg-staging/_notes && echo 'mget *' | cadaver https://dav.messagingengine.com/codemac.fastmail.com/files/org/_notes"))))
+  (add-hook 'org-mobile-post-pull-hook
+            (lambda () (shell-command "cd /home/codemac/org/.mobileorg-staging && echo 'put mobileorg.org' | cadaver https://dav.messagingengine.com/codemac.fastmail.com/files/org &")))
   (setq org-default-notes-files '("~/org/_notes/notes.org"))
   (setq org-agenda-files '("~/org/" "~/org/_notes/"))
   (setq org-refile-targets '((nil :maxlevel . 5) (org-agenda-files :maxlevel . 5)))
@@ -2935,16 +2948,16 @@ How I deploy my personal website.
           ("w" "Work capture" entry (file "~/org/igneous.org") "* %U %?\n\n  %i\n  %a" :prepend nil)
           ("l" "Life Fitness" table-line (file+headline "~/org/fitness.org" "Fitness") ,(concat (format-time-string "| %Y.%m.%d-%H:%M |") " %^{Weight} | | %^{RHR} |") :table-line-pos "II-1")
           ("x" "org-capture" entry (file+headline "~/org/_notes/www.org" "Archived Content") "* %^{Title}p: %:description\n\n  Source: %U %c\n\n  %i")))
-  
+
   (defun gtd ()
     (interactive)
     (find-file "~/org/gtd.org"))
-  
+
   ;; Set up my diary file
   (setq diary-file "~/org/diary") ;; deal with the fact that it's in the org folder
-  
+
   ;;
-  
+
   (setq org-src-fontify-natively nil)
 #+end_src
 
