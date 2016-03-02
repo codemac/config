@@ -194,7 +194,8 @@ end
 
 local function percentage()
   -- Return number indicating battery level percentage
-  return read_value('energy_now') * 100 / read_value('energy_full')
+  return read_value('capacity')
+  --return read_value('energy_now') * 100 / read_value('energy_full')
 end
 
 local function status()

@@ -1,6 +1,4 @@
 !# Most recent update: Wed 01 Apr 2015 09:59:35 PM PDT
-xterm*toolBar:	false
-xterm*utf8: 2
 ! yeah!console
 yeahconsole*restart: 0
 yeahconsole*term: urxvt
@@ -426,7 +424,7 @@ m3g*colorBD:          white
 m3g*colorULMode:      on
 m3g*colorUL:          white
 ! }}}
-#! ---| xterminus |--- {{{
+! ---| xterminus |--- {{{
 !!black
 !urxvt*color0:           #000000
 !urxvt*color8:           #505450
@@ -452,7 +450,7 @@ m3g*colorUL:          white
 !urxvt*color7:           #ffffff
 !urxvt*color15:          #dedede
 
-#! ---| Colorful Obsolescence |--- {{{
+! ---| Colorful Obsolescence |--- {{{
 !Black	0,0,0	#000000	Preview
 !Black Bold	85,85,85	#555555	Preview
 !Red	238,60,60	#ee3c3c	Preview
@@ -515,8 +513,8 @@ m3g*colorUL:          white
 !xterm*cursorColor2: white
 !xterm*pointerColor: yellow
 !xterm*font:				xft:Terminus:pixelsize=12
-#xterm*term:		xterm-color	  
-#! ---| hisham |--- {{{
+!#xterm*term:		xterm-color	  
+! ---| hisham |--- {{{
 !urxvt*color0:	#303430
 !urxvt*color8:	#CDB5CD
 !urxvt*color1:	#bf7979
@@ -535,7 +533,7 @@ m3g*colorUL:          white
 !urxvt*color15:	#dedede
 !}}}
 
-#!	---| cursor fun! |--- {{{
+!	---| cursor fun! |--- {{{
 urxvt*foreground: #DDDDDD
 urxvt*background: #000000
 urxvt*cursorColor: yellow

@@ -23,3 +23,4 @@ ioncore.set{
 }
 
 dopath("cfg_defaults")
+dopath("cfg_look")

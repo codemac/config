@@ -749,6 +749,13 @@
 	nil "Quickly generate linear ranges in Emacs" tar
 	((:keywords "convenience")
 	 (:url . "https://github.com/abo-abo/tiny"))])
+ (tramp-theme .
+	      [(0 1 1)
+	       ((emacs
+		 (24 1)))
+	       "Custom theme for remote buffers" single
+	       ((:url . "http://elpa.gnu.org/packages/tramp-theme.html")
+		(:keywords "convenience" "faces"))])
  (transcribe .
 	     [(1 0 2)
 	      nil "Package for audio transcriptions" single
@@ -772,6 +779,15 @@
 		  [(0 1)
 		   nil "Unicode confusables table" tar
 		   ((:url . "http://elpa.gnu.org/packages/uni-confusables.html"))])
+ (url-http-ntlm .
+		[(2 0 1)
+		 ((cl-lib
+		   (0 5))
+		  (ntlm
+		   (2 0 0)))
+		 "NTLM authentication for the url library" tar
+		 ((:keywords "comm" "data" "processes" "hypermedia")
+		  (:url . "http://elpa.gnu.org/packages/url-http-ntlm.html"))])
  (vlf .
       [(1 7)
        nil "View Large Files" tar

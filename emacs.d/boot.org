@@ -35,6 +35,7 @@ configured manually, as detection can lead to other trust bugs.
    (cond
     ((string-prefix-p "nevada" system-name) "/home/codemac/.guix-profile/etc/ssl/certs/ca-certificates.crt")
     ((string-prefix-p "nordic" system-name) "/etc/ssl/certs/ca-certificates.crt")
+    ((string-prefix-p "neah" system-name) "/etc/ssl/certs/ca-certificates.crt")
     (t (error "No tls trust set for this host! Add exception or find cert.pem you trust"))))
 #+end_src
 
@@ -145,18 +146,31 @@ Had to do some funky stuff to get around how shitty Mac OS X default
 VPN settings are. Also, set different font sizes for the different
 screen DPI's.
 #+begin_src emacs-lisp
+  (defun cm/produce-font (size)
+    (let ((font (concat "DejaVu Sans Mono-"
+                        (if (numberp size) (number-to-string size) size)
+                        ":hinting=true:autohint=true")))
+      (add-to-list 'initial-frame-alist `(font . ,font))
+      (add-to-list 'default-frame-alist `(font . ,font))))
+             
   (cond
     ((or (string-prefix-p "phoenix-mta" system-name)
          (string-prefix-p "vpn2ntap-" system-name)
          (string-prefix-p "moc.ppaten" (apply 'string (reverse (string-to-list system-name)))))
-     (add-to-list 'default-frame-alist '(font . "DejaVu Sans Mono-12:hinting=true:autohint=true")))
+     (cm/produce-font 12))
     ((equal system-name "penolpe")
-     (add-to-list 'default-frame-alist '(font . "DejaVu Sans Mono-9:hinting=true:autohint=true")))
+     (cm/produce-font 9))
     (t
-     (set-frame-font "DejaVu Sans Mono-11:hinting=true:autohint=true")))
+     (cm/produce-font 11)))
 
-  (when (member "symbola" (font-family-list))
-    (set-fontset-font t 'unicode "Symbola" nil 'prepend))
+  ;; gotta figure out a better way for unicode
+  (cond
+   ((member "Noto Emoji" (font-family-list))
+    (set-fontset-font t 'unicode "Noto Emoji" nil 'prepend))
+   ((member "symbola" (font-family-list))
+    (set-fontset-font t 'unicode "Symbola" nil 'prepend)))
+
+
 #+end_src
 * Environment
   :PROPERTIES:

@@ -5,8 +5,8 @@ GUIX_PACKAGE_PATH=/home/codemac/code/guix-pkgs/src
 GUIX_LOCPATH=/home/codemac/.guix-profile/lib/locale
 LANGUAGE=en_US.UTF-8
 MOZ_USE_OMTC=1
-GUILE_LOAD_PATH=/home/codemac/.guix-profile/share/guile/site/2.0
-GUILE_LOAD_COMPILED_PATH=/home/codemac/.guix-profile/share/guile/site/2.0
+GUILE_LOAD_PATH=/home/codemac/.guix-profile/share/guile/site/2.0:/home/codemac/scm
+GUILE_LOAD_COMPILED_PATH=/home/codemac/.guix-profile/share/guile/site/2.0:/home/codemac/scm
 INFOPATH=/home/codemac/.guix-profile/share/info
 PERL5LIB=/home/codemac/.guix-profile/lib/perl5/site_perl
 

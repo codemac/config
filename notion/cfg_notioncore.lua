@@ -71,8 +71,8 @@ defbindings("WScreen", {
     kpress(META.."F9", "ioncore.create_ws(_)"),
 
     bdoc("Display the main menu."),
-    kpress(ALTMETA.."F12", "mod_query.query_menu(_, _sub, 'mainmenu', 'Main menu:')"),
-    --kpress(ALTMETA.."F12", "mod_menu.menu(_, _sub, 'mainmenu', {big=true})"),
+    kpress(ALTMETA.."F10", "mod_query.query_menu(_, _sub, 'mainmenu', 'Main menu:')"),
+    --kpress(ALTMETA.."F10", "mod_menu.menu(_, _sub, 'mainmenu', {big=true})"),
     mpress("Button3", "mod_menu.pmenu(_, _sub, 'mainmenu')"),
 
     bdoc("Display the window list menu."),
