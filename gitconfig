@@ -1,0 +1,7 @@
+[user]
+	email = j@codemac.net
+	name = Jeff Mickey
+[push]
+	default = current
+[alias]
+	st = status --branch --short
