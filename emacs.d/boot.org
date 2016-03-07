@@ -2587,13 +2587,13 @@ Functions borrowed from Sacha Chua.
             (tags "ERRAND"))
            ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
             (org-agenda-sorting-strategy '(user-defined-up))))
-          ("p" "Phone Agenda"
+          ("f" "Phone Agenda"
            ((tags-todo "PHONE-BLOCKED=\"t\"/!-WAITING")
             (tags "PHONE+PROJECT")
             (tags "PHONE"))
            ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
             (org-agenda-sorting-strategy '(user-defined-up))))
-          ("o" "Project Agenda"
+          ("p" "Project Agenda"
            ((tags-todo "PROJECT/!-WAITING")
             (tags "PROJECT"))
            ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
@@ -2689,12 +2689,12 @@ Functions borrowed from Sacha Chua.
                         ("ERRAND" . ?r)
                         (:endgroup)
                         ("COMPUTER" . ?c)
-                        ("INTERNET" . ?i)
-                        ("PHONE" . ?p)
+                        ("INTERNET" . ?v)
+                        ("PHONE" . ?f)
                         ("EMAIL" . ?m)
                         ("OUTREACH" . ?h)
                         ("DISPATCH" . ?d)
-                        ("PROJECT" . ?o)))
+                        ("PROJECT" . ?p)))
   
   (setq org-log-done '(note))
   (setq org-log-into-drawer t) ; record state changes into LOGBOOK
