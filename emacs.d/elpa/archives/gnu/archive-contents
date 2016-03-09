@@ -187,7 +187,7 @@
  (csv-mode .
 	   [(1 5)
 	    nil "Major mode for editing comma/char separated values" single
-	    ((:url . "http://centaur.maths.qmul.ac.uk/Emacs/")
+	    ((:url . "http://elpa.gnu.org/packages/csv-mode.html")
 	     (:keywords "convenience"))])
  (darkroom .
 	   [(0 1)
@@ -390,7 +390,7 @@
 		((:keywords "html" "xml")
 		 (:url . "https://github.com/validator/validator"))])
  (hydra .
-	[(0 13 4)
+	[(0 13 5)
 	 ((cl-lib
 	   (0 5)))
 	 "Make bindings that stick around." tar
@@ -582,7 +582,7 @@
 	     ((:url . "https://github.com/michael-heerdegen/on-screen.el")
 	      (:keywords "convenience"))])
  (org .
-      [(20160229)
+      [(20160307)
        nil "Outline-based notes management and organizer" tar nil])
  (osc .
       [(0 1)
@@ -712,7 +712,7 @@
 	   ((:url . "https://github.com/Malabarba/spinner.el")
 	    (:keywords "processes" "mode-line"))])
  (stream .
-	 [(2 1 0)
+	 [(2 2 0)
 	  ((emacs
 	    (25)))
 	  "Implementation of streams" single
@@ -754,7 +754,7 @@
 		      ((:url . "http://elpa.gnu.org/packages/temp-buffer-browse.html")
 		       (:keywords "convenience"))])
  (test-simple .
-	      [(1 1)
+	      [(1 2 0)
 	       ((cl-lib
 		 (0)))
 	       "Simple Unit Test Framework for Emacs Lisp" single

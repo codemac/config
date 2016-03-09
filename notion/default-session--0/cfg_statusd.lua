@@ -2,26 +2,26 @@
 return {
     ["load"] = {
     },
+    ["mail"] = {
+    },
+    ["date"] = {
+        ["date_format"] = "%a %Y-%m-%d %H:%M",
+    },
     ["battery"] = {
+        ["blink_on_discharge"] = true,
+        ["status_display"] = {
+            ["discharging"] = "â\134\147",
+            ["full"] = " ",
+            ["charging"] = "â\134\145",
+        },
+        ["info_format"] = "%s%.f%s",
+        ["content_format"] = "|| %s",
         ["info_data"] = {
             [1] = "status",
             [2] = "percentage",
             [3] = "status",
         },
-        ["content_format"] = "|| %s",
         ["bat_no"] = 0,
-        ["info_format"] = "%s%.f%s",
-        ["blink_on_discharge"] = true,
-        ["status_display"] = {
-            ["charging"] = "â\134\145",
-            ["full"] = " ",
-            ["discharging"] = "â\134\147",
-        },
-    },
-    ["date"] = {
-        ["date_format"] = "%a %Y-%m-%d %H:%M",
-    },
-    ["mail"] = {
     },
 }
 
