@@ -4,7 +4,7 @@ Description=xbanish
 [Service]
 ExecStart=/usr/bin/xbanish
 Restart=always
-EnvironmentFile=/home/codemac/config/env-guix
+EnvironmentFile=/home/jmickey/config/env-arch
 
 [Install]
 WantedBy=main.target

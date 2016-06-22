@@ -2,8 +2,8 @@
 Description=Sound Service
 
 [Service]
-EnvironmentFile=/home/codemac/config/env-arch
-#ExecStart=/home/codemac/.guix-profile/bin/pulseaudio --daemonize=no
+EnvironmentFile=/home/jmickey/config/env-arch
+#ExecStart=/home/jmickey/.guix-profile/bin/pulseaudio --daemonize=no
 ExecStart=/bin/pulseaudio --daemonize=no
 Restart=on-failure
 

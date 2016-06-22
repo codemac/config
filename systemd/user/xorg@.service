@@ -7,7 +7,7 @@ After=xorg@%i.socket
 Type=simple
 SuccessExitStatus=0 1
 #ExecStart=/usr/bin/Xorg :%i -nolisten tcp -noreset -verbose 2 "vt${XDG_VTNR}"
-ExecStart=/usr/bin/Xorg :%i -nolisten tcp -noreset -verbose 2 "vt1"
+ExecStart=/usr/bin/xinit -- /usr/bin/X :%i -nolisten tcp -noreset -verbose 2 "vt1"
 
 [Install]
 DefaultInstance=0

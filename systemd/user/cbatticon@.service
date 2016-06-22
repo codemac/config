@@ -1,12 +1,12 @@
 [Unit]
 Description=Battery Icon for %i
-Requires=xorg@0.service window-manager.service initx.service
-After=xorg@0.service window-manager.service initx.service
+Requires=xorg@0.service window-manager.service initx.service trayion.service
+After=xorg@0.service window-manager.service initx.service trayion.service
 
 [Service]
 ExecStart=/usr/bin/cbatticon -i standard -u 30 -l 15 -r 2 %i
 Restart=always
-EnvironmentFile=/home/codemac/config/env-arch
+EnvironmentFile=/home/jmickey/config/env-arch
 
 [Install]
 WantedBy=main.target

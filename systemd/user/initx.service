@@ -5,7 +5,7 @@ After=xorg@0.service
 
 [Service]
 Type=oneshot
-EnvironmentFile=/home/codemac/config/env-arch
+EnvironmentFile=/home/jmickey/config/env-arch
 
 #
 # Socket based activation is FUBAR in xorg 1.18. This sleep runs

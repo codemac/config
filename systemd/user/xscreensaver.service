@@ -1,0 +1,10 @@
+[Unit]
+Description=XScreensaver
+Requires=xorg@0.service window-manager.service initx.service
+After=xorg@0.service window-manager.service initx.service
+
+[Service]
+ExecStart=/usr/bin/xscreensaver -no-splash
+
+[Install]
+WantedBy=main.target

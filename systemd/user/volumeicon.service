@@ -4,9 +4,9 @@ Requires=xorg@0.service dbus.service trayion.service
 After=xorg@0.service trayion.service
 
 [Service]
-#ExecStart=/home/codemac/.guix-profile/bin/volumeicon
+#ExecStart=/home/jmickey/.guix-profile/bin/volumeicon
 ExecStart=/bin/volumeicon
-EnvironmentFile=/home/codemac/config/env-arch
+EnvironmentFile=/home/jmickey/config/env-arch
 
 [Install]
 WantedBy=main.target

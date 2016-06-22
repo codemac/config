@@ -2,7 +2,7 @@
 Description=Music Player Daemon
 
 [Service]
-ExecStart=/home/codemac/.guix-profile/bin/mpd --no-daemon
+ExecStart=/home/jmickey/.guix-profile/bin/mpd --no-daemon
 
 # allow MPD to use real-time priority 50
 LimitRTPRIO=50

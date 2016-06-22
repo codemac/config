@@ -1,12 +1,12 @@
 [Unit]
 Description=NetworkManager Applet
-Requires=xorg@0.service dbus.service
-After=xorg@0.service
+Requires=xorg@0.service dbus.service trayion.service
+After=xorg@0.service trayion.service
 
 [Service]
 ExecStart=/usr/bin/nm-applet
 Restart=always
-EnvironmentFile=/home/codemac/config/env-arch
+EnvironmentFile=/home/jmickey/config/env-arch
 KillSignal=SIGKILL
 
 [Install]

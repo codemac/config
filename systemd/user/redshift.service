@@ -1,12 +1,12 @@
 [Unit]
 Description=Redshift
-After=xorg@0.service
-Requires=xorg@0.service
+After=xorg@0.service trayion.service
+Requires=xorg@0.service trayion.service
 
 [Service]
-ExecStart=/usr/bin/redshift
+ExecStart=/usr/bin/redshift-gtk
 Restart=always
-EnvironmentFile=/home/codemac/config/env-arch
+EnvironmentFile=/home/jmickey/config/env-arch
 KillSignal=SIGKILL
 
 [Install]

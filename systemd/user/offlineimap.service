@@ -3,5 +3,5 @@ Description=OfflineImap Runner
 
 [Service]
 Type=oneshot
-ExecStart=/home/codemac/bin/mailupd
+ExecStart=/home/jmickey/bin/mailupd
 TimeoutSec=600s

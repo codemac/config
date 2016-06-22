@@ -3,5 +3,5 @@ Description=calendarsync runner
 
 [Service]
 Type=oneshot
-ExecStart=/home/codemac/bin/calendarsync
+ExecStart=/home/jmickey/bin/calendarsync
 TimeoutSec=600s
