@@ -33,8 +33,9 @@ configured manually, as detection can lead to other trust bugs.
   (setq
    cm/machine-trust-file
    (cond
-    ((string-prefix-p "nevada" system-name) "/home/codemac/.guix-profile/etc/ssl/certs/ca-certificates.crt")
+    ((string-prefix-p "nevada" system-name) (concat (getenv "HOME") "/.guix-profile/etc/ssl/certs/ca-certificates.crt"))
     ((string-prefix-p "nordic" system-name) "/etc/ssl/certs/ca-certificates.crt")
+    ((string-prefix-p "novaria" system-name) "/etc/ssl/certs/ca-certificates.crt")
     ((string-prefix-p "neah" system-name) "/etc/ssl/certs/ca-certificates.crt")
     (t (error "No tls trust set for this host! Add exception or find cert.pem you trust"))))
 #+end_src
@@ -152,10 +153,11 @@ screen DPI's.
                         ":hinting=true:autohint=true")))
       (add-to-list 'initial-frame-alist `(font . ,font))
       (add-to-list 'default-frame-alist `(font . ,font))))
-             
+           
   (cond
     ((or (string-prefix-p "phoenix-mta" system-name)
          (string-prefix-p "vpn2ntap-" system-name)
+         (string-prefix-p "novaria" system-name)
          (string-prefix-p "moc.ppaten" (apply 'string (reverse (string-to-list system-name)))))
      (cm/produce-font 12))
     ((equal system-name "penolpe")
@@ -869,7 +871,7 @@ I need to tie this into projectile, but for now have a way to create a
     :ID:       1f6334ef-51f3-417d-acc6-c578c2a9223b
     :END:
 #+begin_src emacs-lisp
-  (set-default 'explicit-shell-file-name "/home/codemac/.guix-profile/bin/rc")
+  (set-default 'explicit-shell-file-name (concat (getenv "HOME") "/bin/rc"))
 ;  (setq explicit-rc-args '("-l"))
 #+end_src
 *** Track the directory of the shell process
@@ -1666,7 +1668,7 @@ really a fault of their own.
   (defun cm/go-mode-hook ()
     (interactive)
     (require 'go-oracle)
-    (setq go-oracle-command "/home/codemac/bin/oracle")
+    (setq go-oracle-command (concat (getenv "HOME") "/bin/oracle"))
     (go-oracle-mode)
     (subword-mode 1)
     (diminish 'subword-mode)
@@ -2629,16 +2631,16 @@ Functions borrowed from Sacha Chua.
   (add-hook 'org-mobile-post-push-hook
             (lambda ()
               (progn
-                (shell-command "cd /home/codemac/org/.mobileorg-staging && echo 'mput *' | cadaver https://dav.messagingengine.com/codemac.fastmail.com/files/org")
-                (shell-command "cd /home/codemac/org/.mobileorg-staging/_notes && echo 'mput *' | cadaver https://dav.messagingengine.com/codemac.fastmail.com/files/org/_notes"))))
+                (shell-command "cd $HOME/org/.mobileorg-staging && echo 'mput *' | cadaver https://dav.messagingengine.com/codemac.fastmail.com/files/org")
+                (shell-command "cd $HOME/org/.mobileorg-staging/_notes && echo 'mput *' | cadaver https://dav.messagingengine.com/codemac.fastmail.com/files/org/_notes"))))
   (add-hook 'org-mobile-pre-pull-hook
             (lambda ()
               (progn
-                (shell-command "cd /home/codemac/org/.mobileorg-staging && find . -type f -exec rm '{}' ';'")
-                (shell-command "cd /home/codemac/org/.mobileorg-staging && echo 'mget *' | cadaver https://dav.messagingengine.com/codemac.fastmail.com/files/org")
-                (shell-command "cd /home/codemac/org/.mobileorg-staging/_notes && echo 'mget *' | cadaver https://dav.messagingengine.com/codemac.fastmail.com/files/org/_notes"))))
+                (shell-command "cd $HOME/org/.mobileorg-staging && find . -type f -exec rm '{}' ';'")
+                (shell-command "cd $HOME/org/.mobileorg-staging && echo 'mget *' | cadaver https://dav.messagingengine.com/codemac.fastmail.com/files/org")
+                (shell-command "cd $HOME/org/.mobileorg-staging/_notes && echo 'mget *' | cadaver https://dav.messagingengine.com/codemac.fastmail.com/files/org/_notes"))))
   (add-hook 'org-mobile-post-pull-hook
-            (lambda () (shell-command "cd /home/codemac/org/.mobileorg-staging && echo 'put mobileorg.org' | cadaver https://dav.messagingengine.com/codemac.fastmail.com/files/org &")))
+            (lambda () (shell-command "cd $HOME/org/.mobileorg-staging && echo 'put mobileorg.org' | cadaver https://dav.messagingengine.com/codemac.fastmail.com/files/org &")))
   (setq org-default-notes-files '("~/org/_notes/notes.org"))
   (setq org-agenda-files '("~/org/" "~/org/_notes/"))
   (setq org-refile-targets '((nil :maxlevel . 5) (org-agenda-files :maxlevel . 5)))
@@ -3454,9 +3456,9 @@ you are trying to edit anything.
     :ID:       bb361611-de0c-480f-8919-e1ed77b583e0
     :END:
 #+begin_src emacs-lisp
-  ;(setq inferior-lisp-program "sbcl")
-  ;(require 'slime-autoloads)
-  ;(slime-setup '(slime-fancy))
+  (setq inferior-lisp-program "sbcl")
+  (require 'slime-autoloads)
+  (slime-setup '(slime-fancy))
   ;(load (expand-file-name "/home/codemac/.quicklisp/slime-helper.el"))
 
 #+end_src

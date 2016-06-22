@@ -1,0 +1,94 @@
+2016-05-09  Andrew Hyatt  <ahyatt@gmail.com>
+
+	Version 1.6, mostly fixes for fragmented headers.
+
+	* websocket.el (websocket-verify-response-code, websocket-outer-filter):
+	 Fix handling of fragmented headers.
+	* websocket.el (websocket-server): Accept host for listening on.
+	* websocket-functional-test.el: Stop stopping the listener process on
+	 Windows.
+
+2016-01-24  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	Fix maintainer address
+
+2015-07-19  Andrew Hyatt  <ahyatt@gmail.com>
+
+	Add ability to handle cookies.
+
+	* websocket.el (websocket-open, websocket-process-headers,
+	 websocket-out-filter, websocket-create-headers): Add ability to set
+	 and accept cookies, using the url-cookie library.  Also make sure the
+	 port is included in the Host header.
+
+2015-04-03  Andrew Hyatt  <ahyatt@gmail.com>
+
+	Version 1.4, fix for ping/pong & 32-bit emacs.
+
+	* websocket.el (websocket-encode-frame, websocket-read-frame,
+	websocket-process-frame, websocket-check) Fixes incorrect handling of
+	ping/pong messages in websockets.
+	(websocket-to-bytes) Fixes error computing low-bytes in 32-bit emacs.
+
+2014-08-23  Andrew Hyatt  <ahyatt@gmail.com>
+
+	Upgrade to version 1.3.
+
+	* websocket.el: (websocket-version):Update to 1.3
+	(websocket-close): Remove unnecessary call to process-buffer.
+	(websocket-close): Remove use of buffers in connections.
+	(websocket-open): Remove use of buffers in connections.
+	(websocket-open): Throw clear error when connection cannot be made.
+	(websocket-create-headers): Remove unnecessary Origin header.
+
+2013-12-14  Andrew Hyatt  <ahyatt@gmail.com>
+
+	Remove the ERT testing file, which had too many FSF-unsigned changes.
+
+	This brings this package into FSF compliance.
+
+	* README.org: Mention the fact that the ERT tests are in the github 
+	repository.
+
+	* websocket-test.el: Removed.
+
+2013-09-21  Andrew Hyatt  <ahyatt@gmail.com>
+
+	websocket.el: Set version to 1.2, after last set of server fixes.
+
+2013-09-15  Andrew Hyatt  <ahyatt@gmail.com>
+
+	2013-09-15 Andrew Hyatt	 <ahyatt@gmail.com>
+
+		* websocket.el (websocket-mask-frames, websocket-encode-frame,
+		 websocket, websocket-send): Get rid of
+		 `websocket-mask-frames' variable, which was a mistake, and
+		 make masking mandatory for clients and forbidden for
+		 servers.
+	       * websocket-test.el (websocket-encode-frame,
+		 websocket-outer-filter): Alter tests to pass new argument
+		 for `websocket-encode-frame'.
+
+		* websocket.el (websocket-close, websocket-open,
+		 websocket-server-accept): Only call the on-close callback on
+		 process state change if the process is now closed or
+		 similar, and always call the on-close callback from
+		 `websocket-close'
+	       * websocket-test.el (websocket-close): Add an on-close callback
+		 which the `websocket-close' method now expects.
+
+		* magit-functiona-test.el: Assert on ready-state, and increase
+		 the sleep time for the wss test.
+
+2013-08-02  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* packages/websocket/websocket.el: Fix version number.
+
+2013-08-01  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* packages/websocket: Cleanup copyright and code.
+
+2013-08-01  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	Add websocket git revno bc5c2a2ee2b993a18e8e23ed725829d403508753.
+
