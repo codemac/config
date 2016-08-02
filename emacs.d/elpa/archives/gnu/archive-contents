@@ -131,7 +131,7 @@
 	 ((:keywords "games")
 	  (:url . "http://elpa.gnu.org/packages/chess.html"))])
  (cl-generic .
-	     [(0 2)
+	     [(0 3)
 	      nil "Forward cl-generic compatibility for Emacs<25" single
 	      ((:url . "http://elpa.gnu.org/packages/cl-generic.html")
 	       (:keywords))])
@@ -145,8 +145,13 @@
 	       nil "Major mode for CoffeeScript files" single
 	       ((:url . "http://github.com/defunkt/coffee-mode")
 		(:keywords "coffeescript" "major" "mode"))])
+ (compact-docstrings .
+		     [(0 1)
+		      nil "Shrink blank lines in docstrings and doc comments" single
+		      ((:url . "https://github.com/cpitclaudel/compact-docstrings")
+		       (:keywords "convenience" "faces" "lisp" "maint" "c"))])
  (company .
-	  [(0 8 12)
+	  [(0 9 0)
 	   ((emacs
 	     (24 1))
 	    (cl-lib
@@ -214,7 +219,7 @@
 		((:url . "http://elpa.gnu.org/packages/dbus-codegen.html")
 		 (:keywords "comm" "dbus" "convenience"))])
  (debbugs .
-	  [(0 9 6)
+	  [(0 9 7)
 	   ((soap-client
 	     (3 1 1))
 	    (cl-lib
@@ -234,7 +239,7 @@
 	     ((:url . "http://www.dr-qubit.org/emacs.php")
 	      (:keywords "extensions" "matching" "data structures trie" "tree" "dictionary" "completion" "regexp"))])
  (diff-hl .
-	  [(1 8 3)
+	  [(1 8 4)
 	   ((cl-lib
 	     (0 2)))
 	   "Highlight uncommitted changes using VC" tar
@@ -346,7 +351,7 @@
 	   ((:url . "http://elpa.gnu.org/packages/flylisp.html")
 	    (:keywords))])
  (fsm .
-      [(0 2)
+      [(0 2 1)
        ((emacs
 	 (24 1))
 	(cl-lib
@@ -435,7 +440,7 @@
 	       ((:url . "http://elpa.gnu.org/packages/jgraph-mode.html")
 		(:keywords "tex" "wp"))])
  (js2-mode .
-	   [(20150909)
+	   [(20160623)
 	    ((emacs
 	      (24 1))
 	     (cl-lib
@@ -588,7 +593,7 @@
 	     ((:url . "http://elpa.gnu.org/packages/num3-mode.html")
 	      (:keywords "faces" "minor-mode"))])
  (oauth2 .
-	 [(0 10)
+	 [(0 11)
 	  nil "OAuth 2.0 Authorization Protocol" single
 	  ((:url . "http://elpa.gnu.org/packages/oauth2.html")
 	   (:keywords "comm"))])
@@ -605,7 +610,7 @@
 	     ((:url . "https://github.com/michael-heerdegen/on-screen.el")
 	      (:keywords "convenience"))])
  (org .
-      [(20160620)
+      [(20160711)
        nil "Outline-based notes management and organizer" tar nil])
  (osc .
       [(0 1)
@@ -631,7 +636,7 @@
 	     (:keywords "gnupg"))])
  (poker .
 	[(0 1)
-	 nil "Texas hold'em poker" single
+	 nil "Texas hold 'em poker" single
 	 ((:url . "http://elpa.gnu.org/packages/poker.html")
 	  (:keywords "games"))])
  (python .
@@ -677,7 +682,13 @@
 	     (:keywords "xml" "relaxng"))])
  (rudel .
 	[(0 3)
-	 nil "A collaborative editing framework for Emacs" tar
+	 ((emacs
+	   (24))
+	  (cl-lib
+	   (0 5))
+	  (cl-generic
+	   (0 3)))
+	 "A collaborative editing framework for Emacs" tar
 	 ((:keywords "rudel" "collaboration")
 	  (:url . "http://rudel.sourceforge.net/"))])
  (scroll-restore .
