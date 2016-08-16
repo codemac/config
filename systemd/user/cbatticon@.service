@@ -4,7 +4,7 @@ Requires=xorg@0.service window-manager.service initx.service trayion.service
 After=xorg@0.service window-manager.service initx.service trayion.service
 
 [Service]
-ExecStart=/usr/bin/cbatticon -i standard -u 30 -l 15 -r 2 %i
+ExecStart=/usr/bin/cbatticon -i standard -u 30 -l 15 -r 2 %i -n
 Restart=always
 EnvironmentFile=/home/jmickey/config/env-arch
 

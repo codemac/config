@@ -1,0 +1,12 @@
+[Unit]
+Description=Workrave (RSI break) Applet
+Requires=xorg@0.service dbus.service trayion.service
+After=xorg@0.service trayion.service
+
+[Service]
+ExecStart=/bin/workrave
+Restart=always
+EnvironmentFile=/home/jmickey/config/env-arch
+
+[Install]
+WantedBy=main.target

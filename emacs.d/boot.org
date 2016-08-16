@@ -520,10 +520,10 @@ If zenburn isn't available, we should use wombat. So how do we detect
 that?
 
 #+begin_src emacs-lisp
-  (if (custom-theme-name-valid-p 'zenburn)
-      (load-theme 'zenburn t)
-    (load-theme 'wombat t))
-;(load-theme 'wombat t)
+    ;; (if (custom-theme-name-valid-p 'zenburn)
+    ;;     (load-theme 'zenburn t)
+    ;;    (load-theme 'wombat t))
+  (load-theme 'wombat t)
 #+end_src
 
 For now we just check that the name is valid.
@@ -930,14 +930,20 @@ I need to tie this into projectile, but for now have a way to create a
   ;; truncate buffers continuously
   (add-hook 'comint-output-filter-functions 'comint-truncate-buffer)
 
-  ; interpret and use ansi color codes in shell output windows
-  (add-hook 'shell-mode-hook 'ansi-color-for-comint-mode-filter)
+  ;; interpret and use ansi color codes in shell output windows is the
+  ;; default. If you want to filter out there existence, then do the
+  ;; following:
+  ;; (add-hook 'shell-mode-hook 'ansi-color-for-comint-mode-filter)
+  ;;
+  ;; instead, I'm going to have it do nothing!
+  (add-hook 'shell-mode-hook 'ansi-color-for-comint-mode-off)
 
   (defun set-scroll-conservatively ()
     "Add to shell-mode-hook to prevent jump-scrolling on newlines in shell buffers."
     (set (make-local-variable 'scroll-conservatively) 10))
   (add-hook 'shell-mode-hook 'set-scroll-conservatively t)
   (add-hook 'shell-mode-hook 'shell-procfs-dirtrack-mode t)
+  (add-hook 'shell-mode-hook (lambda () (font-lock-mode -1)))
 
 #+end_src
 ** Eshell
@@ -1237,26 +1243,29 @@ this page is *STUPID* slow in eww)
     (when (executable-find "curl")
       (setq helm-google-suggest-use-curl-p t))
     (delete helm-source-locate helm-for-files-preferred-list)
-    
+
     ;; bindings I haven't figured out with :bind
     (global-unset-key (kbd "C-x c"))
     (define-key helm-map (kbd "<tab>") 'helm-execute-persistent-action)
     (define-key helm-map (kbd "C-i") 'helm-execute-persistent-action)
     (define-key helm-map (kbd "C-z")  'helm-select-action)
     (global-set-key (kbd "C-c h o") 'helm-occur)
-    (global-set-key (kbd "C-c h x") 'helm-register))
+    (global-set-key (kbd "C-c h x") 'helm-register)
+    ;; omg helm + occur/grep is fucking awful!
+    (define-key projectile-command-map [remap projectile-grep] nil)
+    (define-key projectile-command-map [remap helm-projectile-grep] 'projectile-grep))
+#+end_src
 
-  ;; I dislike helm grep immensely (super slow!) and I don't use ack / ag
-  ;; / etc. This disables C-c p s <g,a,s> and just does C-c p s like it
-  ;; used to.
-
+I dislike helm grep immensely (super slow!) and I don't use =ack= /
+=ag= / etc. This disables =C-c p s <g,a,s>= and just does =C-c p s=
+like it used to.
+#+begin_src emacs-lisp
   (use-package helm-projectile
-    :config
+    :init
     (setq projectile-completion-system 'helm)
     (helm-projectile-on)
-    (define-key projectile-command-map (kbd "s")  'projectile-grep))
-
-
+    (define-key projectile-command-map [remap projectile-grep] nil)
+    (define-key projectile-command-map [remap helm-projectile-grep] 'projectile-grep))
 #+end_src
 **** Mac os x hacks
      :PROPERTIES:
@@ -1369,7 +1378,7 @@ Navigate visually through the entire kill ring.
 #+begin_src emacs-lisp
   (autoload 'browse-kill-ring "browse-kill-ring" "")
   
-  (global-set-key (kbd "C-c n") 'browse-kill-ring)
+  (global-set-key (kbd "C-c k") 'browse-kill-ring)
 #+end_src
 
 *** Expand region
@@ -1400,6 +1409,10 @@ out semantically.
   (global-hl-line-mode t)
   (make-variable-buffer-local 'global-hl-line-mode)
 
+  ;; wombat and others set underlines. they are assholes.
+  (set-face-underline hl-line-face nil)
+  (set-face-background 'highlight "#303030")
+  (set-face-foreground 'highlight nil)
 #+end_src
 *** Projectile
     :PROPERTIES:
@@ -1705,7 +1718,7 @@ Lisp seems to be the current mental debate.
 My C settings.
 #+begin_src emacs-lisp
   (require 'compile)
-  
+
   (defun* get-closest-pathname (&optional (file "*akefile") (dir default-directory))
     "Determine the pathname of the first instance of FILE starting
      from the current directory towards root. This may not do the
@@ -1719,15 +1732,64 @@ My C settings.
        return (car (file-expand-wildcards (expand-file-name file d)))
        if (equal d root)
        return nil)))
-  
+
   (defun cm/make-c++-header ()
     (interactive)
     (c++-mode)
     (add-file-local-variable-prop-line 'mode 'c++))
-  
+
   (c-add-style "mars" '("linux"))
-  
-  (defun my-c-hook ()
+
+  (defconst iridium-c++-style
+    '((c-basic-offset . 4)
+      (c-comment-only-line-offset . 4)
+      (c-hanging-braces-alist . ((substatement-open before)
+                                 (brace-list-open before)))
+      (c-hanging-colons-alist . ((member-init-intro after)
+                                 (inher-intro after)
+                                 (case-label after)
+                                 (label after)
+                                 (access-label after)))
+      (c-offsets-alist        . ((defun-open . 0)
+                                 (defun-block-intro . 4)
+                                 (label . 0)
+                                 (inclass . +)
+                                 (case-label . +)
+                                 (access-label . 0)
+                                 (brace-list-intro . 4)
+                                 (substatement-open . 0)
+                                 (member-init-intro . 8)
+                                 (statement-case-open . 0)
+                                 (statement-block-intro . 4)
+                                 (class-open . 0)
+                                 (inline-open . 0)
+                                 (innamespace . 4)
+                                 (namespace-open . 0)
+                                 (comment-intro . 0)
+                                 (c . 1)
+                                 (inher-intro 8)
+                                 (class-close . 0)
+                                 (namespace-close . 0)
+                                 (func-decl-cont . 8))))
+      "Iridium style")
+
+    (add-to-list 'auto-mode-alist '("\\.h\\'" . c++-mode))
+
+
+  (defun cm/iridium-c-hook ()
+    (interactive)
+    (c-add-style "iridium-c++" iridium-c++-style t)
+    (setq indent-tabs-mode nil)
+    (setq comment-multi-line t)
+    (local-set-key (kbd "C-c o") 'ff-find-other-file)
+    (helm-gtags-mode)
+    (setq fill-column 90))
+
+  (add-hook 'c++-mode-hook 'cm/iridium-c-hook)
+  (add-hook 'cc-mode-hook 'cm/iridium-c-hook)
+  (add-hook 'c-mode-hook 'cm/iridium-c-hook)
+
+  (defun mars-c-hook ()
     (interactive)
     (c-set-style "mars")
     (require 'auto-complete)
@@ -1753,11 +1815,7 @@ My C settings.
                                ac-source-semantic
                                ac-source-words-in-buffer))
     (auto-complete-mode -1))
-  
-  
-  (add-hook 'c++-mode-hook 'my-c-hook)
-  (add-hook 'cc-mode-hook 'my-c-hook)
-  (add-hook 'c-mode-hook 'my-c-hook)
+
 #+end_src
 *** GNU Plot
     :PROPERTIES:
@@ -1872,13 +1930,7 @@ Friendlier compilation support, tries to guess what the compilation
 command should be. I haven't found this to be incredibly helpful
 unless you are using the default build systems (make, pdflatex, etc).
 #+begin_src emacs-lisp
-  (autoload 'mode-compile "mode-compile"
-     "Command to compile current buffer file based on the major mode" t)
-  ;(global-set-key "\C-cc" 'mode-compile)
   (global-set-key "\C-cc" 'compile)
-  (autoload 'mode-compile-kill "mode-compile"
-   "Command to kill a compilation launched by `mode-compile'" t)
-  (global-set-key "\C-ck" 'mode-compile-kill)
 #+end_src
 *** YAML
     :PROPERTIES:
@@ -2045,8 +2097,8 @@ We're just borrowing the gnus settings here..
 #+begin_src emacs-lisp
   (setq smtpmail-auth-credentials "~/.authinfo.gpg") ;; is this needed?
 
-  (setq notmuch-fcc-dirs '((".*igneous.*" . "ig/sent")
-                           (".*codemac.net.*" . "cm/INBOX.Sent Items")))
+  (setq notmuch-fcc-dirs '((".*purestorage.*" . "pure/sent")
+                           (".*codemac.net.*" . "cm/Sent Items")))
 
 #+end_src
 The smtpmail-multi-accounts block has a strict ordering. By using ssl
@@ -2065,14 +2117,14 @@ I get to avoid most of the complications. It goes, in order:
    set this usually to the hostname of the email provider.)
   
 #+begin_src emacs-lisp
-  (setq smtpmail-multi-accounts '((igneous . ("jeffmickey@igneoussystems.com"
-                                              "smtp.gmail.com"
-                                              465
-                                              nil
-                                              ssl
-                                              nil
-                                              nil
-                                              "igneoussystems.com"))
+  (setq smtpmail-multi-accounts '((pure . ("jmickey@purestorage.com"
+                                           "smtp.gmail.com"
+                                           465
+                                           nil
+                                           ssl
+                                           nil
+                                           nil
+                                           "purestorage.com"))
                                   (codemac . ("codemac@fastmail.com"
                                               "mail.messagingengine.com"
                                               465
@@ -2083,7 +2135,7 @@ I get to avoid most of the complications. It goes, in order:
                                               "codemac.net"))))
 
   (setq smtpmail-multi-default-account 'codemac)
-  (setq smtpmail-multi-associations '(("jm@igneous.io\\|jeffmickey@igneoussystems.com" igneous)
+  (setq smtpmail-multi-associations '(("jmickey@purestorage.com\\|jeff.mickey@purestorage.com" pure)
                                       ("j@codemac.net\\|jeff@archlinux.org\\|jm@vt.edu\\|jmickey@vt.edu" codemac)))
 
   (setq send-mail-function 'smtpmail-multi-send-it)
@@ -2099,7 +2151,9 @@ I get to avoid most of the complications. It goes, in order:
         smtpmail-queue-dir   "~/mail/queue")
 
   (setq user-full-name "Jeff Mickey")
-  (setq user-mail-address "j@codemac.net")
+  (if (equalp system-name "novaria")
+      (setq user-mail-address "jmickey@purestorage.com")
+    (setq user-mail-address "j@codemac.net"))
 #+end_src
 ***** Message view
       :PROPERTIES:
@@ -2127,7 +2181,7 @@ works with the cyrus IMAP server.
   ;; how to get these things to not suck
   (setq message-draft-headers '(From References Subject Date (optional . In-Reply-To) Message-ID (optional . User-Agent)))
   (setq message-generate-headers-first t) ;; would love to do this without Date
-  (setq message-auto-save-directory "~/mail/cm/INBOX.Drafts/cur")
+  (setq message-auto-save-directory "~/mail/cm/Drafts/cur")
 
   (defun cm/draft-insert-mail-header-separator ()
     "Insert `mail-header-separator' in the first empty line of the message.
@@ -2206,7 +2260,7 @@ works with the cyrus IMAP server.
     (save-excursion
       (set-buffer (last-buffer))
       (cm/draft-remove-mail-header-separator)
-      (notmuch-maildir-fcc-write-buffer-to-maildir "~/mail/cm/INBOX.Drafts" t)
+      (notmuch-maildir-fcc-write-buffer-to-maildir "~/mail/cm/Drafts" t)
       (kill-buffer)))
 
   (defun notmuch-show-resume-message ()
@@ -2243,7 +2297,7 @@ horrifying.
   (setq notmuch-saved-searches
         '((:name "inbox"         :query "tag:inbox"                 :key "i" :sort-order 'oldest-first)
           (:name "unread"        :query "tag:unread"                :key "u" :sort-order 'newest-first)
-          (:name "inbox-igneous" :query "tag:igneous AND tag:inbox" :key "w" :sort-order 'oldest-first)
+          (:name "inbox-pure"    :query "tag:pure AND tag:inbox"    :key "w" :sort-order 'oldest-first)
           (:name "inbox-codemac" :query "tag:codemac AND tag:inbox" :key "c" :sort-order 'oldest-first)
           (:name "drafts"        :query "tag:draft"                 :key "d" :sort-order 'newest-first)
           (:name "sent"          :query "tag:sent"                  :key "t")))
@@ -2546,6 +2600,28 @@ Functions borrowed from Sacha Chua.
              +1)
             (t nil))))
 
+#+end_src
+The org agenda. It's mostly for gtd usage, so I have the following views:
+
+- =d= :: calendar
+- =i= :: inbox (anything not tagged)
+- =n= :: "next" agenda (really, just super flagged items I need to
+     look into
+- =r= :: Review commands, currently there is 'r d' for review a day
+     and 'r w' for review a week. These hopefully will get much more
+     sophisticated.
+- =p= :: Projects list. The projects list in GTD is one of the most
+     important lists, so keeping this up to date and reviewed is very
+     important. I'd love to add something like 'levels of focus'
+     agendas for each, but it's just not a practical way to review
+     things that are done so infrequently.
+- =c= :: Context commands, there are several, but the highlights are
+     they use the *same* keys as the relevant tagging short keys for
+     filing, so my brain uses them easily. I can finally move
+     =INTERNET= from =v= to =i= with this change, but the muscle
+     memory is already set, so we'll have to wait and see on that one.
+
+#+begin_src emacs-lisp
   (setq org-agenda-custom-commands
         '(("d" "Full Day Agenda"
            ((agenda)
@@ -2553,7 +2629,7 @@ Functions borrowed from Sacha Chua.
                                       (org-agenda-sorting-strategy '(user-defined-up))))
             (todo "WAITING" ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
                              (org-agenda-sorting-strategy '(user-defined-up))))
-            (tags-todo "-MAYBE-BLOCKED=\"t\"" ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
+            (tags-todo "-BLOCKED=\"t\"" ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
                                                (org-agenda-sorting-strategy '(user-defined-up))))))
           ("i" "Inbox"
            ((tags-todo "-{.*}")))
@@ -2563,47 +2639,56 @@ Functions borrowed from Sacha Chua.
             (todo "STARTED"))
            ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
             (org-agenda-sorting-strategy '(user-defined-up))))
-          ("v" "INTERNET agenda"
-           ((tags-todo "INTERNET-BLOCKED=\"t\"/!-WAITING"))
-           ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
-            (org-agenda-sorting-strategy '(user-defined-up))))
-          ("c" "COMPUTER agenda"
-           ((tags-todo "COMPUTER-BLOCKED=\"t\"/!-WAITING"))
-           ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
-            (org-agenda-sorting-strategy '(user-defined-up))))
-          ("w" "Work Agenda"
-           ((tags-todo "WORK-BLOCKED=\"t\"/!-WAITING")
-            (tags "WORK+PROJECT")
-            (tags "WORK"))
-           ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
-            (org-agenda-sorting-strategy '(user-defined-up))))
-          ("h" "Home Agenda"
-           ((tags-todo "HOME-BLOCKED=\"t\"/!-WAITING")
-            (tags "HOME+PROJECT")
-            (tags "HOME"))
-           ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
-            (org-agenda-sorting-strategy '(user-defined-up))))
-          ("r" "Errand Agenda"
-           ((tags-todo "ERRAND-BLOCKED=\"t\"/!-WAITING")
-            (tags "ERRAND+PROJECT")
-            (tags "ERRAND"))
-           ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
-            (org-agenda-sorting-strategy '(user-defined-up))))
-          ("f" "Phone Agenda"
-           ((tags-todo "PHONE-BLOCKED=\"t\"/!-WAITING")
-            (tags "PHONE+PROJECT")
-            (tags "PHONE"))
-           ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
-            (org-agenda-sorting-strategy '(user-defined-up))))
           ("p" "Project Agenda"
            ((tags-todo "PROJECT/!-WAITING")
             (tags "PROJECT"))
            ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
             (org-agenda-sorting-strategy '(user-defined-up))))
-          ("l" "People Agenda"
+          ("cv" "INTERNET agenda"
+           ((tags-todo "INTERNET-BLOCKED=\"t\"/!-WAITING"))
+           ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
+            (org-agenda-sorting-strategy '(user-defined-up))))
+          ("cc" "COMPUTER agenda"
+           ((tags-todo "COMPUTER-PROJECT-BLOCKED=\"t\"/!-WAITING"))
+           ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
+            (org-agenda-sorting-strategy '(user-defined-up))))
+          ("cw" "Work Agenda"
+           ((tags-todo "WORK-PROJECT-BLOCKED=\"t\"/!-WAITING")
+            (tags "WORK+PROJECT")
+            (tags "WORK"))
+           ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
+            (org-agenda-sorting-strategy '(user-defined-up))))
+          ("ch" "Home Agenda"
+           ((tags-todo "HOME-PROJECT-BLOCKED=\"t\"/!-WAITING")
+            (tags "HOME+PROJECT")
+            (tags "HOME"))
+           ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
+            (org-agenda-sorting-strategy '(user-defined-up))))
+          ("cr" "Errand Agenda"
+           ((tags-todo "ERRAND-PROJECT-BLOCKED=\"t\"/!-WAITING")
+            (tags "ERRAND+PROJECT")
+            (tags "ERRAND"))
+           ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
+            (org-agenda-sorting-strategy '(user-defined-up))))
+          ("cf" "Phone Agenda"
+           ((tags-todo "PHONE-PROJECT-BLOCKED=\"t\"/!-WAITING")
+            (tags "PHONE+PROJECT")
+            (tags "PHONE"))
+           ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
+            (org-agenda-sorting-strategy '(user-defined-up))))
+          ("cl" "People Agenda"
            ((todo "-ERRAND-HOME-INTERNET-PROJECT-COMPUTER-PHONE"))
            ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
             (org-agenda-sorting-strategy '(user-defined-up))))
+          ("rd" "Daily Agenda"
+           ((agenda)
+            (todo "DONE|NVM"))
+           ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
+            (org-agenda-sorting-strategy '(user-defined-up))
+            (org-agenda-ndays 1)
+            (org-agenda-start-day "-1d")))
+          ("rw" "Weekly Review Agenda"
+           ((agenda)))
           ("x" "Tasks" ((tags-todo "-BLOCKED=\"t\""
                                    ((org-agenda-overriding-header "Tasks sorted by TIMESTAMP_IA")
                                     (org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
@@ -2627,22 +2712,9 @@ Functions borrowed from Sacha Chua.
   (setq org-clock-persist 'history)
   (org-clock-persistence-insinuate)
   (setq org-clock-idle-time 10)
-  (setq org-mobile-directory "~/org/.mobileorg-staging")
-  (add-hook 'org-mobile-post-push-hook
-            (lambda ()
-              (progn
-                (shell-command "cd $HOME/org/.mobileorg-staging && echo 'mput *' | cadaver https://dav.messagingengine.com/codemac.fastmail.com/files/org")
-                (shell-command "cd $HOME/org/.mobileorg-staging/_notes && echo 'mput *' | cadaver https://dav.messagingengine.com/codemac.fastmail.com/files/org/_notes"))))
-  (add-hook 'org-mobile-pre-pull-hook
-            (lambda ()
-              (progn
-                (shell-command "cd $HOME/org/.mobileorg-staging && find . -type f -exec rm '{}' ';'")
-                (shell-command "cd $HOME/org/.mobileorg-staging && echo 'mget *' | cadaver https://dav.messagingengine.com/codemac.fastmail.com/files/org")
-                (shell-command "cd $HOME/org/.mobileorg-staging/_notes && echo 'mget *' | cadaver https://dav.messagingengine.com/codemac.fastmail.com/files/org/_notes"))))
-  (add-hook 'org-mobile-post-pull-hook
-            (lambda () (shell-command "cd $HOME/org/.mobileorg-staging && echo 'put mobileorg.org' | cadaver https://dav.messagingengine.com/codemac.fastmail.com/files/org &")))
-  (setq org-default-notes-files '("~/org/_notes/notes.org"))
-  (setq org-agenda-files '("~/org/" "~/org/_notes/"))
+
+
+  (setq org-agenda-files '("~/org/"))
   (setq org-refile-targets '((nil :maxlevel . 5) (org-agenda-files :maxlevel . 5)))
 
   (setq org-agenda-tags-column -90)
@@ -2671,7 +2743,10 @@ Functions borrowed from Sacha Chua.
   (setq org-export-with-sub-superscripts nil)
   (setq org-pretty-entities-include-sub-superscripts nil)
   (setq org-use-sub-superscripts nil)
+  (setq org-attach-directory "~/org/_attachments/")
 
+  ;; disable dumb-ass git crap for now
+  (advice-add 'org-attach-commit :override #'list)
   ;; less file local settings!
   ;; actually - let's do more file-local settings. Remove these asap.
   (setq org-archive-location "_archive/%s_old::")
@@ -2679,6 +2754,54 @@ Functions borrowed from Sacha Chua.
   (setq org-columns-default-format "%TODO %50ITEM(Task) %17Effort(Estimated Effort){:} %CLOCKSUM")
 
   (global-set-key (kbd "<f6>") 'org-clock-goto)
+#+end_src
+
+**** MobileOrg
+#+begin_src emacs-lisp
+  (setq org-mobile-directory "~/org/.mobileorg-staging")
+  (add-hook 'org-mobile-post-push-hook
+            (lambda ()
+              (shell-command "cd $HOME/org/.mobileorg-staging && echo 'mput *' | cadaver https://dav.messagingengine.com/codemac.fastmail.com/files/org")))
+
+  (add-hook 'org-mobile-pre-pull-hook
+            (lambda ()
+              (progn
+                (shell-command "cd $HOME/org/.mobileorg-staging && find . -type f -exec rm '{}' ';'")
+                (shell-command "cd $HOME/org/.mobileorg-staging && echo 'mget *' | cadaver https://dav.messagingengine.com/codemac.fastmail.com/files/org"))))
+  (add-hook 'org-mobile-post-pull-hook
+            (lambda () (shell-command "cd $HOME/org/.mobileorg-staging && echo 'put mobileorg.org' | cadaver https://dav.messagingengine.com/codemac.fastmail.com/files/org &")))
+
+#+end_src
+
+Sync my mobile-org files in a single function. This grabs everything
+in "from-mobile.org" after an org-mobile-pull and puts it into
+gtd.org/Inbox. At some point I'd love to call this from =emacsclient=,
+but I don't know what it would do if I was in the middle of refiling
+or something else. For now, it's manual.
+
+#+begin_src emacs-lisp
+  (defun cm/get-inbox-pos ()
+    (save-excursion
+      (with-current-buffer "gtd.org"
+        (goto-char (point-min))
+        (re-search-forward "^\\* Inbox[        ]*$")
+        (move-beginning-of-line nil)
+        (point))))
+
+  (defun cm/org-sync ()
+    (interactive)
+    (save-excursion
+      (org-save-all-org-buffers)
+      (org-mobile-pull)
+      (with-current-buffer "from-mobile.org"
+        (if (equalp (point-max) (point-min))
+            (message "Nothing to move in from-mobile.org, pushing current files.")
+          (goto-char (point-max))
+          (push-mark (point-min) t t)
+          (org-refile nil nil `("gtd.org/Inbox" ,(buffer-file-name (get-buffer "gtd.org")) "" ,(cm/get-inbox-pos)))
+        (org-save-all-org-buffers))
+      (org-mobile-push)
+      (org-save-all-org-buffers))))
 #+end_src
 **** Tags and todo keywords
      :PROPERTIES:
@@ -2697,11 +2820,11 @@ Functions borrowed from Sacha Chua.
                         ("OUTREACH" . ?h)
                         ("DISPATCH" . ?d)
                         ("PROJECT" . ?p)))
-  
+
   (setq org-log-done '(note))
   (setq org-log-into-drawer t) ; record state changes into LOGBOOK
   (setq org-todo-keywords
-        '((sequence "TODO(t@)" "NEXT(n!)" "STARTED(s)" "WAITING(w@)" "|" "DONE(d@)" "NVM(v@)" "MAYBE(m@)")))
+        '((sequence "TODO(t@)" "NEXT(n!)" "STARTED(s)" "WAITING(w@)" "|" "DONE(d@)" "NVM(v@)")))
   (setq org-tags-exclude-from-inheritance '("PROJECT"))
   ;(setq org-agenda-category-icon-alist
   ;      '(("netapp" "" nil t)
@@ -2752,6 +2875,7 @@ Functions borrowed from Sacha Chua.
    `((emacs-lisp . t)
      (C . t)
      (R . t)
+     (awk . t)
      (clojure . t)
      (ditaa . t)
      (dot . t)
@@ -2859,9 +2983,27 @@ How I deploy my personal website.
      :ID:       ef5ab78f-e0b9-4e28-b1b1-256a1253ec39
      :END:
 #+begin_src emacs-lisp
-    (defun org-insert-datetime ()
-      (interactive)
-      (insert (format-time-string "%Y-%m-%d %a %H:%M %z")))
+  (defun org-insert-datetime ()
+    (interactive)
+    (insert (format-time-string "%Y-%m-%d %a %H:%M %z")))
+
+  (defun cm/org-delete-link ()
+    "Replace an org link of the format [[LINK][DESCRIPTION]] with DESCRIPTION.
+  If the link is of the format [[LINK]], delete the whole org link.
+
+  In both the cases, save the LINK to the kill-ring.
+
+  Execute this command while the point is on or after the hyper-linked org link."
+    (interactive)
+    (when (derived-mode-p 'org-mode)
+      (let ((search-invisible t) start end)
+        (save-excursion
+          (when (re-search-backward "\\[\\[" nil :noerror)
+            (when (re-search-forward "\\[\\[\\(.*?\\)\\(\\]\\[.*?\\)*\\]\\]" nil :noerror)
+              (setq start (match-beginning 0))
+              (setq end   (match-end 0))
+              (kill-new (match-string-no-properties 1)) ; Save the link to kill-ring
+              (replace-regexp "\\[\\[.*?\\(\\]\\[\\(.*?\\)\\)*\\]\\]" "\\2" nil start end)))))))
 #+end_src
 **** Link Types
      :PROPERTIES:
@@ -2947,6 +3089,43 @@ How I deploy my personal website.
         (delete-frame)))
   (add-hook 'org-capture-after-finalize-hook 'cm/org-capture-other-frame-cleanup)
 #+end_src
+**** Search through my _notes directory
+I like to record notes about various things in a long lived way via
+plain text. However, I haven't actually used them that much because I
+forget what I've even recorded!
+
+To help get rid of that, I want to create an emacs interface where I
+search through my notes based on headings, content, and possibly tags
+of some form as well.
+
+Let's first layout what we want the keymap to be like:
+#+begin_src emacs-lisp
+  (defvar cm/org-notes-command-prefix)
+  (defvar cm/org-notes-command-map
+    (let ((map (make-sparse-keymap)))
+      (define-key map (kbd "s") 'cm/org-notes-search)
+      (define-key map (kbd "r") 'cm/org-notes-capture)
+      map))
+
+  (define-prefix-command 'cm/org-notes-command-prefix)
+  (fset 'cm/org-notes-command-prefix cm/org-notes-command-map)
+  (setq  cm/org-notes-command-prefix cm/org-notes-command-map)
+
+  (global-set-key (kbd "C-c n") 'cm/org-notes-command-prefix)
+#+end_src
+
+THIS WAS WAY OVER THE TOP. We can just use =org-search-view=.
+#+begin_src emacs-lisp
+  (defun cm/org-notes-search ()
+    (interactive)
+    (let ((org-agenda-files (append org-agenda-files '("~/org/_notes"))))
+      (org-search-view)))
+
+  (defun cm/org-notes-capture ()
+    (interactive)
+    (org-capture nil "n"))
+#+end_src
+
 **** Org Capture
      :PROPERTIES:
      :ID:       47a9dc31-f51e-4ee3-b06f-44848cbe9a04
@@ -2961,7 +3140,7 @@ How I deploy my personal website.
           ("j" "Journal" entry (file ,(format-time-string "~/org/_editorial/%Y.%m.org")) "* %U %?\n\n  %i\n  %a" :prepend nil)
           ("c" "Add note to currently clocked task" entry (clock) "* %U %?\n%a\n\n%i")
           ("n" "Timed Notes" entry (file ,(format-time-string "~/org/_notes/%Y.org")) "* %U %?\n\n  %i\n  %a" :prepend nil)
-          ("w" "Work capture" entry (file "~/org/igneous.org") "* %U %?\n\n  %i\n  %a" :prepend nil)
+          ("w" "Work capture" entry (file "~/org/pure.org") "* %U %?\n\n  %i\n  %a" :prepend nil)
           ("l" "Life Fitness" table-line (file+headline "~/org/fitness.org" "Fitness") ,(concat (format-time-string "| %Y.%m.%d-%H:%M |") " %^{Weight} | | %^{RHR} |") :table-line-pos "II-1")
           ("x" "org-capture" entry (file+headline "~/org/_notes/www.org" "Archived Content") "* %^{Title}p: %:description\n\n  Source: %U %c\n\n  %i")))
 
