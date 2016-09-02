@@ -4,3 +4,5 @@ PATH=/home/jmickey/bin:/bin
 LANGUAGE=en_US.UTF-8
 MOZ_USE_OMTC=1
 ABSROOT=/home/jmickey/src/abs
+GOPATH=/home/jmickey/src/go
+GUILE_LOAD_PATH=/home/jmickey/scm

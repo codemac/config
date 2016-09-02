@@ -37,7 +37,7 @@ mod_statusbar.create{
     -- right, respectively, and %systray is a placeholder for system tray
     -- windows and icons.
     --
-    template="[ %date || load: %load %battery ] %filler%systray",
+    template="[ %date // %date_utctime || load: %load %battery ] %filler%systray",
     --template="[ %date || load:% %>load || mail:% %>mail_new/%>mail_total ] %filler%systray",
     --template="[ %date || load: %05load_1min || mail: %02mail_new/%02mail_total ] %filler%systray",
 }
@@ -56,11 +56,11 @@ mod_statusbar.launch_statusd{
         --date_format='%c',
 
         -- Additional date formats.
-        --[[
+
         formats={
-            time = '%H:%M', -- %date_time
-        }
-        --]]
+            utctime = '!%H:%M', -- %date_utctime
+        },
+
     },
 
     -- Load meter
