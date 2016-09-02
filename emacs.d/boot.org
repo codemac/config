@@ -865,7 +865,6 @@ I need to tie this into projectile, but for now have a way to create a
   (global-set-key (kbd "<f7>") 'cm/shell-main)
   (global-set-key (kbd "C-c p $") 'cm/shell-projectile)
 #+end_src
-
 *** Use a login shell 
     :PROPERTIES:
     :ID:       1f6334ef-51f3-417d-acc6-c578c2a9223b
@@ -945,6 +944,31 @@ I need to tie this into projectile, but for now have a way to create a
   (add-hook 'shell-mode-hook 'shell-procfs-dirtrack-mode t)
   (add-hook 'shell-mode-hook (lambda () (font-lock-mode -1)))
 
+#+end_src
+
+*** Use a better async-shell-command 
+The =*Async Shell Command*= buffer naming is bullshit. Here is
+something much better, it names each buffer =*shell:<cmd>*= so my
+above shell searching functions also find these buffers. Eventually
+I'd like something where these are launched automatically from any
+command run in shell mode, but we'll see.
+
+#+begin_src emacs-lisp
+  (defun cm/exec-shell (oldfun scmd)
+    (interactive "sShell Command: ")
+    (let* ((shell-to-exec (or (locate-file "rc" exec-path) "/bin/sh"))
+           (base-name (replace-regexp-in-string "[^a-z]+" "-" (downcase scmd)))
+           (short-name (if (> (length base-name) 15) (substring base-name 0 15) base-name))
+           (unique-name (concat "*shell:" short-name "*"))
+           (name-idx 0))
+
+      (while (get-buffer unique-name)
+        (setq name-idx (+ name-idx 1))
+        (setq unique-name (concat "*shell:" short-name ":" (number-to-string name-idx) "*")))
+
+      (funcall oldfun scmd (get-buffer-create unique-name) nil)))
+
+  (advice-add #'async-shell-command :around #'cm/exec-shell)
 #+end_src
 ** Eshell
    :PROPERTIES:
