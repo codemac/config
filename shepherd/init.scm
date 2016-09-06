@@ -1,7 +1,7 @@
-;; init.scm -- default dmd configuration file.
+;; init.scm -- default shepherd configuration file.
 
-;; Services known to dmd:
-;; Add new services (defined using 'make <service>') to dmd here by
+;; Services known to shepherd:
+;; Add new services (defined using 'make <service>') to shepherd here by
 ;; providing them as arguments to 'register-services'.
 (define (make-system-constructor command)
   (lambda _
@@ -54,7 +54,7 @@
 
 ;; TODO find every battery in /sys and auto generate this list! Also
 ;; consider making it take an "ordering" so we can determine what
-;; order that dmd launches them in.
+;; order that shepherd launches them in.
 (cbattsvc "BAT0")
 (cbattsvc "BAT1")
 
@@ -82,10 +82,10 @@
 	   '("gpg-agent" "--homedir=/mnt/keys/gnupghome"))
   #:stop (make-kill-destructor))
 
-;; Send dmd into the background
-(action 'dmd 'daemonize)
+;; Send shepherd into the background
+(action 'shepherd 'daemonize)
 
-;; Services to start when dmd starts:
+;; Services to start when shepherd starts:
 ;; Add the name of each service that should be started to the list
 ;; below passed to 'for-each'.
 (for-each start
