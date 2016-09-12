@@ -2646,69 +2646,51 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
      memory is already set, so we'll have to wait and see on that one.
 
 #+begin_src emacs-lisp
+  (setq cm/std-sort-style '((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
+                            (org-agenda-skip-function '(org-agenda-skip-entry-if 'scheduled))
+                            (org-agenda-sorting-strategy '(user-defined-up))))
+
+  (defun cm/org-ctx-agenda (key ctx title)
+    `(,(concat "c" key) ,title
+      ((tags-todo ,(concat ctx "-PROJECT-BLOCKED=\"t\"/!-WAITING"))
+       (tags ,(concat ctx "+PROJECT"))
+       (tags ,ctx))
+      ,cm/std-sort-style))
+
   (setq org-agenda-custom-commands
-        '(("d" "Full Day Agenda"
+        `(("d" "Full Day Agenda"
            ((agenda)
-            (tags "PROJECT/!WAITING" ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
-                                      (org-agenda-sorting-strategy '(user-defined-up))))
-            (todo "WAITING" ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
-                             (org-agenda-sorting-strategy '(user-defined-up))))
-            (tags-todo "-BLOCKED=\"t\"" ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
-                                               (org-agenda-sorting-strategy '(user-defined-up))))))
+            (tags "PROJECT/!WAITING" ,cm/std-sort-style)
+            (todo "WAITING" ,cm/std-sort-style)
+            (tags-todo "-BLOCKED=\"t\"" ,cm/std-sort-style)))
           ("i" "Inbox"
            ((tags-todo "-{.*}")))
           ("n" "Next agenda"
            ((todo "WAITING")
             (todo "NEXT")
             (todo "STARTED"))
-           ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
-            (org-agenda-sorting-strategy '(user-defined-up))))
+           ,cm/std-sort-style)
           ("p" "Project Agenda"
            ((tags-todo "PROJECT/!-WAITING")
             (tags "PROJECT"))
+           ,cm/std-sort-style)
+          ,(cm/org-ctx-agenda "v" "INTERNET" "Internet Agenda")
+          ,(cm/org-ctx-agenda "c" "COMPUTER" "Computer Agenda")
+          ,(cm/org-ctx-agenda "w" "WORK" "Work Agenda")
+          ,(cm/org-ctx-agenda "h" "HOME" "Home Agenda")
+          ,(cm/org-ctx-agenda "r" "ERRAND" "Errand Agenda")
+          ,(cm/org-ctx-agenda "f" "PHONE" "Phone Agenda")
+          ,(cm/org-ctx-agenda "l" "-ERRAND-HOME-INTERNET-PROJECT-COMPUTER-WORK-PHONE" "People Agenda")
+          ("ct" "Tickler Agenda"
+           ((tags-todo "-PROJECT-BLOCKED=\"t\"/!-WAITING")
+            (todo "PROJECT"))
            ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
-            (org-agenda-sorting-strategy '(user-defined-up))))
-          ("cv" "INTERNET agenda"
-           ((tags-todo "INTERNET-BLOCKED=\"t\"/!-WAITING"))
-           ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
-            (org-agenda-sorting-strategy '(user-defined-up))))
-          ("cc" "COMPUTER agenda"
-           ((tags-todo "COMPUTER-PROJECT-BLOCKED=\"t\"/!-WAITING"))
-           ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
-            (org-agenda-sorting-strategy '(user-defined-up))))
-          ("cw" "Work Agenda"
-           ((tags-todo "WORK-PROJECT-BLOCKED=\"t\"/!-WAITING")
-            (tags "WORK+PROJECT")
-            (tags "WORK"))
-           ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
-            (org-agenda-sorting-strategy '(user-defined-up))))
-          ("ch" "Home Agenda"
-           ((tags-todo "HOME-PROJECT-BLOCKED=\"t\"/!-WAITING")
-            (tags "HOME+PROJECT")
-            (tags "HOME"))
-           ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
-            (org-agenda-sorting-strategy '(user-defined-up))))
-          ("cr" "Errand Agenda"
-           ((tags-todo "ERRAND-PROJECT-BLOCKED=\"t\"/!-WAITING")
-            (tags "ERRAND+PROJECT")
-            (tags "ERRAND"))
-           ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
-            (org-agenda-sorting-strategy '(user-defined-up))))
-          ("cf" "Phone Agenda"
-           ((tags-todo "PHONE-PROJECT-BLOCKED=\"t\"/!-WAITING")
-            (tags "PHONE+PROJECT")
-            (tags "PHONE"))
-           ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
-            (org-agenda-sorting-strategy '(user-defined-up))))
-          ("cl" "People Agenda"
-           ((todo "-ERRAND-HOME-INTERNET-PROJECT-COMPUTER-PHONE"))
-           ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
+            (org-agenda-skip-function '(org-agenda-skip-entry-if 'notscheduled))
             (org-agenda-sorting-strategy '(user-defined-up))))
           ("rd" "Daily Agenda"
            ((agenda)
             (todo "DONE|NVM"))
-           ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
-            (org-agenda-sorting-strategy '(user-defined-up))
+           (,@cm/std-sort-style
             (org-agenda-ndays 1)
             (org-agenda-start-day "-1d")))
           ("rw" "Weekly Review Agenda"
