@@ -1,8 +1,9 @@
 DISPLAY=:0
 GNUPGHOME=/mnt/keys/gnupghome
-PATH=/home/jmickey/bin:/bin
+PATH=/home/jmickey/work/bin:/home/jmickey/bin:/bin:/bin/core_perl
 LANGUAGE=en_US.UTF-8
 MOZ_USE_OMTC=1
 ABSROOT=/home/jmickey/src/abs
 GOPATH=/home/jmickey/src/go
 GUILE_LOAD_PATH=/home/jmickey/scm
+_JAVA_OPTIONS="-Dawt.useSystemAAFontSettings=on -Dswing.defaultlaf=com.sun.java.swing.plaf.gtk.GTKLookAndFeel -Dswing.aatext=true"

@@ -1274,10 +1274,7 @@ this page is *STUPID* slow in eww)
     (define-key helm-map (kbd "C-i") 'helm-execute-persistent-action)
     (define-key helm-map (kbd "C-z")  'helm-select-action)
     (global-set-key (kbd "C-c h o") 'helm-occur)
-    (global-set-key (kbd "C-c h x") 'helm-register)
-    ;; omg helm + occur/grep is fucking awful!
-    (define-key projectile-command-map [remap projectile-grep] nil)
-    (define-key projectile-command-map [remap helm-projectile-grep] 'projectile-grep))
+    (global-set-key (kbd "C-c h x") 'helm-register))
 #+end_src
 
 I dislike helm grep immensely (super slow!) and I don't use =ack= /
@@ -2160,7 +2157,7 @@ I get to avoid most of the complications. It goes, in order:
 
   (setq smtpmail-multi-default-account 'codemac)
   (setq smtpmail-multi-associations '(("jmickey@purestorage.com\\|jeff.mickey@purestorage.com" pure)
-                                      ("j@codemac.net\\|jeff@archlinux.org\\|jm@vt.edu\\|jmickey@vt.edu" codemac)))
+                                      ("j@codemac.net\\|jeff@archlinux.org\\|j@mickey.email\\|jeff@mickey.email\\|jm@vt.edu\\|jmickey@vt.edu" codemac)))
 
   (setq send-mail-function 'smtpmail-multi-send-it)
   (setq message-send-mail-function 'smtpmail-multi-send-it)
@@ -2605,7 +2602,8 @@ Functions borrowed from Sacha Chua.
      :PROPERTIES:
      :ID:       16aafc16-4240-4a4a-98f6-92186bc07d14
      :END:
-#+begin_src emacs-lisp  
+#+begin_src emacs-lisp
+  ;; DEPRECATED: just use tsia-up / tsia-down
   (defun my-agenda-sort-by-inactive-timestamp (a b)
     "Sort by interactive timestamp. Oldest first, items without any ts at the bottom."
     (let* ((ma (or (get-text-property 1 'org-marker a)
@@ -2646,34 +2644,48 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
      memory is already set, so we'll have to wait and see on that one.
 
 #+begin_src emacs-lisp
-  (setq cm/std-sort-style '((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
-                            (org-agenda-skip-function '(org-agenda-skip-entry-if 'scheduled))
-                            (org-agenda-sorting-strategy '(user-defined-up))))
+  (setq cm/org-sort-style '((org-agenda-skip-function '(org-agenda-skip-entry-if 'scheduled))
+                            (org-agenda-sorting-strategy
+                             '((agenda habit-down time-up priority-down category-keep)
+                               (todo tsia-up)
+                               (tags tsia-up)
+                               (search tsia-up)))))
+
+  (defun cm/review-header (title)
+    `((org-agenda-overriding-header ,(concat "     " title))))
+  ;; this dynamic title sizing doesn't work because the org-agenda
+  ;; buffer is created when org-agenda is called. :/
+    ;; (let* ((basewidth (/ (- (window-body-width) (+ (length title) 6)) 4.0))
+    ;;        (leftside (make-string (floor basewidth) ?+))
+    ;;        (rightside (make-string (ceiling basewidth) ?+)))
+    ;;   `((org-agenda-overriding-header ,(concat leftside " " title " " rightside)))))
 
   (defun cm/org-ctx-agenda (key ctx title)
     `(,(concat "c" key) ,title
       ((tags-todo ,(concat ctx "-PROJECT-BLOCKED=\"t\"/!-WAITING"))
        (tags ,(concat ctx "+PROJECT"))
        (tags ,ctx))
-      ,cm/std-sort-style))
+      ,cm/org-sort-style))
 
-  (setq org-agenda-custom-commands
+  (defun cm/org-set-agenda ()
+    (interactive)
+    (setq org-agenda-custom-commands
         `(("d" "Full Day Agenda"
            ((agenda)
-            (tags "PROJECT/!WAITING" ,cm/std-sort-style)
-            (todo "WAITING" ,cm/std-sort-style)
-            (tags-todo "-BLOCKED=\"t\"" ,cm/std-sort-style)))
+            (tags "PROJECT/!WAITING" ,cm/org-sort-style)
+            (todo "WAITING" ,cm/org-sort-style)
+            (tags-todo "-BLOCKED=\"t\"" ,cm/org-sort-style)))
           ("i" "Inbox"
            ((tags-todo "-{.*}")))
           ("n" "Next agenda"
            ((todo "WAITING")
             (todo "NEXT")
             (todo "STARTED"))
-           ,cm/std-sort-style)
+           ,cm/org-sort-style)
           ("p" "Project Agenda"
            ((tags-todo "PROJECT/!-WAITING")
             (tags "PROJECT"))
-           ,cm/std-sort-style)
+           ,cm/org-sort-style)
           ,(cm/org-ctx-agenda "v" "INTERNET" "Internet Agenda")
           ,(cm/org-ctx-agenda "c" "COMPUTER" "Computer Agenda")
           ,(cm/org-ctx-agenda "w" "WORK" "Work Agenda")
@@ -2690,17 +2702,40 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
           ("rd" "Daily Agenda"
            ((agenda)
             (todo "DONE|NVM"))
-           (,@cm/std-sort-style
-            (org-agenda-ndays 1)
+           ((org-agenda-ndays 3)
             (org-agenda-start-day "-1d")))
           ("rw" "Weekly Review Agenda"
-           ((agenda)))
+           ((agenda "" (,@(cm/review-header "Review Calendar Data")
+                        (org-agenda-skip-function nil)))
+            (tags-todo "EMPTYYOURHEAD" ,(cm/review-header "Empty Your Head!"))
+            (tags-todo "PROJECT" ,(cm/review-header "Review Projects and Larger Outcomes"))
+            (tags-todo "-PROJECT-BLOCKED=\"t\"/!-WAITING" ,(cm/review-header "Review Next Actions List"))
+            (todo "WAITING" ,(cm/review-header "Review Waiting For List"))
+            (tags-todo "RELEVANTCHECKLISTS" ,(cm/review-header "Review Relevant Checklists"))
+            (tags-todo "REVIEWSOMEDAYMAYBE" ,(cm/review-header "Review Someday/Maybe List"))
+            (tags-todo "REVIEWSUPPORTMATERIAL" ,(cm/review-header "Review Pending and Support Material"))
+            (tags-todo "CREATIVEANDCOURAGEOUS" ,(cm/review-header "Be Creative and Courageous!"))
+            ;; creative and courageous
+            (todo "DONE|NVM"))
+           ((org-agenda-ndays 22)
+            (org-agenda-start-day ,(concat "-" (number-to-string (cm/days-back-to-monday)) "d")))
           ("x" "Tasks" ((tags-todo "-BLOCKED=\"t\""
                                    ((org-agenda-overriding-header "Tasks sorted by TIMESTAMP_IA")
                                     (org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
                                     (org-agenda-sorting-strategy '(user-defined-up))))))
           ("Z" "Receipt Agenda"
-           ((org-receipt-agenda)))))
+           ((org-receipt-agenda)))))))
+
+  (defun cm/days-back-to-monday ()
+    (+ 7 (calendar-day-of-week (calendar-gregorian-from-absolute (org-today)))))
+
+  (defun cm/days-to-next-saturday ()
+    (- 21 (cm/days-back-to-monday)))
+
+  (defun cm/org-load-agenda ()
+    (interactive)
+    (cm/org-set-agenda)
+    (org-agenda))
 #+end_src
 **** Useful setq's
      :PROPERTIES:
@@ -2710,10 +2745,10 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
   (setq org-stuck-projects
             '("+PROJECT/-NVM-DONE-WAITING" ("NEXT" "TODO")))
 
-  (add-to-list 'auto-mode-alist '("\\.org$" . org-mode))
+  (add-to-list 'auto-mode-alist '("\\.org'$" . org-mode))
   (setq org-return-follows-link t)
   (global-set-key (kbd "C-c l") 'org-store-link)
-  (global-set-key (kbd "C-c a") 'org-agenda)
+  (global-set-key (kbd "C-c a") 'cm/org-load-agenda)
   (setq org-fontify-done-headline t)
   (setq org-clock-persist 'history)
   (org-clock-persistence-insinuate)
