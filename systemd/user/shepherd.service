@@ -1,0 +1,6 @@
+[Unit]
+Description=Shepherd herds the services
+
+[Service]
+ExecStart=/bin/shepherd
+EnvironmentFile=/home/jmickey/config/env-arch
