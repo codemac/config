@@ -646,6 +646,7 @@ may or may not be always true though.
   (defvar cm/what-password "nope" "The nickserv password for what.")
   (defvar cm/rizon-password "nope" "The nickserv password for rizon.")
   (defvar cm/bitlbee-password "nope" "The password for bitlbee!")
+  (defvar cm/slack-password "nope" "The password for PureStorage IRC integration")
   (defvar cm/rcirc-channel-alist '(("freenode" "#archlinux" "#emacs")
                                  ("oftc" "#ikiwiki"))
     "The channel list..")
@@ -2176,10 +2177,10 @@ I get to avoid most of the complications. It goes, in order:
       (setq user-mail-address "jmickey@purestorage.com")
     (setq user-mail-address "j@codemac.net"))
 #+end_src
-***** Message view
-      :PROPERTIES:
-      :ID:       609c8599-feea-4606-8444-3a243b306e2c
-      :END:
+**** Message view
+     :PROPERTIES:
+     :ID:       609c8599-feea-4606-8444-3a243b306e2c
+     :END:
 The vast majority of this is around setting up drafts handling in
 notmuch to be sync'd over IMAP. =notmuch= doesn't handle this for us,
 and this is an amalgamation of things I found online. It currently
@@ -2187,7 +2188,13 @@ works with the cyrus IMAP server.
 #+begin_src emacs-lisp
   (setq message-citation-line-format "* %f [%Y-%m-%d %H:%M]:")
   (setq message-citation-line-function 'message-insert-formatted-citation-line)
+#+end_src
+Set background color of eww rendered buffers to make wayyy more sense.
+#+begin_src emacs-lisp
+  (setq shr-color-visible-luminance-min 80)
+#+end_src
 
+#+begin_src emacs-lisp
   (defun cm/message-mode-hook ()
     (local-set-key (kbd "C-c M-o") 'org-mime-htmlize)
     (orgstruct-mode 1))
@@ -2199,6 +2206,12 @@ works with the cyrus IMAP server.
   (setq notmuch-wash-signature-lines-max 0)
   (setq notmuch-wash-wrap-lines-length (if (< fill-column 100) 100 fill-column))
 
+#+end_src
+**** Drafts Handling
+Ridiculous hacks to get sensible synced drafts. Sometimes I end up
+with way too many drafts saved due to mbsync being fast, but that's a
+good problem to me :)
+#+begin_src emacs-lisp
   ;; how to get these things to not suck
   (setq message-draft-headers '(From References Subject Date (optional . In-Reply-To) Message-ID (optional . User-Agent)))
   (setq message-generate-headers-first t) ;; would love to do this without Date
@@ -3489,7 +3502,7 @@ me over.
   (setq erc-insert-timestamp-function 'erc-insert-timestamp-left)
 
   ;; Auto-fill (static size so log files look decent)
-  (setq erc-fill-column 100)
+  (setq erc-fill-column 80)
   (setq erc-fill-function 'erc-fill-static)
   (setq erc-fill-static-center 15)
   (setq erc-join-buffer 'bury)
@@ -3522,13 +3535,19 @@ me over.
     (add-to-list 'erc-modules 'image)
     (erc-update-modules))
 
-  (defun cm/erc-begin ()
+  (defun cm/erc-begin-bitlbee ()
     (interactive)
     (erc :server "localhost" :port 6667))
 
   (defun cm/erc-begin-freenode ()
     (interactive)
-    (erc-ssl :server "chat.freenode.net" :port 6697))
+    (erc-ssl :server "chat.freenode.net" :port 6697
+             :nick "codemac" :password cm/freenode-password))
+
+  (defun cm/erc-begin-pstg-slack ()
+    (interactive)
+    (erc-ssl :server "purestorage.irc.slack.com" :port 6697
+             :nick "jmickey" :password cm/slack-password))
 
   (add-hook 'erc-mode-hook 'cm/erc-hook)
   (add-hook 'erc-join-hook 'bitlbee-netrc-identify)

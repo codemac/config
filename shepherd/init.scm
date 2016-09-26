@@ -17,37 +17,85 @@
 ;; Also, check out jailing for processes, notably with user
 ;; containers. Probably using something like minijail0
 
+(use-modules (srfi srfi-2)
+	     (ice-9 popen)
+	     (ice-9 rdelim))
+
 (define (tilde . rest)
   (apply string-append (getenv "HOME") rest))
 
-;; this command forks away, and runs in the background. I hate /bin/sh
-(define (make-exec-constructor . args)
+;; I hate /bin/sh
+(define (make-exec-constructor cmd)
   (lambda args
-    (zero? (status:exit-val (apply system* args)))))
+    (zero? (status:exit-val (apply system* cmd)))))
 
-(define (make-exec-destructor . args)
-  (lambda args
-    (zero? (status:exit-val (apply system* args)))))
+(define (make-exec-destructor cmd)
+  (lambda (ignored . args)
+    (zero? (status:exit-val (apply system* cmd)))))
 
 (define (cbattsvc batnum)
   (make <service>
     #:provides (list (string->symbol (string-append "cbatticon_" batnum)))
     #:requires '(x)
+    #:environment *global-environment*
     #:start (make-forkexec-constructor
 	     `("cbatticon" "-i" "standard" "-u" "30" "-l" "15" "-r" "2" ,batnum))
     #:stop (make-kill-destructor)))
 
+;; set up my ssh-agent
+
+(define (ssh-agent-initialize)
+  (define (envval s)
+    (cadr (string-split (car (string-split s #\;)) #\=)))
+  (and-let* ((p (open-pipe* OPEN_BOTH "ssh-agent"))
+	     (authsock (read-line p))
+	     (authpid (read-line p))
+	     (echoline (read-line p))
+	     (eofp (eof-object? (read-line p)))
+	     (sshauthsock (envval authsock))
+	     (sshagentpid (envval authpid)))
+    (setenv "SSH_AUTH_SOCK" sshauthsock)
+    (setenv "SSH_AGENT_PID" sshagentpid)
+    (zero? (status:exit-val (system* "ssh-add")))))
+
+(ssh-agent-initialize)
+
+(setenv "DISPLAY" ":0.0")
+(setenv "GNUPGHOME" "/mnt/keys/gnupghome")
+(setenv "PATH" "/home/jmickey/work/bin:/home/jmickey/bin:/bin:/bin/core_perl")
+(setenv "LANGUAGE" "en_US.UTF-8")
+(setenv "MOZ_USE_OMTC" "1")
+(setenv "ABSROOT" "/home/jmickey/src/abs")
+(setenv "GOPATH" "/home/jmickey/src/go")
+(setenv "GUILE_LOAD_PATH" "/home/jmickey/scm")
+(setenv "_JAVA_OPTIONS" "-Dawt.useSystemAAFontSettings=on -Dswing.defaultlaf=com.sun.java.swing.plaf.gtk.GTKLookAndFeel -Dswing.aatext=true")
+
+(define *global-environment* (environ))
+
+(define (shellrunner a)
+  (zero? (status:exit-val (apply system* (list "sh" "-c" a)))))
+
+(define (initx)
+  (for-each
+    shellrunner
+    '("sleep 2"
+      "setxkbmap -device $(xinput list 'AT Translated Set 2 keyboard' | cut -d= -f2 | cut -f 1) -layout dvorak -option ctrl:swapcaps"
+      "xsetroot -solid '#80a0af'"
+      "xset r rate 200 20")))
+
 (register-services
  (make <service>
-   #:provides '(x11 xorg x)
+   #:provides '(x)
    #:requires '()
+   #:environment *global-environment*
    #:start (make-forkexec-constructor
 	    '("Xorg" ":0" "-nolisten" "tcp" "-noreset" "-verbose" "2" "vt1"))
    #:stop (make-kill-destructor))
 
  (make <service>
    #:provides '(tray trayion)
-   #:requires '(x)
+   #:requires '(notion)
+   #:environment *global-environment*
    #:start (make-forkexec-constructor
 	    '("trayion"))
    #:stop (make-kill-destructor))
@@ -55,19 +103,14 @@
  (make <service>
    #:provides '(emacs)
    #:requires '()
-   #:start (make-exec-constructor '("emacs" "--daemon"))
+   #:environment *global-environment*
+   #:start (make-forkexec-constructor '("emacs" "--daemon"))
    #:stop (make-exec-destructor '("emacsclient" "--eval" "(kill-emacs)")))
-
- (make <service>
-   #:provides '(sxhkd)
-   #:requires '(x)
-   #:start (make-forkexec-constructor
-	    '("sxhkd"))
-   #:stop (make-kill-destructor))
 
  (make <service>
    #:provides '(volumeicon)
    #:requires '(tray)
+   #:environment *global-environment*
    #:start (make-forkexec-constructor
 	    '("volumeicon"))
    #:stop (make-kill-destructor))
@@ -75,24 +118,28 @@
  (make <service>
    #:provides '(audio pulseaudio)
    #:requires '()
+   #:environment *global-environment*
    #:start (make-exec-constructor '("pulseaudio" "--start"))
    #:stop (make-kill-destructor))
 
  (make <service>
    #:provides '(syndaemon)
    #:requires '(x)
+   #:environment *global-environment*
    #:start (make-exec-constructor '("syndaemon" "-i" "1.0" "-R" "-d"))
    #:stop (make-kill-destructor))
 
  (make <service>
    #:provides '(networkicon)
    #:requires '(tray)
+   #:environment *global-environment*
    #:start (make-forkexec-constructor '("nm-applet"))
    #:stop (make-kill-destructor))
  
  (make <service>
    #:provides '(bitlbee)
    #:requires '()
+   #:environment *global-environment*
    #:start (make-forkexec-constructor
 	    `("bitlbee" "-F" "-n" "-d" ,(tilde "/.config/bitlbee")))
    #:stop (make-kill-destructor))
@@ -100,6 +147,7 @@
  (make <service>
    #:provides '(screensaver xscreensaver)
    #:requires '(x)
+   #:environment *global-environment*
    #:start (make-forkexec-constructor
 	    '("xscreensaver" "-no-splash"))
    #:stop (make-kill-destructor))
@@ -107,12 +155,14 @@
  (make <service>
    #:provides '(notion wm)
    #:requires '(x)
+   #:environment *global-environment*
    #:start (make-forkexec-constructor '("notion"))
    #:stop (make-kill-destructor))
 
  (make <service>
    #:provides '(redshift)
-   #:requires '(x)
+   #:requires '(tray)
+   #:environment *global-environment*
    #:start (make-forkexec-constructor '("redshift-gtk"))
    #:stop (make-kill-destructor))
  
@@ -120,28 +170,23 @@
  (cbattsvc "BAT1")
  
  (make <service>
-  #:provides '(gpgagent)
-  #:requires '()
-  #:start (make-exec-constructor
-	   '("gpg-agent" "--homedir=/mnt/keys/gnupghome"))
-  #:stop (make-kill-destructor)))
+   #:provides '(gpgagent)
+   #:requires '()
+   #:environment *global-environment*
+   #:start (make-exec-constructor
+	    '("gpg-agent" "--homedir=/mnt/keys/gnupghome"))
+   #:stop (make-kill-destructor)))
 
-;; a set-environment command
-;(define (set-environment))
+(start 'x)
 
-;; Services to start when shepherd starts:
-;; Add the name of each service that should be started to the list
-;; below passed to 'for-each'.
+(initx)
+
 (for-each start
-	  '(x
-	    notion
-	    trayion
+	  '(notion
+	    pulseaudio
 	    cbatticon_BAT0
 	    cbatticon_BAT1
 	    screensaver
 	    networkicon
 	    volumeicon
-	    redshift
-	    bitlbee
-	    sxhkd
-	    emacs))
+	    redshift))
