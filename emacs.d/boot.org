@@ -570,6 +570,11 @@ For now we just check that the name is valid.
     (interactive "F")
     (set-buffer (find-file (concat "/sudo::" file))))
 #+end_src
+** Doc View
+Increase the DPI to a factor of most screen DPI's.
+#+begin_src emacs-lisp
+  (setq doc-view-resolution 288)
+#+end_src
 ** Occur, isearch, and all
    :PROPERTIES:
    :ID:       7e4874a8-093c-4ac3-9441-5f8dd8103b39
@@ -865,6 +870,28 @@ I need to tie this into projectile, but for now have a way to create a
   (global-set-key (kbd "<f2>") 'cm/shell-find-or-new)
   (global-set-key (kbd "<f7>") 'cm/shell-main)
   (global-set-key (kbd "C-c p $") 'cm/shell-projectile)
+#+end_src
+**** Remote Shells
+This is to manage remote shells. I hope for this to get a *lot* more
+sophisticated, as ideally you'd be able to restore scrollback as
+well. Ideally dtach would actually have support for replaying
+scrollback, but not sure how it would handle it given it doesn't
+really interpret anything.
+
+#+begin_src emacs-lisp
+  (defvar cm/ssh-dtach-history-host nil
+    "History list for reading host names from ssh-dtach")
+  (defvar cm/ssh-dtach-history-session nil
+    "History list for reading sessions from ssh-dtach")
+
+  (defun cm/ssh-dtach (host user session cwd)
+    "Open SSH connection to HOST with SESSION and start dtach session."
+    (interactive "sSSH Host: \nsSSH User: \nsSession name: \nsWorking directory: ")
+    (let ((explicit-shell-file-name "dtach")
+          (explicit-dtach-args `("-A" ,(concat "/tmp/.dtach.emacs." session) "-z"
+                                 "/bin/bash" "--noediting" "-login"))
+          (default-directory (concat "/ssh:" user "@" host ":" cwd)))
+      (shell (format "*ssh shell:%s*" host))))
 #+end_src
 *** Use a login shell 
     :PROPERTIES:
@@ -1220,6 +1247,24 @@ So useful, I think everyone should have this turned on.
     (interactive "*")
     (uniquify-all-lines-region (point-min) (point-max)))
 #+end_src
+** Diff Before Save
+I find myself often forgetting what I've changed in a file and what I
+haven't. Obviously I use git, but I save files multiple times before
+committing, and can get a little lost. The challenges around
+auto-committing are pretty intense as well, as many intermediate
+states are basically completely irrelevant. I need more diligence in
+these areas.
+
+Anyways, this just makes sure that I can easily diff the file I'm
+currently looking at with the file on disk. It'll help me get back to
+sanity in many cases.
+
+- TODO default to current buffer, no =RET= required
+- TODO if not a file-based buffer, *then* ask for buffer nome
+
+#+begin_src emacs-lisp
+  (global-set-key (kbd "C-c d") #'diff-buffer-with-file)
+#+end_src
 * External
   :PROPERTIES:
   :ID:       d6a73715-3861-4816-9c49-0b3a2e493fa2
@@ -1323,6 +1368,15 @@ Yay gtags support for helm!
                  (local-set-key (kbd "C-c g s") 'helm-gtags-find-symbol)
                  (local-set-key (kbd "C-c g f") 'helm-gtags-find-files)
                  (local-set-key (kbd "C-t") 'helm-gtags-pop-stack))))
+#+end_src
+*** Undo Tree
+Undo tree is excellent! =C-x u= to browse. Now the larger question is
+how it works with browse-kill-ring? I like both modes I guess.
+#+begin_src emacs-lisp
+  (use-package undo-tree
+    :ensure t
+    :init
+    (global-undo-tree-mode))
 #+end_src
 *** Minimap
     :PROPERTIES:
@@ -2193,7 +2247,14 @@ Set background color of eww rendered buffers to make wayyy more sense.
 #+begin_src emacs-lisp
   (setq shr-color-visible-luminance-min 80)
 #+end_src
+Set the colors of each search result line based on the tags of the
+result. This was inspired because notmuch changed them to have insane
+defaults.
 
+#+begin_src emacs-lisp
+  (setq notmuch-search-line-faces `(("unread" . (:weight bold))
+                                    ("flagged" . (:foreground "yellow"))))
+#+end_src
 #+begin_src emacs-lisp
   (defun cm/message-mode-hook ()
     (local-set-key (kbd "C-c M-o") 'org-mime-htmlize)
@@ -2310,12 +2371,13 @@ good problem to me :)
     (message-mode)
     (cm/draft-insert-mail-header-separator))
 
+  (setq notmuch-maildir-use-notmuch-insert nil)
   (define-key notmuch-show-mode-map "e" 'notmuch-show-resume-message)
 #+end_src
-***** Keybindings
-      :PROPERTIES:
-      :ID:       dd303b47-13d6-48df-bb7f-93a81ac25edc
-      :END:
+**** Keybindings
+     :PROPERTIES:
+     :ID:       dd303b47-13d6-48df-bb7f-93a81ac25edc
+     :END:
 For some reason the ~=~ sign is used for refresh in notmuch. This is
 horrifying.
 #+begin_src emacs-lisp
@@ -2329,12 +2391,13 @@ horrifying.
     '(define-key notmuch-common-keymap "A" 'cm/notmuch-archive-unread-all))
 
   (setq notmuch-saved-searches
-        '((:name "inbox"         :query "tag:inbox"                 :key "i" :sort-order 'oldest-first)
-          (:name "unread"        :query "tag:unread"                :key "u" :sort-order 'newest-first)
-          (:name "inbox-pure"    :query "tag:pure AND tag:inbox"    :key "w" :sort-order 'oldest-first)
-          (:name "inbox-codemac" :query "tag:codemac AND tag:inbox" :key "c" :sort-order 'oldest-first)
-          (:name "drafts"        :query "tag:draft"                 :key "d" :sort-order 'newest-first)
-          (:name "sent"          :query "tag:sent"                  :key "t")))
+        '((:name "inbox"         :query "tag:inbox"                 :key "i" :sort-order oldest-first)
+          (:name "unread"        :query "tag:unread"                :key "u" :sort-order newest-first)
+          (:name "inbox-pure"    :query "tag:pure AND tag:inbox"    :key "w" :sort-order oldest-first)
+          (:name "inbox-codemac" :query "tag:codemac AND tag:inbox" :key "c" :sort-order oldest-first)
+          (:name "drafts"        :query "tag:draft"                 :key "d" :sort-order newest-first)
+          (:name "today"         :query "date:today..!"             :key "t" :sort-order oldest-first)
+          (:name "sent"          :query "tag:sent"                  :key "n")))
 
   (global-set-key (kbd "C-c i") 'notmuch-jump-search)
 #+end_src
@@ -2347,8 +2410,6 @@ Let's get our scheme on!
   (unless (not (file-exists-p "~/.guix-profile/share/emacs/site-lisp"))
     (add-to-list 'load-path "~/.guix-profile/share/emacs/site-lisp")
     (require 'geiser-install))
-  ;; racket is great and all, but I need me some ffi, ice-9, and of course, gnu.
-  (setq geiser-active-implementations '(guile))
 #+end_src
 *** Muse
     :PROPERTIES:
@@ -2607,7 +2668,7 @@ Functions borrowed from Sacha Chua.
 #+begin_src emacs-lisp
   (defun org-receipt-agenda (match)
     (setq org-agenda-include-all-todo nil
-          org-agenda-ndays 7
+          org-agenda-span 7
           org-agenda-show-all-dates t)
     (org-agenda-list))
 #+end_src
@@ -2664,6 +2725,8 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
                                (tags tsia-up)
                                (search tsia-up)))))
 
+  (defun cm/review-section (title)
+    `((org-agenda-overriding-header ,(concat "########## " title " ##################################################"))))
   (defun cm/review-header (title)
     `((org-agenda-overriding-header ,(concat "     " title))))
   ;; this dynamic title sizing doesn't work because the org-agenda
@@ -2715,22 +2778,31 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
           ("rd" "Daily Agenda"
            ((agenda)
             (todo "DONE|NVM"))
-           ((org-agenda-ndays 3)
+           ((org-agenda-span 3)
             (org-agenda-start-day "-1d")))
           ("rw" "Weekly Review Agenda"
-           ((agenda "" (,@(cm/review-header "Review Calendar Data")
+           (;; GET CLEAR
+            (tags-todo "noop" ,(cm/review-section "Get Clear!"))
+            (tags-todo "noop" ,(cm/review-header "Collect Loose Papers and Materials"))
+            (tags-todo "noop" ,(cm/review-header "Get IN to ZERO"))
+            (tags-todo "noop" ,(cm/review-header "Empty Your Head!"))
+
+            ;; GET CURRENT
+            (tags-todo "noop" ,(cm/review-section "Get Current!"))
+            (tags-todo "-PROJECT-BLOCKED=\"t\"/!-WAITING" ,(cm/review-header "Review Actions Lists"))
+            (todo "DONE|NVM")
+            (agenda "" (,@(cm/review-header "Review Previous & Upcoming Calendar Data")
                         (org-agenda-skip-function nil)))
-            (tags-todo "EMPTYYOURHEAD" ,(cm/review-header "Empty Your Head!"))
-            (tags-todo "PROJECT" ,(cm/review-header "Review Projects and Larger Outcomes"))
-            (tags-todo "-PROJECT-BLOCKED=\"t\"/!-WAITING" ,(cm/review-header "Review Next Actions List"))
             (todo "WAITING" ,(cm/review-header "Review Waiting For List"))
-            (tags-todo "RELEVANTCHECKLISTS" ,(cm/review-header "Review Relevant Checklists"))
-            (tags-todo "REVIEWSOMEDAYMAYBE" ,(cm/review-header "Review Someday/Maybe List"))
-            (tags-todo "REVIEWSUPPORTMATERIAL" ,(cm/review-header "Review Pending and Support Material"))
-            (tags-todo "CREATIVEANDCOURAGEOUS" ,(cm/review-header "Be Creative and Courageous!"))
-            ;; creative and courageous
-            (todo "DONE|NVM"))
-           ((org-agenda-ndays 22)
+            (tags-todo "PROJECT" ,(cm/review-header "Review Projects and Larger Outcomes"))
+            (tags-todo "noop" ,(cm/review-header "Review Relevant Checklists"))
+
+            ;; GET CREATIVE
+            (tags-todo "noop" ,(cm/review-section "Get Creative!"))
+            (tags-todo "noop" ,(cm/review-header "Review Someday/Maybe List"))
+            (tags-todo "noop" ,(cm/review-header "Empty your head!")))
+  
+           ((org-agenda-span 22)
             (org-agenda-start-day ,(concat "-" (number-to-string (cm/days-back-to-monday)) "d")))
           ("x" "Tasks" ((tags-todo "-BLOCKED=\"t\""
                                    ((org-agenda-overriding-header "Tasks sorted by TIMESTAMP_IA")
@@ -2778,7 +2850,7 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
   (setq org-hide-leading-stars t)
   (setq org-return-follows-link t)
   (setq org-agenda-include-all-todo t)
-  (setq org-agenda-ndays 7)
+  (setq org-agenda-span 'week)
   (setq org-agenda-include-diary t)
   (setq org-agenda-skip-deadline-if-done t)
   (setq org-agenda-skip-scheduled-if-done t)
@@ -2803,13 +2875,44 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
   (advice-add 'org-attach-commit :override #'list)
   ;; less file local settings!
   ;; actually - let's do more file-local settings. Remove these asap.
-  (setq org-archive-location "_archive/%s_old::")
   (setq org-global-properties '(("Effort_ALL" . "0:10 0:20 0:30 0:40 0:50 1:00 2:00 3:00 4:00 5:00 6:00 7:00 8:00 9:00 10:00 11:00 12:00")))
   (setq org-columns-default-format "%TODO %50ITEM(Task) %17Effort(Estimated Effort){:} %CLOCKSUM")
 
   (global-set-key (kbd "<f6>") 'org-clock-goto)
 #+end_src
+**** Archiving
 
+These little functions do something super interesting for my GTD
+workflow. When I go to archive a task, I generally want to move it
+into these =_archive= folders I keep. However, if I'm working on a
+long project, a lot of the time I like to keep notes or other
+information that I've completed much closer to the project. So
+whenever I press archive, I search to the parent heading using
+outline-mode, and then get the tags from org. If the tags include
+=:PROJECT:=, then I archive it to an =* Archive= subtree. If it's
+parent is not a project, then I assume it's a bare todo, and archive
+it the normal way.
+
+#+begin_src emacs-lisp
+  (setq org-archive-location "_archive/%s_old::")
+
+  (defun cm/parent-tags ()
+    (interactive)
+    (save-excursion
+      (with-current-buffer (current-buffer)
+	(outline-up-heading 1)
+	(nth 5 (org-heading-components)))))
+
+  (defun cm/gtd-archiver ()
+    (interactive)
+    (let ((tags (cm/parent-tags)))
+      (if (and (not (null tags))
+	       (string-match ":PROJECT:" tags))
+	  (org-archive-to-archive-sibling)
+	(org-archive-subtree))))
+
+  (setq org-archive-default-command #'cm/gtd-archiver)
+#+end_src
 **** MobileOrg
 #+begin_src emacs-lisp
   (setq org-mobile-directory "~/org/.mobileorg-staging")
@@ -2926,7 +3029,7 @@ or something else. For now, it's manual.
 
   (org-babel-do-load-languages 
    'org-babel-load-languages
-   `((emacs-lisp . t)
+   '((emacs-lisp . t)
      (C . t)
      (R . t)
      (awk . t)
@@ -2944,7 +3047,7 @@ or something else. For now, it's manual.
      (python . t)
      (ruby . t)
      (scheme . t)
-     (sh . t)
+     (shell . t)
      (sql .t)))
   (setq org-confirm-babel-evaluate t)  ; nah, let's be safe
 
@@ -3544,7 +3647,7 @@ me over.
     (erc-ssl :server "chat.freenode.net" :port 6697
              :nick "codemac" :password cm/freenode-password))
 
-  (defun cm/erc-begin-pstg-slack ()
+  (defun cm/erc-begin-pure-slack ()
     (interactive)
     (erc-ssl :server "purestorage.irc.slack.com" :port 6697
              :nick "jmickey" :password cm/slack-password))
@@ -3963,122 +4066,6 @@ A wholly owned subsidiary of Cisco.
   (require 'tup-mode)
 #+end_src
 
-* EXWM
-  :PROPERTIES:
-  :ID:       cfaf9b3f-9ab8-449e-ac79-1d671655f1aa
-  :END:
-I manage my windows in X with emacs.
-
-
-Well, at least I'm trying
-#+begin_src emacs-lisp
-  ;; Shrink fringes to 1 pixel
-  ;; (fringe-mode 1)
-  ;; 
-  ;; ;; Load EXWM
-  ;; (require 'exwm)
-  ;; 
-  ;; ;; All buffers created in EXWM mode are named "*EXWM*". You may want to change
-  ;; ;; it in `exwm-update-class-hook' and `exwm-update-title-hook', which are run
-  ;; ;; when a new window class name or title is available. Here's some advice on
-  ;; ;; this subject:
-  ;; ;; + Always set the second argument of `rename-buffer' to `t' to avoid naming
-  ;; ;;   conflict.
-  ;; ;; + Only renaming buffer in one hook and avoid it in the other. There's no
-  ;; ;;   guarantee on the order in which they are run.
-  ;; ;; + For applications with multiple windows (e.g. GIMP), the class names of all
-  ;; ;;   windows are probably the same. Using window titles for them makes more
-  ;; ;;   sense.
-  ;; ;; + Some application change its title frequently (e.g. browser, terminal).
-  ;; ;;   Its class name may be more suitable for such case.
-  ;; ;; In the following example, we use class names for all windows expect for
-  ;; ;; Java applications and GIMP.
-  ;; (add-hook 'exwm-update-class-hook
-  ;;           (lambda ()
-  ;;             (unless (or (string-prefix-p "sun-awt-X11-" exwm-instance-name)
-  ;;                         (string= "gimp" exwm-instance-name))
-  ;;               (rename-buffer exwm-class-name t))))
-  ;; (add-hook 'exwm-update-title-hook
-  ;;           (lambda ()
-  ;;             (when (or (string-prefix-p "sun-awt-X11-" exwm-instance-name)
-  ;;                       (string= "gimp" exwm-instance-name))
-  ;;               (rename-buffer exwm-title t))))
-  ;; 
-  ;; ;; `exwm-input-set-key' allows you to set a global key binding (available in
-  ;; ;; any case). Following are a few examples.
-  ;; ;; + We always need a way to go back to line-mode from char-mode
-  ;; (exwm-input-set-key (kbd "s-r") 'exwm-reset)
-  ;; ;; + Bind a key to switch workspace interactively
-  ;; (exwm-input-set-key (kbd "s-n") 'exwm-workspace-switch)
-  ;; ;; + Set shortcuts to switch to a certain workspace.
-  ;; (exwm-input-set-key (kbd "s-0")
-  ;;                     (lambda () (interactive) (exwm-workspace-switch 0)))
-  ;; (exwm-input-set-key (kbd "s-1")
-  ;;                     (lambda () (interactive) (exwm-workspace-switch 1)))
-  ;; (exwm-input-set-key (kbd "s-2")
-  ;;                     (lambda () (interactive) (exwm-workspace-switch 2)))
-  ;; (exwm-input-set-key (kbd "s-3")
-  ;;                     (lambda () (interactive) (exwm-workspace-switch 3)))
-  ;; ;; + Application launcher ('M-&' also works if the output buffer does not
-  ;; ;;   bother you). Note that there is no need for processes to be created by
-  ;; ;;   Emacs.
-  ;; (exwm-input-set-key (kbd "s-&")
-  ;;                     (lambda (command)
-  ;;                       (interactive (list (read-shell-command "$ ")))
-  ;;                       (start-process-shell-command command nil command)))
-  ;; ;; + 'slock' is a simple X display locker provided by suckless tools. 'i3lock'
-  ;; ;;   is more feature-rich alternative.
-  ;; ;(exwm-input-set-key (kbd "s-<f2>")
-  ;;  ;                   (lambda () (interactive) (start-process "" nil "slock")))
-  ;; 
-  ;; ;; The following example demonstrates how to set a key binding only available
-  ;; ;; in line mode. It's simply done by first push the prefix key to
-  ;; ;; `exwm-input-prefix-keys' and then add the key sequence to `exwm-mode-map'.
-  ;; ;; The example shorten 'C-c q' to 'C-q'.
-  ;; (push ?\C-q exwm-input-prefix-keys)
-  ;; (define-key exwm-mode-map [?\C-q] 'exwm-input-send-next-key)
-  ;; 
-  ;; ;; The following example demonstrates how to use simulation keys to mimic the
-  ;; ;; behavior of Emacs. The argument to `exwm-input-set-simulation-keys' is a
-  ;; ;; list of cons cells (SRC . DEST), where SRC is the key sequence you press and
-  ;; ;; DEST is what EXWM actually sends to application. Note that SRC must be a key
-  ;; ;; sequence (of type vector or string), while DEST can also be a single key.
-  ;; (exwm-input-set-simulation-keys
-  ;;  '(([?\C-b] . left)
-  ;;    ([?\C-f] . right)
-  ;;    ([?\C-p] . up)
-  ;;    ([?\C-n] . down)
-  ;;    ([?\C-a] . home)
-  ;;    ([?\C-e] . end)
-  ;;    ([?\M-v] . prior)
-  ;;    ([?\C-v] . next)))
-  ;; 
-  ;; ;; Do not forget to enable EXWM. It will start by itself when things are ready.
-  ;; (exwm-enable)
-  ;; 
-  ;; ;Configuration of X init script
-  ;; ;
-  ;; ;~/.xinitrc:
-  ;; ;
-  ;; ;# Set themes, etc
-  ;; ;gnome-settings-daemon &
-  ;; ;
-  ;; ;# Set fallback cursor
-  ;; ;xsetroot -cursor_name left_ptr
-  ;; ;
-  ;; ;# Set keyboard repeat rate
-  ;; ;xset r rate 200 60
-  ;; ;
-  ;; ;# Finally launch emacs
-  ;; ;exec dbus-launch --exit-with-session emacs
-  ;; ;
-  ;; ;Other configurations
-  ;; ;
-  ;; ;Append the following line to your ~/.profile to start EXWM when you login on tty5:
-  ;; ;
-  ;; ;[ -z "$DISPLAY" -a "$(tty)" = '/dev/tty5' ] && exec xinit -- vt05
-#+end_src 
-    
 * Directory Specific Code
   :PROPERTIES:
   :ID:       2fbd3ec2-ed82-414f-9bf9-bfecad2a9db5
@@ -4400,4 +4387,3 @@ Start a server if it's not started, and I'm not root.
 
   (add-hook 'server-visit-hook 'raise-frame)
 #+end_src
-

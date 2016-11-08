@@ -14,9 +14,11 @@
 ;; why the fuck aren't these https!
 (setq package-archives 
       '(("org"          . "http://orgmode.org/elpa/")
-;        ("melpa"        . "http://melpa.org/packages/") ;; let's stick with more stable packages for a bit
+	;; let's stick with more stable packages for a bit
+	;; ("melpa"        . "http://melpa.org/packages/")
         ("melpa-stable" . "http://stable.melpa.org/packages/")
-;        ("marmalade"    . "http://marmalade-repo.org/packages/") ;; ssl not validating!
+	;; ssl not validating!
+	;; ("marmalade"    . "http://marmalade-repo.org/packages/")
         ("gnu"          . "http://elpa.gnu.org/packages/")))
       
 (package-initialize)
