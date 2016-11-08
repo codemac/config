@@ -1,7 +1,12 @@
+[alias]
+	st = status -s -b
+	co = checkout
+	pushf = push --force-with-lease
+	cob = checkout -b
+	lg = log --oneline
 [user]
 	email = j@codemac.net
 	name = Jeff Mickey
+	signingkey = 110DF02CCBED60BB
 [push]
 	default = current
-[alias]
-	st = status --branch --short
