@@ -61,8 +61,8 @@
 (ssh-agent-initialize)
 
 (setenv "DISPLAY" ":0.0")
-(setenv "GNUPGHOME" "/mnt/keys/gnupghome")
-(setenv "PATH" "/home/jmickey/work/bin:/home/jmickey/bin:/bin:/bin/core_perl")
+; q: why is perl in core_perl / vendor_perl?
+(setenv "PATH" "/home/jmickey/work/bin:/home/jmickey/bin:/bin:/bin/core_perl:/bin/vendor_perl")
 (setenv "LANGUAGE" "en_US.UTF-8")
 (setenv "MOZ_USE_OMTC" "1")
 (setenv "ABSROOT" "/home/jmickey/src/abs")
@@ -167,15 +167,7 @@
    #:stop (make-kill-destructor))
  
  (cbattsvc "BAT0")
- (cbattsvc "BAT1")
- 
- (make <service>
-   #:provides '(gpgagent)
-   #:requires '()
-   #:environment *global-environment*
-   #:start (make-exec-constructor
-	    '("gpg-agent" "--homedir=/mnt/keys/gnupghome"))
-   #:stop (make-kill-destructor)))
+ (cbattsvc "BAT1"))
 
 (start 'x)
 
