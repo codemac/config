@@ -33,7 +33,6 @@ case ${OSTYPE} in
     linux*)
 	export EDITOR=emacsclient
 	export GIT_EDITOR=emacsclient
-	export GNUPGHOME=/mnt/keys/gnupghome
 	;;
     *)
 	export EDITOR=emacsclient
