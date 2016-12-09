@@ -60,8 +60,10 @@
 
 (ssh-agent-initialize)
 
+;; depressed I have to set this, but it's easier to sanitize the
+;; environment.
 (setenv "DISPLAY" ":0.0")
-; q: why is perl in core_perl / vendor_perl?
+;; q: why is perl in core_perl / vendor_perl?
 (setenv "PATH" "/home/jmickey/work/bin:/home/jmickey/bin:/bin:/bin/core_perl:/bin/vendor_perl")
 (setenv "LANGUAGE" "en_US.UTF-8")
 (setenv "MOZ_USE_OMTC" "1")
@@ -81,7 +83,8 @@
     '("sleep 2"
       "setxkbmap -device $(xinput list 'AT Translated Set 2 keyboard' | cut -d= -f2 | cut -f 1) -layout dvorak -option ctrl:swapcaps"
       "xsetroot -solid '#80a0af'"
-      "xset r rate 200 20")))
+      "xset r rate 200 20"
+      "xrandr --dpi 144")))
 
 (register-services
  (make <service>
@@ -165,6 +168,20 @@
    #:environment *global-environment*
    #:start (make-forkexec-constructor '("redshift-gtk"))
    #:stop (make-kill-destructor))
+
+ (make <service>
+   #:provides '(blueman)
+   #:requires '(tray)
+   #:environment *global-environment*
+   #:start (make-forkexec-constructor '("blueman-applet"))
+   #:stop (make-kill-destructor))
+ 
+ (make <service>
+   #:provides '(rescuetime)
+   #:requires '(tray)
+   #:environment *global-environment*
+   #:start (make-forkexec-constructor '("rescuetime"))
+   #:stop (make-kill-destructor))
  
  (cbattsvc "BAT0")
  (cbattsvc "BAT1"))
@@ -181,4 +198,6 @@
 	    screensaver
 	    networkicon
 	    volumeicon
+	    rescuetime
+	    blueman
 	    redshift))
