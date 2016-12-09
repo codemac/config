@@ -44,7 +44,7 @@
      (bug-reference-bug-regexp . "<https?://\\(debbugs\\|bugs\\)\\.gnu\\.org/\\([0-9]+\\)>")
      (yaml-indent-offset . 8)
      (after-save-hook archive-done-tasks))))
- '(smtpmail-queue-mail nil)
+ '(smtpmail-queue-mail nil t)
  '(warning-suppress-types (quote ((undo discard-info))) t)
  '(yaml-indent-offset 8))
 (custom-set-faces
