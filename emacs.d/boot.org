@@ -139,6 +139,16 @@ And of course, transparency!
   (display-time-mode t)
   
 #+end_src
+*** Emacs Title Bar
+RescueTime and other resources use the title bar to assess what an
+application is doing. I use that to include the mode of the file I'm
+currently looking at, so I can categorize what I'm doing in
+emacs. Unfortunately, I haven't figured out how to include the
+projectile project as well, as this would make it easy to see what was
+"in scope" for something.
+#+begin_src emacs-lisp
+  (setq frame-title-format '("%m " invocation-name "@" system-name))
+#+end_src
 ** System sepecific settings
    :PROPERTIES:
    :ID:       9af79705-bbb1-4b52-bfe7-0e05831d87b0
