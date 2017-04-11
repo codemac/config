@@ -37,6 +37,7 @@ configured manually, as detection can lead to other trust bugs.
     ((string-prefix-p "nordic" system-name) "/etc/ssl/certs/ca-certificates.crt")
     ((string-prefix-p "novaria" system-name) "/etc/ssl/certs/ca-certificates.crt")
     ((string-prefix-p "neah" system-name) "/etc/ssl/certs/ca-certificates.crt")
+    ((string-prefix-p "manatee" system-name) "/etc/ssl/certs/ca-certificates.crt")
     (t (error "No tls trust set for this host! Add exception or find cert.pem you trust"))))
 #+end_src
 
@@ -1871,9 +1872,9 @@ My C settings.
     (helm-gtags-mode)
     (setq fill-column 90))
 
-  (add-hook 'c++-mode-hook 'cm/iridium-c-hook)
-  (add-hook 'cc-mode-hook 'cm/iridium-c-hook)
-  (add-hook 'c-mode-hook 'cm/iridium-c-hook)
+  (add-hook 'c++-mode-hook 'cm/work-c-hook)
+  (add-hook 'cc-mode-hook 'cm/work-c-hook)
+  (add-hook 'c-mode-hook 'cm/work-c-hook)
 
   (defun mars-c-hook ()
     (interactive)
@@ -2061,7 +2062,7 @@ No seriously, I wrote lots of Ruby.
     :END:
 Thank you Britt.
 #+begin_src emacs-lisp
-  (require 'gtags-autoloads)
+;  (require 'gtags-autoloads)
   
   (defun my-gtags-settings ()
     "Settings for gtags."
@@ -2118,8 +2119,8 @@ Thank you Britt.
     (define-key gtags-mode-map [M-mouse-2] 'my-gtags-find-this-file)
   )
   
-  (eval-after-load "gtags"
-    '(my-gtags-settings))
+ ; (eval-after-load "gtags"
+  ;  '(my-gtags-settings))
 #+end_src
 *** Android
     :PROPERTIES:
