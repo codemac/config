@@ -37,6 +37,7 @@ configured manually, as detection can lead to other trust bugs.
     ((string-prefix-p "nordic" system-name) "/etc/ssl/certs/ca-certificates.crt")
     ((string-prefix-p "novaria" system-name) "/etc/ssl/certs/ca-certificates.crt")
     ((string-prefix-p "neah" system-name) "/etc/ssl/certs/ca-certificates.crt")
+    ((string-prefix-p "jmickey-glaptop0" system-name) "/etc/ssl/certs/ca-certificates.crt")
     (t (error "No tls trust set for this host! Add exception or find cert.pem you trust"))))
 #+end_src
 
@@ -2183,7 +2184,7 @@ We're just borrowing the gnus settings here..
 #+begin_src emacs-lisp
   (setq smtpmail-auth-credentials "~/.authinfo.gpg") ;; is this needed?
 
-  (setq notmuch-fcc-dirs '((".*purestorage.*" . "pure/sent")
+  (setq notmuch-fcc-dirs '((".*google.*" . "g/sent")
                            (".*codemac.net.*" . "cm/Sent Items")))
 
 #+end_src
@@ -2203,14 +2204,14 @@ I get to avoid most of the complications. It goes, in order:
    set this usually to the hostname of the email provider.)
   
 #+begin_src emacs-lisp
-  (setq smtpmail-multi-accounts '((pure . ("jmickey@purestorage.com"
+  (setq smtpmail-multi-accounts '((google . ("jmickey@google.com"
                                            "smtp.gmail.com"
                                            465
                                            nil
                                            ssl
                                            nil
                                            nil
-                                           "purestorage.com"))
+                                           "google.com"))
                                   (codemac . ("codemac@fastmail.com"
                                               "mail.messagingengine.com"
                                               465
@@ -2221,7 +2222,7 @@ I get to avoid most of the complications. It goes, in order:
                                               "codemac.net"))))
 
   (setq smtpmail-multi-default-account 'codemac)
-  (setq smtpmail-multi-associations '(("jmickey@purestorage.com\\|jeff.mickey@purestorage.com" pure)
+  (setq smtpmail-multi-associations '(("jmickey@google.com" google)
                                       ("j@codemac.net\\|jeff@archlinux.org\\|j@mickey.email\\|jeff@mickey.email\\|jm@vt.edu\\|jmickey@vt.edu" codemac)))
 
   (setq send-mail-function 'smtpmail-multi-send-it)
@@ -2756,11 +2757,13 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
   (defun cm/org-set-agenda ()
     (interactive)
     (setq org-agenda-custom-commands
-        `(("d" "Full Day Agenda"
+	`(("d" "Full Day Agenda"
            ((agenda)
             (tags "PROJECT/!WAITING" ,cm/org-sort-style)
             (todo "WAITING" ,cm/org-sort-style)
-            (tags-todo "-BLOCKED=\"t\"" ,cm/org-sort-style)))
+            (tags-todo "-BLOCKED=\"t\"" ,cm/org-sort-style))
+	   ((org-agenda-span 3)
+	    (org-agenda-start-day "-1d")))
           ("i" "Inbox"
            ((tags-todo "-{.*}")))
           ("n" "Next agenda"
@@ -2802,7 +2805,7 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
             (tags-todo "-PROJECT-BLOCKED=\"t\"/!-WAITING" ,(cm/review-header "Review Actions Lists"))
             (todo "DONE|NVM")
             (agenda "" (,@(cm/review-header "Review Previous & Upcoming Calendar Data")
-                        (org-agenda-skip-function nil)))
+			(org-agenda-skip-function nil)))
             (todo "WAITING" ,(cm/review-header "Review Waiting For List"))
             (tags-todo "PROJECT" ,(cm/review-header "Review Projects and Larger Outcomes"))
             (tags-todo "noop" ,(cm/review-header "Review Relevant Checklists"))
@@ -2811,7 +2814,7 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
             (tags-todo "noop" ,(cm/review-section "Get Creative!"))
             (tags-todo "noop" ,(cm/review-header "Review Someday/Maybe List"))
             (tags-todo "noop" ,(cm/review-header "Empty your head!")))
-  
+
            ((org-agenda-span 22)
             (org-agenda-start-day ,(concat "-" (number-to-string (cm/days-back-to-monday)) "d")))
           ("x" "Tasks" ((tags-todo "-BLOCKED=\"t\""
@@ -2928,15 +2931,15 @@ it the normal way.
   (setq org-mobile-directory "~/org/.mobileorg-staging")
   (add-hook 'org-mobile-post-push-hook
             (lambda ()
-              (shell-command "cd $HOME/org/.mobileorg-staging && echo 'mput *' | cadaver https://dav.messagingengine.com/codemac.fastmail.com/files/org")))
+              (shell-command "pushorg")))
 
   (add-hook 'org-mobile-pre-pull-hook
             (lambda ()
               (progn
                 (shell-command "cd $HOME/org/.mobileorg-staging && find . -type f -exec rm '{}' ';'")
-                (shell-command "cd $HOME/org/.mobileorg-staging && echo 'mget *' | cadaver https://dav.messagingengine.com/codemac.fastmail.com/files/org"))))
+                (shell-command "pullorg"))))
   (add-hook 'org-mobile-post-pull-hook
-            (lambda () (shell-command "cd $HOME/org/.mobileorg-staging && echo 'put mobileorg.org' | cadaver https://dav.messagingengine.com/codemac.fastmail.com/files/org &")))
+            (lambda () (shell-command "cd $HOME/org/.mobileorg-staging && curl -n -T mobileorg.org https://dav.messagingengine.com/codemac.fastmail.com/files/org/mobileorg.org &")))
 
 #+end_src
 
@@ -3301,15 +3304,24 @@ THIS WAS WAY OVER THE TOP. We can just use =org-search-view=.
   ;; org capture!
   (setq org-directory "~/org")
   (setq org-default-notes-file (concat org-directory "/gtd.org"))
+  (setq org-board-capture-file (concat org-directory "/_notes/www.org"))
   (define-key global-map "\C-cr" 'org-capture)
   (setq org-capture-templates
-        `(("t" "Todo" entry (file+headline "~/org/gtd.org" "Inbox") "* TODO %?\n  %U\n  %i\n  %a" :prepend t)
+	`(("t" "Todo" entry (file+headline "~/org/gtd.org" "Inbox") "* TODO %?\n  %U\n  %i\n  %a" :prepend t)
           ("j" "Journal" entry (file ,(format-time-string "~/org/_editorial/%Y.%m.org")) "* %U %?\n\n  %i\n  %a" :prepend nil)
           ("c" "Add note to currently clocked task" entry (clock) "* %U %?\n%a\n\n%i")
           ("n" "Timed Notes" entry (file ,(format-time-string "~/org/_notes/%Y.org")) "* %U %?\n\n  %i\n  %a" :prepend nil)
-          ("w" "Work capture" entry (file "~/org/pure.org") "* %U %?\n\n  %i\n  %a" :prepend nil)
+          ("w" "Work capture" entry (file "~/org/work.org") "* %U %?\n\n  %i\n  %a" :prepend nil)
           ("l" "Life Fitness" table-line (file+headline "~/org/fitness.org" "Fitness") ,(concat (format-time-string "| %Y.%m.%d-%H:%M |") " %^{Weight} | | %^{RHR} |") :table-line-pos "II-1")
-          ("x" "org-capture" entry (file+headline "~/org/_notes/www.org" "Archived Content") "* %^{Title}p: %:description\n\n  Source: %U %c\n\n  %i")))
+          ("x" "org-capture" entry (file "~/org/_notes/www.org") "* %U %:description\n  :PROPERTIES:\n  :URL: %:link\n  :END:\n\n")))
+
+  (defun cm/org-board-dl-hook ()
+    (when (equal (buffer-name)
+		 (concat "CAPTURE-" org-board-capture-file))
+      (org-board-archive)))
+
+  (add-hook 'org-capture-before-finalize-hook 'cm/org-board-dl-hook)
+
 
   (defun gtd ()
     (interactive)
@@ -4396,4 +4408,10 @@ Start a server if it's not started, and I'm not root.
       (server-start)))
 
   (add-hook 'server-visit-hook 'raise-frame)
+  (defun cm/raise-frame-and-give-focus ()
+    (when window-system
+      (raise-frame)
+      (x-focus-frame (selected-frame))
+      (set-mouse-pixel-position (selected-frame) 4 4)))
+  (add-hook 'server-switch-hook 'cm/raise-frame-and-give-focus)
 #+end_src
