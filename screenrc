@@ -26,7 +26,7 @@ bind ^v version
 
 #caption splitonly
 #caption always "%{+b bw}[%n:%t] %{-b kw} %= %?%-Lw%?%{+b kb}[%n:%t]%?(%u)%?%{-b kw}%?%+Lw%?"
-caption always "%{= kb}[ %{G}%H::$USER %{b}][ %=%{w}%?%-Lw%?%{b}(%{W}%n*%f %t%?(%u)%?%{b})%{w}%?%+Lw%?%= %{b}][%{kB} %Y.%m.%d %{kW}%0c %{kb}]"
+caption always "%{= kb}[ %{G}%H::$USER %{b}][ %=%{w}%?%-Lw%?%{b}(%{W}%n*%f %t%?(%u)%?%{b})%{w}%?%+Lw%?%= %{b}][%{kB} %Y-%m-%d %{kW}%0c %{kb}]"
 #backtick 1 5 5 $HOME/bin/wifinfo
 #backtick 2 0 0 $HOME/bin/net_txrx
 #backtick 3 0 0 $HOME/bin/batinfo

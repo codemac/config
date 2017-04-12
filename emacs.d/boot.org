@@ -38,6 +38,7 @@ configured manually, as detection can lead to other trust bugs.
     ((string-prefix-p "novaria" system-name) "/etc/ssl/certs/ca-certificates.crt")
     ((string-prefix-p "neah" system-name) "/etc/ssl/certs/ca-certificates.crt")
     ((string-prefix-p "jmickey-glaptop0" system-name) "/etc/ssl/certs/ca-certificates.crt")
+    ((string-prefix-p "manatee" system-name) "/etc/ssl/certs/ca-certificates.crt")
     (t (error "No tls trust set for this host! Add exception or find cert.pem you trust"))))
 #+end_src
 
@@ -1872,9 +1873,9 @@ My C settings.
     (helm-gtags-mode)
     (setq fill-column 90))
 
-  (add-hook 'c++-mode-hook 'cm/iridium-c-hook)
-  (add-hook 'cc-mode-hook 'cm/iridium-c-hook)
-  (add-hook 'c-mode-hook 'cm/iridium-c-hook)
+  (add-hook 'c++-mode-hook 'cm/work-c-hook)
+  (add-hook 'cc-mode-hook 'cm/work-c-hook)
+  (add-hook 'c-mode-hook 'cm/work-c-hook)
 
   (defun mars-c-hook ()
     (interactive)
@@ -2062,7 +2063,7 @@ No seriously, I wrote lots of Ruby.
     :END:
 Thank you Britt.
 #+begin_src emacs-lisp
-  (require 'gtags-autoloads)
+;  (require 'gtags-autoloads)
   
   (defun my-gtags-settings ()
     "Settings for gtags."
@@ -2119,8 +2120,8 @@ Thank you Britt.
     (define-key gtags-mode-map [M-mouse-2] 'my-gtags-find-this-file)
   )
   
-  (eval-after-load "gtags"
-    '(my-gtags-settings))
+ ; (eval-after-load "gtags"
+  ;  '(my-gtags-settings))
 #+end_src
 *** Android
     :PROPERTIES:
@@ -2713,21 +2714,24 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
 - =d= :: calendar
 - =i= :: inbox (anything not tagged)
 - =n= :: "next" agenda (really, just super flagged items I need to
-     look into
+         look into
 - =r= :: Review commands, currently there is 'r d' for review a day
-     and 'r w' for review a week. These hopefully will get much more
-     sophisticated.
+         and 'r w' for review a week. These hopefully will get much
+         more sophisticated.
 - =p= :: Projects list. The projects list in GTD is one of the most
-     important lists, so keeping this up to date and reviewed is very
-     important. I'd love to add something like 'levels of focus'
-     agendas for each, but it's just not a practical way to review
-     things that are done so infrequently.
+         important lists, so keeping this up to date and reviewed is
+         very important. I'd love to add something like 'levels of
+         focus' agendas for each, but it's just not a practical way to
+         review things that are done so infrequently.
 - =c= :: Context commands, there are several, but the highlights are
-     they use the *same* keys as the relevant tagging short keys for
-     filing, so my brain uses them easily. I can finally move
-     =INTERNET= from =v= to =i= with this change, but the muscle
-     memory is already set, so we'll have to wait and see on that one.
-
+         they use the *same* keys as the relevant tagging short keys
+         for filing, so my brain uses them easily. I can finally move
+         =INTERNET= from =v= to =i= with this change, but the muscle
+         memory is already set, so we'll have to wait and see on that
+         one.
+- =x= :: Checklist agenda, these are largely for pre-flight checklists
+         that I maintain. Not sure how to integrate them into my whole
+         emacs / org-mode flow just yet.
 #+begin_src emacs-lisp
   (setq cm/org-sort-style '((org-agenda-skip-function '(org-agenda-skip-entry-if 'scheduled))
                             (org-agenda-sorting-strategy
@@ -2814,15 +2818,27 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
             (tags-todo "noop" ,(cm/review-section "Get Creative!"))
             (tags-todo "noop" ,(cm/review-header "Review Someday/Maybe List"))
             (tags-todo "noop" ,(cm/review-header "Empty your head!")))
-
            ((org-agenda-span 22)
             (org-agenda-start-day ,(concat "-" (number-to-string (cm/days-back-to-monday)) "d")))
           ("x" "Tasks" ((tags-todo "-BLOCKED=\"t\""
                                    ((org-agenda-overriding-header "Tasks sorted by TIMESTAMP_IA")
                                     (org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
                                     (org-agenda-sorting-strategy '(user-defined-up))))))
+	   ((org-agenda-span 22)
+            (org-agenda-start-day ,(concat "-" (number-to-string (cm/days-back-to-monday)) "d"))))
+	  ("xx" "All Checklists"
+	   ((tags "+CATEGORY=\"ckl\""))
+	   ((org-agenda-search-view-max-outline-level 2)))
+	  ("xd" "Daily Checklists"
+	   ((tags "DAILY+CATEGORY=\"ckl\""))
+	   ((org-agenda-search-view-max-outline-level 2)))
+	  
+          ;; ("x" "Tasks" ((tags-todo "-BLOCKED=\"t\""
+          ;;                          ((org-agenda-overriding-header "Tasks sorted by TIMESTAMP_IA")
+          ;;                           (org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
+          ;;                           (org-agenda-sorting-strategy '(user-defined-up))))))
           ("Z" "Receipt Agenda"
-           ((org-receipt-agenda)))))))
+           ((org-receipt-agenda))))))
 
   (defun cm/days-back-to-monday ()
     (+ 7 (calendar-day-of-week (calendar-gregorian-from-absolute (org-today)))))
