@@ -2819,24 +2819,13 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
             (tags-todo "noop" ,(cm/review-header "Review Someday/Maybe List"))
             (tags-todo "noop" ,(cm/review-header "Empty your head!")))
            ((org-agenda-span 22)
-            (org-agenda-start-day ,(concat "-" (number-to-string (cm/days-back-to-monday)) "d")))
-          ("x" "Tasks" ((tags-todo "-BLOCKED=\"t\""
-                                   ((org-agenda-overriding-header "Tasks sorted by TIMESTAMP_IA")
-                                    (org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
-                                    (org-agenda-sorting-strategy '(user-defined-up))))))
-	   ((org-agenda-span 22)
             (org-agenda-start-day ,(concat "-" (number-to-string (cm/days-back-to-monday)) "d"))))
 	  ("xx" "All Checklists"
-	   ((tags "+CATEGORY=\"ckl\""))
+	   ((tags "CHECKLIST"))
 	   ((org-agenda-search-view-max-outline-level 2)))
 	  ("xd" "Daily Checklists"
-	   ((tags "DAILY+CATEGORY=\"ckl\""))
+	   ((tags "DAILY+CHECKLIST"))
 	   ((org-agenda-search-view-max-outline-level 2)))
-	  
-          ;; ("x" "Tasks" ((tags-todo "-BLOCKED=\"t\""
-          ;;                          ((org-agenda-overriding-header "Tasks sorted by TIMESTAMP_IA")
-          ;;                           (org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
-          ;;                           (org-agenda-sorting-strategy '(user-defined-up))))))
           ("Z" "Receipt Agenda"
            ((org-receipt-agenda))))))
 
@@ -2995,23 +2984,24 @@ or something else. For now, it's manual.
      :END:
 #+begin_src emacs-lisp
   (setq org-tag-alist '((:startgroup)
-                        ("HOME" . ?h)
-                        ("WORK" . ?w)
-                        ("ERRAND" . ?r)
-                        (:endgroup)
-                        ("COMPUTER" . ?c)
-                        ("INTERNET" . ?v)
-                        ("PHONE" . ?f)
-                        ("EMAIL" . ?m)
-                        ("OUTREACH" . ?h)
-                        ("DISPATCH" . ?d)
-                        ("PROJECT" . ?p)))
+			("HOME" . ?h)
+			("WORK" . ?w)
+			("ERRAND" . ?r)
+			(:endgroup)
+			("COMPUTER" . ?c)
+			("INTERNET" . ?v)
+			("PHONE" . ?f)
+			("EMAIL" . ?m)
+			("OUTREACH" . ?h)
+			("DISPATCH" . ?d)
+			("PROJECT" . ?p)
+			("CHECKLIST" . ?x))
 
   (setq org-log-done '(note))
   (setq org-log-into-drawer t) ; record state changes into LOGBOOK
   (setq org-todo-keywords
-        '((sequence "TODO(t@)" "NEXT(n!)" "STARTED(s)" "WAITING(w@)" "|" "DONE(d@)" "NVM(v@)")))
-  (setq org-tags-exclude-from-inheritance '("PROJECT"))
+	'((sequence "TODO(t@)" "NEXT(n!)" "STARTED(s)" "WAITING(w@)" "|" "DONE(d@)" "NVM(v@)")))
+  (setq org-tags-exclude-from-inheritance '("PROJECT" "CHECKLIST"))
   ;(setq org-agenda-category-icon-alist
   ;      '(("netapp" "" nil t)
 #+end_src
