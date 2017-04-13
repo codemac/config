@@ -2995,7 +2995,7 @@ or something else. For now, it's manual.
 			("OUTREACH" . ?h)
 			("DISPATCH" . ?d)
 			("PROJECT" . ?p)
-			("CHECKLIST" . ?x))
+			("CHECKLIST" . ?x)))
 
   (setq org-log-done '(note))
   (setq org-log-into-drawer t) ; record state changes into LOGBOOK
