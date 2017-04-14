@@ -2955,28 +2955,29 @@ but I don't know what it would do if I was in the middle of refiling
 or something else. For now, it's manual.
 
 #+begin_src emacs-lisp
-  (defun cm/get-inbox-pos ()
-    (save-excursion
-      (with-current-buffer "gtd.org"
-        (goto-char (point-min))
-        (re-search-forward "^\\* Inbox[        ]*$")
-        (move-beginning-of-line nil)
-        (point))))
+    (defun cm/get-inbox-pos ()
+      (save-excursion
+	(with-current-buffer "gtd.org"
+	  (goto-char (point-min))
+	  (re-search-forward "^\\* Inbox[        ]*$")
+	  (move-beginning-of-line nil)
+	  (point))))
 
-  (defun cm/org-sync ()
-    (interactive)
-    (save-excursion
-      (org-save-all-org-buffers)
-      (org-mobile-pull)
-      (with-current-buffer "from-mobile.org"
-        (if (equalp (point-max) (point-min))
-            (message "Nothing to move in from-mobile.org, pushing current files.")
-          (goto-char (point-max))
-          (push-mark (point-min) t t)
-          (org-refile nil nil `("gtd.org/Inbox" ,(buffer-file-name (get-buffer "gtd.org")) "" ,(cm/get-inbox-pos)))
-        (org-save-all-org-buffers))
-      (org-mobile-push)
-      (org-save-all-org-buffers))))
+    (defun cm/org-sync ()
+      (interactive)
+      (save-excursion
+	(org-save-all-org-buffers)
+	(org-mobile-pull)
+	(with-current-buffer "from-mobile.org"
+	  (if (equalp (point-max) (point-min))
+              (message "Nothing to move in from-mobile.org, pushing current files.")
+            (goto-char (point-max))
+            (push-mark (point-min) t t)
+            (org-refile nil nil `("gtd.org/Inbox" ,(buffer-file-name (get-buffer "gtd.org")) "" ,(cm/get-inbox-pos)))
+	  (org-save-all-org-buffers))
+	(org-mobile-push)
+	(org-save-all-org-buffers)))
+      (message "cm/org-sync completed"))
 #+end_src
 **** Tags and todo keywords
      :PROPERTIES:
