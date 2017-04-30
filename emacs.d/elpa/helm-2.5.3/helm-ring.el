@@ -37,10 +37,12 @@
 
 (defcustom helm-kill-ring-max-offset 400
   "Max number of chars displayed per candidate in kill-ring browser.
-If nil, don't truncate candidate, show all.
+When `t', don't truncate candidate, show all.
 By default it is approximatively the number of bits contained in five lines
-of 80 chars each i.e 80*5."
-  :type '(choice (const :tag "Disabled" nil)
+of 80 chars each i.e 80*5.
+Note that if you set this to nil multiline will be disabled, i.e you
+will not have anymore separators between candidates."
+  :type '(choice (const :tag "Disabled" t)
           (integer :tag "Max candidate offset"))
   :group 'helm-ring)
 
@@ -51,7 +53,8 @@ of 80 chars each i.e 80*5."
 
 (defcustom helm-kill-ring-actions
   '(("Yank" . helm-kill-ring-action-yank)
-    ("Delete" . helm-kill-ring-action-delete))
+    ("Delete" . helm-kill-ring-action-delete)
+    ("Append" . helm-kill-ring-append))
   "List of actions for kill ring source."
   :group 'helm-ring
   :type '(alist :key-type string :value-type function))
@@ -66,6 +69,7 @@ of 80 chars each i.e 80*5."
     (define-key map (kbd "M-y")     'helm-next-line)
     (define-key map (kbd "M-u")     'helm-previous-line)
     (define-key map (kbd "M-D")     'helm-kill-ring-delete)
+    (define-key map (kbd "C-M-w")   'helm-kill-ring-run-append)
     (define-key map (kbd "C-]")     'helm-kill-ring-toggle-truncated)
     (define-key map (kbd "C-c C-k") 'helm-kill-ring-kill-selection)
     map)
@@ -73,7 +77,9 @@ of 80 chars each i.e 80*5."
 
 (defvar helm-source-kill-ring
   (helm-build-sync-source "Kill Ring"
-    :init (lambda () (helm-attrset 'last-command last-command))
+    :init (lambda ()
+            (helm-attrset 'last-command last-command)
+            (helm-attrset 'multiline helm-kill-ring-max-offset))
     :candidates #'helm-kill-ring-candidates
     :filtered-candidate-transformer #'helm-kill-ring-transformer
     :action 'helm-kill-ring-actions
@@ -82,7 +88,7 @@ of 80 chars each i.e 80*5."
     :persistent-help "DoNothing"
     :keymap helm-kill-ring-map
     :migemo t
-    :multiline t)
+    :multiline 'helm-kill-ring-max-offset)
   "Source for browse and insert contents of kill-ring.")
 
 (defun helm-kill-ring-candidates ()
@@ -92,30 +98,11 @@ of 80 chars each i.e 80*5."
         collect kill))
 
 (defun helm-kill-ring-transformer (candidates _source)
-  "Display only the `helm-kill-ring-max-lines-number' lines of candidate."
+  "Ensure CANDIDATES are not read-only."
   (cl-loop for i in candidates
            when (get-text-property 0 'read-only i)
            do (set-text-properties 0 (length i) '(read-only nil) i)
-           collect (cons (helm-kill-ring--get-truncated-candidate i) i)))
-
-(defun helm-kill-ring--get-truncated-candidate (candidate)
-  "Truncate CANDIDATE when its length is > than `helm-kill-ring-max-offset'."
-  (with-temp-buffer
-    (insert candidate)
-    (goto-char (point-min))
-    (if (and helm-kill-ring-max-offset
-             (> (buffer-size) helm-kill-ring-max-offset))
-        (let ((end-str "[...]"))
-          (concat
-           (buffer-substring
-            (point)
-            (save-excursion
-              (forward-char helm-kill-ring-max-offset)
-              (setq end-str (if (looking-at "\n")
-                                end-str (concat "\n" end-str)))
-              (point)))
-           end-str))
-        (buffer-string))))
+           collect i))
 
 (defvar helm-kill-ring--truncated-flag nil)
 (defun helm-kill-ring-toggle-truncated ()
@@ -126,12 +113,11 @@ of 80 chars each i.e 80*5."
     (let* ((cur-cand (helm-get-selection))
            (presel-fn (lambda ()
                         (helm-kill-ring--preselect-fn cur-cand))))
-      (let ((helm-kill-ring-max-offset
-             (if helm-kill-ring--truncated-flag
-                 15000000
-                 (default-toplevel-value
-                     'helm-kill-ring-max-offset))))
-        (helm-update presel-fn)))))
+      (helm-attrset 'multiline
+                    (if helm-kill-ring--truncated-flag
+                        15000000
+                        helm-kill-ring-max-offset))
+        (helm-update presel-fn))))
 (put 'helm-kill-ring-toggle-truncated 'helm-only t)
 
 (defun helm-kill-ring-kill-selection ()
@@ -158,34 +144,36 @@ Same as `helm-kill-selection-and-quit' called with a prefix arg."
 If this action is executed just after `yank',
 replace with STR as yanked string."
   (with-helm-current-buffer
-    (setq kill-ring (delete str kill-ring))
-    ;; Adding a `delete-selection' property
-    ;; to `helm-kill-ring-action' is not working
-    ;; because `this-command' will be `helm-maybe-exit-minibuffer',
-    ;; so use this workaround (Issue #1520).
-    (when (and (region-active-p) delete-selection-mode)
-      (delete-region (region-beginning) (region-end)))
-    (if (not (eq (helm-attr 'last-command helm-source-kill-ring) 'yank))
-        (insert-for-yank str)
-      ;; from `yank-pop'
-      (let ((inhibit-read-only t)
-            (before (< (point) (mark t))))
-        (if before
-            (funcall (or yank-undo-function 'delete-region) (point) (mark t))
-          (funcall (or yank-undo-function 'delete-region) (mark t) (point)))
-        (setq yank-undo-function nil)
-        (set-marker (mark-marker) (point) helm-current-buffer)
-        (insert-for-yank str)
-        ;; Set the window start back where it was in the yank command,
-        ;; if possible.
-        (set-window-start (selected-window) yank-window-start t)
-        (when before
-          ;; This is like exchange-point-and-mark, but doesn't activate the mark.
-          ;; It is cleaner to avoid activation, even though the command
-          ;; loop would deactivate the mark because we inserted text.
-          (goto-char (prog1 (mark t)
-                       (set-marker (mark-marker) (point) helm-current-buffer))))))
-    (kill-new str)))
+    (unwind-protect
+         (progn
+           (setq kill-ring (delete str kill-ring))
+           ;; Adding a `delete-selection' property
+           ;; to `helm-kill-ring-action' is not working
+           ;; because `this-command' will be `helm-maybe-exit-minibuffer',
+           ;; so use this workaround (Issue #1520).
+           (when (and (region-active-p) delete-selection-mode)
+             (delete-region (region-beginning) (region-end)))
+           (if (not (eq (helm-attr 'last-command helm-source-kill-ring) 'yank))
+               (insert-for-yank str)
+               ;; from `yank-pop'
+               (let ((inhibit-read-only t)
+                     (before (< (point) (mark t))))
+                 (if before
+                     (funcall (or yank-undo-function 'delete-region) (point) (mark t))
+                     (funcall (or yank-undo-function 'delete-region) (mark t) (point)))
+                 (setq yank-undo-function nil)
+                 (set-marker (mark-marker) (point) helm-current-buffer)
+                 (insert-for-yank str)
+                 ;; Set the window start back where it was in the yank command,
+                 ;; if possible.
+                 (set-window-start (selected-window) yank-window-start t)
+                 (when before
+                   ;; This is like exchange-point-and-mark, but doesn't activate the mark.
+                   ;; It is cleaner to avoid activation, even though the command
+                   ;; loop would deactivate the mark because we inserted text.
+                   (goto-char (prog1 (mark t)
+                                (set-marker (mark-marker) (point) helm-current-buffer)))))))
+      (kill-new str))))
 (define-obsolete-function-alias 'helm-kill-ring-action 'helm-kill-ring-action-yank "2.4.0")
 
 (defun helm-kill-ring-action-delete (_candidate)
@@ -202,6 +190,19 @@ This is a command for `helm-kill-ring-map'."
   (with-helm-alive-p
     (helm-exit-and-execute-action 'helm-kill-ring-action-delete)))
 
+(defun helm-kill-ring-append (_candidate)
+  "Yank concatenated marked candidates."
+  (let ((marked (helm-marked-candidates)))
+    (helm-kill-ring-action-yank
+     (cl-loop for cand in marked
+              for sep = (if (string-match "\n\\'" cand) "" "\n")
+              concat (concat cand sep)))))
+
+(defun helm-kill-ring-run-append ()
+  "Yank concatenated marked candidates."
+  (interactive)
+  (with-helm-alive-p
+    (helm-exit-and-execute-action 'helm-kill-ring-append)))
 
 ;;;; <Mark ring>
 ;; DO NOT use these sources with other sources use
@@ -214,6 +215,7 @@ This is a command for `helm-kill-ring-map'."
     (goto-char pos)
     (forward-line 0)
     (let ((line (car (split-string (thing-at-point 'line) "[\n\r]"))))
+      (remove-text-properties 0 (length line) '(read-only) line)
       (if (string= "" line)
           "<EMPTY LINE>"
         line))))
@@ -266,6 +268,7 @@ This is a command for `helm-kill-ring-map'."
                         (guard (not (string-match-p "\\`\n?\\'" line))))
                    (car (split-string line "[\n\r]")))
                   (_ "<EMPTY LINE>"))))
+      (remove-text-properties 0 (length line) '(read-only) line)
       (format "%7d:%s:    %s"
               (line-number-at-pos) (marker-buffer marker) line))))
 
@@ -404,35 +407,33 @@ the `global-mark-ring' after each new visit."
 
 (defun helm-register-action-transformer (actions register-and-functions)
   "Decide actions by the contents of register."
-  (cl-loop with transformer-actions = nil
-           with func-actions =
-        '((insert-register
-           "Insert Register" .
-           (lambda (c) (insert-register (car c))))
-          (jump-to-register
-           "Jump to Register" .
-           (lambda (c) (jump-to-register (car c))))
-          (append-to-register
-           "Append Region to Register" .
-           (lambda (c) (append-to-register
-                        (car c) (region-beginning) (region-end))))
-          (prepend-to-register
-           "Prepend Region to Register" .
-           (lambda (c) (prepend-to-register
-                        (car c) (region-beginning) (region-end))))
-          (increment-register
-           "Increment Prefix Arg to Register" .
-           (lambda (c) (increment-register
-                        helm-current-prefix-arg (car c))))
-          (undo-tree-restore-state-from-register
-           "Restore Undo-tree register" .
-           (lambda (c) (and (fboundp 'undo-tree-restore-state-from-register)
-                            (undo-tree-restore-state-from-register (car c))))))
-        for func in (cdr register-and-functions)
-        for cell = (assq func func-actions)
-        when cell
-        do (push (cdr cell) transformer-actions)
-        finally return (append (nreverse transformer-actions) actions)))
+  (cl-loop with func-actions =
+           '((insert-register
+              "Insert Register" .
+              (lambda (c) (insert-register (car c))))
+             (jump-to-register
+              "Jump to Register" .
+              (lambda (c) (jump-to-register (car c))))
+             (append-to-register
+              "Append Region to Register" .
+              (lambda (c) (append-to-register
+                           (car c) (region-beginning) (region-end))))
+             (prepend-to-register
+              "Prepend Region to Register" .
+              (lambda (c) (prepend-to-register
+                           (car c) (region-beginning) (region-end))))
+             (increment-register
+              "Increment Prefix Arg to Register" .
+              (lambda (c) (increment-register
+                           helm-current-prefix-arg (car c))))
+             (undo-tree-restore-state-from-register
+              "Restore Undo-tree register" .
+              (lambda (c) (and (fboundp 'undo-tree-restore-state-from-register)
+                               (undo-tree-restore-state-from-register (car c))))))
+           for func in (cdr register-and-functions)
+           when (assq func func-actions)
+           collect (cdr it) into transformer-actions
+           finally return (append transformer-actions actions)))
 
 ;;;###autoload
 (defun helm-mark-ring ()
