@@ -3346,9 +3346,19 @@ THIS WAS WAY OVER THE TOP. We can just use =org-search-view=.
 Also - remember to give everything an id number. This will really help
 any of my plans to get org mode todos into easier to consume formats.
 #+begin_src emacs-lisp
-(add-hook 'org-capture-prepare-finalize-hook 'org-id-get-create)
+  (add-hook 'org-capture-prepare-finalize-hook 'org-id-get-create)
 #+end_src
 
+**** Merge handling
+When I open a buffer in SMerge mode, org has everything all folded up,
+and it becomes very difficult to see where things went. For ediff,
+diff, and smerge modes we should really not have any folding at all.
+
+#+begin_src emacs-lisp
+  (add-hook 'ediff-prepare-buffer-hook #'outline-show-all)
+  (add-hook 'smerge-mode-hook #'outline-show-all)
+  (add-hook 'diff-mode-hook #'outline-show-all)
+#+end_src
 **** Appt Reminders
      :PROPERTIES:
      :ID:       ac746ebc-a17c-443d-9430-876cd1330c57
