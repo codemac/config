@@ -2801,7 +2801,7 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
            (;; GET CLEAR
             (tags-todo "noop" ,(cm/review-section "Get Clear!"))
             (tags-todo "noop" ,(cm/review-header "Collect Loose Papers and Materials"))
-            (tags-todo "noop" ,(cm/review-header "Get IN to ZERO"))
+            (tags-todo "-{.*}" ,(cm/review-header "Get IN to ZERO"))
             (tags-todo "noop" ,(cm/review-header "Empty Your Head!"))
 
             ;; GET CURRENT
