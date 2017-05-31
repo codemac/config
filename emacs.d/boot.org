@@ -2754,8 +2754,7 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
   (defun cm/org-ctx-agenda (key ctx title)
     `(,(concat "c" key) ,title
       ((tags-todo ,(concat ctx "-PROJECT-BLOCKED=\"t\"/!-WAITING"))
-       (tags ,(concat ctx "+PROJECT"))
-       (tags ,ctx))
+       (tags ,(concat ctx "+PROJECT")))
       ,cm/org-sort-style))
 
   (defun cm/org-set-agenda ()
