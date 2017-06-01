@@ -1,0 +1,98 @@
+2017-05-03  Thierry Volpiatto  <thierry.volpiatto@gmail.com>
+
+	Merge commit '54a1bb3f7d40a7f37a63444fdefcec51155a0e90'
+
+2017-04-30  Thierry Volpiatto  <thierry.volpiatto@gmail.com>
+
+	Merge commit 'ccba4b8381dfc7b39f446a6441d0bc32185866c5'
+
+2017-02-19  Thierry Volpiatto  <thierry.volpiatto@gmail.com>
+
+	Merge commit 'bd11e73689b7fabb82ea8223762039ced33c6199'
+
+2016-11-03  Thierry Volpiatto  <thierry.volpiatto@gmail.com>
+
+	Merge commit '46bfe80d1d0c0ba6cf1a4593b55af11cd943c697'
+
+2016-11-01  Thierry Volpiatto  <thierry.volpiatto@gmail.com>
+
+	Merge commit '4840be0f3a82f49157239014a09c7001b7816316'
+
+2016-10-11  Thierry Volpiatto  <thierry.volpiatto@gmail.com>
+
+	Merge commit 'b6898b8e7945609c3341ead4ed074bdb15a41e40'
+
+2016-08-01  Mario Lang	<mlang@delysid.org>
+
+	Use user-emacs-directory.
+
+2016-07-11  Paul Eggert	 <eggert@cs.ucla.edu>
+
+	Fix some quoting problems in doc strings
+
+	Most of these are minor issues involving, e.g., quoting `like this' 
+	instead of 'like this'.	 A few involve escaping ` and ' with a preceding
+	\= when the characters should not be turned into curved single quotes.
+
+2016-05-19  Thierry Volpiatto  <thierry.volpiatto@gmail.com>
+
+	Merge commit '744aeaaff9c0bc0732ceee98623d6d1a932bc604'
+
+2016-05-18  Thierry Volpiatto  <thierry.volpiatto@gmail.com>
+
+	Remove async-pkg.el file added by error during merge.
+
+	* packages/async/async-pkg.el: Deleted.
+
+2016-05-18  Thierry Volpiatto  <thierry.volpiatto@gmail.com>
+
+	Merge commit '0e327f72bdffc5bc4a1fbc34a8da1b7066e819b3'
+
+2016-01-08  Thierry Volpiatto  <thierry.volpiatto@gmail.com>
+
+	Declare package-alist in async-bytecomp..
+
+2016-01-08  Thierry Volpiatto  <thierry.volpiatto@gmail.com>
+
+	Parse also `package-alist` when getting dependencies (#58).
+
+	* async-bytecomp.el (async-bytecomp--get-package-deps): Try
+	`package-archive-contents` and also `package-alist` in case pkg no more
+	present in `package-archive-contents`.
+
+2016-01-06  Andreas Schwab  <schwab@linux-m68k.org>
+
+	Remove packages/async/async-pkg.el
+
+2016-01-06  Andreas Schwab  <schwab@linux-m68k.org>
+
+	Properly handle unibyte strings and circular data
+
+		* packages/async/async.el (async--insert-sexp): Bind
+	print-escape-nonascii and print-circle.
+
+2016-01-06  Eli Zaretskii  <eliz@gnu.org>
+
+	Don't rely on UTF-8 locale when talking to subordinate Emacs
+
+	* packages/async/async.el (async--receive-sexp)
+	(async-batch-invoke): Bind coding-system-for-write to utf-8-unix.
+	(async-start): Bind coding-system-for-read to utf-8-unix.
+
+2016-01-06  John Wiegley  <johnw@newartisans.com>
+
+	Update version of async.el to 1.6
+
+2016-01-05  John Wiegley  <johnw@newartisans.com>
+
+	Transfer license for async to the FSF, add version 1.0 tag
+
+2015-12-30  Michael Albinus  <michael.albinus@gmx.de>
+
+	Add 'packages/async/' from commit
+	'2a40355c3328e57102a9648c9108e19d67727dc1'
+
+	git-subtree-dir: packages/async git-subtree-mainline:
+	81b0ef76e85360e3f20e71195bf0db94183ecc04 git-subtree-split:
+	2a40355c3328e57102a9648c9108e19d67727dc1
+
