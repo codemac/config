@@ -2848,7 +2848,6 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
             '("+PROJECT/-NVM-DONE-WAITING" ("NEXT" "TODO")))
 
   (add-to-list 'auto-mode-alist '("\\.org'$" . org-mode))
-  (setq org-return-follows-link nil)
   (global-set-key (kbd "C-c l") 'org-store-link)
   (global-set-key (kbd "C-c a") 'cm/org-load-agenda)
   (setq org-fontify-done-headline t)
@@ -2865,7 +2864,7 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
 
   (setq org-log-done t)
   (setq org-hide-leading-stars t)
-  (setq org-return-follows-link t)
+  (setq org-return-follows-link nil)
   (setq org-agenda-include-all-todo t)
   (setq org-agenda-span 'week)
   (setq org-agenda-include-diary t)
