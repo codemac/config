@@ -29,7 +29,7 @@
     (notmuch-hello-insert-saved-searches notmuch-hello-insert-search notmuch-hello-insert-inbox notmuch-hello-insert-alltags notmuch-hello-insert-recent-searches notmuch-hello-insert-footer)))
  '(package-selected-packages
    (quote
-    (org-board org-projectile zenburn-theme xelb xcscope wgrep vlf use-package tup-mode spinner solarized-theme smtpmail-multi slime simple-mpc rust-mode ruby-electric queue puml-mode protobuf-mode pretty-mode perspective pcmpl-git paredit pandoc-mode org-plus-contrib nyan-mode nrepl muse multiple-cursors mode-compile minimap mingus markdown-mode mark-multiple magit lua-mode load-theme-buffer-local js2-mode jabber inf-ruby impatient-mode identica-mode iasm-mode helm-projectile-all helm-projectile helm-gtags helm-go-package helm-c-moccur haskell-mode gtags go-eldoc go-autocomplete geiser flycheck-tip fill-column-indicator f expand-region evil ess-smart-underscore ess-R-object-popup ess-R-data-view erc-image erc-hl-nicks epresent emms emagician-fix-spell-memory elfeed-org ein diffscuss-mode diff-hl d-mode command-frequency centered-window-mode buffer-move browse-kill-ring bbdb auctex ascope anything android-mode ace-jump-mode)))
+    (ivy org-board org-projectile zenburn-theme xelb xcscope wgrep vlf use-package tup-mode spinner solarized-theme smtpmail-multi slime simple-mpc rust-mode ruby-electric queue puml-mode protobuf-mode pretty-mode perspective pcmpl-git paredit pandoc-mode org-plus-contrib nyan-mode nrepl muse multiple-cursors mode-compile minimap mingus markdown-mode mark-multiple magit lua-mode load-theme-buffer-local js2-mode jabber inf-ruby impatient-mode identica-mode iasm-mode helm-projectile-all helm-projectile helm-gtags helm-go-package helm-c-moccur haskell-mode gtags go-eldoc go-autocomplete geiser flycheck-tip fill-column-indicator f expand-region evil ess-smart-underscore ess-R-object-popup ess-R-data-view erc-image erc-hl-nicks epresent emms emagician-fix-spell-memory elfeed-org ein diffscuss-mode diff-hl d-mode command-frequency centered-window-mode buffer-move browse-kill-ring bbdb auctex ascope anything android-mode ace-jump-mode)))
  '(protect-buffer-bury-p nil t)
  '(safe-local-variable-values
    (quote
@@ -46,7 +46,7 @@
      (yaml-indent-offset . 8)
      (after-save-hook archive-done-tasks))))
  '(smtpmail-queue-mail nil t)
- '(warning-suppress-types (quote ((undo discard-info))) t)
+ '(warning-suppress-types (quote ((undo discard-info))))
  '(yaml-indent-offset 8))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.

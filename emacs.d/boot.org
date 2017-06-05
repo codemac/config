@@ -559,22 +559,22 @@ For now we just check that the name is valid.
     (when (file-remote-p (buffer-file-name))
       (rename-buffer
        (format "%s:%s"
-               (file-remote-p (buffer-file-name) 'method)
-               (buffer-name)))))
+	       (file-remote-p (buffer-file-name) 'method)
+	       (buffer-name)))))
 
-  (add-hook 'find-file-hook
-            'cm/rename-tramp-buffer)
+  ;;(add-hook 'find-file-hook
+  ;;          'cm/rename-tramp-buffer)
 
   (defadvice find-file (around th-find-file activate)
     "Open FILENAME using tramp's sudo method if it's read-only."
     (let ((thefile (ad-get-arg 0)))
       (if (or (string-prefix-p "/etc" thefile)
-              (string-prefix-p "/boot" thefile))
-          (if (and (not (file-writable-p thefile))
-                   (y-or-n-p (concat "File "
-                                     thefile
-                                     " is read-only.  Open it as root? ")))
-              (cm/find-file-sudo thefile))))
+	      (string-prefix-p "/boot" thefile))
+	  (if (and (not (file-writable-p thefile))
+		   (y-or-n-p (concat "File "
+				     thefile
+				     " is read-only.  Open it as root? ")))
+	      (cm/find-file-sudo thefile))))
     ad-do-it)
 
   (defun cm/find-file-sudo (file)
@@ -1285,6 +1285,18 @@ sanity in many cases.
    :PROPERTIES:
    :ID:       2fbe45d4-05c6-4eec-98c4-4569aaacf9f5
    :END:
+*** Ivy
+The competitor to Helm. Supposedly simpler.. but I see it more like a
+Microsoft vs Linux situation. Luckily both are better than the Lisp vs
+C situation (they both chose lisp like adults).
+
+#+begin_src emacs-lisp
+  (use-package ivy
+    :config
+    (ivy-mode 1)
+    (setq ivy-use-virtual-buffers t)
+    (setq ivy-count-format ""))
+#+end_src
 *** Helm
     :PROPERTIES:
     :ID:       9e11b4e9-8161-41e8-8e1f-0dabd83a8145
@@ -1300,51 +1312,51 @@ Mostly lifted from https://tuhdo.github.io/helm-intro.html (note that
 this page is *STUPID* slow in eww)
 
 #+begin_src emacs-lisp
-  (use-package helm
-    :diminish helm-mode
-    :bind (("M-x" . helm-M-x)
-           ("M-y" . helm-show-kill-ring)
-           ("C-x b" . helm-mini)
-           ("C-x C-f" . helm-find-files)
-           ("C-h SPC" . helm-all-mark-rings))
-    :init
-    (require 'helm-config)
-    (global-set-key (kbd "C-c h") 'helm-command-prefix)
-    (when cm/using-rc
-        (setq helm-top-command "COLUNMS=%s top -b -n 1"))
+  ;; (use-package helm
+  ;;   :diminish helm-mode
+  ;;   :bind (("M-x" . helm-M-x)
+  ;;          ("M-y" . helm-show-kill-ring)
+  ;;          ("C-x b" . helm-mini)
+  ;;          ("C-x C-f" . helm-find-files)
+  ;;          ("C-h SPC" . helm-all-mark-rings))
+  ;;   :init
+  ;;   (require 'helm-config)
+  ;;   (global-set-key (kbd "C-c h") 'helm-command-prefix)
+  ;;   (when cm/using-rc
+  ;;       (setq helm-top-command "COLUNMS=%s top -b -n 1"))
 
-    (helm-mode 1)
-    :config
-    (setq helm-split-window-in-side-p t
-          helm-ff-file-name-history-use-recentf t
-          helm-ff-search-library-in-sexp t
-          helm-move-to-line-cycle-in-source t
-          helm-scroll-amount 8
-          helm-ff-file-name-history-use-recentf t
-          helm-man-or-woman-function 'woman)
-    (when (executable-find "curl")
-      (setq helm-google-suggest-use-curl-p t))
-    (delete helm-source-locate helm-for-files-preferred-list)
+  ;;   (helm-mode 1)
+  ;;   :config
+  ;;   (setq helm-split-window-in-side-p t
+  ;;         helm-ff-file-name-history-use-recentf t
+  ;;         helm-ff-search-library-in-sexp t
+  ;;         helm-move-to-line-cycle-in-source t
+  ;;         helm-scroll-amount 8
+  ;;         helm-ff-file-name-history-use-recentf t
+  ;;         helm-man-or-woman-function 'woman)
+  ;;   (when (executable-find "curl")
+  ;;     (setq helm-google-suggest-use-curl-p t))
+  ;;   (delete helm-source-locate helm-for-files-preferred-list)
 
-    ;; bindings I haven't figured out with :bind
-    (global-unset-key (kbd "C-x c"))
-    (define-key helm-map (kbd "<tab>") 'helm-execute-persistent-action)
-    (define-key helm-map (kbd "C-i") 'helm-execute-persistent-action)
-    (define-key helm-map (kbd "C-z")  'helm-select-action)
-    (global-set-key (kbd "C-c h o") 'helm-occur)
-    (global-set-key (kbd "C-c h x") 'helm-register))
+  ;;   ;; bindings I haven't figured out with :bind
+  ;;   (global-unset-key (kbd "C-x c"))
+  ;;   (define-key helm-map (kbd "<tab>") 'helm-execute-persistent-action)
+  ;;   (define-key helm-map (kbd "C-i") 'helm-execute-persistent-action)
+  ;;   (define-key helm-map (kbd "C-z")  'helm-select-action)
+  ;;   (global-set-key (kbd "C-c h o") 'helm-occur)
+  ;;   (global-set-key (kbd "C-c h x") 'helm-register))
 #+end_src
 
 I dislike helm grep immensely (super slow!) and I don't use =ack= /
 =ag= / etc. This disables =C-c p s <g,a,s>= and just does =C-c p s=
 like it used to.
 #+begin_src emacs-lisp
-  (use-package helm-projectile
-    :init
-    (setq projectile-completion-system 'helm)
-    (helm-projectile-on)
-    (define-key projectile-command-map [remap projectile-grep] nil)
-    (define-key projectile-command-map [remap helm-projectile-grep] 'projectile-grep))
+  ;; (use-package helm-projectile
+  ;;   :init
+  ;;   (setq projectile-completion-system 'helm)
+  ;;   (helm-projectile-on)
+  ;;   (define-key projectile-command-map [remap projectile-grep] nil)
+  ;;   (define-key projectile-command-map [remap helm-projectile-grep] 'projectile-grep))
 #+end_src
 **** Mac os x hacks
      :PROPERTIES:
@@ -1353,9 +1365,9 @@ like it used to.
 Get spotlight into list of the files that helm can inspect, and get
 top output that doesn't suck
 #+begin_src emacs-lisp
-  (when (eq system-type 'darwin)
-    (add-to-list 'helm-for-files-preferred-list 'helm-c-source-mac-spotlight)
-    (setq helm-c-top-command "COLUMNS=%s top -l 1"))
+  ;; (when (eq system-type 'darwin)
+  ;;   (add-to-list 'helm-for-files-preferred-list 'helm-c-source-mac-spotlight)
+  ;;   (setq helm-c-top-command "COLUMNS=%s top -l 1"))
 #+end_src
 **** Global Tags
      :PROPERTIES:
@@ -1363,23 +1375,23 @@ top output that doesn't suck
      :END:
 Yay gtags support for helm!
 #+begin_src emacs-lisp
-  (use-package helm-gtags
-    :config
-    (add-hook 'c-mode-hook (lambda () (helm-gtags-mode)))
-    
-    ;; customize
-    (setq helm-c-gtags-path-style 'absolute)
-    (setq helm-c-gtags-ignore-case t)
-    (setq helm-c-gtags-read-only nil)
-    
-    ;; key bindings
-    (add-hook 'helm-gtags-mode-hook
-              '(lambda ()
-                 (local-set-key (kbd "C-c g t") 'helm-gtags-find-tag)
-                 (local-set-key (kbd "C-c g r") 'helm-gtags-find-rtag)
-                 (local-set-key (kbd "C-c g s") 'helm-gtags-find-symbol)
-                 (local-set-key (kbd "C-c g f") 'helm-gtags-find-files)
-                 (local-set-key (kbd "C-t") 'helm-gtags-pop-stack))))
+  ;; (use-package helm-gtags
+  ;;   :config
+  ;;   (add-hook 'c-mode-hook (lambda () (helm-gtags-mode)))
+  ;;   
+  ;;   ;; customize
+  ;;   (setq helm-c-gtags-path-style 'absolute)
+  ;;   (setq helm-c-gtags-ignore-case t)
+  ;;   (setq helm-c-gtags-read-only nil)
+  ;;   
+  ;;   ;; key bindings
+  ;;   (add-hook 'helm-gtags-mode-hook
+  ;;             '(lambda ()
+  ;;                (local-set-key (kbd "C-c g t") 'helm-gtags-find-tag)
+  ;;                (local-set-key (kbd "C-c g r") 'helm-gtags-find-rtag)
+  ;;                (local-set-key (kbd "C-c g s") 'helm-gtags-find-symbol)
+  ;;                (local-set-key (kbd "C-c g f") 'helm-gtags-find-files)
+  ;;                (local-set-key (kbd "C-t") 'helm-gtags-pop-stack))))
 #+end_src
 *** Undo Tree
 Undo tree is excellent! =C-x u= to browse. Now the larger question is
@@ -1439,24 +1451,6 @@ Incredibly useful way to browse your buffers.
   
   ;; Add pathnam sorting, useful after 's m'
   (define-key ibuffer-mode-map (kbd "s p") 'ibuffer-do-sort-by-filename-or-dired)
-#+end_src
-*** Desktop
-    :PROPERTIES:
-    :ID:       a920b9cb-92ec-4652-a937-bb296f32bad6
-    :END:
-Saves everything! Very useful for the epic emacs restarters (me)
-#+begin_src emacs-lisp
-  (require 'desktop)
-  
-  (desktop-save-mode 1)
-  
-  ;; auto-save emacs instance
-  (defun cm/desktop-save ()
-    (interactive)
-    (if (eq (desktop-owner) (emacs-pid))
-        (desktop-save desktop-dirname)))
-  
-  (add-hook 'auto-save-hook 'cm/desktop-save)
 #+end_src
 *** Browse Kill Ring
     :PROPERTIES:
@@ -1870,7 +1864,7 @@ My C settings.
     (setq indent-tabs-mode nil)
     (setq comment-multi-line t)
     (local-set-key (kbd "C-c o") 'ff-find-other-file)
-    (helm-gtags-mode)
+    ;(helm-gtags-mode)
     (setq fill-column 90))
 
   (add-hook 'c++-mode-hook 'cm/work-c-hook)
@@ -1893,7 +1887,7 @@ My C settings.
     (setq comment-multi-line t)
     (local-set-key (kbd "C-c o") 'ff-find-other-file)
     ;; (gtags-mode 1) ; no more! going to helm!
-    (helm-gtags-mode)
+    ;; (helm-gtags-mode)
     (set (make-local-variable 'compilation-directory-matcher)
          '("\\(?:\\(?:Entering\\|Leavin\\(g\\)\\) directory
     `\\(.+\\)'$\\)\\|\\(?:[^]^[]*\\][[:space:]]*\\(\\(?:[[:alnum:]]*/\\)+\\)\\)\\|\\(?:^\\(\\[\\)\\)"
@@ -2054,7 +2048,8 @@ No seriously, I wrote lots of Ruby.
   (require 'tramp)
   (eval-after-load 'tramp
     (progn
-      (setq tramp-default-method "ssh")
+      (setq tramp-histfile-override nil)
+      (setq tramp-use-ssh-controlmaster-options nil)
       (setq tramp-verbose 6)))
 #+end_src
 *** GNU Global
@@ -4143,6 +4138,24 @@ A wholly owned subsidiary of Cisco.
   ; have to figure out how to comment multiple lines...
 #+end_src
 
+** Desktop
+    :PROPERTIES:
+    :ID:       a920b9cb-92ec-4652-a937-bb296f32bad6
+    :END:
+Saves everything! Very useful for the epic emacs restarters (me)
+#+begin_src emacs-lisp
+  ;; (require 'desktop)
+  ;; 
+  ;; (desktop-save-mode 1)
+  ;; 
+  ;; ;; auto-save emacs instance
+  ;; (defun cm/desktop-save ()
+  ;;   (interactive)
+  ;;   (if (eq (desktop-owner) (emacs-pid))
+  ;;       (desktop-save desktop-dirname)))
+  ;; 
+  ;; (add-hook 'auto-save-hook 'cm/desktop-save)
+#+end_src
 ** All edit in occur
    :PROPERTIES:
    :ID:       afa1fcb9-1dbe-41d1-ad68-2362ba5d4b76
