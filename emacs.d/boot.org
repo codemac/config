@@ -910,8 +910,9 @@ really interpret anything.
     :ID:       1f6334ef-51f3-417d-acc6-c578c2a9223b
     :END:
 #+begin_src emacs-lisp
-  (set-default 'explicit-shell-file-name (concat (getenv "HOME") "/bin/rc"))
-;  (setq explicit-rc-args '("-l"))
+  (setq explicit-shell-file-name nil)
+  ;; (set-default 'explicit-shell-file-name (concat (getenv "HOME") "/bin/rc"))
+  ;; (setq explicit-rc-args '("-l"))
 #+end_src
 *** Track the directory of the shell process
     :PROPERTIES:
@@ -1460,7 +1461,7 @@ Navigate visually through the entire kill ring.
 #+begin_src emacs-lisp
   (autoload 'browse-kill-ring "browse-kill-ring" "")
   
-  (global-set-key (kbd "C-c k") 'browse-kill-ring)
+  (global-set-key (kbd "M-y") 'browse-kill-ring)
 #+end_src
 
 *** Expand region
@@ -3342,6 +3343,44 @@ any of my plans to get org mode todos into easier to consume formats.
   (add-hook 'org-capture-prepare-finalize-hook 'org-id-get-create)
 #+end_src
 
+***** Capture all open buffers
+The david allen special inbox magic
+#+begin_src emacs-lisp
+  (defvar cm/obvious-buffers
+    '("*Help*" "*scratch*" "*GNU Emacs*" "*Messages*" "diary" "bbdb")
+    "Buffers that are obviously not relevant")
+
+  (defun cm/filter-out-obvious (ls)
+    (require 'seq)
+    (let ((obv-buffs (append cm/obvious-buffers
+			     (org-agenda-files))))
+      (seq-remove (lambda (x) (or (string-prefix-p " " (buffer-name x))
+				  (and (string-prefix-p "*" (buffer-name x))
+				       (string-suffix-p "*" (buffer-name x)))
+				  (member (buffer-name x) obv-buffs)
+				  (member (buffer-file-name x) obv-buffs)))
+		  ls)))
+
+  (defun cm/capture-buffer-links ()
+    (cl-mapcar (lambda (buffer)
+		 (with-current-buffer buffer
+		   (if (and buffer-file-name
+			    (y-or-n-p (format "store link from %s and close? " buffer-file-name)))
+		       (progn
+			 (let ((toret (org-store-link nil)))
+			   (kill-buffer (current-buffer))
+			   toret)))))
+	       (cm/filter-out-obvious (buffer-list))))
+
+  (defun cm/close-n-capture ()
+    (interactive)
+    (org-capture-string (mapconcat #'identity
+				   (cm/capture-buffer-links)
+				   "\n")
+			"t"))
+
+  (global-set-key (kbd "C-c x") 'cm/close-n-capture)
+#+end_src
 **** Merge handling
 When I open a buffer in SMerge mode, org has everything all folded up,
 and it becomes very difficult to see where things went. For ediff,
