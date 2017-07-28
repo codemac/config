@@ -236,6 +236,21 @@ Also, let's get angry about using C-x until I'm used to it actually being C-t.
    :PROPERTIES:
    :ID:       0e40240f-a2c3-4c03-b55d-d66e5cc0ce44
    :END:
+
+Add some normal locations to the path in case it's not when I click an
+emacs icon (instead of launching from the shell).
+#+begin_src emacs-lisp
+  (when (eq system-type 'gnu/linux)
+    (let* ((home-dir (getenv "HOME"))
+	   (linux-paths
+	    `(,(concat home-dir "/bin")
+	      ,(concat home-dir "/.guix-profile/bin"))))
+      (setenv "PATH" (concat (mapconcat 'identity linux-paths ":")
+			     ":"
+			     (getenv "PATH")))
+      (setq exec-path (append linux-paths exec-path))))
+#+end_src
+
 Setting paths correctly depending on whether or not I'm on a
 Mac. Mostly these days, I'm on a Mac :/
 #+begin_src emacs-lisp
@@ -243,20 +258,20 @@ Mac. Mostly these days, I'm on a Mac :/
     (prefer-coding-system 'utf-8)
     (setq file-precious-flag t)
     (let* ((home-dir (getenv "HOME"))
-           (mac-paths `("/Applications/Emacs.app/Contents/MacOS/bin"
-                        ,(concat home-dir "/bin")
-                        ,(concat home-dir "/.cabal/bin")
-                        "/opt/local/bin"
-                        "/usr/local/texlive/2010/bin/x86_64-darwin"
-                        "/usr/local/bin"
-                        "/usr/local/sbin"
-                        "/usr/bin"
-                        "/usr/sbin"
-                        "/bin"
-                        "/sbin")))
+	   (mac-paths `("/Applications/Emacs.app/Contents/MacOS/bin"
+			,(concat home-dir "/bin")
+			,(concat home-dir "/.cabal/bin")
+			"/opt/local/bin"
+			"/usr/local/texlive/2010/bin/x86_64-darwin"
+			"/usr/local/bin"
+			"/usr/local/sbin"
+			"/usr/bin"
+			"/usr/sbin"
+			"/bin"
+			"/sbin")))
       (setenv "PATH" (concat (mapconcat 'identity mac-paths ":")
-                             ":"
-                             (getenv "PATH")))
+			     ":"
+			     (getenv "PATH")))
       (setq exec-path (append exec-path mac-paths))))
 #+end_src
 
@@ -1260,6 +1275,28 @@ So useful, I think everyone should have this turned on.
     (interactive "*")
     (uniquify-all-lines-region (point-min) (point-max)))
 #+end_src
+** Unhighlight all by default
+The keybinding =M-s h u= by default only unhighlights one entry, and
+then =C-u M-s h u= unhighlights everything. I'm going to swap these
+two keybindings with the following:
+
+#+begin_src emacs-lisp
+  (defun cm/unhighlight-regexp-swap (arg)
+    (interactive "P")
+    (pcase arg
+      ('(4)
+       (message "found 4, running nil")
+       (command-execute #'unhighlight-regexp))
+      ('nil
+       (message "found nil, running t")
+       (unhighlight-regexp t))
+      (_
+       (message "found other(%s), running arg" arg)
+       (unhighlight-regexp arg))))
+
+  (substitute-key-definition 'unhighlight-regexp 'cm/unhighlight-regexp-swap hi-lock-map)
+  (substitute-key-definition 'unhighlight-regexp 'cm/unhighlight-regexp-swap search-map)
+#+end_src
 ** Diff Before Save
 I find myself often forgetting what I've changed in a file and what I
 haven't. Obviously I use git, but I save files multiple times before
@@ -1429,29 +1466,65 @@ NaNoWriMo!
 Incredibly useful way to browse your buffers.
 #+begin_src emacs-lisp
   (require 'ibuffer)
-  
+
   ;; replace emac's default buffer list with the excellent ibuffer
   (global-set-key (kbd "C-x C-b") 'ibuffer)
-  
+
   (define-ibuffer-sorter filename-or-dired
     "Sort the buffers by their pathname."
     (:description "filenames plus dired")
     (string-lessp 
      (with-current-buffer (car a)
        (or buffer-file-name
-           (if (eq major-mode 'dired-mode)
-               (expand-file-name dired-directory))
-           ;; so that all non pathnames are at the end
-           "~"))
+	   (if (eq major-mode 'dired-mode)
+	       (expand-file-name dired-directory))
+	   ;; so that all non pathnames are at the end
+	   "~"))
      (with-current-buffer (car b)
        (or buffer-file-name
-           (if (eq major-mode 'dired-mode)
-               (expand-file-name dired-directory))
-           ;; so that all non pathnames are at the end
-           "~"))))
-  
+	   (if (eq major-mode 'dired-mode)
+	       (expand-file-name dired-directory))
+	   ;; so that all non pathnames are at the end
+	   "~"))))
+
   ;; Add pathnam sorting, useful after 's m'
   (define-key ibuffer-mode-map (kbd "s p") 'ibuffer-do-sort-by-filename-or-dired)
+
+  (defvar cm/workspaces-path "~/work/src"
+    "Where the root of my code workspaces are (~/src/, etc)")
+
+  (setq ibuffer-saved-filter-groups
+	`(("default"
+	   ("Work"
+	    (filename . ,cm/workspaces-path))
+	   ("GTD"
+	    (filename . "/org/"))
+	   ("Emacs"
+	    (or (name . "*Messages*")
+		(name . "*scratch*")
+		(name . "*GNU Emacs*")
+		(name . "*Occur*")
+		(name . "*Backtrace*")
+		(name . "*Help*")
+		(name . "tramp/ssh")
+		(name . "tramp/sudo"))))))
+
+  (setq ibuffer-formats
+	'((mark modified read-only " "
+		(name 50 50 :left :elide)
+		" "
+		(size 9 -1 :right)
+		" "
+		(mode 16 16 :left :elide)
+		" " filename-and-process)
+	  (mark " "
+		(name 30 -1)
+		" " filename)))
+      
+  (add-hook 'ibuffer-mode-hook
+	    (lambda ()
+	      (ibuffer-switch-to-saved-filter-groups "default")))
+
 #+end_src
 *** Browse Kill Ring
     :PROPERTIES:
@@ -1507,7 +1580,7 @@ out semantically.
     :config
     (projectile-global-mode)
     (setq projectile-use-git-grep t)
-
+    (setq projectile-completion-system 'ivy)
     ;; this replaces the old `projectile-compile-project' to use the
     ;; project name in the compilation buffer. Let's me run all ze
     ;; compilations!
@@ -1519,20 +1592,20 @@ out semantically.
   with a prefix ARG."
       (interactive "P")
       (let* ((project-root (if dir
-                               dir
-                             (projectile-project-root)))
-             (default-directory project-root)
-             (default-cmd (projectile-compilation-command project-root))
-             (compilation-cmd (if (or compilation-read-command arg)
-                                  (projectile-read-command "Compile command: "
-                                                           default-cmd)
-                                default-cmd)))
-        (puthash project-root compilation-cmd projectile-compilation-cmd-map)
-        (save-some-buffers (not compilation-ask-about-save)
-                           (lambda ()
-                             (projectile-project-buffer-p (current-buffer)
-                                                          project-root)))
-        (compilation-start compilation-cmd nil '(lambda (x) (concat "*compilation:" (projectile-project-name) "*")))))
+			       dir
+			     (projectile-project-root)))
+	     (default-directory project-root)
+	     (default-cmd (projectile-compilation-command project-root))
+	     (compilation-cmd (if (or compilation-read-command arg)
+				  (projectile-read-command "Compile command: "
+							   default-cmd)
+				default-cmd)))
+	(puthash project-root compilation-cmd projectile-compilation-cmd-map)
+	(save-some-buffers (not compilation-ask-about-save)
+			   (lambda ()
+			     (projectile-project-buffer-p (current-buffer)
+							  project-root)))
+	(compilation-start compilation-cmd nil '(lambda (x) (concat "*compilation:" (projectile-project-name) "*")))))
 
     (advice-add 'projectile-compile-project :override #'cm/projectile-compile-project))
 #+end_src
@@ -1827,33 +1900,33 @@ My C settings.
     '((c-basic-offset . 4)
       (c-comment-only-line-offset . 4)
       (c-hanging-braces-alist . ((substatement-open before)
-                                 (brace-list-open before)))
+				 (brace-list-open before)))
       (c-hanging-colons-alist . ((member-init-intro after)
-                                 (inher-intro after)
-                                 (case-label after)
-                                 (label after)
-                                 (access-label after)))
+				 (inher-intro after)
+				 (case-label after)
+				 (label after)
+				 (access-label after)))
       (c-offsets-alist        . ((defun-open . 0)
-                                 (defun-block-intro . 4)
-                                 (label . 0)
-                                 (inclass . +)
-                                 (case-label . +)
-                                 (access-label . 0)
-                                 (brace-list-intro . 4)
-                                 (substatement-open . 0)
-                                 (member-init-intro . 8)
-                                 (statement-case-open . 0)
-                                 (statement-block-intro . 4)
-                                 (class-open . 0)
-                                 (inline-open . 0)
-                                 (innamespace . 4)
-                                 (namespace-open . 0)
-                                 (comment-intro . 0)
-                                 (c . 1)
-                                 (inher-intro 8)
-                                 (class-close . 0)
-                                 (namespace-close . 0)
-                                 (func-decl-cont . 8))))
+				 (defun-block-intro . 4)
+				 (label . 0)
+				 (inclass . +)
+				 (case-label . +)
+				 (access-label . 0)
+				 (brace-list-intro . 4)
+				 (substatement-open . 0)
+				 (member-init-intro . 8)
+				 (statement-case-open . 0)
+				 (statement-block-intro . 4)
+				 (class-open . 0)
+				 (inline-open . 0)
+				 (innamespace . 4)
+				 (namespace-open . 0)
+				 (comment-intro . 0)
+				 (c . 1)
+				 (inher-intro 8)
+				 (class-close . 0)
+				 (namespace-close . 0)
+				 (func-decl-cont . 8))))
       "Iridium style")
 
     (add-to-list 'auto-mode-alist '("\\.h\\'" . c++-mode))
@@ -1868,6 +1941,15 @@ My C settings.
     ;(helm-gtags-mode)
     (setq fill-column 90))
 
+  (defun cm/goog-c-hook ()
+    (setq indent-tabs-mode nil)
+    (setq comment-multi-line t)
+    (setq fill-column 80)
+    (local-set-key (kbd "C-c o") 'ff-find-other-file))
+
+  (defun cm/work-c-hook ()
+    (cm/goog-c-hook))
+
   (add-hook 'c++-mode-hook 'cm/work-c-hook)
   (add-hook 'cc-mode-hook 'cm/work-c-hook)
   (add-hook 'c-mode-hook 'cm/work-c-hook)
@@ -1879,7 +1961,7 @@ My C settings.
     (setq tab-width 8)
     (setq indent-tabs-mode t)
     (setq tab-stop-list
-          '(8 16 24 32 40 48 56 64 72 80 88 96 104 112 120))
+	  '(8 16 24 32 40 48 56 64 72 80 88 96 104 112 120))
     (setq fill-column 80)
     (setq-default c-basic-offset 8)
     (setq show-trailing-whitespace t)
@@ -1890,13 +1972,13 @@ My C settings.
     ;; (gtags-mode 1) ; no more! going to helm!
     ;; (helm-gtags-mode)
     (set (make-local-variable 'compilation-directory-matcher)
-         '("\\(?:\\(?:Entering\\|Leavin\\(g\\)\\) directory
+	 '("\\(?:\\(?:Entering\\|Leavin\\(g\\)\\) directory
     `\\(.+\\)'$\\)\\|\\(?:[^]^[]*\\][[:space:]]*\\(\\(?:[[:alnum:]]*/\\)+\\)\\)\\|\\(?:^\\(\\[\\)\\)"
-           (2 . 1) (3 . 9) (4 . 4)))
+	   (2 . 1) (3 . 9) (4 . 4)))
     (set (make-local-variable 'compile-command) "~/bin/emacs-mars-compile")
     (add-to-list 'ac-sources '(ac-source-gtags
-                               ac-source-semantic
-                               ac-source-words-in-buffer))
+			       ac-source-semantic
+			       ac-source-words-in-buffer))
     (auto-complete-mode -1))
 
 #+end_src
@@ -2162,6 +2244,362 @@ default to serving =~/public_html=, so I turn that off here.
    :PROPERTIES:
    :ID:       cb65de78-396a-4243-8bd8-4132d982e360
    :END:
+*** EMMS - Emacs MultiMedia System
+    :PROPERTIES:
+    :ID:       0e42f65c-aca2-4cbb-9633-1d8cedaefaa8
+    :END:
+Now w/mopidy
+#+begin_src emacs-lisp
+  (require 'emms-setup)
+  (emms-standard)
+  (require 'emms-browser)
+  (require 'emms-player-mpd)
+  (add-to-list 'emms-info-functions 'emms-info-mpd)
+  (add-to-list 'emms-player-list 'emms-player-mpd)
+
+  (require 'emms-volume)
+  (setq emms-volume-change-function 'emms-volume-mpd-change)
+
+  (setq emms-info-asynchronosly t)
+  (add-hook 'emms-player-started-hook 'emms-show)
+  (setq emms-show-format "NP: %s")
+  (setq emms-mode-line-icon-before-format ""
+        emms-mode-line-format " %s"
+        emms-mode-line-icon-color "blue")
+
+  (if (executable-find "find")
+      (setq emms-source-file-directory-tree-function 'emms-source-file-directory-tree-find))
+
+  ;; reserve a key namespace for emms
+  (global-set-key (kbd "C-c m p") 'emms-pause)
+  (global-set-key (kbd "C-c m m") 'emms-smart-browse)
+#+end_src
+*** ERC
+    :PROPERTIES:
+    :ID:       5ba53dbe-b88d-44e9-8121-462325ca2422
+    :END:
+What I generally end up using for irc, but weechat always tends to win
+me over.
+#+begin_src emacs-lisp
+  (require 'erc)
+#+end_src
+
+#+begin_src emacs-lisp
+  (setq erc-user-full-name "codemac")
+  (setq erc-email-userid "j@codemac.net")
+  (setq erc-nick "codemac")
+  (setq erc-prompt-for-password nil)
+  ;; ERC Time stamps
+  (setq erc-timestamp-only-if-changed-flag t)
+  (setq erc-timestamp-format "[%H:%M:%S] ")
+  (setq erc-insert-timestamp-function 'erc-insert-timestamp-left)
+
+  ;; Auto-fill (static size so log files look decent)
+  (setq erc-fill-column 80)
+  (setq erc-fill-function 'erc-fill-static)
+  (setq erc-fill-static-center 15)
+  (setq erc-join-buffer 'bury)
+
+  (setq erc-track-exclude-types '("JOIN" "NICK" "PART" "QUIT"))
+
+  ;; Auto join the given channels
+  (erc-autojoin-mode t)
+  (setq erc-autojoin-channels-alist cm/erc-autojoin-channels-alist)
+
+  (setq erc-server-auto-reconnect t)
+  (setq erc-server-reconnect-attempts 5)
+  (setq erc-server-reconnect-timeout 5)
+  ;; Some other settings
+  (setq erc-max-buffer-size 20000)
+  (setq erc-track-showcount t)
+  (setq erc-auto-query 'bury)             ; Private messages go to a hidden buffer
+  (setq erc-autojoin-timing 'ident) ; wait for the delay (or ident resolution)
+  (setq erc-autojoin-delay 15)
+
+    ;; Setup ERC buffers
+  (defun cm/erc-hook ()
+    "Correctly configure ERC buffers"
+    (auto-fill-mode 0)
+    (setq truncate-lines nil)
+
+    (add-to-list 'erc-modules 'scrolltobottom)
+    (add-to-list 'erc-modules 'truncate)
+    (add-to-list 'erc-modules 'hl-nicks)
+    (add-to-list 'erc-modules 'image)
+    (erc-update-modules))
+
+  (defun cm/erc-begin-bitlbee ()
+    (interactive)
+    (erc :server "localhost" :port 6667))
+
+  (defun cm/erc-begin-freenode ()
+    (interactive)
+    (erc-ssl :server "chat.freenode.net" :port 6697
+             :nick "codemac" :password cm/freenode-password))
+
+  (defun cm/erc-begin-pure-slack ()
+    (interactive)
+    (erc-ssl :server "purestorage.irc.slack.com" :port 6697
+             :nick "jmickey" :password cm/slack-password))
+
+  (add-hook 'erc-mode-hook 'cm/erc-hook)
+  (add-hook 'erc-join-hook 'bitlbee-netrc-identify)
+
+  ;; set up keys for erc
+
+#+end_src
+**** Bitlbee Support
+     :PROPERTIES:
+     :ID:       65b67613-38e8-418f-9abc-9a93e86e441e
+     :END:
+#+begin_src emacs-lisp
+  (defun bitlbee-netrc-identify ()
+    "Auto-identify for Bitlbee channels using authinfo or netrc.
+    
+     The entries that we look for in netrc or authinfo files have
+     their 'port' set to 'bitlbee', their 'login' or 'user' set to
+     the current nickname and 'server' set to the current IRC
+     server's name.  A sample value that works for authenticating
+     as user 'keramida' on server 'localhost' is:
+    
+     machine localhost port bitlbee login keramida password supersecret"
+    (interactive)
+    (when (string= (buffer-name) "&bitlbee")
+      (let* ((secret (plist-get (nth 0 (auth-source-search :max 1
+                                                           :host erc-server
+                                                           :user (erc-current-nick)
+                                                           :port "bitlbee"))
+                                :secret))
+             (password (if (functionp secret)
+                           (funcall secret)
+                         secret)))
+        (erc-message "PRIVMSG" (concat (erc-default-target) " " "identify" " " password) nil))))
+
+  ;; Enable the netrc authentication function for &biblbee channels.
+  ;(add-hook 'erc-join-hook 'bitlbee-netrc-identify)
+#+end_src
+*** EXWM - Emacs as X window manager
+
+#+begin_src emacs-lisp
+  (when (equal x-resource-name "emacs-as-x")
+    (require 'exwm)
+    (require 'exwm-config)
+    (require 'exwm-randr)
+
+    (setq exwm-randr-workspace-output-plist '(0 "eDP1" 1 "HDMI2"))
+    (exwm-randr-enable)
+
+    ;; I swap C-t and C-x, so this is a very useful thing to also have
+    ;; as a prefix
+    (add-to-list 'exwm-input-prefix-keys ?\C-t)
+
+    (add-hook 'exwm-update-class-hook
+	      (lambda ()
+		(unless (or (string-prefix-p "sun-awt-X11-" exwm-instance-name)
+			    (string= "gimp" exwm-instance-name))
+		  (exwm-workspace-rename-buffer exwm-class-name))))
+    (add-hook 'exwm-update-title-hook
+	      (lambda ()
+		(when (or (not exwm-instance-name)
+			  (string-prefix-p "sun-awt-X11-" exwm-instance-name)
+			(string= "gimp" exwm-instance-name))
+		  (exwm-workspace-rename-buffer exwm-title))))
+
+    (setq exwm-workspace-number 10)
+
+    (defun cm/exwm-workspace-next ()
+      (interactive)
+      (exwm-workspace-switch (mod (+ 1 exwm-workspace-current-index) exwm-workspace-number)))
+
+    (defun cm/exwm-workspace-previous ()
+      (interactive)
+      (exwm-workspace-switch (mod (- exwm-workspace-current-index 1) exwm-workspace-number)))
+
+    (exwm-input-set-key (kbd "s-r") #'exwm-reset)
+    (exwm-input-set-key (kbd "s-n") #'cm/exwm-workspace-next)
+
+    ;; s-p does not work on lenovo :( so we'll do s-o and s-n so they're
+    ;; opposite hands for directions in dvorak.
+    (exwm-input-set-key (kbd "s-o") #'cm/exwm-workspace-previous)
+
+    (exwm-input-set-simulation-keys
+     '(([?\C-b] . left)
+       ([?\C-f] . right)
+       ([?\C-p] . up)
+       ([?\C-n] . down)
+       ([?\C-a] . home)
+       ([?\C-e] . end)
+       ([?\M-v] . prior)
+       ([?\C-v] . next)
+       ([?\C-d] . delete)
+       ([?\C-k] . (S-end delete))))
+
+    (dotimes (i exwm-workspace-number)
+      (exwm-input-set-key (kbd (format "s-%d" i))
+			  `(lambda ()
+			     (interactive)
+			     (exwm-workspace-switch-create ,i))))
+
+    (exwm-enable))
+#+end_src
+
+*** Flymake
+    :PROPERTIES:
+    :ID:       b379d31d-a542-496b-ad6b-31817952e93d
+    :END:
+#+begin_src emacs-lisp
+  ;; stolen from http://www.reddit.com/r/emacs/comments/i05v3/emacs_and_pylint/c1ztm6x (user kanak on /r/emacs)
+  (require 'flymake)
+  
+  (setq *cm/flychecker-directory* "~/.emacs.d/flycheck")
+  
+  (defmacro def-flymake-init (mode checker-file)
+    "Writes a function called flymake-MODE-init which contains the usual boilerplate for a default flymake initialization."
+    `(defun ,(intern (format "flymake-%s-init" mode)) () 
+        (let* ((temp-file (flymake-init-create-temp-buffer-copy 
+                     'flymake-create-temp-inplace)) 
+         (local-file (file-relative-name 
+                      temp-file 
+                      (file-name-directory buffer-file-name)))) 
+    (list (expand-file-name ,checker-file *cm/flychecker-directory*) (list local-file)))))
+  
+  (defmacro def-flymake-cleanup (mode extlist)
+    "Writes a function called flymake-MODE-cleanup which removes files with specified extensions in current directory."
+    `(defun ,(intern (format "flymake-%s-cleanup" mode)) ()
+   (when flymake-temp-source-file-name
+     (let* ((temp-files
+             (mapcar (lambda (ext)
+                       (concat 
+                        (file-name-sans-extension flymake-temp-source-file-name) ext))
+                     ,extlist)))
+       (dolist (f temp-files)
+         (when (file-exists-p f)
+           (flymake-safe-delete-file f)))))
+   (flymake-simple-cleanup)))
+  
+  (def-flymake-init "python" "~/.emacs.d/flycheckbin/pychecker.sh")
+  (add-to-list 'flymake-allowed-file-name-masks '("\\.py\\'" flymake-python-init)) 
+  
+  ;; flyspell
+  (setq ispell-program-name "aspell")
+  (setq ispell-list-command "list")
+  (setq ispell-extra-args '("--sug-mode=ultra"))
+#+end_src
+*** Geiser
+    :PROPERTIES:
+    :ID:       10f9438e-5499-4cac-8d6f-6fe2ceec10d2
+    :END:
+Let's get our scheme on!
+#+begin_src emacs-lisp
+  (unless (not (file-exists-p "~/.guix-profile/share/emacs/site-lisp"))
+    (add-to-list 'load-path "~/.guix-profile/share/emacs/site-lisp")
+    (require 'geiser-install))
+#+end_src
+*** Jabber
+    :PROPERTIES:
+    :ID:       cf368eef-c121-411f-ad2c-1560d4a0882f
+    :END:
+Directly use jabber with elisp! It's painfully slow, and the single
+threaded nature of emacs means it turns out to be quite a failure if
+you are trying to edit anything.
+#+begin_src emacs-lisp
+    (autoload 'jabber-connect-all "jabber" "" t)
+    ;; Show my status in the header along with theirs! woo!
+    (eval-after-load 'jabber
+      (progn
+        (setq jabber-chat-header-line-format
+              '(" " (:eval (jabber-jid-displayname jabber-chatting-with))
+                " " (:eval (jabber-jid-resource jabber-chatting-with)) "\t";
+                (:eval (let ((buddy (jabber-jid-symbol jabber-chatting-with)))
+                         (propertize
+                          (or
+                           (cdr (assoc (get buddy 'show) jabber-presence-strings))
+                           (get buddy 'show))
+                          'face
+                          (or (cdr (assoc (get buddy 'show) jabber-presence-faces))
+                              'jabber-roster-user-online))))
+                "\t" (:eval (get (jabber-jid-symbol jabber-chatting-with) 'status))
+                (:eval (unless (equal "" *jabber-current-show*)
+                         (concat "\t You're " *jabber-current-show*
+                                 " (" *jabber-current-status* ")")))))
+        ;; Open urls!
+        (add-hook 'jabber-chat-mode-hook 'goto-address)
+        
+        ;; fun keybindings!
+        (defun my-jabber-chat-delete-or-bury ()
+          (interactive)
+          (if (eq 'jabber-chat-mode major-mode)
+              (condition-case e 
+                  (delete-frame)
+                (error 
+                 (if (string= "Attempt to delete the sole visible or iconified frame" 
+                              (cadr e))
+                     (bury-buffer))))))
+        
+    ;    (define-key jabber-chat-mode-map [escape] 'my-jabber-chat-delete-or-bury)
+        (define-key mode-specific-map "jr"
+          (lambda () 
+            (interactive) 
+            (switch-to-buffer "*-jabber-*")))
+        (define-key mode-specific-map "jc"
+          '(lambda () 
+             (interactive) 
+             (call-interactively 'jabber-connect)))
+        (define-key mode-specific-map "jd"
+          '(lambda () 
+             (interactive) 
+             (call-interactively 'jabber-disconnect)))
+        (define-key mode-specific-map "jj"
+          '(lambda () 
+             (interactive) 
+             (call-interactively 'jabber-chat-with)))
+        (define-key mode-specific-map "ja"
+          '(lambda () 
+             (interactive) 
+             (jabber-send-presence "away" "" 10)))
+        (define-key mode-specific-map "jo"
+          '(lambda () 
+             (interactive) 
+             (jabber-send-presence "" "" 10)))
+        (define-key mode-specific-map "jx"
+          '(lambda () 
+             (interactive) 
+             (jabber-send-presence "xa" "" 10)))))
+
+    ;;;; hipchat support
+    (setq ssl-program-name "gnutls-cli"
+          ssl-program-arguments '("--insecure" "-p" service host)
+          ssl-certificate-verification-policy 1)
+     
+    ;; Connect using jabber.el
+    ;; M-x jabber-connect <RET>
+     
+    ;; Config
+    (setq jabber-account-list '(("75698_604162@chat.hipchat.com")))
+    (defvar hipchat-number "75698")
+    (defvar hipchat-nickname "Jeff Mickey")
+
+    ;; Join a room
+    (defun cm/hipchat-join (room)
+      (interactive "sRoom name: ")
+      (jabber-groupchat-join
+       (jabber-read-account)
+       (concat hipchat-number "_" room "@conf.hipchat.com")
+       hipchat-nickname
+       t))
+
+    ;; Mention nicknames in a way that HipChat clients will pickup
+    (defun hipchat-mention (nickname)
+      (interactive
+       (list (jabber-muc-read-nickname jabber-group "Nickname: ")))
+      (insert (concat "@\"" nickname "\" "))) 
+
+  (defvar cm/hipchat-rooms '())
+
+  (defun cm/hipchat-joinall ()
+    (interactive)
+    (rcirc-cmd-join (mapconcat 'identity cm/hipchat-rooms ",") (rcirc-buffer-process (get-buffer "&bitlbee@localhost")) nil))
+#+end_src
 *** notmuch
     :PROPERTIES:
     :ID:       705f65b0-cd4f-4c2f-a7da-dc340505dbbc
@@ -2179,9 +2617,9 @@ binary - and it's easier to just use whatever my distro packages.
      :END:
 We're just borrowing the gnus settings here..
 #+begin_src emacs-lisp
-  (setq smtpmail-auth-credentials "~/.authinfo.gpg") ;; is this needed?
+  (setq smtpmail-auth-credentials "~/.netrc") ;; is this needed?
 
-  (setq notmuch-fcc-dirs '((".*google.*" . "g/sent")
+  (setq notmuch-fcc-dirs '((".*google.*" . "work/sent")
                            (".*codemac.net.*" . "cm/Sent Items")))
 
 #+end_src
@@ -2261,12 +2699,14 @@ defaults.
 
 #+begin_src emacs-lisp
   (setq notmuch-search-line-faces `(("unread" . (:weight bold))
-                                    ("flagged" . (:foreground "yellow"))))
+                                    ("flagged" . (:foreground "khaki"))))
 #+end_src
 #+begin_src emacs-lisp
   (defun cm/message-mode-hook ()
     (local-set-key (kbd "C-c M-o") 'org-mime-htmlize)
-    (orgstruct-mode 1))
+    (orgstruct-mode 1)
+    (use-hard-newlines nil 'guess))
+
   (add-hook 'message-mode-hook 'cm/message-mode-hook)
 
   ;; set these to something damn high I hate elided messages 
@@ -2389,9 +2829,11 @@ good problem to me :)
 For some reason the ~=~ sign is used for refresh in notmuch. This is
 horrifying.
 #+begin_src emacs-lisp
+  (setq notmuch-archive-tags '("-flagged"))
+
   (defun cm/notmuch-archive-unread-all ()
     (interactive)
-    (notmuch-search-tag-all '("-inbox" "-unread")))
+    (notmuch-search-tag-all (cons "-unread" notmuch-archive-tags)))
 
   (eval-after-load 'notmuch
     '(define-key notmuch-common-keymap "g" 'notmuch-refresh-this-buffer))
@@ -2399,25 +2841,21 @@ horrifying.
     '(define-key notmuch-common-keymap "A" 'cm/notmuch-archive-unread-all))
 
   (setq notmuch-saved-searches
-        '((:name "inbox"         :query "tag:inbox"                 :key "i" :sort-order oldest-first)
-          (:name "unread"        :query "tag:unread"                :key "u" :sort-order newest-first)
-          (:name "inbox-pure"    :query "tag:pure AND tag:inbox"    :key "w" :sort-order oldest-first)
-          (:name "inbox-codemac" :query "tag:codemac AND tag:inbox" :key "c" :sort-order oldest-first)
-          (:name "drafts"        :query "tag:draft"                 :key "d" :sort-order newest-first)
-          (:name "today"         :query "date:today..!"             :key "t" :sort-order oldest-first)
-          (:name "sent"          :query "tag:sent"                  :key "n")))
+	'((:name "inbox"         :query "tag:flagged"                 :key "i" :sort-order newest-first)
+	  (:name "unread"        :query "tag:unread"                  :key "u" :sort-order newest-first)
+	  (:name "work-inbox"    :query "tag:work AND tag:flagged NOT (subject:\"/^CL /\" OR from:buganizer)"
+		 :key "wi" :sort-order newest-first)
+	  (:name "work-bulk"     :query "tag:work AND tag:flagged AND (subject:\"/^CL /\" OR from:buganizer)"
+		 :key "wb" :sort-order newest-first)
+	  (:name "inbox-codemac" :query "tag:codemac AND tag:flagged" :key "c" :sort-order newest-first)
+	  (:name "drafts"        :query "tag:draft"                   :key "d" :sort-order newest-first)
+	  (:name "today"         :query "date:today..!"               :key "t" :sort-order oldest-first)
+	  (:name "sent"          :query "tag:sent"                    :key "n")))
 
   (global-set-key (kbd "C-c i") 'notmuch-jump-search)
-#+end_src
-*** Geiser
-    :PROPERTIES:
-    :ID:       10f9438e-5499-4cac-8d6f-6fe2ceec10d2
-    :END:
-Let's get our scheme on!
-#+begin_src emacs-lisp
-  (unless (not (file-exists-p "~/.guix-profile/share/emacs/site-lisp"))
-    (add-to-list 'load-path "~/.guix-profile/share/emacs/site-lisp")
-    (require 'geiser-install))
+
+  ;; keep the "goto address" logic consistent with org mode
+  (define-key notmuch-show-mode-map (kbd "C-c C-o") 'goto-address-at-point)
 #+end_src
 *** Muse
     :PROPERTIES:
@@ -2950,29 +3388,32 @@ but I don't know what it would do if I was in the middle of refiling
 or something else. For now, it's manual.
 
 #+begin_src emacs-lisp
-    (defun cm/get-inbox-pos ()
-      (save-excursion
-	(with-current-buffer "gtd.org"
-	  (goto-char (point-min))
-	  (re-search-forward "^\\* Inbox[        ]*$")
-	  (move-beginning-of-line nil)
-	  (point))))
+  (defun cm/get-inbox-pos ()
+    (save-excursion
+      (with-current-buffer "gtd.org"
+	(goto-char (point-min))
+	(re-search-forward "^\\* Inbox[        ]*$")
+	(move-beginning-of-line nil)
+	(point))))
 
-    (defun cm/org-sync ()
-      (interactive)
-      (save-excursion
-	(org-save-all-org-buffers)
-	(org-mobile-pull)
-	(with-current-buffer "from-mobile.org"
-	  (if (equalp (point-max) (point-min))
-              (message "Nothing to move in from-mobile.org, pushing current files.")
-            (goto-char (point-max))
-            (push-mark (point-min) t t)
-            (org-refile nil nil `("gtd.org/Inbox" ,(buffer-file-name (get-buffer "gtd.org")) "" ,(cm/get-inbox-pos)))
-	  (org-save-all-org-buffers))
-	(org-mobile-push)
-	(org-save-all-org-buffers)))
-      (message "cm/org-sync completed"))
+  (defun cm/org-sync ()
+    (interactive)
+    (save-excursion
+      (org-save-all-org-buffers)
+      (org-mobile-pull)
+      (with-current-buffer "from-mobile.org"
+	(if (equalp (point-max) (point-min))
+	    (message "Nothing to move in from-mobile.org, pushing current files.")
+	  (goto-char (point-max))
+	  (push-mark (point-min) t t)
+	  (org-refile nil nil `("gtd.org/Inbox" ,(buffer-file-name (get-buffer "gtd.org")) "" ,(cm/get-inbox-pos)))
+	(org-save-all-org-buffers))
+      (org-mobile-push)
+      (org-save-all-org-buffers)))
+    (org-agenda nil "i")
+    (message "cm/org-sync completed"))
+
+  (global-set-key (kbd "C-c y") #'cm/org-sync)
 #+end_src
 **** Tags and todo keywords
      :PROPERTIES:
@@ -3310,12 +3751,12 @@ THIS WAS WAY OVER THE TOP. We can just use =org-search-view=.
   (define-key global-map "\C-cr" 'org-capture)
   (setq org-capture-templates
 	`(("t" "Todo" entry (file+headline "~/org/gtd.org" "Inbox") "* TODO %?\n  %U\n  %i\n  %a" :prepend t)
-          ("j" "Journal" entry (file ,(format-time-string "~/org/_editorial/%Y.%m.org")) "* %U %?\n\n  %i\n  %a" :prepend nil)
-          ("c" "Add note to currently clocked task" entry (clock) "* %U %?\n%a\n\n%i")
-          ("n" "Timed Notes" entry (file ,(format-time-string "~/org/_notes/%Y.org")) "* %U %?\n\n  %i\n  %a" :prepend nil)
-          ("w" "Work capture" entry (file "~/org/work.org") "* %U %?\n\n  %i\n  %a" :prepend nil)
-          ("l" "Life Fitness" table-line (file+headline "~/org/fitness.org" "Fitness") ,(concat (format-time-string "| %Y.%m.%d-%H:%M |") " %^{Weight} | | %^{RHR} |") :table-line-pos "II-1")
-          ("x" "org-capture" entry (file "~/org/_notes/www.org") "* %U %:description\n  :PROPERTIES:\n  :URL: %:link\n  :END:\n\n")))
+	  ("j" "Journal" entry (file "~/org/_editorial/journal.org") "* %T %?\n\n  %i\n  %a" :prepend nil)
+	  ("c" "Add note to currently clocked task" entry (clock) "* %U %?\n%a\n\n%i")
+	  ("n" "Timed Notes" entry (file "~/org/_notes/notes.org") "* %T %?\n\n  %i\n  %a" :prepend nil)
+	  ("w" "Work capture" entry (file "~/org/work.org") "* %U %?\n\n  %i\n  %a" :prepend nil)
+	  ("l" "Life Fitness" table-line (file+headline "~/org/fitness.org" "Fitness") ,(concat (format-time-string "| %Y.%m.%d-%H:%M |") " %^{Weight} | | %^{RHR} |") :table-line-pos "II-1")
+	  ("x" "org-capture" entry (file "~/org/_notes/www.org") "* %U %:description\n  :PROPERTIES:\n  :URL: %:link\n  :END:\n\n")))
 
   (defun cm/org-board-dl-hook ()
     (when (equal (buffer-name)
@@ -3402,13 +3843,6 @@ help with my forgetfulness.
 #+begin_src emacs-lisp
   (appt-activate)
   (org-agenda-to-appt)
-#+end_src
-*** W3M
-    :PROPERTIES:
-    :ID:       79e3e87f-f769-4325-ac15-450572f79a6a
-    :END:
-#+begin_src emacs-lisp
-  (autoload 'w3m-browse-url "w3m-load" "" t)
 #+end_src
 *** RCIRC
     :PROPERTIES:
@@ -3656,215 +4090,6 @@ channels correctly. The format is: =#channela,#channelb ,passwordb=
   ;                           (format "reconnection attempt failed: %s" err)  t)
   ;              (rcirc-reconnect-schedule process))))))))
 #+end_src
-*** ERC
-    :PROPERTIES:
-    :ID:       5ba53dbe-b88d-44e9-8121-462325ca2422
-    :END:
-What I generally end up using for irc, but weechat always tends to win
-me over.
-#+begin_src emacs-lisp
-  (require 'erc)
-#+end_src
-
-#+begin_src emacs-lisp
-  (setq erc-user-full-name "codemac")
-  (setq erc-email-userid "j@codemac.net")
-  (setq erc-nick "codemac")
-  (setq erc-prompt-for-password nil)
-  ;; ERC Time stamps
-  (setq erc-timestamp-only-if-changed-flag t)
-  (setq erc-timestamp-format "[%H:%M:%S] ")
-  (setq erc-insert-timestamp-function 'erc-insert-timestamp-left)
-
-  ;; Auto-fill (static size so log files look decent)
-  (setq erc-fill-column 80)
-  (setq erc-fill-function 'erc-fill-static)
-  (setq erc-fill-static-center 15)
-  (setq erc-join-buffer 'bury)
-
-  (setq erc-track-exclude-types '("JOIN" "NICK" "PART" "QUIT"))
-
-  ;; Auto join the given channels
-  (erc-autojoin-mode t)
-  (setq erc-autojoin-channels-alist cm/erc-autojoin-channels-alist)
-
-  (setq erc-server-auto-reconnect t)
-  (setq erc-server-reconnect-attempts 5)
-  (setq erc-server-reconnect-timeout 5)
-  ;; Some other settings
-  (setq erc-max-buffer-size 20000)
-  (setq erc-track-showcount t)
-  (setq erc-auto-query 'bury)             ; Private messages go to a hidden buffer
-  (setq erc-autojoin-timing 'ident) ; wait for the delay (or ident resolution)
-  (setq erc-autojoin-delay 15)
-
-    ;; Setup ERC buffers
-  (defun cm/erc-hook ()
-    "Correctly configure ERC buffers"
-    (auto-fill-mode 0)
-    (setq truncate-lines nil)
-
-    (add-to-list 'erc-modules 'scrolltobottom)
-    (add-to-list 'erc-modules 'truncate)
-    (add-to-list 'erc-modules 'hl-nicks)
-    (add-to-list 'erc-modules 'image)
-    (erc-update-modules))
-
-  (defun cm/erc-begin-bitlbee ()
-    (interactive)
-    (erc :server "localhost" :port 6667))
-
-  (defun cm/erc-begin-freenode ()
-    (interactive)
-    (erc-ssl :server "chat.freenode.net" :port 6697
-             :nick "codemac" :password cm/freenode-password))
-
-  (defun cm/erc-begin-pure-slack ()
-    (interactive)
-    (erc-ssl :server "purestorage.irc.slack.com" :port 6697
-             :nick "jmickey" :password cm/slack-password))
-
-  (add-hook 'erc-mode-hook 'cm/erc-hook)
-  (add-hook 'erc-join-hook 'bitlbee-netrc-identify)
-
-  ;; set up keys for erc
-
-#+end_src
-**** Bitlbee Support
-     :PROPERTIES:
-     :ID:       65b67613-38e8-418f-9abc-9a93e86e441e
-     :END:
-#+begin_src emacs-lisp
-  (defun bitlbee-netrc-identify ()
-    "Auto-identify for Bitlbee channels using authinfo or netrc.
-    
-     The entries that we look for in netrc or authinfo files have
-     their 'port' set to 'bitlbee', their 'login' or 'user' set to
-     the current nickname and 'server' set to the current IRC
-     server's name.  A sample value that works for authenticating
-     as user 'keramida' on server 'localhost' is:
-    
-     machine localhost port bitlbee login keramida password supersecret"
-    (interactive)
-    (when (string= (buffer-name) "&bitlbee")
-      (let* ((secret (plist-get (nth 0 (auth-source-search :max 1
-                                                           :host erc-server
-                                                           :user (erc-current-nick)
-                                                           :port "bitlbee"))
-                                :secret))
-             (password (if (functionp secret)
-                           (funcall secret)
-                         secret)))
-        (erc-message "PRIVMSG" (concat (erc-default-target) " " "identify" " " password) nil))))
-
-  ;; Enable the netrc authentication function for &biblbee channels.
-  ;(add-hook 'erc-join-hook 'bitlbee-netrc-identify)
-#+end_src
-*** Jabber
-    :PROPERTIES:
-    :ID:       cf368eef-c121-411f-ad2c-1560d4a0882f
-    :END:
-Directly use jabber with elisp! It's painfully slow, and the single
-threaded nature of emacs means it turns out to be quite a failure if
-you are trying to edit anything.
-#+begin_src emacs-lisp
-    (autoload 'jabber-connect-all "jabber" "" t)
-    ;; Show my status in the header along with theirs! woo!
-    (eval-after-load 'jabber
-      (progn
-        (setq jabber-chat-header-line-format
-              '(" " (:eval (jabber-jid-displayname jabber-chatting-with))
-                " " (:eval (jabber-jid-resource jabber-chatting-with)) "\t";
-                (:eval (let ((buddy (jabber-jid-symbol jabber-chatting-with)))
-                         (propertize
-                          (or
-                           (cdr (assoc (get buddy 'show) jabber-presence-strings))
-                           (get buddy 'show))
-                          'face
-                          (or (cdr (assoc (get buddy 'show) jabber-presence-faces))
-                              'jabber-roster-user-online))))
-                "\t" (:eval (get (jabber-jid-symbol jabber-chatting-with) 'status))
-                (:eval (unless (equal "" *jabber-current-show*)
-                         (concat "\t You're " *jabber-current-show*
-                                 " (" *jabber-current-status* ")")))))
-        ;; Open urls!
-        (add-hook 'jabber-chat-mode-hook 'goto-address)
-        
-        ;; fun keybindings!
-        (defun my-jabber-chat-delete-or-bury ()
-          (interactive)
-          (if (eq 'jabber-chat-mode major-mode)
-              (condition-case e 
-                  (delete-frame)
-                (error 
-                 (if (string= "Attempt to delete the sole visible or iconified frame" 
-                              (cadr e))
-                     (bury-buffer))))))
-        
-    ;    (define-key jabber-chat-mode-map [escape] 'my-jabber-chat-delete-or-bury)
-        (define-key mode-specific-map "jr"
-          (lambda () 
-            (interactive) 
-            (switch-to-buffer "*-jabber-*")))
-        (define-key mode-specific-map "jc"
-          '(lambda () 
-             (interactive) 
-             (call-interactively 'jabber-connect)))
-        (define-key mode-specific-map "jd"
-          '(lambda () 
-             (interactive) 
-             (call-interactively 'jabber-disconnect)))
-        (define-key mode-specific-map "jj"
-          '(lambda () 
-             (interactive) 
-             (call-interactively 'jabber-chat-with)))
-        (define-key mode-specific-map "ja"
-          '(lambda () 
-             (interactive) 
-             (jabber-send-presence "away" "" 10)))
-        (define-key mode-specific-map "jo"
-          '(lambda () 
-             (interactive) 
-             (jabber-send-presence "" "" 10)))
-        (define-key mode-specific-map "jx"
-          '(lambda () 
-             (interactive) 
-             (jabber-send-presence "xa" "" 10)))))
-
-    ;;;; hipchat support
-    (setq ssl-program-name "gnutls-cli"
-          ssl-program-arguments '("--insecure" "-p" service host)
-          ssl-certificate-verification-policy 1)
-     
-    ;; Connect using jabber.el
-    ;; M-x jabber-connect <RET>
-     
-    ;; Config
-    (setq jabber-account-list '(("75698_604162@chat.hipchat.com")))
-    (defvar hipchat-number "75698")
-    (defvar hipchat-nickname "Jeff Mickey")
-
-    ;; Join a room
-    (defun cm/hipchat-join (room)
-      (interactive "sRoom name: ")
-      (jabber-groupchat-join
-       (jabber-read-account)
-       (concat hipchat-number "_" room "@conf.hipchat.com")
-       hipchat-nickname
-       t))
-
-    ;; Mention nicknames in a way that HipChat clients will pickup
-    (defun hipchat-mention (nickname)
-      (interactive
-       (list (jabber-muc-read-nickname jabber-group "Nickname: ")))
-      (insert (concat "@\"" nickname "\" "))) 
-
-  (defvar cm/hipchat-rooms '())
-
-  (defun cm/hipchat-joinall ()
-    (interactive)
-    (rcirc-cmd-join (mapconcat 'identity cm/hipchat-rooms ",") (rcirc-buffer-process (get-buffer "&bitlbee@localhost")) nil))
-#+end_src
 *** SLIME
     :PROPERTIES:
     :ID:       bb361611-de0c-480f-8919-e1ed77b583e0
@@ -3900,77 +4125,12 @@ Who needs a command line anyways..
               (setq sql-alternate-buffer-name (sql-make-smart-buffer-name))
               (sql-rename-buffer)))
 #+end_src
-*** Flymake
+*** W3M
     :PROPERTIES:
-    :ID:       b379d31d-a542-496b-ad6b-31817952e93d
+    :ID:       79e3e87f-f769-4325-ac15-450572f79a6a
     :END:
 #+begin_src emacs-lisp
-  ;; stolen from http://www.reddit.com/r/emacs/comments/i05v3/emacs_and_pylint/c1ztm6x (user kanak on /r/emacs)
-  (require 'flymake)
-  
-  (setq *cm/flychecker-directory* "~/.emacs.d/flycheck")
-  
-  (defmacro def-flymake-init (mode checker-file)
-    "Writes a function called flymake-MODE-init which contains the usual boilerplate for a default flymake initialization."
-    `(defun ,(intern (format "flymake-%s-init" mode)) () 
-        (let* ((temp-file (flymake-init-create-temp-buffer-copy 
-                     'flymake-create-temp-inplace)) 
-         (local-file (file-relative-name 
-                      temp-file 
-                      (file-name-directory buffer-file-name)))) 
-    (list (expand-file-name ,checker-file *cm/flychecker-directory*) (list local-file)))))
-  
-  (defmacro def-flymake-cleanup (mode extlist)
-    "Writes a function called flymake-MODE-cleanup which removes files with specified extensions in current directory."
-    `(defun ,(intern (format "flymake-%s-cleanup" mode)) ()
-   (when flymake-temp-source-file-name
-     (let* ((temp-files
-             (mapcar (lambda (ext)
-                       (concat 
-                        (file-name-sans-extension flymake-temp-source-file-name) ext))
-                     ,extlist)))
-       (dolist (f temp-files)
-         (when (file-exists-p f)
-           (flymake-safe-delete-file f)))))
-   (flymake-simple-cleanup)))
-  
-  (def-flymake-init "python" "~/.emacs.d/flycheckbin/pychecker.sh")
-  (add-to-list 'flymake-allowed-file-name-masks '("\\.py\\'" flymake-python-init)) 
-  
-  ;; flyspell
-  (setq ispell-program-name "aspell")
-  (setq ispell-list-command "list")
-  (setq ispell-extra-args '("--sug-mode=ultra"))
-#+end_src
-*** EMMS - Emacs MultiMedia System
-    :PROPERTIES:
-    :ID:       0e42f65c-aca2-4cbb-9633-1d8cedaefaa8
-    :END:
-Now w/mopidy
-#+begin_src emacs-lisp
-  (require 'emms-setup)
-  (emms-standard)
-  (require 'emms-browser)
-  (require 'emms-player-mpd)
-  (add-to-list 'emms-info-functions 'emms-info-mpd)
-  (add-to-list 'emms-player-list 'emms-player-mpd)
-
-  (require 'emms-volume)
-  (setq emms-volume-change-function 'emms-volume-mpd-change)
-
-  (setq emms-info-asynchronosly t)
-  (add-hook 'emms-player-started-hook 'emms-show)
-  (setq emms-show-format "NP: %s")
-  (setq emms-mode-line-icon-before-format ""
-        emms-mode-line-format " %s"
-        emms-mode-line-icon-color "blue")
-
-  (if (executable-find "find")
-      (setq emms-source-file-directory-tree-function 'emms-source-file-directory-tree-find))
-
-  ;; reserve a key namespace for emms
-  (global-set-key (kbd "C-c m p") 'emms-pause)
-  (global-set-key (kbd "C-c m m") 'emms-smart-browse)
+  (autoload 'w3m-browse-url "w3m-load" "" t)
 #+end_src
 ** Custom
    :PROPERTIES:
@@ -4461,8 +4621,17 @@ settings that occur above. Much easier this way.
   ;(add-hook 'post-command-hook 'cm/cursor)
   ; oh god it flashes so much. Don't know how to do this better yet.
   (blink-cursor-mode 0)
-  (set-cursor-color "#ffff00")
-  (set-mouse-color "#ffff00")
+  (setq cm/cursor-color "#ffff00")
+  (set-cursor-color cm/cursor-color)
+  (set-mouse-color cm/cursor-color)
+
+  (require 'frame)
+  (defun cm/cursor-hook (frame)
+    (set-cursor-color cm/cursor-color)
+    (modify-frame-parameters
+     frame (list (cons 'cursor-color cm/cursor-color))))
+
+  (add-hook 'after-make-frame-functions 'cm/cursor-hook)
 #+end_src
 ** Server process
    :PROPERTIES:
