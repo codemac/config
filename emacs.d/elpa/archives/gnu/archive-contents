@@ -80,7 +80,7 @@
 	 ((:keywords "async")
 	  (:url . "http://elpa.gnu.org/packages/async.html"))])
  (auctex .
-	 [(11 90 2)
+	 [(11 91 0)
 	  nil "Integrated environment for *TeX*" tar
 	  ((:url . "http://www.gnu.org/software/auctex/"))])
  (aumix-mode .
@@ -365,7 +365,7 @@
 	       ((:keywords "calendar")
 		(:url . "http://elpa.gnu.org/packages/excorporate.html"))])
  (exwm .
-       [(0 14)
+       [(0 15)
 	((xelb
 	  (0 12)))
 	"Emacs X Window Manager" tar
@@ -458,7 +458,7 @@
 		((:keywords "html" "xml")
 		 (:url . "https://github.com/validator/validator"))])
  (hydra .
-	[(0 13 5)
+	[(0 14 0)
 	 ((cl-lib
 	   (0 5)))
 	 "Make bindings that stick around." tar
@@ -503,7 +503,7 @@
 	       ((:url . "http://elpa.gnu.org/packages/jgraph-mode.html")
 		(:keywords "tex" "wp"))])
  (js2-mode .
-	   [(20170116)
+	   [(20170721)
 	    ((emacs
 	      (24 1))
 	     (cl-lib
@@ -697,7 +697,7 @@
 	     ((:url . "https://github.com/michael-heerdegen/on-screen.el")
 	      (:keywords "convenience"))])
  (org .
-      [(20170717)
+      [(20170731)
        nil "Outline-based notes management and organizer" tar nil])
  (org-edna .
 	   [(1 0 -3 1)
@@ -867,7 +867,7 @@
 	       ((:keywords "soap" "web-services" "comm" "hypermedia")
 		(:url . "http://elpa.gnu.org/packages/soap-client.html"))])
  (sokoban .
-	  [(1 4 4)
+	  [(1 4 5)
 	   nil "Implementation of Sokoban for Emacs." tar
 	   ((:keywords "games")
 	    (:url . "http://elpa.gnu.org/packages/sokoban.html"))])
@@ -1073,7 +1073,7 @@
        ((:keywords "multimedia" "xpm")
 	(:url . "http://www.gnuvola.org/software/xpm/"))])
  (yasnippet .
-	    [(0 12 0)
+	    [(0 12 1)
 	     ((cl-lib
 	       (0 5)))
 	     "Yet another snippet extension for Emacs." tar
