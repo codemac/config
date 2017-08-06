@@ -1281,6 +1281,8 @@ then =C-u M-s h u= unhighlights everything. I'm going to swap these
 two keybindings with the following:
 
 #+begin_src emacs-lisp
+  (require 'hi-lock)
+
   (defun cm/unhighlight-regexp-swap (arg)
     (interactive "P")
     (pcase arg
@@ -2829,23 +2831,18 @@ good problem to me :)
 For some reason the ~=~ sign is used for refresh in notmuch. This is
 horrifying.
 #+begin_src emacs-lisp
-  (setq notmuch-archive-tags '("-flagged"))
+  (setq notmuch-archive-tags '("-flagged" "-unread"))
 
   (defun cm/notmuch-archive-unread-all ()
     (interactive)
-    (notmuch-search-tag-all (cons "-unread" notmuch-archive-tags)))
-
-  (eval-after-load 'notmuch
-    '(define-key notmuch-common-keymap "g" 'notmuch-refresh-this-buffer))
-  (eval-after-load 'notmuch
-    '(define-key notmuch-common-keymap "A" 'cm/notmuch-archive-unread-all))
+    (notmuch-search-tag-all notmuch-archive-tags))
 
   (setq notmuch-saved-searches
 	'((:name "inbox"         :query "tag:flagged"                 :key "i" :sort-order newest-first)
 	  (:name "unread"        :query "tag:unread"                  :key "u" :sort-order newest-first)
-	  (:name "work-inbox"    :query "tag:work AND tag:flagged NOT (subject:\"/^CL /\" OR from:buganizer)"
+	  (:name "work-inbox"    :query "tag:flagged (to:jmickey@google.com OR cc:jmickey@google.com OR (tag:work -subject:\"/^CL /\" -from:buganizer))"
 		 :key "wi" :sort-order newest-first)
-	  (:name "work-bulk"     :query "tag:work AND tag:flagged AND (subject:\"/^CL /\" OR from:buganizer)"
+	  (:name "work-bulk"     :query "tag:work AND tag:flagged (subject:\"/^CL /\" OR from:buganizer)"
 		 :key "wb" :sort-order newest-first)
 	  (:name "inbox-codemac" :query "tag:codemac AND tag:flagged" :key "c" :sort-order newest-first)
 	  (:name "drafts"        :query "tag:draft"                   :key "d" :sort-order newest-first)
@@ -2857,6 +2854,13 @@ horrifying.
   ;; keep the "goto address" logic consistent with org mode
   (define-key notmuch-show-mode-map (kbd "C-c C-o") 'goto-address-at-point)
 #+end_src
+What is this sillyness? =g= should always refresh a buffer, shit man.
+#+begin_src emacs-lisp
+ (eval-after-load 'notmuch
+   '(define-key notmuch-common-keymap "g" 'notmuch-refresh-this-buffer))
+ (eval-after-load 'notmuch
+   '(define-key notmuch-common-keymap "A" 'cm/notmuch-archive-unread-all))
+#+end_src
 *** Muse
     :PROPERTIES:
     :ID:       33123e64-e792-45bc-8260-9ea8a40ca039
@@ -2867,11 +2871,10 @@ Good for person wikis, however I pretty much exclusively use =org-blog=/=org-exp
                                (footnote-mode 1)
                                (flyspell-mode 1)
                                (auto-fill-mode 1)))
-  
   ;; My wiki's!
-  (setq muse-project-alist
-        '(("Personal Miki" ("~/miki/src" :default "index")
-           (:base "html" :path "~/miki/html"))))
+  ;;(setq muse-project-alist
+  ;;      '(("Personal Miki" ("~/miki/src" :default "index")
+  ;;         (:base "html" :path "~/miki/html"))))
 #+end_src
 
 *** Org
@@ -3143,6 +3146,34 @@ Functions borrowed from Sacha Chua.
             (t nil))))
 
 #+end_src
+Set up the styling. These are headers and footers that make it nicer
+to see my review adgendas, and easier on the eyes to follow.
+#+begin_src emacs-lisp
+  (setq cm/org-sort-style '((org-agenda-skip-function '(org-agenda-skip-entry-if 'scheduled))
+			    (org-agenda-sorting-strategy
+			     '((agenda habit-down time-up priority-down category-keep)
+			       (todo tsia-up)
+			       (tags tsia-up)
+			       (search tsia-up)))))
+
+  (defun cm/review-section (title)
+    `((org-agenda-overriding-header ,(concat "########## " title " ##################################################"))))
+  (defun cm/review-header (title)
+    `((org-agenda-overriding-header ,(concat "     " title))))
+  ;; this dynamic title sizing doesn't work because the org-agenda
+  ;; buffer is created when org-agenda is called. :/
+    ;; (let* ((basewidth (/ (- (window-body-width) (+ (length title) 6)) 4.0))
+    ;;        (leftside (make-string (floor basewidth) ?+))
+    ;;        (rightside (make-string (ceiling basewidth) ?+)))
+    ;;   `((org-agenda-overriding-header ,(concat leftside " " title " " rightside)))))
+
+  (defun cm/org-ctx-agenda (key ctx title)
+    `(,(concat "c" key) ,title
+      ((tags-todo ,(concat ctx "-PROJECT-BLOCKED=\"t\"/!-WAITING"))
+       (tags ,(concat ctx "+PROJECT")))
+      ,cm/org-sort-style))
+#+end_src
+
 The org agenda. It's mostly for gtd usage, so I have the following views:
 
 - =d= :: calendar
@@ -3167,101 +3198,83 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
          that I maintain. Not sure how to integrate them into my whole
          emacs / org-mode flow just yet.
 #+begin_src emacs-lisp
-  (setq cm/org-sort-style '((org-agenda-skip-function '(org-agenda-skip-entry-if 'scheduled))
-                            (org-agenda-sorting-strategy
-                             '((agenda habit-down time-up priority-down category-keep)
-                               (todo tsia-up)
-                               (tags tsia-up)
-                               (search tsia-up)))))
-
-  (defun cm/review-section (title)
-    `((org-agenda-overriding-header ,(concat "########## " title " ##################################################"))))
-  (defun cm/review-header (title)
-    `((org-agenda-overriding-header ,(concat "     " title))))
-  ;; this dynamic title sizing doesn't work because the org-agenda
-  ;; buffer is created when org-agenda is called. :/
-    ;; (let* ((basewidth (/ (- (window-body-width) (+ (length title) 6)) 4.0))
-    ;;        (leftside (make-string (floor basewidth) ?+))
-    ;;        (rightside (make-string (ceiling basewidth) ?+)))
-    ;;   `((org-agenda-overriding-header ,(concat leftside " " title " " rightside)))))
-
-  (defun cm/org-ctx-agenda (key ctx title)
-    `(,(concat "c" key) ,title
-      ((tags-todo ,(concat ctx "-PROJECT-BLOCKED=\"t\"/!-WAITING"))
-       (tags ,(concat ctx "+PROJECT")))
-      ,cm/org-sort-style))
-
   (defun cm/org-set-agenda ()
     (interactive)
     (setq org-agenda-custom-commands
 	`(("d" "Full Day Agenda"
-           ((agenda)
-            (tags "PROJECT/!WAITING" ,cm/org-sort-style)
-            (todo "WAITING" ,cm/org-sort-style)
-            (tags-todo "-BLOCKED=\"t\"" ,cm/org-sort-style))
+	   ((agenda)
+	    (tags "PROJECT/!WAITING" ,cm/org-sort-style)
+	    (todo "WAITING" ,cm/org-sort-style)
+	    (tags-todo "-BLOCKED=\"t\"" ,cm/org-sort-style))
 	   ((org-agenda-span 3)
 	    (org-agenda-start-day "-1d")))
-          ("i" "Inbox"
-           ((tags-todo "-{.*}")))
-          ("n" "Next agenda"
-           ((todo "WAITING")
-            (todo "NEXT")
-            (todo "STARTED"))
-           ,cm/org-sort-style)
-          ("p" "Project Agenda"
-           ((tags-todo "PROJECT/!-WAITING")
-            (tags "PROJECT"))
-           ,cm/org-sort-style)
-          ,(cm/org-ctx-agenda "v" "INTERNET" "Internet Agenda")
-          ,(cm/org-ctx-agenda "c" "COMPUTER" "Computer Agenda")
-          ,(cm/org-ctx-agenda "w" "WORK" "Work Agenda")
-          ,(cm/org-ctx-agenda "h" "HOME" "Home Agenda")
-          ,(cm/org-ctx-agenda "r" "ERRAND" "Errand Agenda")
-          ,(cm/org-ctx-agenda "f" "PHONE" "Phone Agenda")
-          ,(cm/org-ctx-agenda "l" "-ERRAND-HOME-INTERNET-PROJECT-COMPUTER-WORK-PHONE" "People Agenda")
-          ("ct" "Tickler Agenda"
-           ((tags-todo "-PROJECT-BLOCKED=\"t\"/!-WAITING")
-            (todo "PROJECT"))
-           ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
-            (org-agenda-skip-function '(org-agenda-skip-entry-if 'notscheduled))
-            (org-agenda-sorting-strategy '(user-defined-up))))
-          ("rd" "Daily Agenda"
-           ((agenda)
-            (todo "DONE|NVM"))
-           ((org-agenda-span 3)
-            (org-agenda-start-day "-1d")))
-          ("rw" "Weekly Review Agenda"
-           (;; GET CLEAR
-            (tags-todo "noop" ,(cm/review-section "Get Clear!"))
-            (tags-todo "noop" ,(cm/review-header "Collect Loose Papers and Materials"))
-            (tags-todo "-{.*}" ,(cm/review-header "Get IN to ZERO"))
-            (tags-todo "noop" ,(cm/review-header "Empty Your Head!"))
+	  ("i" "Inbox"
+	   ((tags-todo "-{.*}")))
+	  ("n" "Next agenda"
+	   ((todo "WAITING")
+	    (todo "NEXT")
+	    (todo "STARTED"))
+	   ,cm/org-sort-style)
+	  ("p" "Project Agenda"
+	   ((tags-todo "PROJECT/!-WAITING")
+	    (tags "PROJECT"))
+	   ,cm/org-sort-style)
+	  ,(cm/org-ctx-agenda "v" "INTERNET" "Internet Agenda")
+	  ,(cm/org-ctx-agenda "c" "COMPUTER" "Computer Agenda")
+	  ,(cm/org-ctx-agenda "w" "WORK" "Work Agenda")
+	  ,(cm/org-ctx-agenda "h" "HOME" "Home Agenda")
+	  ,(cm/org-ctx-agenda "r" "ERRAND" "Errand Agenda")
+	  ,(cm/org-ctx-agenda "f" "PHONE" "Phone Agenda")
+	  ,(cm/org-ctx-agenda "l" "-ERRAND-HOME-INTERNET-PROJECT-COMPUTER-WORK-PHONE" "People Agenda")
+	  ("ct" "Tickler Agenda"
+	   ((tags-todo "-PROJECT-BLOCKED=\"t\"/!-WAITING")
+	    (todo "PROJECT"))
+	   ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
+	    (org-agenda-skip-function '(org-agenda-skip-entry-if 'notscheduled))
+	    (org-agenda-sorting-strategy '(user-defined-up))))
+	  ("rd" "Daily Agenda"
+	   ((agenda)
+	    (todo "DONE|NVM"))
+	   ((org-agenda-span 3)
+	    (org-agenda-start-day "-1d")))
+	  ("rw" "Weekly Review Agenda"
+	   (;; GET CLEAR
+	    (tags-todo "noop" ,(cm/review-section "Get Clear!"))
+	    (tags-todo "noop" ,(cm/review-header "Collect Loose Papers and Materials"))
+	    (tags-todo "-{.*}" ,(cm/review-header "Get IN to ZERO"))
+	    (tags-todo "noop" ,(cm/review-header "Empty Your Head!"))
 
-            ;; GET CURRENT
-            (tags-todo "noop" ,(cm/review-section "Get Current!"))
-            (tags-todo "-PROJECT-BLOCKED=\"t\"/!-WAITING" ,(cm/review-header "Review Actions Lists"))
-            (todo "DONE|NVM")
-            (agenda "" (,@(cm/review-header "Review Previous & Upcoming Calendar Data")
+	    ;; GET CURRENT
+	    (tags-todo "noop" ,(cm/review-section "Get Current!"))
+	    (tags-todo "-PROJECT-BLOCKED=\"t\"/!-WAITING" ,(cm/review-header "Review Actions Lists"))
+	    (todo "DONE|NVM")
+	    (agenda "" (,@(cm/review-header "Review Previous & Upcoming Calendar Data")
 			(org-agenda-skip-function nil)))
-            (todo "WAITING" ,(cm/review-header "Review Waiting For List"))
-            (tags-todo "PROJECT" ,(cm/review-header "Review Projects and Larger Outcomes"))
-            (tags-todo "noop" ,(cm/review-header "Review Relevant Checklists"))
+	    (todo "WAITING" ,(cm/review-header "Review Waiting For List"))
+	    (tags-todo "PROJECT" ,(cm/review-header "Review Projects and Larger Outcomes"))
+	    (tags-todo "noop" ,(cm/review-header "Review Relevant Checklists"))
 
-            ;; GET CREATIVE
-            (tags-todo "noop" ,(cm/review-section "Get Creative!"))
-            (tags-todo "noop" ,(cm/review-header "Review Someday/Maybe List"))
-            (tags-todo "noop" ,(cm/review-header "Empty your head!")))
-           ((org-agenda-span 22)
-            (org-agenda-start-day ,(concat "-" (number-to-string (cm/days-back-to-monday)) "d"))))
+	    ;; GET CREATIVE
+	    (tags-todo "noop" ,(cm/review-section "Get Creative!"))
+	    (tags-todo "noop" ,(cm/review-header "Review Someday/Maybe List"))
+	    (tags-todo "noop" ,(cm/review-header "Empty your head!")))
+	   ((org-agenda-span 22)
+	    (org-agenda-start-day ,(concat "-" (number-to-string (cm/days-back-to-monday)) "d"))))
 	  ("xx" "All Checklists"
 	   ((tags "CHECKLIST"))
 	   ((org-agenda-search-view-max-outline-level 2)))
 	  ("xd" "Daily Checklists"
 	   ((tags "DAILY+CHECKLIST"))
 	   ((org-agenda-search-view-max-outline-level 2)))
-          ("Z" "Receipt Agenda"
-           ((org-receipt-agenda))))))
-
+	  ("Z" "Receipt Agenda"
+	   ((org-receipt-agenda))))))
+#+end_src
+Dynamism! So a big part of what makes these nice is that they compute
+what the right numbers of days on either side (via ndays) so I can see
+weeks surrounding reviews. Unfortunately, these are the parts that
+require the =cm/org-load-agenda= function as opposed to just being
+able to set =org-agenda-custom-commands=
+#+begin_src emacs-lisp
   (defun cm/days-back-to-monday ()
     (+ 7 (calendar-day-of-week (calendar-gregorian-from-absolute (org-today)))))
 
@@ -3273,6 +3286,12 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
     (cm/org-set-agenda)
     (org-agenda))
 #+end_src
+Also, set it the first time on startup so org commands work as
+expected.
+#+begin_src emacs-lisp
+  (cm/org-set-agenda)
+#+end_src
+
 **** Useful setq's
      :PROPERTIES:
      :ID:       8bb80482-a3c3-4e9b-bc23-27fdfdf4d14c
@@ -3398,6 +3417,8 @@ or something else. For now, it's manual.
 
   (defun cm/org-sync ()
     (interactive)
+    (when (fboundp #'cm/org-set-agenda)
+      (cm/org-set-agenda))
     (save-excursion
       (org-save-all-org-buffers)
       (org-mobile-pull)
@@ -3841,6 +3862,8 @@ appointments in the org mode calendar. It's not perfect, but it does
 help with my forgetfulness.
 
 #+begin_src emacs-lisp
+  (setq appt-display-interval 2
+	appt-message-warning-time 6)
   (appt-activate)
   (org-agenda-to-appt)
 #+end_src
