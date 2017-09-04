@@ -1,0 +1,6 @@
+;;; -*- mode: scheme; -*-
+(use-modules (mcron job-specification)
+	     (codemac cmd mail-sync))
+
+(job '(next-minute (range 0 60 4))
+     (main))
