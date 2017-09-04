@@ -925,9 +925,12 @@ really interpret anything.
     :ID:       1f6334ef-51f3-417d-acc6-c578c2a9223b
     :END:
 #+begin_src emacs-lisp
-  (setq explicit-shell-file-name nil)
-  ;; (set-default 'explicit-shell-file-name (concat (getenv "HOME") "/bin/rc"))
-  ;; (setq explicit-rc-args '("-l"))
+  (set-default 'explicit-shell-file-name (concat (getenv "HOME") "/bin/rc"))
+  (setq explicit-rc-args '("-l"))
+
+  (when (string-equal (system-name) "jmickey-glaptop0")
+    (set-default 'explicit-shell-file-name (concat (getenv "HOME") "/bin/rc"))
+    (setq explicit-rc-args nil))
 #+end_src
 *** Track the directory of the shell process
     :PROPERTIES:
