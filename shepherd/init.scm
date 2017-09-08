@@ -64,12 +64,15 @@
 ;; environment.
 (setenv "DISPLAY" ":0.0")
 ;; q: why is perl in core_perl / vendor_perl?
-(setenv "PATH" "/home/jmickey/work/bin:/home/jmickey/bin:/bin:/bin/core_perl:/bin/vendor_perl")
+(setenv "PATH" (string-append
+		 (tilde "/work/bin:")
+		 (tilde "/bin:")
+		 "/bin:/bin/core_perl:/bin/vendor_perl"))
 (setenv "LANGUAGE" "en_US.UTF-8")
 (setenv "MOZ_USE_OMTC" "1")
-(setenv "ABSROOT" "/home/jmickey/src/abs")
-(setenv "GOPATH" "/home/jmickey/src/go")
-(setenv "GUILE_LOAD_PATH" "/home/jmickey/scm")
+(setenv "ABSROOT" (tilde "/src/abs"))
+(setenv "GOPATH" (tilde "/src/go"))
+(setenv "GUILE_LOAD_PATH" (tilde "/scm"))
 (setenv "_JAVA_OPTIONS" "-Dawt.useSystemAAFontSettings=on -Dswing.defaultlaf=com.sun.java.swing.plaf.gtk.GTKLookAndFeel -Dswing.aatext=true")
 
 (define *global-environment* (environ))
@@ -77,14 +80,24 @@
 (define (shellrunner a)
   (zero? (status:exit-val (apply system* (list "sh" "-c" a)))))
 
+(define (host-dpi host)
+  (cond
+    ((equal? host "neah")
+     96)
+    ((equal? host "nevada")
+     144)
+    (else
+      96)))
+
 (define (initx)
   (for-each
     shellrunner
-    '("sleep 2"
-      "setxkbmap -device $(xinput list 'AT Translated Set 2 keyboard' | cut -d= -f2 | cut -f 1) -layout dvorak -option ctrl:swapcaps"
+    `("sleep 2"
+      "setxkbmap -device $(xinput list 'AT Translated Set 2 keyboard' | cut -d= -f2 | cut -f 1) -layout dvorak"
+      ,(string-append "xmodmap " (tilde "/.Xmodmap"))
       "xsetroot -solid '#80a0af'"
       "xset r rate 200 20"
-      "xrandr --dpi 144")))
+      ,(string-append "xrandr --dpi " (number->string (host-dpi (gethostname)))))))
 
 (register-services
  (make <service>
