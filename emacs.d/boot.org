@@ -925,9 +925,12 @@ really interpret anything.
     :ID:       1f6334ef-51f3-417d-acc6-c578c2a9223b
     :END:
 #+begin_src emacs-lisp
-  (setq explicit-shell-file-name nil)
-  ;; (set-default 'explicit-shell-file-name (concat (getenv "HOME") "/bin/rc"))
-  ;; (setq explicit-rc-args '("-l"))
+  (set-default 'explicit-shell-file-name (concat (getenv "HOME") "/bin/rc"))
+  (setq explicit-rc-args '("-l"))
+
+  (when (string-equal (system-name) "jmickey-glaptop0")
+    (set-default 'explicit-shell-file-name (concat (getenv "HOME") "/bin/rc"))
+    (setq explicit-rc-args nil))
 #+end_src
 *** Track the directory of the shell process
     :PROPERTIES:
@@ -1501,6 +1504,12 @@ Incredibly useful way to browse your buffers.
 	    (filename . ,cm/workspaces-path))
 	   ("GTD"
 	    (filename . "/org/"))
+	   ("Mail"
+	    (or (mode . notmuch-search-mode)
+		(mode . notmuch-show-mode)
+		(mode . message-mode)
+		(mode . notmuch-message-mode)
+		(name . "bbdb")))
 	   ("Emacs"
 	    (or (name . "*Messages*")
 		(name . "*scratch*")
@@ -1509,7 +1518,10 @@ Incredibly useful way to browse your buffers.
 		(name . "*Backtrace*")
 		(name . "*Help*")
 		(name . "tramp/ssh")
-		(name . "tramp/sudo"))))))
+		(name . "tramp/sudo")
+		(name . "*Calculator*")
+		(name . "*Calc Trail*")
+		(name . "*Diff*"))))))
 
   (setq ibuffer-formats
 	'((mark modified read-only " "
@@ -1522,7 +1534,7 @@ Incredibly useful way to browse your buffers.
 	  (mark " "
 		(name 30 -1)
 		" " filename)))
-      
+
   (add-hook 'ibuffer-mode-hook
 	    (lambda ()
 	      (ibuffer-switch-to-saved-filter-groups "default")))
@@ -2612,6 +2624,32 @@ binary - and it's easier to just use whatever my distro packages.
 #+begin_src emacs-lisp
   (unless (require 'notmuch nil t)
     (message "Notmuch could not be loaded, should disable sending mail"))
+
+  (setq cm/mail-script "mail-sync")
+
+  (defun cm/notmuch-poll ()
+    (interactive)
+    (unless (equal (call-process cm/mail-script nil nil) 0)
+      (error "Notmuch: poll script `%s' failed!" notmuch-poll-script)))
+
+  (defun cm/notmuch-refresh-buffer-after-poll (proc state)
+    (let ((buffer (process-buffer proc)))
+      (with-current-buffer buffer
+	(with-current-buffer notmuch-buffer-to-refresh
+	  (when notmuch-buffer-refresh-function
+	    (call-interactively notmuch-buffer-refresh-function))))))
+	
+  (defun cm/notmuch-poll-and-refresh-this-buffer ()
+    (interactive)
+    (let ((old-buff (current-buffer)))
+      (with-current-buffer (get-buffer-create "*notmuch-mail-sync*")
+	(set (make-local-variable 'notmuch-buffer-to-refresh) old-buff)
+	(let ((process (start-process-shell-command "async proc mail-sync" (current-buffer) "mail-sync")))
+	  (set-process-sentinel process #'cm/notmuch-refresh-buffer-after-poll)))))
+
+  (advice-add 'notmuch-poll :override #'cm/notmuch-poll)
+
+  (advice-add 'notmuch-poll-and-refresh-this-buffer :override #'cm/notmuch-poll-and-refresh-this-buffer)
 #+end_src
 **** Sending mail
      :PROPERTIES:
@@ -3237,6 +3275,12 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
 	    (todo "DONE|NVM"))
 	   ((org-agenda-span 3)
 	    (org-agenda-start-day "-1d")))
+	  ("rs" "Weekly Snippet Review"
+	   ((agenda))
+	   ((org-agenda-span 7)
+	    (org-agenda-start-on-weekday 1)
+	    (org-agenda-start-with-log-mode t)
+	    (org-agenda-archives-mode t)))
 	  ("rw" "Weekly Review Agenda"
 	   (;; GET CLEAR
 	    (tags-todo "noop" ,(cm/review-section "Get Clear!"))
@@ -3259,6 +3303,7 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
 	    (tags-todo "noop" ,(cm/review-header "Review Someday/Maybe List"))
 	    (tags-todo "noop" ,(cm/review-header "Empty your head!")))
 	   ((org-agenda-span 22)
+	    (org-agenda-start-on-weekday 1)
 	    (org-agenda-start-day ,(concat "-" (number-to-string (cm/days-back-to-monday)) "d"))))
 	  ("xx" "All Checklists"
 	   ((tags "CHECKLIST"))
@@ -3298,7 +3343,7 @@ expected.
      :END:
 #+begin_src emacs-lisp  
   (setq org-stuck-projects
-            '("+PROJECT/-NVM-DONE-WAITING" ("NEXT" "TODO")))
+	    '("+PROJECT/-NVM-DONE-WAITING" ("NEXT" "TODO")))
 
   (add-to-list 'auto-mode-alist '("\\.org'$" . org-mode))
   (global-set-key (kbd "C-c l") 'org-store-link)
@@ -3310,7 +3355,11 @@ expected.
 
 
   (setq org-agenda-files '("~/org/"))
-  (setq org-refile-targets '((nil :maxlevel . 5) (org-agenda-files :maxlevel . 5)))
+  (setq org-refile-targets '((nil
+			      :maxlevel . 5)
+			     (("~/org/gtd.org"
+			       "~/org/work.org")
+			      :maxlevel . 5)))
 
   (setq org-agenda-tags-column -90)
   (setq org-tags-column -90)
