@@ -256,7 +256,7 @@
 	 "setxkbmap -device $(xinput list 'AT Translated Set 2 keyboard' | cut -d= -f2 | cut -f 1) -layout dvorak -option ctrl:swapcaps"
 	 "xsetroot -solid '#80a0af'"
 	 "xset r rate 200 20"
-	 "xrandr --dpi 144")))))
+	 "xrandr --dpi 96")))))
 
 (define machines (list glaptop-machine
 		       neah-machine))
@@ -290,7 +290,6 @@
     ((slot-ref m 'graphical-prehook))
     (for-each start (slot-ref m 'graphical-svcs))))
 
-;;(run (current-machine))
-
 (format #t "Current machine: ~s~%" (current-machine))
+(run (current-machine))
 
