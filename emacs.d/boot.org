@@ -3107,47 +3107,8 @@ Functions borrowed from Sacha Chua.
          :tstart ,(format-time-string "%Y-%m-%d" (calendar-time-from-absolute (1+ org-starting-day) 0))
          :tend ,(format-time-string "%Y-%m-%d" (calendar-time-from-absolute (+ org-starting-day 2) 0))))))
   
-  (defvar org-my-archive-expiry-days 7
-    "The number of days after which a completed task should be auto-archived.
-  This can be 0 for immediate, or a floating point value.")
-  
-  (defun org-my-archive-done-tasks ()
-    (interactive)
-    (save-excursion
-      (goto-char (point-min))
-      (let ((done-regexp
-             (concat "\\* \\(" (regexp-opt org-done-keywords) "\\) "))
-            (state-regexp
-             (concat "- State \"\\(" (regexp-opt org-done-keywords)
-                     "\\)\"\\s-*\\[\\([^]\n]+\\)\\]")))
-        (while (re-search-forward done-regexp nil t)
-          (let ((end (save-excursion
-                       (outline-next-heading)
-                       (point)))
-                begin)
-            (goto-char (line-beginning-position))
-            (setq begin (point))
-            (if (re-search-forward state-regexp end t)
-                (let* ((time-string (match-string 2))
-                       (when-closed (org-parse-time-string time-string)))
-                  (if (>= (time-to-number-of-days
-                           (time-subtract (current-time)
-                                          (apply #'encode-time when-closed)))
-                          org-my-archive-expiry-days)
-                      (org-archive-subtree)))
-              (goto-char end)))))
-      (save-buffer)))
 #+end_src
 
-**** Run an auto archiving script after saves. *This currently does not work!*
-     :PROPERTIES:
-     :ID:       3f3818a7-f12d-4a2c-9ac2-9c2f527b5ca8
-     :END:
-#+begin_src emacs-lisp  
-  (setq safe-local-variable-values (quote ((after-save-hook archive-done-tasks))))
-  
-  (defalias 'archive-done-tasks 'org-my-archive-done-tasks)
-#+end_src
 **** Receipt Agenda
      :PROPERTIES:
      :ID:       86b9b44b-96cd-47c3-8fd5-3086cb77c05b
@@ -3236,83 +3197,116 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
          that I maintain. Not sure how to integrate them into my whole
          emacs / org-mode flow just yet.
 #+begin_src emacs-lisp
+  (defun cm/day-agendas ()
+    `(("d" "Full Day Agenda"
+       ((agenda)
+	(tags "PROJECT/!WAITING" ,cm/org-sort-style)
+	(todo "WAITING" ,cm/org-sort-style)
+	(tags-todo "-BLOCKED=\"t\"" ,cm/org-sort-style))
+       ((org-agenda-span 3)
+	(org-agenda-start-day "-1d")))
+      ("i" "Inbox"
+       ((tags-todo "-{.*}")))
+    ("n" "Next agenda"
+     ((todo "WAITING")
+      (todo "NEXT")
+      (todo "STARTED"))
+     ,cm/org-sort-style)))
+
+  (defun cm/context-agendas ()
+    `(("p" "Project Agenda"
+       ((tags-todo "PROJECT/!-WAITING")
+	(tags "PROJECT"))
+       ,cm/org-sort-style)
+      ,(cm/org-ctx-agenda "v" "INTERNET" "Internet Agenda")
+      ,(cm/org-ctx-agenda "c" "COMPUTER" "Computer Agenda")
+      ,(cm/org-ctx-agenda "w" "WORK" "Work Agenda")
+      ,(cm/org-ctx-agenda "h" "HOME" "Home Agenda")
+      ,(cm/org-ctx-agenda "r" "ERRAND" "Errand Agenda")
+      ,(cm/org-ctx-agenda "f" "PHONE" "Phone Agenda")
+      ,(cm/org-ctx-agenda "l" "-ERRAND-HOME-INTERNET-PROJECT-COMPUTER-WORK-PHONE" "People Agenda")
+      ("ct" "Tickler Agenda"
+       ((tags-todo "-PROJECT-BLOCKED=\"t\"/!-WAITING")
+	(todo "PROJECT"))
+       ((org-agenda-skip-function '(org-agenda-skip-entry-if 'notscheduled))
+	(org-agenda-sorting-strategy '(tsia-up))))))
+
+  (defun cm/review-agendas ()
+    `(("rd" "Daily Review"
+       ((agenda)
+	(todo "DONE|NVM"))
+       ((org-agenda-span 3)
+	(org-agenda-start-day "-1d")))
+      ("rs" "Weekly Snippet Review"
+       ((agenda))
+       ((org-agenda-span 7)
+	(org-agenda-start-on-weekday 1)
+	(org-agenda-start-with-log-mode t)
+	(org-agenda-archives-mode t)))
+      ("rw" "Weekly Review Agenda"
+       (;; GET CLEAR
+	(tags-todo "noop" ,(cm/review-section "Get Clear!"))
+	(tags-todo "noop" ,(cm/review-header "Collect Loose Papers and Materials"))
+	(tags-todo "-{.*}" ,(cm/review-header "Get IN to ZERO"))
+	(tags-todo "noop" ,(cm/review-header "Empty Your Head!"))
+
+	;; GET CURRENT
+	(tags-todo "noop" ,(cm/review-section "Get Current!"))
+	(tags-todo "-PROJECT-BLOCKED=\"t\"/!-WAITING" ,(cm/review-header "Review Actions Lists"))
+	(todo "DONE|NVM")
+	(agenda "" (,@(cm/review-header "Review Previous & Upcoming Calendar Data")
+		    (org-agenda-skip-function nil)))
+	(todo "WAITING" ,(cm/review-header "Review Waiting For List"))
+	(tags-todo "PROJECT" ,(cm/review-header "Review Projects and Larger Outcomes"))
+	(tags-todo "noop" ,(cm/review-header "Review Relevant Checklists"))
+
+	;; GET CREATIVE
+	(tags-todo "noop" ,(cm/review-section "Get Creative!"))
+	(tags-todo "noop" ,(cm/review-header "Review Someday/Maybe List"))
+	(tags-todo "noop" ,(cm/review-header "Empty Your Head!")))
+       ((org-agenda-span 22)
+	(org-agenda-start-on-weekday 1)
+	(org-agenda-start-day ,(concat "-" (number-to-string (cm/days-back-to-monday)) "d"))))
+      ("rq" "Quarterly Review Agenda"
+       (;; GET CLEAR
+	(tags-todo "noop" ,(cm/review-section "Get Clear!"))
+	(tags-todo "noop" ,(cm/review-header "Empty Your Head!"))
+
+	;; GET CURRENT
+	(tags-todo "noop" ,(cm/review-section "Get Current!"))
+	(tags "PRIORITY+50K" ,(cm/review-header "Read and Review Life Purpose"))
+	(tags "PRIORITY+40K" ,(cm/review-header "Read and Review Visions"))
+	(tags "PRIORITY+30K" ,(cm/review-header "Read and Review Goals and Objectives"))
+	(tags "PRIORITY+20K" ,(cm/review-header "Read and Review Areas of Focus and Responsibility"))
+	(tags-todo "PROJECT" ,(cm/review-header "Read and Review Projects and Alignment"))
+
+	;; GET CREATIVE
+	(tags-todo "noop" ,(cm/review-section "Get Creative!"))
+	(tags-todo "noop" ,(cm/review-header "What Went Well This Quarter, and Why?"))
+	(tags-todo "noop" ,(cm/review-header "What Went Poorly This Quarter, and Why?"))
+	(tags-todo "noop" ,(cm/review-header "Am I Headed the Right Direction?"))
+	(tags-todo "noop" ,(cm/review-header "Empty Your Head!")))
+       ((org-agenda-entry-text-maxlines 1000)
+	(org-agenda-entry-text-mode 1)))))
+
+  (defun cm/checklist-agendas ()
+    '(("xx" "All Checklists"
+       ((tags "CHECKLIST"))
+       ((org-agenda-search-view-max-outline-level 2)))
+      ("xd" "Daily Checklists"
+       ((tags "DAILY+CHECKLIST"))
+       ((org-agenda-search-view-max-outline-level 2)))))
+
   (defun cm/org-set-agenda ()
     (interactive)
     (setq org-agenda-custom-commands
-	`(("d" "Full Day Agenda"
-	   ((agenda)
-	    (tags "PROJECT/!WAITING" ,cm/org-sort-style)
-	    (todo "WAITING" ,cm/org-sort-style)
-	    (tags-todo "-BLOCKED=\"t\"" ,cm/org-sort-style))
-	   ((org-agenda-span 3)
-	    (org-agenda-start-day "-1d")))
-	  ("i" "Inbox"
-	   ((tags-todo "-{.*}")))
-	  ("n" "Next agenda"
-	   ((todo "WAITING")
-	    (todo "NEXT")
-	    (todo "STARTED"))
-	   ,cm/org-sort-style)
-	  ("p" "Project Agenda"
-	   ((tags-todo "PROJECT/!-WAITING")
-	    (tags "PROJECT"))
-	   ,cm/org-sort-style)
-	  ,(cm/org-ctx-agenda "v" "INTERNET" "Internet Agenda")
-	  ,(cm/org-ctx-agenda "c" "COMPUTER" "Computer Agenda")
-	  ,(cm/org-ctx-agenda "w" "WORK" "Work Agenda")
-	  ,(cm/org-ctx-agenda "h" "HOME" "Home Agenda")
-	  ,(cm/org-ctx-agenda "r" "ERRAND" "Errand Agenda")
-	  ,(cm/org-ctx-agenda "f" "PHONE" "Phone Agenda")
-	  ,(cm/org-ctx-agenda "l" "-ERRAND-HOME-INTERNET-PROJECT-COMPUTER-WORK-PHONE" "People Agenda")
-	  ("ct" "Tickler Agenda"
-	   ((tags-todo "-PROJECT-BLOCKED=\"t\"/!-WAITING")
-	    (todo "PROJECT"))
-	   ((org-agenda-cmp-user-defined 'my-agenda-sort-by-inactive-timestamp)
-	    (org-agenda-skip-function '(org-agenda-skip-entry-if 'notscheduled))
-	    (org-agenda-sorting-strategy '(user-defined-up))))
-	  ("rd" "Daily Agenda"
-	   ((agenda)
-	    (todo "DONE|NVM"))
-	   ((org-agenda-span 3)
-	    (org-agenda-start-day "-1d")))
-	  ("rs" "Weekly Snippet Review"
-	   ((agenda))
-	   ((org-agenda-span 7)
-	    (org-agenda-start-on-weekday 1)
-	    (org-agenda-start-with-log-mode t)
-	    (org-agenda-archives-mode t)))
-	  ("rw" "Weekly Review Agenda"
-	   (;; GET CLEAR
-	    (tags-todo "noop" ,(cm/review-section "Get Clear!"))
-	    (tags-todo "noop" ,(cm/review-header "Collect Loose Papers and Materials"))
-	    (tags-todo "-{.*}" ,(cm/review-header "Get IN to ZERO"))
-	    (tags-todo "noop" ,(cm/review-header "Empty Your Head!"))
-
-	    ;; GET CURRENT
-	    (tags-todo "noop" ,(cm/review-section "Get Current!"))
-	    (tags-todo "-PROJECT-BLOCKED=\"t\"/!-WAITING" ,(cm/review-header "Review Actions Lists"))
-	    (todo "DONE|NVM")
-	    (agenda "" (,@(cm/review-header "Review Previous & Upcoming Calendar Data")
-			(org-agenda-skip-function nil)))
-	    (todo "WAITING" ,(cm/review-header "Review Waiting For List"))
-	    (tags-todo "PROJECT" ,(cm/review-header "Review Projects and Larger Outcomes"))
-	    (tags-todo "noop" ,(cm/review-header "Review Relevant Checklists"))
-
-	    ;; GET CREATIVE
-	    (tags-todo "noop" ,(cm/review-section "Get Creative!"))
-	    (tags-todo "noop" ,(cm/review-header "Review Someday/Maybe List"))
-	    (tags-todo "noop" ,(cm/review-header "Empty your head!")))
-	   ((org-agenda-span 22)
-	    (org-agenda-start-on-weekday 1)
-	    (org-agenda-start-day ,(concat "-" (number-to-string (cm/days-back-to-monday)) "d"))))
-	  ("xx" "All Checklists"
-	   ((tags "CHECKLIST"))
-	   ((org-agenda-search-view-max-outline-level 2)))
-	  ("xd" "Daily Checklists"
-	   ((tags "DAILY+CHECKLIST"))
-	   ((org-agenda-search-view-max-outline-level 2)))
-	  ("Z" "Receipt Agenda"
-	   ((org-receipt-agenda))))))
+	  (append
+	   (cm/day-agendas)
+	   (cm/context-agendas)
+	   (cm/review-agendas)
+	   (cm/checklist-agendas)
+	   '(("Z" "Receipt Agenda"
+	      ((org-receipt-agenda)))))))
 #+end_src
 Dynamism! So a big part of what makes these nice is that they compute
 what the right numbers of days on either side (via ndays) so I can see
@@ -3389,6 +3383,7 @@ expected.
   (setq org-use-sub-superscripts nil)
   (setq org-attach-directory "~/org/_attachments/")
   (setq org-adapt-indentation nil)
+  (setq calendar-mark-diary-entries-flag t)
 
   ;; disable dumb-ass git crap for now
   (advice-add 'org-attach-commit :override #'list)
@@ -3466,10 +3461,14 @@ or something else. For now, it's manual.
 
   (defun cm/org-sync ()
     (interactive)
-    (when (fboundp #'cm/org-set-agenda)
-      (cm/org-set-agenda))
     (save-excursion
       (org-save-all-org-buffers)
+      ;; skip the review agendas (which are slow)
+      (setq org-agenda-custom-commands
+	    (append (cm/day-agendas)
+		    (cm/context-agendas)
+		    (cm/checklist-agendas)))
+
       (org-mobile-pull)
       (with-current-buffer "from-mobile.org"
 	(if (equalp (point-max) (point-min))
@@ -3480,6 +3479,8 @@ or something else. For now, it's manual.
 	(org-save-all-org-buffers))
       (org-mobile-push)
       (org-save-all-org-buffers)))
+    ;; set it back to normal
+    (cm/org-set-agenda)
     (org-agenda nil "i")
     (message "cm/org-sync completed"))
 
