@@ -4,19 +4,19 @@ return {
     },
     ["battery"] = {
         ["status_display"] = {
-            ["charging"] = "â\134\145",
             ["discharging"] = "â\134\147",
             ["full"] = " ",
+            ["charging"] = "â\134\145",
         },
-        ["blink_on_discharge"] = true,
-        ["content_format"] = "|| %s",
-        ["bat_no"] = 0,
-        ["info_format"] = "%s%.f%s",
         ["info_data"] = {
             [1] = "status",
             [2] = "percentage",
             [3] = "status",
         },
+        ["blink_on_discharge"] = true,
+        ["info_format"] = "%s%.f%s",
+        ["bat_no"] = 0,
+        ["content_format"] = "|| %s",
     },
     ["date"] = {
         ["formats"] = {

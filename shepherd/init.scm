@@ -29,8 +29,8 @@
   (apply string-append (getenv "HOME") rest))
 
 ;; Execute commands directly
-(define (make-exec-constructor cmd)
-  (lambda args
+(define* (make-exec-constructor cmd #:key (environment-variables #f))
+  (lambda (arg)
     (zero? (status:exit-val (apply system* cmd)))))
 
 ;; Execute destruction commands directly
@@ -43,13 +43,14 @@
 (define (ssh-agent-initialize)
   (define (envval s)
     (cadr (string-split (car (string-split s #\;)) #\=)))
-  (and-let* ((p (open-pipe* OPEN_BOTH "ssh-agent"))
+  (and-let* ((p (open-pipe* OPEN_READ "ssh-agent"))
 	     (authsock (read-line p))
 	     (authpid (read-line p))
 	     (echoline (read-line p))
 	     (eofp (eof-object? (read-line p)))
 	     (sshauthsock (envval authsock))
 	     (sshagentpid (envval authpid)))
+    ;; note we do not call close-pipe, the process is gone anyways and guile signals an error any time you wait on an already exited child (whyyy)
     (setenv "SSH_AUTH_SOCK" sshauthsock)
     (setenv "SSH_AGENT_PID" sshagentpid)
     (zero? (status:exit-val (system* "ssh-add")))))
@@ -58,6 +59,8 @@
 (define (shellrunner a)
   (zero? (status:exit-val (apply system* (list "sh" "-c" a)))))
 
+(define *the-environment* (environ))
+
 
 ;;; Service Definitions.
 
@@ -65,130 +68,133 @@
   (make <service>
     #:provides '(bitlbee)
     #:requires '()
-    #:environment (environ)
     #:start (make-forkexec-constructor
-	     `("bitlbee" "-F" "-n" "-d" ,(tilde "/.config/bitlbee")))
+	     `("bitlbee" "-F" "-n" "-d" ,(tilde "/.config/bitlbee"))
+	     #:environment-variables *the-environment*)
     #:stop (make-kill-destructor)))
 
 (define (svc-blueman)
   (make <service>
     #:provides '(blueman)
     #:requires '(tray)
-    #:environment (environ)
-    #:start (make-forkexec-constructor '("blueman-applet"))
+    #:start (make-forkexec-constructor '("blueman-applet")
+	     #:environment-variables *the-environment*)
     #:stop (make-kill-destructor)))
 
 (define (svc-cbatticon batnum)
   (make <service>
     #:provides (list (string->symbol (string-append "cbatticon_" batnum)))
-    #:requires '(x)
-    #:environment (environ)
+    #:requires '(tray)
     #:start (make-forkexec-constructor
-	     `("cbatticon" "-i" "standard" "-u" "30" "-l" "15" "-r" "2" ,batnum))
+	     `("cbatticon" "-i" "standard" "-u" "30" "-l" "15" "-r" "2" ,batnum)
+	     #:environment-variables *the-environment*)
     #:stop (make-kill-destructor)))
 
 (define (svc-emacs)
   (make <service>
     #:provides '(emacs)
-    #:requires '()
-    #:environment (environ)
-    #:start (make-forkexec-constructor '("emacs" "--daemon"))
+    #:requires '(x)
+    #:start (make-forkexec-constructor '("emacs" "--daemon")
+	     #:environment-variables *the-environment*)
     #:stop (make-exec-destructor '("emacsclient" "--eval" "(kill-emacs)"))))
 
 (define (svc-mcron)
   #:provides '(mcron)
   #:requires '()
-  #:environment (environ)
-  #:start (make-exec-constructor '("mcron"))
+  #:start (make-exec-constructor '("mcron")
+	     #:environment-variables *the-environment*)
   #:stop (make-kill-destructor))
 
 (define (svc-networkicon)
   (make <service>
     #:provides '(networkicon)
     #:requires '(tray)
-    #:environment (environ)
-    #:start (make-forkexec-constructor '("nm-applet"))
+    #:start (make-forkexec-constructor '("nm-applet")
+	     #:environment-variables *the-environment*)
     #:stop (make-kill-destructor)))
 
 (define (svc-notion)
   (make <service>
     #:provides '(notion wm)
     #:requires '(x)
-    #:environment (environ)
-    #:start (make-forkexec-constructor '("notion"))
+    #:respawn? #t
+    #:start (make-forkexec-constructor '("notion")
+	     #:environment-variables *the-environment*)
     #:stop (make-kill-destructor)))
 
 (define (svc-pulseaudio)
   (make <service>
     #:provides '(audio pulseaudio)
     #:requires '()
-    #:environment (environ)
-    #:start (make-exec-constructor '("pulseaudio" "--start"))
+    #:start (make-exec-constructor '("pulseaudio" "--start")
+	     #:environment-variables *the-environment*)
     #:stop (make-kill-destructor)))
 
 (define (svc-redshift)
   (make <service>
     #:provides '(redshift)
     #:requires '(tray)
-    #:environment (environ)
-    #:start (make-forkexec-constructor '("redshift-gtk"))
+    #:start (make-forkexec-constructor '("redshift-gtk")
+	     #:environment-variables *the-environment*)
     #:stop (make-kill-destructor)))
 
 (define (svc-rescuetime)
   (make <service>
     #:provides '(rescuetime)
     #:requires '(tray)
-    #:environment (environ)
-    #:start (make-forkexec-constructor '("rescuetime"))
+    #:start (make-forkexec-constructor '("rescuetime")
+	     #:environment-variables *the-environment*)
     #:stop (make-kill-destructor)))
 
 (define (svc-syndaemon)
   (make <service>
     #:provides '(syndaemon)
     #:requires '(x)
-    #:environment (environ)
-    #:start (make-exec-constructor '("syndaemon" "-i" "1.0" "-R" "-d"))
+    #:start (make-exec-constructor '("syndaemon" "-i" "1.0" "-R" "-d")
+	     #:environment-variables *the-environment*)
     #:stop (make-kill-destructor)))
 
 (define (svc-trayion)
   (make <service>
     #:provides '(tray trayion)
     #:requires '(notion)
-    #:environment (environ)
     #:start (make-forkexec-constructor
-	     '("trayion"))
+	     '("trayion")
+	     #:environment-variables *the-environment*)
     #:stop (make-kill-destructor)))
 
 (define (svc-volumeicon)
   (make <service>
     #:provides '(volumeicon)
     #:requires '(tray)
-    #:environment (environ)
     #:start (make-forkexec-constructor
-	     '("volumeicon"))
+	     '("volumeicon")
+	     #:environment-variables *the-environment*)
     #:stop (make-kill-destructor)))
 
 (define (svc-x)
   (make <service>
     #:provides '(x)
     #:requires '()
-    #:environment (environ)
     #:start (make-forkexec-constructor
-	     '("Xorg" ":0" "-nolisten" "tcp" "-noreset" "-verbose" "2" "vt1"))
+	     `("Xorg" ":0.0" "-nolisten" "tcp" "-noreset" "-verbose" "2" ,(string-append "vt" (getenv "XDG_VTNR")))
+	     #:environment-variables *the-environment*)
     #:stop (make-kill-destructor)))
 
 (define (svc-xscreensaver)
   (make <service>
     #:provides '(screensaver xscreensaver)
     #:requires '(x)
-    #:environment (environ)
     #:start (make-forkexec-constructor
-	     '("xscreensaver" "-no-splash"))
+	     '("xscreensaver" "-no-splash")
+	     #:environment-variables *the-environment*)
     #:stop (make-kill-destructor)))
 
 
 ;;; Machine definitions.
 (define-class <machine> ()
+  (host-detector #:init-keyword #:host-detector
+		 #:init-value "")
   (register-svcs #:init-keyword #:register-svcs
 		 #:init-value '())
   (user-prehook #:init-keyword #:user-prehook
@@ -215,19 +221,21 @@
     #:register-svcs
     (list
      (svc-x)
+     (svc-notion)
      (svc-trayion)
      (svc-emacs)
      (svc-volumeicon)
      (svc-pulseaudio)
-     (svc-syndaemon)
+     ;(svc-syndaemon)
      (svc-networkicon)
      (svc-bitlbee)
      (svc-xscreensaver)
      (svc-blueman)
      (svc-rescuetime)
-     (svc-mcron)
-     (cbattsvc "BAT0")
-     (cbattsvc "BAT1"))
+     (svc-redshift)
+     ;(svc-mcron)
+     (svc-cbatticon "BAT0")
+     (svc-cbatticon "BAT1"))
     #:user-prehook
     (lambda ()
       ;; depressed I have to set this, but it's easier to sanitize the
@@ -246,17 +254,21 @@
       (setenv "GUILE_LOAD_PATH" (tilde "/scm"))
       (setenv "_JAVA_OPTIONS" "-Dawt.useSystemAAFontSettings=on -Dswing.defaultlaf=com.sun.java.swing.plaf.gtk.GTKLookAndFeel -Dswing.aatext=true")
       (ssh-agent-initialize))
-    #:user-svcs
-    '(mcron)
+;    #:user-svcs
+;    '(mcron)
     #:graphical-prehook
     (lambda ()
       (for-each
        shellrunner
-       '("sleep 2"
-	 "setxkbmap -device $(xinput list 'AT Translated Set 2 keyboard' | cut -d= -f2 | cut -f 1) -layout dvorak -option ctrl:swapcaps"
+       `("sleep 2"
+	 "setxkbmap -device $(xinput list 'AT Translated Set 2 keyboard' | cut -d= -f2 | cut -f 1) -layout dvorak"
+	 ,(string-append "xmodmap " (tilde "/.Xmodmap"))
 	 "xsetroot -solid '#80a0af'"
 	 "xset r rate 200 20"
-	 "xrandr --dpi 96")))))
+	 "xrandr --dpi 96")))
+    #:graphical-svcs
+    '(notion trayion
+       volumeicon networkicon xscreensaver blueman cbatticon_BAT0 redshift)))
 
 (define machines (list glaptop-machine
 		       neah-machine))
@@ -264,7 +276,7 @@
 
 ;;; Run the machine!
 (define (current-machine)
-  (define (check-machine m)
+  (define (check-machine hn)
     (cond
      ((procedure? hn)
       (hn))
@@ -282,14 +294,15 @@
 	  (loop (cdr mlist))))))
 
 (define-method (run (m <machine>))
-  (apply register-services (slot-ref m 'register-svcs))
   ((slot-ref m 'user-prehook))
+  (set! *the-environment* (environ))
+  (apply register-services (slot-ref m 'register-svcs))
   (for-each start (slot-ref m 'user-svcs))
   (unless (null? (slot-ref m 'graphical-svcs))
     (start 'x)
+    (environ *the-environment*)
     ((slot-ref m 'graphical-prehook))
     (for-each start (slot-ref m 'graphical-svcs))))
 
-(format #t "Current machine: ~s~%" (current-machine))
 (run (current-machine))
 
