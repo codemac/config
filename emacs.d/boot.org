@@ -190,6 +190,14 @@ screen DPI's.
   :PROPERTIES:
   :ID:       75fc0c8b-e66b-4f0f-ad21-72adef4fd23e
   :END:
+** Common Lisp
+    :PROPERTIES:
+    :ID:       5803e34a-7304-429a-ba92-f69e14623941
+    :END:
+Common lisp has things like =cl-loop=, which are life.
+#+begin_src emacs-lisp
+  (require 'cl)
+#+end_src
 ** Yes I can scroll left
    :PROPERTIES:
    :ID:       4ac2d83a-08d8-437d-8937-e8775ae454b9
@@ -476,8 +484,8 @@ taken from http://blog.akinori.org/2013/05/27/m-g-vs-goto-line/
                 (read-from-minibuffer
                  "Goto line: "
                  (char-to-string last-command-event)))))
-  (require 'cl)
-  (loop for n from 1 to 9 do
+
+  (cl-loop for n from 1 to 9 do
         (global-set-key (format "\M-g%d" n) 'cm/goto-line-number))
   (global-set-key "\M-g?" 'describe-prefix-bindings)
 #+end_src
@@ -491,6 +499,33 @@ anyways. This means that how I hold down the control button doesn't
 matter.
 #+begin_src emacs-lisp
   (global-set-key (kbd "C-x C-d") 'dired)
+#+end_src
+** Toggle Layout
+#+begin_src emacs-lisp
+  (defun toggle-window-split ()
+    (interactive)
+    (if (= (count-windows) 2)
+        (let* ((this-win-buffer (window-buffer))
+               (next-win-buffer (window-buffer (next-window)))
+               (this-win-edges (window-edges (selected-window)))
+               (next-win-edges (window-edges (next-window)))
+               (this-win-2nd (not (and (<= (car this-win-edges)
+                                           (car next-win-edges))
+                                       (<= (cadr this-win-edges)
+                                           (cadr next-win-edges)))))
+               (splitter
+                (if (= (car this-win-edges)
+                       (car (window-edges (next-window))))
+                    'split-window-horizontally
+                  'split-window-vertically)))
+          (delete-other-windows)
+          (let ((first-win (selected-window)))
+            (funcall splitter)
+            (if this-win-2nd (other-window 1))
+            (set-window-buffer (selected-window) this-win-buffer)
+            (set-window-buffer (next-window) next-win-buffer)
+            (select-window first-win)
+            (if this-win-2nd (other-window 1))))))
 #+end_src
 ** Use rc escaping
    :PROPERTIES:
@@ -863,26 +898,26 @@ I need to tie this into projectile, but for now have a way to create a
     "Create a shell buffer named NAME."
     (interactive "sShell Name: ")
     (let* ((bn (concat "*shell:" name "*"))
-           (eb (get-buffer bn)))
-      (if eb
-          (switch-to-buffer eb)
-        (shell bn))))
+	   (eb (get-buffer bn)))
+      (if (and eb (get-buffer-process eb))
+	  (switch-to-buffer eb)
+	(shell bn))))
 
   (defun cm/current-shells ()
     (require 'subr-x)
     (delq nil
-          (mapcar
-           (lambda (x)
-             (if (string-prefix-p "*shell:" (buffer-name x))
-                 `(,(string-remove-prefix "*shell:" (string-remove-suffix "*" (buffer-name x))) ,x)))
-           (buffer-list))))
+	  (mapcar
+	   (lambda (x)
+	     (if (string-prefix-p "*shell:" (buffer-name x))
+		 `(,(string-remove-prefix "*shell:" (string-remove-suffix "*" (buffer-name x))) ,x)))
+	   (buffer-list))))
 
   (defun cm/shell-find-or-new ()
     "Find or create a shell with the given name"
     (interactive)
     (let ((selected-shell (completing-read
-                           "Shell Name: "
-                           (cm/current-shells))))
+			   "Shell Name: "
+			   (cm/current-shells))))
       (cm/shell-new selected-shell)))
 
   (defun cm/shell-main ()
@@ -1794,14 +1829,6 @@ hacking on elisp I want the lowest barrier to entry.
     :END:
 #+begin_src emacs-lisp
   (use-package paredit)
-#+end_src
-*** Common Lisp
-    :PROPERTIES:
-    :ID:       5803e34a-7304-429a-ba92-f69e14623941
-    :END:
-Uhh, go CL?
-#+begin_src emacs-lisp
-  (require 'cl)
 #+end_src
 *** Markdown
     :PROPERTIES:
@@ -2878,8 +2905,10 @@ horrifying.
   (setq notmuch-saved-searches
 	'((:name "inbox"         :query "tag:flagged"                 :key "i" :sort-order newest-first)
 	  (:name "unread"        :query "tag:unread"                  :key "u" :sort-order newest-first)
-	  (:name "work-inbox"    :query "tag:flagged (to:jmickey@google.com OR cc:jmickey@google.com OR (tag:work -subject:\"/^CL /\" -from:buganizer))"
-		 :key "wi" :sort-order newest-first)
+	  (:name "work-inbox"    :query "tag:flagged (to:jmickey@google.com OR cc:jmickey@google.com OR jmickey OR (tag:work -subject:\"/^CL /\" -from:buganizer))"
+		 :key "wi" :sort-order oldest-first)
+	  (:name "work-me"       :query "tag:flagged AND tag:work AND (to:jmickey@google.com OR cc:jmickey@google.com)"
+		 :key "wm" :sort-order oldest-first)
 	  (:name "work-bulk"     :query "tag:work AND tag:flagged (subject:\"/^CL /\" OR from:buganizer)"
 		 :key "wb" :sort-order newest-first)
 	  (:name "inbox-codemac" :query "tag:codemac AND tag:flagged" :key "c" :sort-order newest-first)
@@ -2891,6 +2920,21 @@ horrifying.
 
   ;; keep the "goto address" logic consistent with org mode
   (define-key notmuch-show-mode-map (kbd "C-c C-o") 'goto-address-at-point)
+  (setq notmuch-tagging-keys
+	`((,(kbd "a") notmuch-archive-tags "Archive")
+	  (,(kbd "u") notmuch-show-mark-read-tags "Mark read")
+	  (,(kbd "f")
+	   ("+flagged")
+	   "Flag")
+	  (,(kbd "m")
+	   ("+muted")
+	   "Mute")
+	  (,(kbd "s")
+	   ("+spam" "-inbox")
+	   "Mark as spam")
+	  (,(kbd "d")
+	   ("+deleted" "-inbox")
+	   "Delete")))
 #+end_src
 What is this sillyness? =g= should always refresh a buffer, shit man.
 #+begin_src emacs-lisp
@@ -3175,13 +3219,14 @@ to see my review adgendas, and easier on the eyes to follow.
 
 The org agenda. It's mostly for gtd usage, so I have the following views:
 
-- =d= :: calendar
-- =i= :: inbox (anything not tagged)
-- =n= :: "next" agenda (really, just super flagged items I need to
-         look into
+- =d= :: "Day" view, useful for use throughout the day when I've
+         scheduled most things and marked tasks as "NEXT"
+- =i= :: inbox (anything without a tag, usually from orgmobile)
+- =n= :: "next" agenda (Rarely used as this is also covered in the day
+         view, just super flagged items I need to look into)
 - =r= :: Review commands, currently there is 'r d' for review a day
          and 'r w' for review a week. These hopefully will get much
-         more sophisticated.
+         more sophisticated as part of my review process.
 - =p= :: Projects list. The projects list in GTD is one of the most
          important lists, so keeping this up to date and reviewed is
          very important. I'd love to add something like 'levels of
@@ -3199,19 +3244,18 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
 #+begin_src emacs-lisp
   (defun cm/day-agendas ()
     `(("d" "Full Day Agenda"
-       ((agenda)
-	(tags "PROJECT/!WAITING" ,cm/org-sort-style)
-	(todo "WAITING" ,cm/org-sort-style)
-	(tags-todo "-BLOCKED=\"t\"" ,cm/org-sort-style))
-       ((org-agenda-span 3)
-	(org-agenda-start-day "-1d")))
+       ((agenda "Today" ((org-agenda-span 1)))
+	(todo "STARTED")
+	(todo "NEXT" ,cm/org-sort-style)
+	(tags-todo "-PROJECT/WAITING" ,cm/org-sort-style)
+	(tags-todo "PROJECT/!-WAITING" ,cm/org-sort-style)))
       ("i" "Inbox"
        ((tags-todo "-{.*}")))
-    ("n" "Next agenda"
-     ((todo "WAITING")
-      (todo "NEXT")
-      (todo "STARTED"))
-     ,cm/org-sort-style)))
+      ("n" "Next agenda"
+       ((todo "WAITING")
+	(todo "NEXT")
+	(todo "STARTED"))
+       ,cm/org-sort-style)))
 
   (defun cm/context-agendas ()
     `(("p" "Project Agenda"
@@ -3322,15 +3366,22 @@ able to set =org-agenda-custom-commands=
 
   (defun cm/org-load-agenda ()
     (interactive)
-    (cm/org-set-agenda)
-    (org-agenda))
+    (with-current-buffer (get-buffer-create "*scratch*")
+      (cm/org-set-agenda)
+      (org-agenda)))
 #+end_src
 Also, set it the first time on startup so org commands work as
 expected.
 #+begin_src emacs-lisp
   (cm/org-set-agenda)
 #+end_src
-
+print agendas
+#+begin_src emacs-lisp
+  (setq org-agenda-exporter-settings
+	'((ps-print-color-p 'black-white)
+	  (ps-landscape-mode t)
+	  (htmlize-output-type 'css)))
+#+end_src
 **** Useful setq's
      :PROPERTIES:
      :ID:       8bb80482-a3c3-4e9b-bc23-27fdfdf4d14c
@@ -3826,6 +3877,7 @@ THIS WAS WAY OVER THE TOP. We can just use =org-search-view=.
 	  ("c" "Add note to currently clocked task" entry (clock) "* %U %?\n%a\n\n%i")
 	  ("n" "Timed Notes" entry (file "~/org/_notes/notes.org") "* %T %?\n\n  %i\n  %a" :prepend nil)
 	  ("w" "Work capture" entry (file "~/org/work.org") "* %U %?\n\n  %i\n  %a" :prepend nil)
+	  ("s" "Snippet Log" entry (file+headline "~/org/work.org" "Snippets") "* S: %?\n  %T\n" :prepend nil)
 	  ("l" "Life Fitness" table-line (file+headline "~/org/fitness.org" "Fitness") ,(concat (format-time-string "| %Y.%m.%d-%H:%M |") " %^{Weight} | | %^{RHR} |") :table-line-pos "II-1")
 	  ("x" "org-capture" entry (file "~/org/_notes/www.org") "* %U %:description\n  :PROPERTIES:\n  :URL: %:link\n  :END:\n\n")))
 
@@ -3855,44 +3907,6 @@ any of my plans to get org mode todos into easier to consume formats.
   (add-hook 'org-capture-prepare-finalize-hook 'org-id-get-create)
 #+end_src
 
-***** Capture all open buffers
-The david allen special inbox magic
-#+begin_src emacs-lisp
-  (defvar cm/obvious-buffers
-    '("*Help*" "*scratch*" "*GNU Emacs*" "*Messages*" "diary" "bbdb")
-    "Buffers that are obviously not relevant")
-
-  (defun cm/filter-out-obvious (ls)
-    (require 'seq)
-    (let ((obv-buffs (append cm/obvious-buffers
-			     (org-agenda-files))))
-      (seq-remove (lambda (x) (or (string-prefix-p " " (buffer-name x))
-				  (and (string-prefix-p "*" (buffer-name x))
-				       (string-suffix-p "*" (buffer-name x)))
-				  (member (buffer-name x) obv-buffs)
-				  (member (buffer-file-name x) obv-buffs)))
-		  ls)))
-
-  (defun cm/capture-buffer-links ()
-    (cl-mapcar (lambda (buffer)
-		 (with-current-buffer buffer
-		   (if (and buffer-file-name
-			    (y-or-n-p (format "store link from %s and close? " buffer-file-name)))
-		       (progn
-			 (let ((toret (org-store-link nil)))
-			   (kill-buffer (current-buffer))
-			   toret)))))
-	       (cm/filter-out-obvious (buffer-list))))
-
-  (defun cm/close-n-capture ()
-    (interactive)
-    (org-capture-string (mapconcat #'identity
-				   (cm/capture-buffer-links)
-				   "\n")
-			"t"))
-
-  (global-set-key (kbd "C-c x") 'cm/close-n-capture)
-#+end_src
 **** Merge handling
 When I open a buffer in SMerge mode, org has everything all folded up,
 and it becomes very difficult to see where things went. For ediff,
@@ -4370,7 +4384,171 @@ A wholly owned subsidiary of Cisco.
 #+begin_src emacs-lisp
   (require 'tup-mode)
 #+end_src
+* Tools
+** Time Saved Calculater
+The =cm/timesaved= function is a user interface for calculating how
+much time someone saves if they shave off some amount of time per
+occurrence of a task. Good example: morning routines, imagine if you
+shaved off 10 seconds, but you know you're going to do that every day
+for the rest of your life, those 10 seconds add up! In fact, you save
+2 days 12 hours and 50 minutes.
 
+The idea for this comes from https://xkcd.com/1205/
+#+begin_src emacs-lisp
+(defun cm/timesaved-unit-message (totalremaining unit)
+  (let ((total (floor (/ totalremaining (cm/timesaved-seconds-in-time unit)))))
+    (format
+     "%s %s "
+     total
+     (if (> total 1) (concat unit "s") unit))))
+
+(defun cm/timesaved-subtract-unit (totalremaining unit)
+  (mod totalremaining (cm/timesaved-seconds-in-time unit)))
+
+
+(defun cm/timesaved-seconds-to-breakdown (seconds)
+  (let ((totalremaining seconds)
+	(messagestring ""))
+    (mapc (lambda (unit)
+	    (when (> totalremaining (cm/timesaved-seconds-in-time unit))
+	      (setq messagestring (concat messagestring (cm/timesaved-unit-message totalremaining unit)))
+	      (setq totalremaining (cm/timesaved-subtract-unit totalremaining unit))))
+	  (list "year" "month" "week" "day" "hour" "minute" "second"))
+    (message messagestring)))
+
+(defun cm/timesaved-times-per-year (time)
+  (/ (cm/seconds-in-time "year")
+     (cm/seconds-in-time time)))
+
+(defun cm/timesaved-seconds-in-time (time)
+  (message (format "intern time: %S" (intern time)))
+  (pcase (intern time)
+    ('second 1)
+    ('minute 60)
+    ('hour (* 60 60))
+    ('day (* 60 60 24))
+    ('week (* 60 60 24 7))
+    ('month (* 60 60 24 30))
+    ('year (* 60 60 24 365))
+    (_ (error "No proper time string"))))
+
+;; Notations:
+;;
+;; would be awesome to think of a much shorter notation
+;;   <number meaning x times><character meaning for y units> <number of years>
+
+;; my lowest unit is a second, so we convert everything to seconds
+(defun cm/timesaved (occurrenceunit occurrences years savedunit savedperoccurrence)
+  (interactive
+   (list
+    (completing-read
+     "Multiple occurrences per what unit? "
+     '("second" "minute" "hour" "day" "week" "month" "year"))
+    (string-to-number (read-string "How many occurances per unit? "))
+    (string-to-number (read-string "How many years will this event repeat for? "))
+    (completing-read
+     "What unit of measure for how much is saved? "
+     '("second" "minute" "hour" "day" "week" "month" "year"))
+    (string-to-number (read-string "How much of the unit is saved per occurance? "))))
+
+  (message (format "You will save: %s"
+		   (cm/timesaved-seconds-to-breakdown
+		    (* (cm/timesaved-times-per-year occurrenceunit) occurrences years
+		       savedperoccurrence (cm/timesaved-seconds-in-time savedunit))))))
+    
+#+end_src
+
+
+** Capture all open buffers
+The david allen special inbox magic
+#+begin_src emacs-lisp
+  (defvar cm/obvious-buffers
+    '("*Help*" "*scratch*" "*GNU Emacs*" "*Messages*" "diary" "bbdb")
+    "Buffers that are obviously not relevant")
+
+  (defun cm/filter-out-obvious (ls)
+    (require 'seq)
+    (let ((obv-buffs (append cm/obvious-buffers
+			     (org-agenda-files))))
+      (seq-remove (lambda (x) (or (string-prefix-p " " (buffer-name x))
+				  (and (string-prefix-p "*" (buffer-name x))
+				       (string-suffix-p "*" (buffer-name x)))
+				  (member (buffer-name x) obv-buffs)
+				  (member (buffer-file-name x) obv-buffs)))
+		  ls)))
+
+  (defun cm/capture-buffer-links ()
+    (delete
+     nil
+     (cl-mapcar (lambda (buffer)
+		  (with-current-buffer buffer
+		    (if (and buffer-file-name
+			     (y-or-n-p (format "store link from %s and close? " buffer-file-name)))
+			(progn
+			  (let ((toret (org-store-link nil)))
+			    (kill-buffer (current-buffer))
+			    toret)))))
+		(cm/filter-out-obvious (buffer-list)))))
+
+  (defun cm/chrome-debug-tabs ()
+    (list
+     (delete
+      nil
+      (mapcar
+       (lambda (x)
+	 (if (equal (cdr (assq 'type x)) "page")
+	     (cons (cdr (assq 'title x)) (cdr (assq 'url x)))))
+       (with-current-buffer
+	   (url-retrieve-synchronously "http://127.0.0.1:9222/json")
+	 (replace-regexp "HTTP/1.1 200 OK\nContent-Length:.*\n.*UTF-8\n\n" "" nil (point-min) (point-max))
+	 (beginning-of-buffer)
+	 (json-read))))))
+
+  (defun cm/firefox-profile ()
+    (concat (car (directory-files (concat (getenv "HOME") "/.mozilla/firefox") t ".*default" t))
+	    "/sessionstore-backups/recovery.js"))
+
+  (defun cm/firefox-tabs ()
+    "Retrieves the list of tabs from the current firefox session,
+  without any pinned tabs"
+    (mapcar
+     (lambda (x)
+       (delete
+	nil
+	(mapcar
+	 (lambda (y)
+	   (let* ((entries (cdr (assq 'entries y)))
+		  (pinned (not (null (assq 'pinned y))))
+		  (lastentry (aref entries (- (length entries) 1)))
+		  (url (cdr (assq 'url lastentry)))
+		  (title (cdr (assq 'title lastentry))))
+	     (if (not pinned)
+		 (cons title url))))
+	 (cdr (assq 'tabs x)))))
+     (cdr (assq 'windows (json-read-file (cm/firefox-profile))))))
+
+  (defun cm/get-browser-tabs ()
+    (interactive)
+    "Makes a single list of all tabs open in all browsers"
+    (let ((tabs (apply #'append (append (cm/firefox-tabs) (cm/chrome-debug-tabs)))))
+      (delete nil
+	      (cl-mapcar (lambda (title-url)
+			   (if (and title-url (y-or-n-p (format "store %s - %s ? " (car title-url) (cdr title-url))))
+			       (org-make-link-string (cdr title-url) (car title-url))))
+			 tabs)))
+
+
+  (defun cm/close-n-capture ()
+    (interactive)
+    (org-capture-string (mapconcat #'identity
+				   (append
+				    (cm/capture-buffer-links)
+				    (cm/get-browser-tabs))
+				   "\n")
+			"t"))
+
+  (global-set-key (kbd "C-c x") 'cm/close-n-capture)
+#+end_src
 * Directory Specific Code
   :PROPERTIES:
   :ID:       2fbd3ec2-ed82-414f-9bf9-bfecad2a9db5
