@@ -39,6 +39,11 @@ defwinprop {
     statusbar = "systray",
 }
 
+defwinprop {
+    class = "trayer",
+    statusbar = "systray",
+}
+
 -- https://sourceforge.net/tracker/?func=detail&aid=3471910&group_id=314802&atid=1324528
 defwinprop {
     class = "Gimp",
