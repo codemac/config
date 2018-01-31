@@ -117,7 +117,6 @@
   (make <service>
     #:provides '(notion wm)
     #:requires '(x)
-    #:respawn? #t
     #:start (make-forkexec-constructor '("notion")
 	     #:environment-variables *the-environment*)
     #:stop (make-kill-destructor)))
@@ -226,14 +225,12 @@
      (svc-emacs)
      (svc-volumeicon)
      (svc-pulseaudio)
-     ;(svc-syndaemon)
      (svc-networkicon)
      (svc-bitlbee)
      (svc-xscreensaver)
      (svc-blueman)
      (svc-rescuetime)
      (svc-redshift)
-     ;(svc-mcron)
      (svc-cbatticon "BAT0")
      (svc-cbatticon "BAT1"))
     #:user-prehook
@@ -254,8 +251,6 @@
       (setenv "GUILE_LOAD_PATH" (tilde "/scm"))
       (setenv "_JAVA_OPTIONS" "-Dawt.useSystemAAFontSettings=on -Dswing.defaultlaf=com.sun.java.swing.plaf.gtk.GTKLookAndFeel -Dswing.aatext=true")
       (ssh-agent-initialize))
-;    #:user-svcs
-;    '(mcron)
     #:graphical-prehook
     (lambda ()
       (for-each
@@ -301,6 +296,7 @@
   (unless (null? (slot-ref m 'graphical-svcs))
     (start 'x)
     (environ *the-environment*)
+    (format #t "*the-environment*: ~s~%" *the-environment*)
     ((slot-ref m 'graphical-prehook))
     (for-each start (slot-ref m 'graphical-svcs))))
 
