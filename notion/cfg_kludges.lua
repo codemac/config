@@ -23,6 +23,26 @@ defwinprop {
     switchto = false,
 }
 
+defwinprop {
+    class = "gnubby_ssh_prompt",
+    float = true,
+}
+
+defwinprop {
+   instance = "Org-Capture",
+   float = true,
+}
+
+defwinprop {
+   instance = "emacs-expander",
+   float = true,
+}
+
+defwinprop {
+    class = "trayer",
+    statusbar = "systray",
+}
+
 -- Put all dockapps in the statusbar's systray, also adding the missing size
 -- hints necessary for this to work.
 defwinprop {

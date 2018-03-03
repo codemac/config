@@ -105,6 +105,9 @@ defbindings("WScreen", {
     kpress(META.."XF86MonBrightnessUp", "mod_query.exec_on_merr(_, 'xbacklight -inc 10')"),
     kpress(META.."XF86MonBrightnessDown", "mod_query.exec_on_merr(_, 'xbacklight -dec 10')"),
 
+    kpress(META.."C", "mod_query.exec_on_merr(_, 'org-capture')"),
+    kpress(META.."H", "mod_query.exec_on_merr(_, 'emacs-expander')"),
+
 })
 
 
@@ -154,7 +157,7 @@ defbindings("WMPlex.toplevel", {
     kpress(META.."T", "WRegion.set_tagged(_sub, 'toggle')", "_sub:non-nil"),
 
     bdoc("Lock screen"),
-    kpress(META.."L", "notioncore.exec_on(_, notioncore.lookup_script('notion-lock'))"),
+    kpress(META.."L", "mod_query.exec_on_merr(_, 'notion-lock')"),
 
     bdoc("Query for manual page to be displayed."),
     kpress(ALTMETA.."F1", "mod_query.query_man(_, ':man')"),

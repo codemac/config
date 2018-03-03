@@ -21,6 +21,11 @@ see how this goes!
   :END:
 Unfortuantely, emacs can't read directly from org mode files just yet,
 so you have to check [[file:init.el][init.el]] for more information! DRY!
+** Lexical lisp
+This must be first, and it makes everything else a little bit easier.
+#+begin_src emacs-lisp
+  ;;; -*- lexical-binding: t -*-
+#+end_src
 * Security
 There was a very elucidating and concerning [[https://glyph.twistedmatrix.com/2015/11/editor-malware.html][blog post]] that showed how
 tls is configured in emacs. This is some code to turn on tls
@@ -312,6 +317,8 @@ who provided this original functionality for me.
         (dirs-inside-directory "~/.emacs.d/site-lisp/"))
   (mapc (lambda (x) (add-to-list 'load-path x))
         (dirs-inside-directory "~/.emacs.d/site-lisp/xelb"))
+  (mapc (lambda (x) (add-to-list 'load-path x))
+        (dirs-inside-directory "~/.guix-profile/share/emacs/site-lisp/guix.d"))
 #+end_src
 
 *** Guix Support
@@ -1355,6 +1362,13 @@ sanity in many cases.
 #+begin_src emacs-lisp
   (global-set-key (kbd "C-c d") #'diff-buffer-with-file)
 #+end_src
+** Unwrap lines
+#+begin_src emacs-lisp
+  (defun cm/unwrap-lines ()
+    (interactive)
+    (let ((fill-column 999999999999))
+      (fill-paragraph nil t)))
+#+end_src
 * External
   :PROPERTIES:
   :ID:       d6a73715-3861-4816-9c49-0b3a2e493fa2
@@ -1375,102 +1389,6 @@ C situation (they both chose lisp like adults).
     (setq ivy-use-virtual-buffers t)
     (setq ivy-count-format ""))
 #+end_src
-*** Helm
-    :PROPERTIES:
-    :ID:       9e11b4e9-8161-41e8-8e1f-0dabd83a8145
-    :END:
-Helm is the new Anything. Helm will help steer you in the right
-direction!
-
-Configure helm to be used for =M-x=... well let's just use it for
-everything. Helm is GNU for emacs. Helm is borg. We are the helm. You
-will be assimilated.
-
-Mostly lifted from https://tuhdo.github.io/helm-intro.html (note that
-this page is *STUPID* slow in eww)
-
-#+begin_src emacs-lisp
-  ;; (use-package helm
-  ;;   :diminish helm-mode
-  ;;   :bind (("M-x" . helm-M-x)
-  ;;          ("M-y" . helm-show-kill-ring)
-  ;;          ("C-x b" . helm-mini)
-  ;;          ("C-x C-f" . helm-find-files)
-  ;;          ("C-h SPC" . helm-all-mark-rings))
-  ;;   :init
-  ;;   (require 'helm-config)
-  ;;   (global-set-key (kbd "C-c h") 'helm-command-prefix)
-  ;;   (when cm/using-rc
-  ;;       (setq helm-top-command "COLUNMS=%s top -b -n 1"))
-
-  ;;   (helm-mode 1)
-  ;;   :config
-  ;;   (setq helm-split-window-in-side-p t
-  ;;         helm-ff-file-name-history-use-recentf t
-  ;;         helm-ff-search-library-in-sexp t
-  ;;         helm-move-to-line-cycle-in-source t
-  ;;         helm-scroll-amount 8
-  ;;         helm-ff-file-name-history-use-recentf t
-  ;;         helm-man-or-woman-function 'woman)
-  ;;   (when (executable-find "curl")
-  ;;     (setq helm-google-suggest-use-curl-p t))
-  ;;   (delete helm-source-locate helm-for-files-preferred-list)
-
-  ;;   ;; bindings I haven't figured out with :bind
-  ;;   (global-unset-key (kbd "C-x c"))
-  ;;   (define-key helm-map (kbd "<tab>") 'helm-execute-persistent-action)
-  ;;   (define-key helm-map (kbd "C-i") 'helm-execute-persistent-action)
-  ;;   (define-key helm-map (kbd "C-z")  'helm-select-action)
-  ;;   (global-set-key (kbd "C-c h o") 'helm-occur)
-  ;;   (global-set-key (kbd "C-c h x") 'helm-register))
-#+end_src
-
-I dislike helm grep immensely (super slow!) and I don't use =ack= /
-=ag= / etc. This disables =C-c p s <g,a,s>= and just does =C-c p s=
-like it used to.
-#+begin_src emacs-lisp
-  ;; (use-package helm-projectile
-  ;;   :init
-  ;;   (setq projectile-completion-system 'helm)
-  ;;   (helm-projectile-on)
-  ;;   (define-key projectile-command-map [remap projectile-grep] nil)
-  ;;   (define-key projectile-command-map [remap helm-projectile-grep] 'projectile-grep))
-#+end_src
-**** Mac os x hacks
-     :PROPERTIES:
-     :ID:       ca5c4755-da49-491b-ae37-6255407b5598
-     :END:
-Get spotlight into list of the files that helm can inspect, and get
-top output that doesn't suck
-#+begin_src emacs-lisp
-  ;; (when (eq system-type 'darwin)
-  ;;   (add-to-list 'helm-for-files-preferred-list 'helm-c-source-mac-spotlight)
-  ;;   (setq helm-c-top-command "COLUMNS=%s top -l 1"))
-#+end_src
-**** Global Tags
-     :PROPERTIES:
-     :ID:       17f2f463-4bb3-4901-86e6-2acb32572dbf
-     :END:
-Yay gtags support for helm!
-#+begin_src emacs-lisp
-  ;; (use-package helm-gtags
-  ;;   :config
-  ;;   (add-hook 'c-mode-hook (lambda () (helm-gtags-mode)))
-  ;;   
-  ;;   ;; customize
-  ;;   (setq helm-c-gtags-path-style 'absolute)
-  ;;   (setq helm-c-gtags-ignore-case t)
-  ;;   (setq helm-c-gtags-read-only nil)
-  ;;   
-  ;;   ;; key bindings
-  ;;   (add-hook 'helm-gtags-mode-hook
-  ;;             '(lambda ()
-  ;;                (local-set-key (kbd "C-c g t") 'helm-gtags-find-tag)
-  ;;                (local-set-key (kbd "C-c g r") 'helm-gtags-find-rtag)
-  ;;                (local-set-key (kbd "C-c g s") 'helm-gtags-find-symbol)
-  ;;                (local-set-key (kbd "C-c g f") 'helm-gtags-find-files)
-  ;;                (local-set-key (kbd "C-t") 'helm-gtags-pop-stack))))
-#+end_src
 *** Undo Tree
 Undo tree is excellent! =C-x u= to browse. Now the larger question is
 how it works with browse-kill-ring? I like both modes I guess.
@@ -1479,6 +1397,13 @@ how it works with browse-kill-ring? I like both modes I guess.
     :ensure t
     :init
     (global-undo-tree-mode))
+#+end_src
+*** Speedbar
+I use sr-speedbar so it's part of the same emacs frame.
+#+begin_src emacs-lisp
+  (use-package sr-speedbar
+    :commands (sr-speedbar-open sr-speedbar-toggle)
+    :bind (("<f5>" . sr-speedbar-toggle)))
 #+end_src
 *** Minimap
     :PROPERTIES:
@@ -1530,17 +1455,24 @@ Incredibly useful way to browse your buffers.
   ;; Add pathnam sorting, useful after 's m'
   (define-key ibuffer-mode-map (kbd "s p") 'ibuffer-do-sort-by-filename-or-dired)
 
-  (defvar cm/workspaces-path "~/work/src"
-    "Where the root of my code workspaces are (~/src/, etc)")
+  ;; we both know this isn't true, but go with it.
+  (setq ibuffer-expert t)
 
   (setq ibuffer-saved-filter-groups
-	`(("default"
+	'(("default"
 	   ("Work"
-	    (filename . ,cm/workspaces-path))
+	    (or
+	     (filename . "/google/")
+	     (filename . "/work/")))
 	   ("GTD"
 	    (filename . "/org/"))
 	   ("Mail"
-	    (or (mode . notmuch-search-mode)
+	    (or (mode . mu4e-compose-mode)
+		(mode . mu4e-main-mode)
+		(mode . mu4e-headers-mode)
+		(mode . mu4e-org-mode)
+		(mode . mu4e-view-mode)
+		(mode . notmuch-search-mode)
 		(mode . notmuch-show-mode)
 		(mode . message-mode)
 		(mode . notmuch-message-mode)
@@ -2174,7 +2106,7 @@ No seriously, I wrote lots of Ruby.
     (progn
       (setq tramp-histfile-override nil)
       (setq tramp-use-ssh-controlmaster-options nil)
-      (setq tramp-verbose 6)))
+      (setq tramp-verbose 1)))
 #+end_src
 *** GNU Global
     :PROPERTIES:
@@ -2378,11 +2310,6 @@ me over.
     (erc-ssl :server "chat.freenode.net" :port 6697
              :nick "codemac" :password cm/freenode-password))
 
-  (defun cm/erc-begin-pure-slack ()
-    (interactive)
-    (erc-ssl :server "purestorage.irc.slack.com" :port 6697
-             :nick "jmickey" :password cm/slack-password))
-
   (add-hook 'erc-mode-hook 'cm/erc-hook)
   (add-hook 'erc-join-hook 'bitlbee-netrc-identify)
 
@@ -2532,7 +2459,7 @@ me over.
     :END:
 Let's get our scheme on!
 #+begin_src emacs-lisp
-  (unless (not (file-exists-p "~/.guix-profile/share/emacs/site-lisp"))
+  (when (file-exists-p "~/.guix-profile/share/emacs/site-lisp")
     (add-to-list 'load-path "~/.guix-profile/share/emacs/site-lisp")
     (require 'geiser-install))
 #+end_src
@@ -2641,308 +2568,6 @@ you are trying to edit anything.
     (interactive)
     (rcirc-cmd-join (mapconcat 'identity cm/hipchat-rooms ",") (rcirc-buffer-process (get-buffer "&bitlbee@localhost")) nil))
 #+end_src
-*** notmuch
-    :PROPERTIES:
-    :ID:       705f65b0-cd4f-4c2f-a7da-dc340505dbbc
-    :END:
-I'm not a fan that this isn't a simple =use-package= thing, but the
-notmuch emacs implementation generally has to match the notmuch
-binary - and it's easier to just use whatever my distro packages.
-#+begin_src emacs-lisp
-  (unless (require 'notmuch nil t)
-    (message "Notmuch could not be loaded, should disable sending mail"))
-
-  (setq cm/mail-script "mail-sync")
-
-  (defun cm/notmuch-poll ()
-    (interactive)
-    (unless (equal (call-process cm/mail-script nil nil) 0)
-      (error "Notmuch: poll script `%s' failed!" notmuch-poll-script)))
-
-  (defun cm/notmuch-refresh-buffer-after-poll (proc state)
-    (let ((buffer (process-buffer proc)))
-      (with-current-buffer buffer
-	(with-current-buffer notmuch-buffer-to-refresh
-	  (when notmuch-buffer-refresh-function
-	    (call-interactively notmuch-buffer-refresh-function))))))
-	
-  (defun cm/notmuch-poll-and-refresh-this-buffer ()
-    (interactive)
-    (let ((old-buff (current-buffer)))
-      (with-current-buffer (get-buffer-create "*notmuch-mail-sync*")
-	(set (make-local-variable 'notmuch-buffer-to-refresh) old-buff)
-	(let ((process (start-process-shell-command "async proc mail-sync" (current-buffer) "mail-sync")))
-	  (set-process-sentinel process #'cm/notmuch-refresh-buffer-after-poll)))))
-
-  (advice-add 'notmuch-poll :override #'cm/notmuch-poll)
-
-  (advice-add 'notmuch-poll-and-refresh-this-buffer :override #'cm/notmuch-poll-and-refresh-this-buffer)
-#+end_src
-**** Sending mail
-     :PROPERTIES:
-     :ID:       58944cd4-e6a8-4053-8b9f-b51cd3e8bf34
-     :END:
-We're just borrowing the gnus settings here..
-#+begin_src emacs-lisp
-  (setq smtpmail-auth-credentials "~/.netrc") ;; is this needed?
-
-  (setq notmuch-fcc-dirs '((".*google.*" . "work/sent")
-                           (".*codemac.net.*" . "cm/Sent Items")))
-
-#+end_src
-The smtpmail-multi-accounts block has a strict ordering. By using ssl
-I get to avoid most of the complications. It goes, in order:
-
-1. =smtpmail-smtp-user=
-2. =smtpmail-smtp-server=
-3. =stmpmail-smtp-service= (port)
-4. =mail-specify-envelope-from= (not needed, especially if you're
-   using this.
-5. =smtpmail-stream-type= (ssl, starttls, or plain. USE SSL if you
-   want to live)
-6. starttls crap
-7. starttls crap
-8. =smtpmail-local-domain= (hostname to use as where it's sent from. I
-   set this usually to the hostname of the email provider.)
-  
-#+begin_src emacs-lisp
-  (setq smtpmail-multi-accounts '((google . ("jmickey@google.com"
-                                           "smtp.gmail.com"
-                                           465
-                                           nil
-                                           ssl
-                                           nil
-                                           nil
-                                           "google.com"))
-                                  (codemac . ("codemac@fastmail.com"
-                                              "mail.messagingengine.com"
-                                              465
-                                              nil
-                                              ssl
-                                              nil
-                                              nil
-                                              "codemac.net"))))
-
-  (setq smtpmail-multi-default-account 'codemac)
-  (setq smtpmail-multi-associations '(("jmickey@google.com" google)
-                                      ("j@codemac.net\\|jeff@archlinux.org\\|j@mickey.email\\|jeff@mickey.email\\|jm@vt.edu\\|jmickey@vt.edu" codemac)))
-
-  (setq send-mail-function 'smtpmail-multi-send-it)
-  (setq message-send-mail-function 'smtpmail-multi-send-it)
-
-#+end_src
-***** queueing
-      :PROPERTIES:
-      :ID:       f884dff3-0e19-41e1-969b-8911fcc05f68
-      :END:
-#+begin_src emacs-lisp
-  (setq smtpmail-queue-mail  t  ;; start in non-queuing mode
-        smtpmail-queue-dir   "~/mail/queue")
-
-  (setq user-full-name "Jeff Mickey")
-  (if (equalp system-name "novaria")
-      (setq user-mail-address "jmickey@purestorage.com")
-    (setq user-mail-address "j@codemac.net"))
-#+end_src
-**** Message view
-     :PROPERTIES:
-     :ID:       609c8599-feea-4606-8444-3a243b306e2c
-     :END:
-The vast majority of this is around setting up drafts handling in
-notmuch to be sync'd over IMAP. =notmuch= doesn't handle this for us,
-and this is an amalgamation of things I found online. It currently
-works with the cyrus IMAP server.
-#+begin_src emacs-lisp
-  (setq message-citation-line-format "* %f [%Y-%m-%d %H:%M]:")
-  (setq message-citation-line-function 'message-insert-formatted-citation-line)
-#+end_src
-Set background color of eww rendered buffers to make wayyy more sense.
-#+begin_src emacs-lisp
-  (setq shr-color-visible-luminance-min 80)
-#+end_src
-Set the colors of each search result line based on the tags of the
-result. This was inspired because notmuch changed them to have insane
-defaults.
-
-#+begin_src emacs-lisp
-  (setq notmuch-search-line-faces `(("unread" . (:weight bold))
-                                    ("flagged" . (:foreground "khaki"))))
-#+end_src
-#+begin_src emacs-lisp
-  (defun cm/message-mode-hook ()
-    (local-set-key (kbd "C-c M-o") 'org-mime-htmlize)
-    (orgstruct-mode 1)
-    (use-hard-newlines nil 'guess))
-
-  (add-hook 'message-mode-hook 'cm/message-mode-hook)
-
-  ;; set these to something damn high I hate elided messages 
-  (setq notmuch-wash-citation-lines-prefix 1024)
-  (setq notmuch-wash-citation-lines-suffix 1024)
-  (setq notmuch-wash-signature-lines-max 0)
-  (setq notmuch-wash-wrap-lines-length (if (< fill-column 100) 100 fill-column))
-
-#+end_src
-**** Drafts Handling
-Ridiculous hacks to get sensible synced drafts. Sometimes I end up
-with way too many drafts saved due to mbsync being fast, but that's a
-good problem to me :)
-#+begin_src emacs-lisp
-  ;; how to get these things to not suck
-  (setq message-draft-headers '(From References Subject Date (optional . In-Reply-To) Message-ID (optional . User-Agent)))
-  (setq message-generate-headers-first t) ;; would love to do this without Date
-  (setq message-auto-save-directory "~/mail/cm/Drafts/cur")
-
-  (defun cm/draft-insert-mail-header-separator ()
-    "Insert `mail-header-separator' in the first empty line of the message.
-  `message-mode' needs this line to know where the headers end and
-  the body starts. Note, in `mu4e-compose-mode', we use
-  `before-save-hook' and `after-save-hook' to ensure that this
-  separator is never written to the message file. Also see
-  `mu4e-remove-mail-header-separator'."
-    ;; we set this here explicitly, since (as it has happened) a wrong
-    ;; value for this (such as "") breaks address completion and other things
-    (set (make-local-variable 'mail-header-separator)
-      (purecopy "--text follows this line--"))
-    (put 'mail-header-separator 'permanent-local t)
-    (save-excursion
-      ;; make sure there's not one already
-      (cm/draft-remove-mail-header-separator)
-      (let ((sepa (propertize mail-header-separator
-                    'intangible t
-                    ;; don't make this read-only, message-mode
-                    ;; seems to require it being writable in some cases
-                    ;;'read-only "Can't touch this"
-                    'rear-nonsticky t
-                    'font-lock-face 'message-separator)))
-        (widen)
-        ;; search for the first empty line
-        (goto-char (point-min))
-        (if (search-forward-regexp "^$" nil t)
-            (replace-match sepa)
-            (progn ;; no empty line? then prepend one
-              (goto-char (point-max))
-              (insert "\n" sepa))))))
-
-  (defun cm/draft-remove-mail-header-separator ()
-    "Remove `mail-header-separator; we do this before saving a
-  file (and restore it afterwards), to ensure that the separator
-  never hits the disk. Also see `mu4e-draft-insert-mail-header-separator."
-    (interactive)
-    (save-excursion
-      (widen)
-      (goto-char (point-min))
-      ;; remove the --text follows this line-- separator
-      (when (search-forward-regexp (concat "^" mail-header-separator) nil t)
-        (let ((inhibit-read-only t))
-          (replace-match "")))))
-
-  (defun cm/notmuch-message-setup ()
-    "Configures a bunch of hooks for notmuch message windows"
-    (message-add-action `(message "debug: done exit actions") 'exit)
-    (message-add-action `(message "debug: done postpone actions") 'postpone)
-    (message-add-action `(message "debug: done kill actions") 'kill)
-    (message-add-action 'notmuch-message-postpone-keep 'postpone)
-    (message-add-action 'notmuch-message-postpone-cleanup 'exit))
-
-  (add-hook 'message-mode-hook 'cm/notmuch-message-setup)
-  (add-hook 'message-mode-hook
-            (lambda ()
-              (add-hook 'after-save-hook 'cm/draft-insert-mail-header-separator nil 'make-it-local)
-              (add-hook 'before-save-hook 'cm/draft-remove-mail-header-separator nil 'make-it-local)))
-
-  (defun notmuch-message-postpone-cleanup ()
-    "Remove autosave and postponed messages for that buffer"
-    (message "debug: postpone cleanup hook")
-    (message "deleting draft file: %s" notmuch-draft-filename)
-    (if (file-exists-p notmuch-draft-filename)
-        (progn
-          (kill-buffer)
-          (delete-file notmuch-draft-filename)
-          (if (file-exists-p notmuch-draft-filename)
-              (message "failed to delete file %s" notmuch-draft-filename)
-            (message "debug: file deleted"))
-          )
-      (message "draft file %s doesn't exist" notmuch-draft-filename)))
-
-  (defun notmuch-message-postpone-keep ()
-    "Moves the previous buffer into the postponed folder and then kill it"
-    (save-excursion
-      (set-buffer (last-buffer))
-      (cm/draft-remove-mail-header-separator)
-      (notmuch-maildir-fcc-write-buffer-to-maildir "~/mail/cm/Drafts" t)
-      (kill-buffer)))
-
-  (defun notmuch-show-resume-message ()
-    "Resume a postponed message."
-    (interactive)
-    (setq tmpfilename (notmuch-show-get-filename))
-    (notmuch-show-view-raw-message)
-    (setq buffer-file-name tmpfilename)
-    (message "debug: set buffer file name to %s" buffer-file-name)
-    (setq notmuch-draft-filename buffer-file-name)
-    (make-local-variable 'notmuch-draft-filename)
-    (message "debug: set draft file name to %s" notmuch-draft-filename)
-    (message-mode)
-    (cm/draft-insert-mail-header-separator))
-
-  (setq notmuch-maildir-use-notmuch-insert nil)
-  (define-key notmuch-show-mode-map "e" 'notmuch-show-resume-message)
-#+end_src
-**** Keybindings
-     :PROPERTIES:
-     :ID:       dd303b47-13d6-48df-bb7f-93a81ac25edc
-     :END:
-For some reason the ~=~ sign is used for refresh in notmuch. This is
-horrifying.
-#+begin_src emacs-lisp
-  (setq notmuch-archive-tags '("-flagged" "-unread"))
-
-  (defun cm/notmuch-archive-unread-all ()
-    (interactive)
-    (notmuch-search-tag-all notmuch-archive-tags))
-
-  (setq notmuch-saved-searches
-	'((:name "inbox"         :query "tag:flagged"                 :key "i" :sort-order newest-first)
-	  (:name "unread"        :query "tag:unread"                  :key "u" :sort-order newest-first)
-	  (:name "work-inbox"    :query "tag:flagged (to:jmickey@google.com OR cc:jmickey@google.com OR jmickey OR (tag:work -subject:\"/^CL /\" -from:buganizer))"
-		 :key "wi" :sort-order oldest-first)
-	  (:name "work-me"       :query "tag:flagged AND tag:work AND (to:jmickey@google.com OR cc:jmickey@google.com)"
-		 :key "wm" :sort-order oldest-first)
-	  (:name "work-bulk"     :query "tag:work AND tag:flagged (subject:\"/^CL /\" OR from:buganizer)"
-		 :key "wb" :sort-order newest-first)
-	  (:name "inbox-codemac" :query "tag:codemac AND tag:flagged" :key "c" :sort-order newest-first)
-	  (:name "drafts"        :query "tag:draft"                   :key "d" :sort-order newest-first)
-	  (:name "today"         :query "date:today..!"               :key "t" :sort-order oldest-first)
-	  (:name "sent"          :query "tag:sent"                    :key "n")))
-
-  (global-set-key (kbd "C-c i") 'notmuch-jump-search)
-
-  ;; keep the "goto address" logic consistent with org mode
-  (define-key notmuch-show-mode-map (kbd "C-c C-o") 'goto-address-at-point)
-  (setq notmuch-tagging-keys
-	`((,(kbd "a") notmuch-archive-tags "Archive")
-	  (,(kbd "u") notmuch-show-mark-read-tags "Mark read")
-	  (,(kbd "f")
-	   ("+flagged")
-	   "Flag")
-	  (,(kbd "m")
-	   ("+muted")
-	   "Mute")
-	  (,(kbd "s")
-	   ("+spam" "-inbox")
-	   "Mark as spam")
-	  (,(kbd "d")
-	   ("+deleted" "-inbox")
-	   "Delete")))
-#+end_src
-What is this sillyness? =g= should always refresh a buffer, shit man.
-#+begin_src emacs-lisp
- (eval-after-load 'notmuch
-   '(define-key notmuch-common-keymap "g" 'notmuch-refresh-this-buffer))
- (eval-after-load 'notmuch
-   '(define-key notmuch-common-keymap "A" 'cm/notmuch-archive-unread-all))
-#+end_src
 *** Muse
     :PROPERTIES:
     :ID:       33123e64-e792-45bc-8260-9ea8a40ca039
@@ -2985,175 +2610,8 @@ org-mouse in case I already have a pointing device. I imagine
      :PROPERTIES:
      :ID:       9fdf73e8-52bf-4c3a-b0da-86280d3929fe
      :END:
-These are some functions stolen from [[http://sachachua.com/][Sacha Chua]] to make some fun
-agenda stuff. The org-agenda-load is especially nice when you use lots
-of schedule events, you can figure out just how busy you've really
-decided you are.
-#+begin_src emacs-lisp  
-  (defun sacha/org-agenda-load (match)
-    "Can be included in `org-agenda-custom-commands'."
-    (let ((inhibit-read-only t)
-          (time (sacha/org-calculate-free-time
-                 ;; today
-                 (calendar-gregorian-from-absolute org-starting-day)
-                 ;; now if today, else start of day
-                 (if (= org-starting-day
-                        (time-to-days (current-time)))
-                     (let* ((now (decode-time))
-                            (cur-hour (nth 2 now))
-                            (cur-min (nth 1 now)))
-                       (+ (* cur-hour 60) cur-min))
-                   (let ((start (car (elt org-agenda-time-grid 2))))
-                     (+ (* (/ start 100) 60) (% start 100))))
-                   ;; until the last time in my time grid
-                 (let ((last (car (last (elt org-agenda-time-grid 2)))))
-                   (+ (* (/ last 100) 60) (% last 100))))))
-      (goto-char (point-max))
-      (insert (format
-               "%.1f%% load: %d minutes scheduled, %d minutes to be scheduled, %d minutes free, %d minutes gap - %.1f total work hours planned\n"
-               (/ (elt time 1) (* .01 (elt time 2)))
-               (elt time 0)
-               (elt time 1)
-               (elt time 2)
-               (- (elt time 2) (elt time 1))
-               (/ (+ (elt time 0) (elt time 1)) 60)
-               ))))
-  
-  (defun sacha/org-calculate-free-time (date start-time end-of-day)
-    "Return a cons cell of the form (TASK-TIME . FREE-TIME) for DATE, given START-TIME and END-OF-DAY.
-  DATE is a list of the form (MONTH DAY YEAR).
-  START-TIME and END-OF-DAY are the number of minutes past midnight."
-    (save-window-excursion
-    (let ((files org-agenda-files)
-          (total-unscheduled 0)
-          (total-gap 0)
-          file
-          rtn
-          rtnall
-          entry
-          (total-scheduled 0)
-          (last-timestamp start-time)
-          scheduled-entries)
-      (while (setq file (car files))
-        (catch 'nextfile
-          (org-check-agenda-file file)
-          (setq rtn (org-agenda-get-day-entries file date :scheduled :timestamp))
-          (setq rtnall (append rtnall rtn)))
-        (setq files (cdr files)))
-      ;; For each item on the list
-      (while (setq entry (car rtnall))
-        (let ((time (get-text-property 1 'time entry)))
-          (cond
-           ((and time (string-match "\\([^-]+\\)-\\([^-]+\\)" time))
-            (setq scheduled-entries
-                  (cons
-                   (cons
-                    (save-match-data (org-matcher-time (match-string 1 time)))
-                    (save-match-data (org-matcher-time (match-string 2 time))))
-                   scheduled-entries)))
-           ((and
-             time
-             (string-match "\\([^-]+\\)\\.+" time)
-             (string-match "^[A-Z]+ \\(\\[#[A-Z]\\] \\)?\\([0-9]+\\)"
-                           (get-text-property 1 'txt entry)))
-            (setq scheduled-entries
-                  (let ((start (and (string-match "\\([^-]+\\)\\.+" time)
-                                    (appt-convert-time (match-string 1 time)))))
-                    (cons
-                     (cons start
-                           (and (string-match
-                                 "^[A-Z]+ \\(\\[#[A-Z]\\] \\)?\\([0-9]+\\) "
-                                 (get-text-property 1 'txt entry))
-                                (+ start
-                                   (string-to-number
-                                    (match-string
-                                     2
-                                     (get-text-property 1 'txt entry))))))
-                          scheduled-entries))))
-           ((and
-             (get-text-property 1 'txt entry)
-             (string-match "^[A-Z]+ \\(\\[#[A-Z]\\] \\)?\\([0-9]+\\)"
-                           (get-text-property 1 'txt entry)))
-            (setq total-unscheduled
-                  (+ (string-to-number
-                      (match-string 2 (get-text-property 1 'txt entry)))
-                     total-unscheduled)))))
-        (setq rtnall (cdr rtnall)))
-      ;; Sort the scheduled entries by time
-      (setq scheduled-entries
-            (sort scheduled-entries (lambda (a b) (< (car a) (car b)))))
-  
-      (while scheduled-entries
-        (let ((start (car (car scheduled-entries)))
-              (end (cdr (car scheduled-entries))))
-        (cond
-         ;; are we in the middle of this timeslot?
-         ((and (>= last-timestamp start)
-               (<= last-timestamp end))
-          ;; move timestamp later, no change to time
-          (setq total-scheduled (+ total-scheduled (- end last-timestamp)))
-          (setq last-timestamp end))
-         ;; are we completely before this timeslot?
-         ((< last-timestamp start)
-          ;; add gap to total, skip to the end
-          (setq total-gap (+ (- start last-timestamp) total-gap))
-          (setq total-scheduled (+ total-scheduled (- end start)))
-          (setq last-timestamp end)))
-        (setq scheduled-entries (cdr scheduled-entries))))
-      (if (< last-timestamp end-of-day)
-          (setq total-gap (+ (- end-of-day last-timestamp) total-gap)))
-      (list total-scheduled total-unscheduled total-gap))))
-#+end_src
-**** Org Clock
-     :PROPERTIES:
-     :ID:       fbb22f25-0f77-44c8-ab44-47187909d25a
-     :END:
-This adds automatic task clocking. It's incredibly useful to figure
-out how long tasks took that you start and stop.
-#+begin_src emacs-lisp  
-  (defun org-clock-in-if-starting ()
-    "Clock in when the task is marked STARTED."
-    (when (and (string= org-state "STARTED")
-               (not (string= org-last-state org-state)))
-      (org-clock-in)))
-  
-  (defadvice org-clock-in (after sacha activate)
-    "Set this task's status to 'STARTED'."
-    (org-todo "STARTED"))
-  
-  (defun org-clock-out-if-waiting ()
-    "Clock in when the task is marked STARTED."
-    (when (and (string= org-state "WAITING")
-               (not (string= org-last-state org-state)))
-      (org-clock-out)))
-  
-  (defun org-clock-out-if-started-todo ()
-    (when (and (or (string= org-state "TODO")
-                   (string= org-state "NEXT"))
-               (string= org-last-state "STARTED"))
-      (if (org-clocking-p)
-          (org-clock-out))))
-  
-  (add-hook 'org-after-todo-state-change-hook 'org-clock-in-if-starting)
-  (add-hook 'org-after-todo-state-change-hook 'org-clock-out-if-waiting)
-  (add-hook 'org-after-todo-state-change-hook 'org-clock-out-if-started-todo)
-#+end_src
 
-Functions borrowed from Sacha Chua.
-#+begin_src emacs-lisp  
-  (defun sacha/org-agenda-clock (match)
-    ;; Find out when today is
-    (let* ((inhibit-read-only t))
-      (goto-char (point-max))
-      (org-dblock-write:clocktable
-       `(:scope agenda
-         :maxlevel 4
-         :tstart ,(format-time-string "%Y-%m-%d" (calendar-time-from-absolute (1+ org-starting-day) 0))
-         :tend ,(format-time-string "%Y-%m-%d" (calendar-time-from-absolute (+ org-starting-day 2) 0))))))
-  
-#+end_src
-
-**** Receipt Agenda
+***** Receipt Agenda
      :PROPERTIES:
      :ID:       86b9b44b-96cd-47c3-8fd5-3086cb77c05b
      :END:
@@ -3164,31 +2622,10 @@ Functions borrowed from Sacha Chua.
           org-agenda-show-all-dates t)
     (org-agenda-list))
 #+end_src
-**** Custom agendas
+***** Custom agendas
      :PROPERTIES:
      :ID:       16aafc16-4240-4a4a-98f6-92186bc07d14
      :END:
-#+begin_src emacs-lisp
-  ;; DEPRECATED: just use tsia-up / tsia-down
-  (defun my-agenda-sort-by-inactive-timestamp (a b)
-    "Sort by interactive timestamp. Oldest first, items without any ts at the bottom."
-    (let* ((ma (or (get-text-property 1 'org-marker a)
-                   (get-text-property 1 'org-hd-marker a)))
-           (mb (or (get-text-property 1 'org-marker b)
-                   (get-text-property 1 'org-hd-marker b)))
-           (tsa (org-entry-get ma "TIMESTAMP_IA"))
-           (tsb (org-entry-get mb "TIMESTAMP_IA"))
-           (ta (when tsa (date-to-time tsa)))
-           (tb (when tsb (date-to-time tsb))))
-      (cond ((eq tsa nil) +1)
-            ((eq tsb nil) -1)
-            ((time-less-p ta tb)
-             -1)
-            ((time-less-p tb ta)
-             +1)
-            (t nil))))
-
-#+end_src
 Set up the styling. These are headers and footers that make it nicer
 to see my review adgendas, and easier on the eyes to follow.
 #+begin_src emacs-lisp
@@ -3211,10 +2648,10 @@ to see my review adgendas, and easier on the eyes to follow.
     ;;   `((org-agenda-overriding-header ,(concat leftside " " title " " rightside)))))
 
   (defun cm/org-ctx-agenda (key ctx title)
-    `(,(concat "c" key) ,title
-      ((tags-todo ,(concat ctx "-PROJECT-BLOCKED=\"t\"/!-WAITING"))
-       (tags ,(concat ctx "+PROJECT")))
-      ,cm/org-sort-style))
+    (let ((ctxlist (if (listp ctx) ctx (list ctx))))
+      `(,(concat "c" key) ,title
+	((tags-todo ,(mapconcat #'(lambda (x) (concat x "-TODO=\"PROJECT\"-BLOCKED=\"t\"-TODO=\"WAITING\"")) ctxlist "|")))
+	,cm/org-sort-style)))
 #+end_src
 
 The org agenda. It's mostly for gtd usage, so I have the following views:
@@ -3245,35 +2682,34 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
   (defun cm/day-agendas ()
     `(("d" "Full Day Agenda"
        ((agenda "Today" ((org-agenda-span 1)))
-	(todo "STARTED")
 	(todo "NEXT" ,cm/org-sort-style)
-	(tags-todo "-PROJECT/WAITING" ,cm/org-sort-style)
-	(tags-todo "PROJECT/!-WAITING" ,cm/org-sort-style)))
+	(tags-todo "-TODO=\"PROJECT\"-TODO=\"WAITING\"" ,cm/org-sort-style)
+	(todo "PROJECT" ,cm/org-sort-style)))
       ("i" "Inbox"
-       ((tags-todo "-{.*}")))
+       ((tags-todo "-{.*}-TODO=\"PROJECT\"")))
       ("n" "Next agenda"
-       ((todo "WAITING")
-	(todo "NEXT")
+       ((todo "NEXT")
+	(todo "WAITING")
 	(todo "STARTED"))
        ,cm/org-sort-style)))
 
   (defun cm/context-agendas ()
     `(("p" "Project Agenda"
-       ((tags-todo "PROJECT/!-WAITING")
-	(tags "PROJECT"))
+       ((todo "PROJECT")
+	(todo "WAITING"))
        ,cm/org-sort-style)
-      ,(cm/org-ctx-agenda "v" "INTERNET" "Internet Agenda")
+      ,(cm/org-ctx-agenda "v" '("INTERNET" "COMPUTER") "Internet Agenda")
       ,(cm/org-ctx-agenda "c" "COMPUTER" "Computer Agenda")
       ,(cm/org-ctx-agenda "w" "WORK" "Work Agenda")
       ,(cm/org-ctx-agenda "h" "HOME" "Home Agenda")
       ,(cm/org-ctx-agenda "r" "ERRAND" "Errand Agenda")
       ,(cm/org-ctx-agenda "f" "PHONE" "Phone Agenda")
-      ,(cm/org-ctx-agenda "l" "-ERRAND-HOME-INTERNET-PROJECT-COMPUTER-WORK-PHONE" "People Agenda")
+      ,(cm/org-ctx-agenda "l" "AGENDA" "People Agenda")
       ("ct" "Tickler Agenda"
-       ((tags-todo "-PROJECT-BLOCKED=\"t\"/!-WAITING")
+       ((tags-todo "-TODO=\"PROJECT\"-BLOCKED=\"t\"-TODO=\"WAITING\"")
 	(todo "PROJECT"))
        ((org-agenda-skip-function '(org-agenda-skip-entry-if 'notscheduled))
-	(org-agenda-sorting-strategy '(tsia-up))))))
+       (org-agenda-sorting-strategy '(tsia-up))))))
 
   (defun cm/review-agendas ()
     `(("rd" "Daily Review"
@@ -3291,22 +2727,38 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
        (;; GET CLEAR
 	(tags-todo "noop" ,(cm/review-section "Get Clear!"))
 	(tags-todo "noop" ,(cm/review-header "Collect Loose Papers and Materials"))
-	(tags-todo "-{.*}" ,(cm/review-header "Get IN to ZERO"))
+	(tags-todo "-{.*}-TODO=\"PROJECT\"" ,(cm/review-header "Get IN to ZERO"))
 	(tags-todo "noop" ,(cm/review-header "Empty Your Head!"))
 
 	;; GET CURRENT
 	(tags-todo "noop" ,(cm/review-section "Get Current!"))
-	(tags-todo "-PROJECT-BLOCKED=\"t\"/!-WAITING" ,(cm/review-header "Review Actions Lists"))
+	(tags-todo "-TODO=\"PROJECT\"-BLOCKED=\"t\"-TODO=\"WAITING\""
+		   (,@(cm/review-header "Review Actions Lists")
+		    (org-agenda-skip-function '(org-agenda-skip-entry-if 'scheduled))))
 	(todo "DONE|NVM")
-	(agenda "" (,@(cm/review-header "Review Previous & Upcoming Calendar Data")
-		    (org-agenda-skip-function nil)))
+	(tags-todo "-TODO=\"PROJECT\"-BLOCKED=\"t\"-TODO=\"WAITING\""
+		   (,@(cm/review-header "Review Scheduled Actions Lists")
+		    (org-agenda-skip-function '(org-agenda-skip-entry-if 'notscheduled))))
+	(agenda "" (,@(cm/review-header "Review Previous Week Calendar Data")
+		    (org-agenda-skip-function nil)
+		    (org-agenda-span 7)
+		    (org-agenda-start-day ,(concat "-" (number-to-string (+ 7 (cm/days-back-to-monday))) "d"))))
+	(agenda "" (,@(cm/review-header "Review Current Week Calendar Data")
+		    (org-agenda-skip-function nil)
+		    (org-agenda-span 7)
+		    (org-agenda-start-day ,(concat "-" (number-to-string (cm/days-back-to-monday)) "d"))))
+
+	(agenda "" (,@(cm/review-header "Review Next Week Calendar Data")
+		    (org-agenda-skip-function nil)
+		    (org-agenda-span 7)
+		    (org-agenda-start-day ,(concat "+" (number-to-string (- 7 (cm/days-back-to-monday))) "d"))))
 	(todo "WAITING" ,(cm/review-header "Review Waiting For List"))
-	(tags-todo "PROJECT" ,(cm/review-header "Review Projects and Larger Outcomes"))
-	(tags-todo "noop" ,(cm/review-header "Review Relevant Checklists"))
+	(todo "PROJECT" ,(cm/review-header "Review Projects and Larger Outcomes"))
+	(tags "CHECKLIST" ,(cm/review-header "Review Relevant Checklists"))
 
 	;; GET CREATIVE
 	(tags-todo "noop" ,(cm/review-section "Get Creative!"))
-	(tags-todo "noop" ,(cm/review-header "Review Someday/Maybe List"))
+	(tags "SOMEDAY" ,(cm/review-header "Review Someday/Maybe List"))
 	(tags-todo "noop" ,(cm/review-header "Empty Your Head!")))
        ((org-agenda-span 22)
 	(org-agenda-start-on-weekday 1)
@@ -3322,7 +2774,7 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
 	(tags "PRIORITY+40K" ,(cm/review-header "Read and Review Visions"))
 	(tags "PRIORITY+30K" ,(cm/review-header "Read and Review Goals and Objectives"))
 	(tags "PRIORITY+20K" ,(cm/review-header "Read and Review Areas of Focus and Responsibility"))
-	(tags-todo "PROJECT" ,(cm/review-header "Read and Review Projects and Alignment"))
+	(todo "PROJECT" ,(cm/review-header "Read and Review Projects and Alignment"))
 
 	;; GET CREATIVE
 	(tags-todo "noop" ,(cm/review-section "Get Creative!"))
@@ -3336,10 +2788,12 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
   (defun cm/checklist-agendas ()
     '(("xx" "All Checklists"
        ((tags "CHECKLIST"))
-       ((org-agenda-search-view-max-outline-level 2)))
+       ((org-agenda-entry-text-maxlines 100)
+	(org-agenda-add-entry-text-maxlines 100)))
       ("xd" "Daily Checklists"
        ((tags "DAILY+CHECKLIST"))
-       ((org-agenda-search-view-max-outline-level 2)))))
+       ((org-agenda-entry-text-maxlines 100)
+	(org-agenda-add-entry-text-maxlines 100)))))
 
   (defun cm/org-set-agenda ()
     (interactive)
@@ -3359,14 +2813,17 @@ require the =cm/org-load-agenda= function as opposed to just being
 able to set =org-agenda-custom-commands=
 #+begin_src emacs-lisp
   (defun cm/days-back-to-monday ()
-    (+ 7 (calendar-day-of-week (calendar-gregorian-from-absolute (org-today)))))
+    (mod (+ (calendar-day-of-week (calendar-gregorian-from-absolute (org-today))) 6) 7))
 
   (defun cm/days-to-next-saturday ()
     (- 21 (cm/days-back-to-monday)))
 
   (defun cm/org-load-agenda ()
     (interactive)
-    (with-current-buffer (get-buffer-create "*scratch*")
+    (with-current-buffer
+	(if (equalp major-mode 'org-mode)
+	    (current-buffer)
+	  (get-buffer-create "*scratch*"))
       (cm/org-set-agenda)
       (org-agenda)))
 #+end_src
@@ -3382,13 +2839,94 @@ print agendas
 	  (ps-landscape-mode t)
 	  (htmlize-output-type 'css)))
 #+end_src
+***** Agenda todo/done capture commands
+This is really useful for Projects and others where I want to create
+sub-tasks / references quickly from the agenda view. Thanks yet again
+to Sacha Chua.
+#+begin_src emacs-lisp
+  (require 'org-agenda)
+  (defun cm/org-agenda-done (&optional arg)
+    "Mark current TODO as done.
+  This changes the line at point, all other lines in the agenda referring to
+  the same tree node, and the headline of the tree node in the Org-mode file."
+    (interactive "P")
+    (org-agenda-todo "DONE"))
+
+  (define-key org-agenda-mode-map "x" #'cm/org-agenda-done)
+
+  (defun cm/org-agenda-mark-done-and-add-followup ()
+      "Mark the current TODO as done and add another task after it.
+  Creates it at the same level as the previous task, so it's better to use
+  this with to-do items than with projects or headings."
+      (interactive)
+      (org-agenda-todo "DONE")
+      (org-agenda-switch-to)
+      (org-capture 0 "t"))
+
+  (define-key org-agenda-mode-map "X" #'cm/org-agenda-mark-done-and-add-followup)
+
+  (defun cm/org-agenda-new ()
+    "Create a new note or task at the current agenda item.
+  Creates it at the same level as the previous task, so it's better to use
+  this with to-do items than with projects or headings."
+    (interactive)
+    (org-agenda-switch-to)
+    (org-capture 0))
+
+  (define-key org-agenda-mode-map "N" #'cm/org-agenda-new)
+
+  (defun cm/org-agenda-new-project-todo ()
+    "Create a new note or task at the current project's level."
+    (interactive)
+    (org-agenda-switch-to)
+    (if (not (equalp (nth 2 (org-heading-components)) "PROJECT"))
+	(error (format "%s %s" (org-heading-components)
+		       ": Not a project tagged element! Cannot add dependent action"))
+      (org-capture nil "b")))
+
+  (define-key org-agenda-mode-map "K" #'cm/org-agenda-new-project-todo)
+#+end_src
+**** Org Clock
+     :PROPERTIES:
+     :ID:       fbb22f25-0f77-44c8-ab44-47187909d25a
+     :END:
+This adds automatic task clocking. It's incredibly useful to figure
+out how long tasks took that you start and stop.
+#+begin_src emacs-lisp  
+  (defun org-clock-in-if-starting ()
+    "Clock in when the task is marked STARTED."
+    (when (and (string= org-state "STARTED")
+               (not (string= org-last-state org-state)))
+      (org-clock-in)))
+  
+  (defadvice org-clock-in (after cm activate)
+    "Set this task's status to 'STARTED'."
+    (org-todo "STARTED"))
+  
+  (defun org-clock-out-if-waiting ()
+    "Clock in when the task is marked STARTED."
+    (when (and (string= org-state "WAITING")
+               (not (string= org-last-state org-state)))
+      (org-clock-out)))
+  
+  (defun org-clock-out-if-started-todo ()
+    (when (and (or (string= org-state "TODO")
+                   (string= org-state "NEXT"))
+               (string= org-last-state "STARTED"))
+      (if (org-clocking-p)
+          (org-clock-out))))
+  
+  (add-hook 'org-after-todo-state-change-hook 'org-clock-in-if-starting)
+  (add-hook 'org-after-todo-state-change-hook 'org-clock-out-if-waiting)
+  (add-hook 'org-after-todo-state-change-hook 'org-clock-out-if-started-todo)
+#+end_src
 **** Useful setq's
      :PROPERTIES:
      :ID:       8bb80482-a3c3-4e9b-bc23-27fdfdf4d14c
      :END:
 #+begin_src emacs-lisp  
   (setq org-stuck-projects
-	    '("+PROJECT/-NVM-DONE-WAITING" ("NEXT" "TODO")))
+	    '("TODO=\"PROJECT\"" ("TODO" "NEXT" "STARTED") () ""))
 
   (add-to-list 'auto-mode-alist '("\\.org'$" . org-mode))
   (global-set-key (kbd "C-c l") 'org-store-link)
@@ -3406,36 +2944,37 @@ print agendas
 			       "~/org/work.org")
 			      :maxlevel . 5)))
 
-  (setq org-agenda-tags-column -90)
-  (setq org-tags-column -90)
-
-  (setq org-log-done t)
-  (setq org-hide-leading-stars t)
-  (setq org-return-follows-link nil)
+  (setq calendar-mark-diary-entries-flag t)
+  (setq org-adapt-indentation nil)
+  (setq org-agenda-dim-blocked-tasks t)
   (setq org-agenda-include-all-todo t)
-  (setq org-agenda-span 'week)
   (setq org-agenda-include-diary t)
+  (setq org-agenda-inhibit-startup t)
+  (setq org-agenda-show-all-dates t)
   (setq org-agenda-skip-deadline-if-done t)
   (setq org-agenda-skip-scheduled-if-done t)
-  (setq org-start-on-weekday nil)
-  ;(setq org-completion-use-ido t)
-  (setq org-agenda-show-all-dates t)
-  (setq org-reverse-note-order nil)
-  (setq org-fontify-done-headline t)
-  (setq org-special-ctrl-k t)
-  (setq org-special-ctrl-a/e t)
-  (setq org-agenda-dim-blocked-tasks t)
-  (setq org-enforce-todo-dependencies t)
-  (setq org-outline-path-complete-in-steps nil) ;ido lol
-  (setq org-refile-use-outline-path 'file)
-  (setq org-use-speed-commands t)
-  (setq org-export-with-sub-superscripts nil)
-  (setq org-pretty-entities-include-sub-superscripts nil)
-  (setq org-use-sub-superscripts nil)
+  (setq org-agenda-span 'week)
+  (setq org-agenda-tags-column -90)
+  (setq org-agenda-use-tag-inheritance '(search timeline agenda))
+  (setq org-attach-archive-delete 'query)
   (setq org-attach-directory "~/org/_attachments/")
-  (setq org-adapt-indentation nil)
-  (setq calendar-mark-diary-entries-flag t)
-
+  (setq org-enforce-todo-dependencies t)
+  (setq org-export-with-sub-superscripts nil)
+  (setq org-fontify-done-headline t)
+  (setq org-hide-leading-stars t)
+  (setq org-log-done t)
+  (setq org-outline-path-complete-in-steps nil) ;ido lol
+  (setq org-pretty-entities-include-sub-superscripts nil)
+  (setq org-refile-use-outline-path 'file)
+  (setq org-return-follows-link nil)
+  (setq org-reverse-note-order nil)
+  (setq org-special-ctrl-a/e t)
+  (setq org-special-ctrl-k t)
+  (setq org-start-on-weekday nil)
+  (setq org-tags-column -90)
+  (setq org-use-speed-commands t)
+  (setq org-use-sub-superscripts nil)
+  ;(setq org-completion-use-ido t)
   ;; disable dumb-ass git crap for now
   (advice-add 'org-attach-commit :override #'list)
   ;; less file local settings!
@@ -3444,6 +2983,12 @@ print agendas
   (setq org-columns-default-format "%TODO %50ITEM(Task) %17Effort(Estimated Effort){:} %CLOCKSUM")
 
   (global-set-key (kbd "<f6>") 'org-clock-goto)
+#+end_src
+**** Org Contacts
+#+begin_src emacs-lisp
+  (use-package org-contacts
+    :init
+    (setq org-contacts-files '("~/org/_notes/contacts.org")))
 #+end_src
 **** Archiving
 
@@ -3465,16 +3010,28 @@ it the normal way.
     (interactive)
     (save-excursion
       (with-current-buffer (current-buffer)
-	(outline-up-heading 1)
+	(outline-show-all)
+	(outline-up-heading 1 t)
 	(nth 5 (org-heading-components)))))
+
+  (defun cm/dependent-project-todo-p ()
+    (interactive)
+    (save-excursion
+      (with-current-buffer (current-buffer)
+	(outline-show-all)
+	(let ((toret nil))
+	  (dotimes (i (- (org-current-level) 1) toret)
+	    (outline-up-heading 1 t)
+	    (setq toret
+		  (or toret
+		      (string-equal "PROJECT"
+				    (nth 2 (org-heading-components))))))))))
 
   (defun cm/gtd-archiver ()
     (interactive)
-    (let ((tags (cm/parent-tags)))
-      (if (and (not (null tags))
-	       (string-match ":PROJECT:" tags))
+    (if (cm/dependent-project-todo-p)
 	  (org-archive-to-archive-sibling)
-	(org-archive-subtree))))
+	(org-archive-subtree)))
 
   (setq org-archive-default-command #'cm/gtd-archiver)
 #+end_src
@@ -3543,24 +3100,24 @@ or something else. For now, it's manual.
      :END:
 #+begin_src emacs-lisp
   (setq org-tag-alist '((:startgroup)
-			("HOME" . ?h)
-			("WORK" . ?w)
+			("HOME"   . ?h)
+			("WORK"   . ?w)
 			("ERRAND" . ?r)
 			(:endgroup)
-			("COMPUTER" . ?c)
-			("INTERNET" . ?v)
-			("PHONE" . ?f)
-			("EMAIL" . ?m)
-			("OUTREACH" . ?h)
-			("DISPATCH" . ?d)
-			("PROJECT" . ?p)
+			("AGENDA"    . ?a)
+			("COMPUTER"  . ?c)
+			("INTERNET"  . ?v)
+			("PHONE"     . ?f)
+			("EMAIL"     . ?m)
+			("OUTREACH"  . ?h)
+			("DISPATCH"  . ?d)
 			("CHECKLIST" . ?x)))
 
   (setq org-log-done '(note))
   (setq org-log-into-drawer t) ; record state changes into LOGBOOK
   (setq org-todo-keywords
-	'((sequence "TODO(t@)" "NEXT(n!)" "STARTED(s)" "WAITING(w@)" "|" "DONE(d@)" "NVM(v@)")))
-  (setq org-tags-exclude-from-inheritance '("PROJECT" "CHECKLIST"))
+	'((sequence "TODO(t@)" "NEXT(n!)" "STARTED(s)" "WAITING(w@)" "PROJECT(p)" "|" "DONE(d@)" "NVM(v@)")))
+  (setq org-tags-exclude-from-inheritance '("CHECKLIST"))
   ;(setq org-agenda-category-icon-alist
   ;      '(("netapp" "" nil t)
 #+end_src
@@ -3761,21 +3318,21 @@ How I deploy my personal website.
 
   (defun org-man-store-link ()
     "Store a link to a manpage."
-         (when (memq major-mode '(Man-mode woman-mode))
-           ;; This is a man page, we do make this link
-           (let* ((page (org-man-get-page-name))
-                  (link (concat "man:" page))
-                  (description (format "Manpage for %s" page)))
-             (org-store-link-props
-              :type "man"
-              :link link
-              :description description))))
+	 (when (memq major-mode '(Man-mode woman-mode))
+	   ;; This is a man page, we do make this link
+	   (let* ((page (org-man-get-page-name))
+		  (link (concat "man:" page))
+		  (description (format "Manpage for %s" page)))
+	     (org-store-link-props
+	      :type "man"
+	      :link link
+	      :description description))))
 
   (defun org-man-get-page-name ()
     "Extract the page name from the buffer name."
     ;; This works for both `Man-mode' and `woman-mode'.
     (if (string-match " \\(\\S-+\\)\\*" (buffer-name))
-        (match-string 1 (buffer-name))
+	(match-string 1 (buffer-name))
       (error "Cannot create link to this man page")))
 
   ;; cisco links
@@ -3805,23 +3362,23 @@ How I deploy my personal website.
     "Create a new frame and run org-capture."
     (interactive)
     (make-frame '((name . "Org-Capture")
-                  (width . 120)
-                  (height . 20)
-                  (menu-bar-lines . 0)
-                  (tool-bar-lines . 0)
-                  (auto-lower . nil)
-                  (auto-raise . t)))
+		  (width . 120)
+		  (height . 20)
+		  (menu-bar-lines . 0)
+		  (tool-bar-lines . 0)
+		  (auto-lower . nil)
+		  (auto-raise . t)))
     (select-frame-by-name "Org-Capture")
     (if (condition-case nil
-            (progn (org-capture) t)
-          (error nil))
-        (delete-other-windows)
+	    (progn (org-capture) t)
+	  (error nil))
+	(delete-other-windows)
       (cm/org-capture-other-frame-cleanup)))
 
   (defun cm/org-capture-other-frame-cleanup ()
     "Close the Org-Capture frame."
     (if (equal "Org-Capture" (frame-parameter nil 'name))
-        (delete-frame)))
+	(delete-frame)))
   (add-hook 'org-capture-after-finalize-hook 'cm/org-capture-other-frame-cleanup)
 #+end_src
 **** Search through my _notes directory
@@ -3867,19 +3424,37 @@ THIS WAS WAY OVER THE TOP. We can just use =org-search-view=.
      :END:
 #+begin_src emacs-lisp
   ;; org capture!
+  (defun cm/org-child-location ()
+    ;; get id of current location
+    (pcase (org-id-find (org-id-get))
+      (`(,path . ,position)
+       (set-buffer (org-capture-target-buffer path))
+       (widen)
+       (org-capture-put-target-region-and-position)
+       (goto-char position))
+      (_ (error "Connot find target ID \"%s\"" id))))
+
   (setq org-directory "~/org")
   (setq org-default-notes-file (concat org-directory "/gtd.org"))
   (setq org-board-capture-file (concat org-directory "/_notes/www.org"))
   (define-key global-map "\C-cr" 'org-capture)
   (setq org-capture-templates
-	`(("t" "Todo" entry (file+headline "~/org/gtd.org" "Inbox") "* TODO %?\n  %U\n  %i\n  %a" :prepend t)
-	  ("j" "Journal" entry (file "~/org/_editorial/journal.org") "* %T %?\n\n  %i\n  %a" :prepend nil)
-	  ("c" "Add note to currently clocked task" entry (clock) "* %U %?\n%a\n\n%i")
-	  ("n" "Timed Notes" entry (file "~/org/_notes/notes.org") "* %T %?\n\n  %i\n  %a" :prepend nil)
-	  ("w" "Work capture" entry (file "~/org/work.org") "* %U %?\n\n  %i\n  %a" :prepend nil)
-	  ("s" "Snippet Log" entry (file+headline "~/org/work.org" "Snippets") "* S: %?\n  %T\n" :prepend nil)
-	  ("l" "Life Fitness" table-line (file+headline "~/org/fitness.org" "Fitness") ,(concat (format-time-string "| %Y.%m.%d-%H:%M |") " %^{Weight} | | %^{RHR} |") :table-line-pos "II-1")
-	  ("x" "org-capture" entry (file "~/org/_notes/www.org") "* %U %:description\n  :PROPERTIES:\n  :URL: %:link\n  :END:\n\n")))
+	`(("t" "Todo" entry (file+headline "~/org/gtd.org" "Inbox") "* TODO %?\n  :PROPERTIES:\n  :CREATED:  %U\n  :END:\n  %i\n  %a\n\n" :prepend t :empty-lines 1)
+	  ("p" "Project" entry (id "a262e411-ff66-43fc-9124-341694564dda") "* PROJECT %?\n  :PROPERTIES:\n  :CREATED:  %U\n  :END:\n\n** Actions\n\n** Archive :ARCHIVE:\n\n" :empty-lines 1)
+	  ("j" "Journal" entry (file "~/org/_editorial/journal.org") "* %T %?\n\n  %i\n  %a\n\n" :prepend nil :empty-lines 1)
+	  ("c" "Add note to currently clocked task" entry (clock) "* %U %?\n%a\n\n%i\n\n" :empty-lines 1)
+	  ("a" "Address Book" entry (file "~/org/_notes/contacts.org") "* %(org-contacts-template-name)\n:PROPERTIES:\n:EMAIL: %(org-contacts-template-email)\n:END:" :empty-lines 1)
+	  ("n" "Timed Notes" entry (file "~/org/_notes/notes.org") "* %T %?\n\n  %i\n  %a\n\n" :prepend nil :empty-lines 1)
+	  ("w" "Work captures")
+	  ("wt" "Work Action" entry (file+headline "~/org/work.org" "Actions") "* %U %?\n\n  %i\n  %a\n\n" :prepend nil :empty-lines 1)
+	  ("wn" "Work Note" entry (file "~/org/work.org") "* %U %?\n\n  %i\n  %a\n\n" :prepend nil :empty-lines 1)
+	  ("wj" "Work journal entry" plain (file+olp+datetree "~/org/work.org" "Lab Notes") "\n\n%?\n\n" :tree-type week :empty-lines 1)
+	  ("ws" "Snippet Log" entry (file+headline "~/org/work.org" "Snippets") "* S: %?\n  %T\n\n" :prepend nil :empty-lines 1)
+	  ("r" "Review Captures")
+	  ("ry" "Review Entry For The Year" entry (id "256745aa-ece4-4649-a616-52b0194850d0") "* Review for %<%Y>\n:PROPERTIES:\n:CREATED:   %U\n:END:\n\n** Review previous year\n\n- What was completed?\n- What was not completed?\n- What was the best spent time?\n- What was the worst spent time?\n- What is the current financial, physical, emotional, mental, spiritual state?\n\n** Project future year\n\n- What to spend more time on in new year?\n- What to spend less time on in new year?\n- What projects should be started in the next year?\n- What project should be completed in the next year?\n\n" :empty-lines 1)
+	  ("b" "Agenda Project" entry (function cm/org-child-location) "* TODO %?\n  %U\n  %i\n\n" :prepend nil :empty-lines 1)
+	  ("l" "Life Fitness" table-line (file+headline "~/org/fitness.org" "Fitness") ,(concat (format-time-string "| %Y.%m.%d-%H:%M |") " %^{Weight} | | %^{RHR} |") :table-line-pos "II-1" :empty-lines 1)
+	  ("x" "org-capture" entry (file "~/org/_notes/www.org") "* %U %:description\n  :PROPERTIES:\n  :URL: %:link\n  :END:\n\n%:body\n\n" :empty-lines 1)))
 
   (defun cm/org-board-dl-hook ()
     (when (equal (buffer-name)
@@ -4219,6 +3794,310 @@ Who needs a command line anyways..
 #+begin_src emacs-lisp
   (autoload 'w3m-browse-url "w3m-load" "" t)
 #+end_src
+*** notmuch
+    :PROPERTIES:
+    :ID:       705f65b0-cd4f-4c2f-a7da-dc340505dbbc
+    :END:
+I'm not a fan that this isn't a simple =use-package= thing, but the
+notmuch emacs implementation generally has to match the notmuch
+binary - and it's easier to just use whatever my distro packages.
+#+begin_src emacs-lisp
+  (unless (require 'notmuch nil t)
+    (message "Notmuch could not be loaded, should disable sending mail"))
+
+  (setq cm/mail-script "mail-sync")
+
+  (defun cm/notmuch-poll ()
+    (interactive)
+    (unless (equal (call-process cm/mail-script nil nil) 0)
+      (error "Notmuch: poll script `%s' failed!" notmuch-poll-script)))
+
+  (defun cm/notmuch-refresh-buffer-after-poll (proc state)
+    (let ((buffer (process-buffer proc)))
+      (with-current-buffer buffer
+	(with-current-buffer notmuch-buffer-to-refresh
+	  (when notmuch-buffer-refresh-function
+	    (call-interactively notmuch-buffer-refresh-function))))))
+
+  (defun cm/notmuch-poll-and-refresh-this-buffer ()
+    (interactive)
+    (let ((old-buff (current-buffer)))
+      (with-current-buffer (get-buffer-create "*notmuch-mail-sync*")
+	(set (make-local-variable 'notmuch-buffer-to-refresh) old-buff)
+	(let ((process (start-process-shell-command "async proc mail-sync" (current-buffer) "mail-sync")))
+	  (set-process-sentinel process #'cm/notmuch-refresh-buffer-after-poll)))))
+
+  (advice-add 'notmuch-poll :override #'cm/notmuch-poll)
+
+  (advice-add 'notmuch-poll-and-refresh-this-buffer :override #'cm/notmuch-poll-and-refresh-this-buffer)
+#+end_src
+**** Sending mail
+     :PROPERTIES:
+     :ID:       58944cd4-e6a8-4053-8b9f-b51cd3e8bf34
+     :END:
+We're just borrowing the gnus settings here..
+#+begin_src emacs-lisp
+;  (setq smtpmail-auth-credentials "~/.netrc") ;; is this needed?
+#+end_src
+The smtpmail-multi-accounts block has a strict ordering. By using ssl
+I get to avoid most of the complications. It goes, in order:
+
+1. =smtpmail-smtp-user=
+2. =smtpmail-smtp-server=
+3. =stmpmail-smtp-service= (port)
+4. =mail-specify-envelope-from= (not needed, especially if you're
+   using this.
+5. =smtpmail-stream-type= (ssl, starttls, or plain. USE SSL if you
+   want to live)
+6. starttls crap
+7. starttls crap
+8. =smtpmail-local-domain= (hostname to use as where it's sent from. I
+   set this usually to the hostname of the email provider.)
+  
+#+begin_src emacs-lisp
+  (setq smtpmail-multi-accounts '((google . ("jmickey@google.com"
+                                           "smtp.gmail.com"
+                                           465
+                                           nil
+                                           ssl
+                                           nil
+                                           nil
+                                           "google.com"))
+                                  (codemac . ("codemac@fastmail.com"
+                                              "mail.messagingengine.com"
+                                              465
+                                              nil
+                                              ssl
+                                              nil
+                                              nil
+                                              "codemac.net"))))
+
+  (setq smtpmail-multi-default-account 'codemac)
+  (setq smtpmail-multi-associations '(("jmickey@google.com" google)
+                                      ("j@codemac.net\\|jeff@archlinux.org\\|j@mickey.email\\|jeff@mickey.email\\|jm@vt.edu\\|jmickey@vt.edu" codemac)))
+
+  (setq send-mail-function 'smtpmail-multi-send-it)
+  (setq message-send-mail-function 'smtpmail-multi-send-it)
+
+#+end_src
+***** queueing
+      :PROPERTIES:
+      :ID:       f884dff3-0e19-41e1-969b-8911fcc05f68
+      :END:
+#+begin_src emacs-lisp
+  (setq smtpmail-queue-mail  t  ;; start in non-queuing mode
+        smtpmail-queue-dir   "~/mail/queue")
+
+  (setq user-full-name "Jeff Mickey")
+  (if (equalp (system-name) "jmickey-glaptop0")
+      (setq user-mail-address "jmickey@google.com")
+    (setq user-mail-address "j@codemac.net"))
+#+end_src
+**** Drafts Handling
+Ridiculous hacks to get sensible synced drafts. Sometimes I end up
+with way too many drafts saved due to mbsync being fast, but that's a
+good problem to me :)
+#+begin_src emacs-lisp
+  ;; how to get these things to not suck
+  (setq message-draft-headers '(From References Subject Date (optional . In-Reply-To) Message-ID (optional . User-Agent)))
+  (setq message-generate-headers-first t) ;; would love to do this without Date
+  (setq message-auto-save-directory "~/mail/cm/Drafts/cur")
+
+  (defun cm/draft-insert-mail-header-separator ()
+    "Insert `mail-header-separator' in the first empty line of the message.
+  `message-mode' needs this line to know where the headers end and
+  the body starts. Note, in `mu4e-compose-mode', we use
+  `before-save-hook' and `after-save-hook' to ensure that this
+  separator is never written to the message file. Also see
+  `mu4e-remove-mail-header-separator'."
+    ;; we set this here explicitly, since (as it has happened) a wrong
+    ;; value for this (such as "") breaks address completion and other things
+    (set (make-local-variable 'mail-header-separator)
+      (purecopy "--text follows this line--"))
+    (put 'mail-header-separator 'permanent-local t)
+    (save-excursion
+      ;; make sure there's not one already
+      (cm/draft-remove-mail-header-separator)
+      (let ((sepa (propertize mail-header-separator
+		    'intangible t
+		    ;; don't make this read-only, message-mode
+		    ;; seems to require it being writable in some cases
+		    ;;'read-only "Can't touch this"
+		    'rear-nonsticky t
+		    'font-lock-face 'message-separator)))
+	(widen)
+	;; search for the first empty line
+	(goto-char (point-min))
+	(if (search-forward-regexp "^$" nil t)
+	    (replace-match sepa)
+	    (progn ;; no empty line? then prepend one
+	      (goto-char (point-max))
+	      (insert "\n" sepa))))))
+
+  (defun cm/draft-remove-mail-header-separator ()
+    "Remove `mail-header-separator; we do this before saving a
+  file (and restore it afterwards), to ensure that the separator
+  never hits the disk. Also see `mu4e-draft-insert-mail-header-separator."
+    (interactive)
+    (save-excursion
+      (widen)
+      (goto-char (point-min))
+      ;; remove the --text follows this line-- separator
+      (when (search-forward-regexp (concat "^" mail-header-separator) nil t)
+	(let ((inhibit-read-only t))
+	  (replace-match "")))))
+
+  (defun cm/notmuch-message-setup ()
+    "Configures a bunch of hooks for notmuch message windows"
+    (message-add-action `(message "debug: done exit actions") 'exit)
+    (message-add-action `(message "debug: done postpone actions") 'postpone)
+    (message-add-action `(message "debug: done kill actions") 'kill)
+    (message-add-action 'notmuch-message-postpone-keep 'postpone)
+    (message-add-action 'notmuch-message-postpone-cleanup 'exit))
+
+  (add-hook 'message-mode-hook 'cm/notmuch-message-setup)
+  (add-hook 'message-mode-hook
+	    (lambda ()
+	      (add-hook 'after-save-hook 'cm/draft-insert-mail-header-separator nil 'make-it-local)
+	      (add-hook 'before-save-hook 'cm/draft-remove-mail-header-separator nil 'make-it-local)))
+
+  (defun notmuch-message-postpone-cleanup ()
+    "Remove autosave and postponed messages for that buffer"
+    (message "debug: postpone cleanup hook")
+    (message "deleting draft file: %s" notmuch-draft-filename)
+    (if (file-exists-p notmuch-draft-filename)
+	(progn
+	  (kill-buffer)
+	  (delete-file notmuch-draft-filename)
+	  (if (file-exists-p notmuch-draft-filename)
+	      (message "failed to delete file %s" notmuch-draft-filename)
+	    (message "debug: file deleted"))
+	  )
+      (message "draft file %s doesn't exist" notmuch-draft-filename)))
+
+  (defun notmuch-message-postpone-keep ()
+    "Moves the previous buffer into the postponed folder and then kill it"
+    (save-excursion
+      (set-buffer (last-buffer))
+      (cm/draft-remove-mail-header-separator)
+      (notmuch-maildir-fcc-write-buffer-to-maildir "~/mail/cm/drafts" t)
+      (kill-buffer)))
+
+  (defun notmuch-show-resume-message ()
+    "Resume a postponed message."
+    (interactive)
+    (setq tmpfilename (notmuch-show-get-filename))
+    (notmuch-show-view-raw-message)
+    (setq buffer-file-name tmpfilename)
+    (message "debug: set buffer file name to %s" buffer-file-name)
+    (setq notmuch-draft-filename buffer-file-name)
+    (make-local-variable 'notmuch-draft-filename)
+    (message "debug: set draft file name to %s" notmuch-draft-filename)
+    (message-mode)
+    (cm/draft-insert-mail-header-separator))
+
+  ;; set these to something damn high I hate elided messages 
+  (setq notmuch-wash-citation-lines-prefix 1024)
+  (setq notmuch-wash-citation-lines-suffix 1024)
+  (setq notmuch-wash-signature-lines-max 0)
+  (setq notmuch-wash-wrap-lines-length (if (< fill-column 100) 100 fill-column))
+
+  (setq notmuch-maildir-use-notmuch-insert nil)
+  (require 'notmuch-show)
+  (define-key notmuch-show-mode-map "e" 'notmuch-show-resume-message)
+#+end_src
+**** Keybindings
+     :PROPERTIES:
+     :ID:       dd303b47-13d6-48df-bb7f-93a81ac25edc
+     :END:
+For some reason the ~=~ sign is used for refresh in notmuch. This is
+horrifying.
+#+begin_src emacs-lisp
+  (setq notmuch-archive-tags '("-inbox" "-unread" "+archive"))
+
+  (defun cm/notmuch-archive-unread-all ()
+    (interactive)
+    (notmuch-search-tag-all notmuch-archive-tags))
+
+  (setq notmuch-saved-searches
+	'((:name "inbox"         :query "tag:inbox"                 :key "i" :sort-order newest-first)
+	  (:name "unread"        :query "tag:unread"                :key "u" :sort-order newest-first)
+	  (:name "work-inbox"    :query "tag:work AND tag:inbox"    :key "wi" :sort-order oldest-first)
+	  (:name "work-bulk"     :query "tag:work AND tag:unread"
+		 :key "wb" :sort-order newest-first)
+	  (:name "inbox-codemac" :query "tag:codemac AND tag:inbox" :key "c" :sort-order newest-first)
+	  (:name "drafts"        :query "tag:draft"                 :key "d" :sort-order newest-first)
+	  (:name "today"         :query "date:today..!"             :key "t" :sort-order oldest-first)
+	  (:name "sent"          :query "tag:sent"                  :key "n")))
+
+  (global-set-key (kbd "C-c i") 'notmuch-jump-search)
+
+  ;; keep the "goto address" logic consistent with org mode
+  (define-key notmuch-show-mode-map (kbd "C-c C-o") 'goto-address-at-point)
+  (setq notmuch-tagging-keys
+	`((,(kbd "a") notmuch-archive-tags "Archive")
+	  (,(kbd "u") notmuch-show-mark-read-tags "Mark read")
+	  (,(kbd "f")
+	   ("+flagged")
+	   "Flag")
+	  (,(kbd "m")
+	   ("+muted")
+	   "Mute")
+	  (,(kbd "s")
+	   ("+spam" "-inbox")
+	   "Mark as spam")
+	  (,(kbd "d")
+	   ("+deleted" "-inbox")
+	   "Delete")))
+#+end_src
+What is this sillyness? =g= should always refresh a buffer, shit man.
+#+begin_src emacs-lisp
+ (eval-after-load 'notmuch
+   '(define-key notmuch-common-keymap "g" 'notmuch-refresh-this-buffer))
+ (eval-after-load 'notmuch
+   '(define-key notmuch-common-keymap "A" 'cm/notmuch-archive-unread-all))
+#+end_src
+
+Notmuch fcc dir handling
+#+begin_src emacs-lisp
+  (setq notmuch-fcc-dirs '((".*@google.com" . "work/sent")
+			   (".*@codemac.net" . "cm/sent")))
+#+end_src
+**** Message view
+     :PROPERTIES:
+     :ID:       609c8599-feea-4606-8444-3a243b306e2c
+     :END:
+The vast majority of this is around setting up drafts handling in
+notmuch to be sync'd over IMAP. =notmuch= doesn't handle this for us,
+and this is an amalgamation of things I found online. It currently
+works with the cyrus IMAP server.
+#+begin_src emacs-lisp
+  (setq message-citation-line-format "* %f [%Y-%m-%d %H:%M]:")
+  (setq message-citation-line-function 'message-insert-formatted-citation-line)
+#+end_src
+Set background color of eww rendered buffers to make wayyy more sense.
+#+begin_src emacs-lisp
+  (setq shr-color-visible-luminance-min 80)
+#+end_src
+Set the colors of each search result line based on the tags of the
+result. This was inspired because notmuch changed them to have insane
+defaults.
+
+#+begin_src emacs-lisp
+  (setq notmuch-search-line-faces `(("unread" . (:weight bold))
+                                    ("flagged" . (:foreground "khaki"))))
+#+end_src
+#+begin_src emacs-lisp
+  (defun cm/message-mode-hook ()
+    (local-set-key (kbd "C-c M-o") 'org-mime-htmlize)
+    ;; orgstruct mode conflicts with hard-newlines. format=flowed is
+    ;; *more* important than org-mime-htmlize.
+    ;; (orgstruct-mode 1)
+    (auto-fill-mode -1)
+    (use-hard-newlines nil 'guess))
+
+  (add-hook 'message-mode-hook 'cm/message-mode-hook)
+#+end_src
 ** Custom
    :PROPERTIES:
    :ID:       3897ecf3-7d82-47a2-b736-abf8204a83b4
@@ -4458,7 +4337,6 @@ The idea for this comes from https://xkcd.com/1205/
     
 #+end_src
 
-
 ** Capture all open buffers
 The david allen special inbox magic
 #+begin_src emacs-lisp
@@ -4535,7 +4413,7 @@ The david allen special inbox magic
 	      (cl-mapcar (lambda (title-url)
 			   (if (and title-url (y-or-n-p (format "store %s - %s ? " (car title-url) (cdr title-url))))
 			       (org-make-link-string (cdr title-url) (car title-url))))
-			 tabs)))
+			 tabs))))
 
 
   (defun cm/close-n-capture ()
@@ -4548,6 +4426,92 @@ The david allen special inbox magic
 			"t"))
 
   (global-set-key (kbd "C-c x") 'cm/close-n-capture)
+#+end_src
+
+
+** Global Abbrev Support
+So something that cracks me up, is the concept of textexpander being
+so "powerful". It's not powerful - it's just global.
+
+Let's use completing read for fuzzy matching on our abbrev. In emacs
+we can do it *after* typing the abbrev, I'll need to figure out how to
+accomplish that across x11 apps though.
+
+#+begin_src emacs-lisp
+  (defvar cm/emacs-expander-alist
+    "alist of things to expand to"
+    '(("//" . (text "  //  mickey"))))
+
+  (setq cm/emacs-expander-alist
+	'(("//" . (text "  //  mickey"))
+	  ("sg." . (text "Sounds good."))))
+
+  (defun cm/xdotool-key (key)
+    (make-process
+     :name "xdotool key process"
+     :buffer "xdotool-process-buffer"
+     :command `("xdotool" "key" "--clearmodifiers" "--delay" "5" ,key)
+     :connection-type 'pipe
+     :sentinel #'cm/expander-sentinel))
+
+  (defun cm/xdotool-type (text)
+    (let ((proc (make-process
+		 :name "xdotool type process"
+		 :buffer "xdotool-process-buffer"
+		 :command '("xdotool" "type" "--clearmodifiers" "--delay" "5" "--file" "-")
+		 :connection-type 'pipe
+		 :sentinel #'cm/expander-sentinel)))
+      (process-send-string proc text)
+      (process-send-eof proc)))
+
+  (defvar cm/expander-temp-storage-reply
+    "So the callback can reply!" '())
+
+  (defun cm/expander-sentinel (proc event)
+    (cm/run-expander-plist cm/expander-temp-storage-reply))
+
+
+  (defun cm/run-expander-plist (pls)
+    (when (> (length pls) 1)
+      (let ((sym (car pls))
+	    (val (cadr pls)))
+	(setq cm/expander-temp-storage-reply (cddr pls))
+	(pcase sym
+	  ('text (cm/xdotool-type val))
+	  ('key (cm/xdotool-key val))))))
+
+  (defun cm/emacs-expander ()
+    (interactive)
+    (save-window-excursion
+      (let* ((key (completing-read "Abbrev to expand: " cm/emacs-expander-alist))
+	     (kpl (cdr (assoc key cm/emacs-expander-alist))))
+	(cm/emacs-expander-frame-cleanup)
+	(cm/run-expander-plist kpl))))
+
+  (defun cm/emacs-expander-frame ()
+    "Create a new frame and run cm/emacs-expander."
+    (interactive)
+    (save-window-excursion
+      (make-frame '((name . "emacs-expander")
+		    (width . 120)
+		    (height . 20)
+		    (menu-bar-lines . 0)
+		    (tool-bar-lines . 0)
+		    (minibuffer . only)
+		    (auto-lower . nil)
+		    (auto-raise . t)))
+      (select-frame-by-name "emacs-expander")
+      (condition-case nil
+	  (progn (cm/emacs-expander) t)
+	((error debug quit) nil)))
+    (cm/emacs-expander-frame-cleanup))
+
+  (defun cm/emacs-expander-frame-cleanup ()
+    "Close the emacs-expander frame."
+    (dolist (elem (frame-list))
+      (if (equalp "emacs-expander" (frame-parameter elem 'name))
+	  (save-window-excursion
+	    (delete-frame elem)))))
 #+end_src
 * Directory Specific Code
   :PROPERTIES:
@@ -4737,85 +4701,6 @@ fix. I found that I never used the data though..
   ;; (command-frequency-autosave-mode 1)
 #+end_src
 
-** mu4e
-   :PROPERTIES:
-   :ID:       67b2693a-b95f-47fc-8db4-92a9b669a177
-   :END:
-=mu4e= is a Maildir emacs mail mode. It's quite simple, but it's
-design goals fall right in the "super perfect" range, and I think it
-has a huge opportunity to succeed. It is similar to notmuch.
-#+begin_src emacs-lisp
-;  (require 'mu4e)
-#+end_src
-*** Folders
-    :PROPERTIES:
-    :ID:       14769157-82d3-40b0-8aea-f0a614e746ee
-    :END:
-These match the Outlook ones..
-#+begin_src emacs-lisp
-;  (setq mu4e-maildir "~/mail"
-;        mu4e-sent-folder "/Sent Items"
-;        mu4e-drafts-folder "/Drafts"
-;        mu4e-trash-folder "/Deleted Items"
-;        mu4e-refile-folder "/archive")
-;  
-;  (setq mu4e-maildir-shortcuts
-;        '(("/INBOX" . ?i)))
-;  
-;  (setq mu4e-refile-folder 'cm/mu4e-refile-folder)
-;  
-#+end_src
-*** Retrieval and Indexing
-    :PROPERTIES:
-    :ID:       a8d53e13-c716-4cd3-9028-8c53cfc67139
-    :END:
-Let's update the maildirs once every 5 minutes
-#+begin_src emacs-lisp
-;  (setq mu4e-get-mail-command "offlineimap"
-;        mu4e-update-interval 200)
-#+end_src
-*** Sending mail
-    :PROPERTIES:
-    :ID:       1f68110e-5f40-47e1-afda-a325af1662f2
-    :END:
-We're just borrowing the gnus settings here..
-#+begin_src emacs-lisp
-;  (setq smtpmail-auth-credentials "~/.authinfo"
-;        smtpmail-smtp-server "mail.netapp.com"
-;        smtpmail-default-smtp-server "mail.netapp.com"
-;        smtpmail-smtp-service 25
-;        send-mail-function 'smtpmail-send-it
-;        message-send-mail-function 'smtpmail-send-it
-;        smtpmail-auth-supported '(login))
-;  
-;  (setq mu4e-sent-messages-behavior 'sent)
-#+end_src
-*** Queuing mail
-    :PROPERTIES:
-    :ID:       8360c965-6186-4e05-9330-2ed9ec58bf1b
-    :END:
-This is very useful for when I ride the train.
-#+begin_src emacs-lisp
-;  (setq smtpmail-queue-mail  nil  ;; start in non-queuing mode
-;        smtpmail-queue-dir   "~/mail/queue/cur")
-#+end_src
-*** Setting the default mail client
-    :PROPERTIES:
-    :ID:       4ebb9da5-b997-4cb8-ba4a-c1c7bfc2a970
-    :END:
-#+begin_src emacs-lisp
-;  (setq mail-user-agent 'mu4e-user-agent)
-;  (setq user-mail-address "jmickey@netapp.com")
-;  (setq user-full-name "Jeff Mickey")
-#+end_src
-*** Org mode integration
-    :PROPERTIES:
-    :ID:       34a985b7-f503-4301-809e-d36bc140fcfd
-    :END:
-#+begin_src emacs-lisp
-;  (require 'org-mu4e)
-;  (setq org-mu4e-convert-to-html t)
-#+end_src
 ** Ido
    :PROPERTIES:
    :ID:       72b1beb3-ca21-4ef1-8741-30fac3e98ca8
@@ -4846,6 +4731,186 @@ Microblog, baby.
   ;(global-set-key "\C-cip" 'identica-update-status-interactive)
   ;(global-set-key "\C-cid" 'identica-direct-message-interactive)
 #+end_src
+** Helm
+    :PROPERTIES:
+    :ID:       9e11b4e9-8161-41e8-8e1f-0dabd83a8145
+    :END:
+Helm is the new Anything. Helm will help steer you in the right
+direction!
+
+Configure helm to be used for =M-x=... well let's just use it for
+everything. Helm is GNU for emacs. Helm is borg. We are the helm. You
+will be assimilated.
+
+Mostly lifted from https://tuhdo.github.io/helm-intro.html (note that
+this page is *STUPID* slow in eww)
+
+#+begin_src emacs-lisp
+  ;; (use-package helm
+  ;;   :diminish helm-mode
+  ;;   :bind (("M-x" . helm-M-x)
+  ;;          ("M-y" . helm-show-kill-ring)
+  ;;          ("C-x b" . helm-mini)
+  ;;          ("C-x C-f" . helm-find-files)
+  ;;          ("C-h SPC" . helm-all-mark-rings))
+  ;;   :init
+  ;;   (require 'helm-config)
+  ;;   (global-set-key (kbd "C-c h") 'helm-command-prefix)
+  ;;   (when cm/using-rc
+  ;;       (setq helm-top-command "COLUNMS=%s top -b -n 1"))
+
+  ;;   (helm-mode 1)
+  ;;   :config
+  ;;   (setq helm-split-window-in-side-p t
+  ;;         helm-ff-file-name-history-use-recentf t
+  ;;         helm-ff-search-library-in-sexp t
+  ;;         helm-move-to-line-cycle-in-source t
+  ;;         helm-scroll-amount 8
+  ;;         helm-ff-file-name-history-use-recentf t
+  ;;         helm-man-or-woman-function 'woman)
+  ;;   (when (executable-find "curl")
+  ;;     (setq helm-google-suggest-use-curl-p t))
+  ;;   (delete helm-source-locate helm-for-files-preferred-list)
+
+  ;;   ;; bindings I haven't figured out with :bind
+  ;;   (global-unset-key (kbd "C-x c"))
+  ;;   (define-key helm-map (kbd "<tab>") 'helm-execute-persistent-action)
+  ;;   (define-key helm-map (kbd "C-i") 'helm-execute-persistent-action)
+  ;;   (define-key helm-map (kbd "C-z")  'helm-select-action)
+  ;;   (global-set-key (kbd "C-c h o") 'helm-occur)
+  ;;   (global-set-key (kbd "C-c h x") 'helm-register))
+#+end_src
+
+I dislike helm grep immensely (super slow!) and I don't use =ack= /
+=ag= / etc. This disables =C-c p s <g,a,s>= and just does =C-c p s=
+like it used to.
+#+begin_src emacs-lisp
+  ;; (use-package helm-projectile
+  ;;   :init
+  ;;   (setq projectile-completion-system 'helm)
+  ;;   (helm-projectile-on)
+  ;;   (define-key projectile-command-map [remap projectile-grep] nil)
+  ;;   (define-key projectile-command-map [remap helm-projectile-grep] 'projectile-grep))
+#+end_src
+*** Mac os x hacks
+     :PROPERTIES:
+     :ID:       ca5c4755-da49-491b-ae37-6255407b5598
+     :END:
+Get spotlight into list of the files that helm can inspect, and get
+top output that doesn't suck
+#+begin_src emacs-lisp
+  ;; (when (eq system-type 'darwin)
+  ;;   (add-to-list 'helm-for-files-preferred-list 'helm-c-source-mac-spotlight)
+  ;;   (setq helm-c-top-command "COLUMNS=%s top -l 1"))
+#+end_src
+*** Global Tags
+     :PROPERTIES:
+     :ID:       17f2f463-4bb3-4901-86e6-2acb32572dbf
+     :END:
+Yay gtags support for helm!
+#+begin_src emacs-lisp
+  ;; (use-package helm-gtags
+  ;;   :config
+  ;;   (add-hook 'c-mode-hook (lambda () (helm-gtags-mode)))
+  ;;   
+  ;;   ;; customize
+  ;;   (setq helm-c-gtags-path-style 'absolute)
+  ;;   (setq helm-c-gtags-ignore-case t)
+  ;;   (setq helm-c-gtags-read-only nil)
+  ;;   
+  ;;   ;; key bindings
+  ;;   (add-hook 'helm-gtags-mode-hook
+  ;;             '(lambda ()
+  ;;                (local-set-key (kbd "C-c g t") 'helm-gtags-find-tag)
+  ;;                (local-set-key (kbd "C-c g r") 'helm-gtags-find-rtag)
+  ;;                (local-set-key (kbd "C-c g s") 'helm-gtags-find-symbol)
+  ;;                (local-set-key (kbd "C-c g f") 'helm-gtags-find-files)
+  ;;                (local-set-key (kbd "C-t") 'helm-gtags-pop-stack))))
+#+end_src
+** mu4e
+   :PROPERTIES:
+   :ID:       67b2693a-b95f-47fc-8db4-92a9b669a177
+   :END:
+=mu4e= is a Maildir emacs mail mode. It's quite simple, but it's
+design goals fall right in the "super perfect" range, and I think it
+has a huge opportunity to succeed. It is similar to notmuch.
+#+begin_src emacs-lisp
+;  (setq message-draft-headers '(From References Subject Date (optional . In-Reply-To) Message-ID (optional . User-Agent)))
+;  (setq message-generate-headers-first t) ;; would love to do this without Date
+;  (setq message-auto-save-directory "~/mail/cm/drafts/cur")
+;  (setq smtpmail-auth-credentials "~/.netrc") ;; is this needed?
+;  (defun cm/make-dynamic-folder (init)
+;    (lexical-let ((name init))
+;      #'(lambda (msg)
+;	  (when (not msg)
+;	    (error (concat "Blank msg in " name)))
+;	  (let ((maildir (mu4e-message-field msg :maildir)))
+;	    (cond
+;	     ((string-match "cm/" maildir)
+;	      (concat "/cm/" name))
+;	     ((string-match "work/" maildir)
+;	      (concat "/work/" name))
+;	     (t
+;	      (error "Could not find message?")))))))
+;
+;  (use-package mu4e
+;    :bind (("C-c i" . mu4e))
+;    :init
+;    (setq mu4e-maildir                "~/mail"
+;	  mu4e-sent-folder            "/work/sent"
+;	  mu4e-drafts-folder          "/cm/drafts"
+;	  mu4e-trash-folder           (cm/make-dynamic-folder "trash")
+;	  mu4e-refile-folder          (cm/make-dynamic-folder "all")
+;	  mu4e-get-mail-command       "mbsync -a" ;; mbsync -a is running by cron
+;	  mu4e-sent-messages-behavior 'sent
+;	  mu4e-org-contacts-file      "~/org/_notes/contacts.org"
+;	  mu4e-use-fancy-chars        nil
+;	  mu4e-view-show-images       t
+;	  mu4e-view-show-addresses    t
+;	  mail-user-agent             'mu4e-user-agent
+;	  mu4e-compose-format-flowed  t
+;	  fill-flowed-encode-column   60
+;	  mu4e-change-filenames-when-moving t
+;	  mu4e-headers-fields '((:human-date . 12)
+;				(:flags      .  6)
+;				(:from       . 32)
+;				(:subject        ))
+;	  mu4e-headers-time-format "%H:%M"
+;	  mu4e-headers-date-format "%Y-%m-%d"
+;	  mu4e-maildir-shortcuts
+;	  '(("/work/INBOX" . ?i)
+;	    ("/work/all"   . ?a)
+;	    ("/work/sent"  . ?s)))
+;    :config
+;    (setq mu4e-bookmarks
+;	  (list
+;	   (make-mu4e-bookmark
+;	    :name "Combined Inbox"
+;	    :query "maildir:/work/INBOX OR maildir:/cm/INBOX"
+;	    :key ?i)
+;	   (make-mu4e-bookmark
+;	    :name "Flagged"
+;	    :query "flag:flagged"
+;	    :key ?f)
+;	   (make-mu4e-bookmark
+;	    :name "Unread"
+;	    :query "flag:unread"
+;	    :key ?u)
+;	   (make-mu4e-bookmark
+;	    :name "Past Week - All"
+;	    :query "date:8d..1d"
+;	    :key ?w)
+;	   (make-mu4e-bookmark
+;	    :name "Yesterday - All"
+;	    :query "date:2d..1d"
+;	    :key ?y)))
+;    (require 'org-mu4e)
+;    (add-to-list 'mu4e-headers-actions
+;		 '("org-contact-add" . mu4e-action-add-org-contact) t)
+;    (add-to-list 'mu4e-view-actions
+;		 '("org-contact-add" . mu4e-action-add-org-contact) t))
+#+end_src
+
 * Cursor color
   :PROPERTIES:
   :ID:       ec982e34-e2a7-429f-b2e0-9a4a7957ba1c

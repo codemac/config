@@ -8,5 +8,7 @@
 	email = j@codemac.net
 	name = Jeff Mickey
 	signingkey = 110DF02CCBED60BB
+[core]
+	hooksPath = /home/jmickey/config/githooks
 [push]
 	default = current
