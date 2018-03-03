@@ -559,7 +559,7 @@ xterm*color14:				#00FFFF
 xterm*color7:				#BBBBBB
 xterm*color15:				#FFFFFF
 !xterm*font:					-windows-dina-medium-r-normal--13-80-96-96-c-70-*-*
-xterm*faceName:                             xft:DejaVu Sans Mono:hinting=true:autohint=true
+xterm*faceName:                             xft:DejaVu Sans Mono
 xterm*faceSize: 11
 xterm*foreground: #DDDDDD
 xterm*background: #000000

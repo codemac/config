@@ -24,3 +24,4 @@ ioncore.set{
 
 dopath("cfg_defaults")
 dopath("cfg_look")
+dopath("net_client_list.lua")

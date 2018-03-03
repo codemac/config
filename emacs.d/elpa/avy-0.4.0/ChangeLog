@@ -1,0 +1,32 @@
+2016-01-23  Oleh Krehel	 <ohwoeowho@gmail.com>
+
+	Merge commit '11fbd70347a8cc62817c6d4ebf2291471ebdd607' from avy
+
+2015-06-25  Oleh Krehel	 <ohwoeowho@gmail.com>
+
+	Merge commit '8d38a898f23b3105c5d098f0cfb6c3383547e394' from avy
+
+2015-05-19  Oleh Krehel	 <ohwoeowho@gmail.com>
+
+	Merge commit '199c52606dcd614cb856bbcaca13b5fada0772b6' from avy
+
+2015-05-09  Oleh Krehel	 <ohwoeowho@gmail.com>
+
+	Merge commit 'e242f04e32c7d874c779fb83c86aa5bdbc508f18' from avy
+
+	Conflicts:
+	packages/avy/avy.el
+
+2015-05-08  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* avy.el: Fix up author email and top-level require.
+
+2015-05-08  Oleh Krehel	 <ohwoeowho@gmail.com>
+
+	Add 'packages/avy/' from commit
+	'32003515c8efa2cf38b62c45499dae30bc7cacb8'
+
+	git-subtree-dir: packages/avy git-subtree-mainline:
+	74b34f2bbb929a1caf5cf753e59c54c3ccb74f50 git-subtree-split:
+	32003515c8efa2cf38b62c45499dae30bc7cacb8
+
