@@ -15,11 +15,18 @@
 (setq package-archives
       '(("org"          . "http://orgmode.org/elpa/")
 	;; let's stick with more stable packages for a bit
-	;; ("melpa"        . "http://melpa.org/packages/")
+	("melpa"        . "http://melpa.org/packages/")
         ("melpa-stable" . "http://stable.melpa.org/packages/")
 	;; ssl not validating!
 	;; ("marmalade"    . "http://marmalade-repo.org/packages/")
         ("gnu"          . "http://elpa.gnu.org/packages/")))
+
+(setq package-archive-priorities
+      '(("gnu"          . 100)
+	("org"          . 90)
+	("melpa-stable" . 80)
+	("melpa"        . 70)
+	("marmalade"    . 60)))
 
 (package-initialize)
 

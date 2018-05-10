@@ -1,0 +1,68 @@
+2018-03-23  Glenn Morris  <rgm@gnu.org>
+
+	muse: replace the obsolete interactive-p
+
+	* packages/muse/muse-mode.el (muse-insert-tag):
+	* packages/muse/muse-project.el (muse-project-find-file)
+	(muse-project-publish-this-file):
+	* packages/muse/muse-publish.el (muse-publish-region): Replace
+	interactive-p, obsolete since 23.2.
+
+2018-03-07  Glenn Morris  <rgm@gnu.org>
+
+	muse: replace find-file-hooks, an obsolete alias since Emacs 22.1
+
+2016-07-11  Paul Eggert	 <eggert@cs.ucla.edu>
+
+	Fix some quoting problems in doc strings
+
+	Most of these are minor issues involving, e.g., quoting `like this' 
+	instead of 'like this'.	 A few involve escaping ` and ' with a preceding
+	\= when the characters should not be turned into curved single quotes.
+
+2014-10-15  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	Miscellaneous cleanup.
+
+	* muse/muse-publish.el (muse-current-output-style): Declare.
+	* muse/muse-project.el (muse-project-set-variables): Only call 
+	make-local-hook if it exists.
+	* muse/muse-html.el (muse-html-src-tag): Use font-lock-ensure when
+	available.
+	* muse/muse-project.el (muse-project-alist-get, muse-project-alist-set):
+	* muse/muse-blosxom.el (muse-blosxom-new-entry): Avoid add-to-list on
+	local var.
+	* muse/htmlize-hack.el: Require `cl' at run-time as well.
+	* muse/cgi.el (cgi-decode): Avoid `flet'.
+
+2013-08-22  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	Only keep the strictly necessary *-pkg.el files
+
+2013-06-27  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* GNUmakefile: Rename from Makefile.  Add targets for in-place use.
+	(all, all-in-place): New targets.
+	* admin/archive-contents.el (archive--simple-package-p): Ignore autosave
+	files.
+	(archive--refresh-pkg-file): New function.
+	(archive--write-pkg-file): Print with ' and ` shorthands.
+	* packages/company/company-pysmell.el: Don't require pysmell during
+	compile.
+	* packages/muse/htmlize-hack.el: Don't require htmlize during compile.
+	* packages/shen-mode/shen-mode.el (shen-functions): Define during
+	compile.
+	* smart-operator/smart-operator.el (smart-operator-insert-1): Use pcase.
+
+2012-10-30  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	Clean up copyright notices.
+
+2011-07-30  Chong Yidong  <cyd@stupidchicken.com>
+
+	Add Texinfo files for muse package.
+
+2011-06-30  Chong Yidong  <cyd@stupidchicken.com>
+
+	Remove version numbers in packages/ directory
+

@@ -1,10 +1,11 @@
-Use the Emacsclient as `$EDITOR' of child processes, making sure
-they know how to call home.  For remote processes a substitute is
-provided, which communicates with Emacs on stdout instead of using
-a socket as the Emacsclient does.
+This library makes it possible to reliably use the Emacsclient as
+the `$EDITOR' of child processes.  It makes sure that they know how
+to call home.  For remote processes a substitute is provided, which
+communicates with Emacs on standard output/input instead of using a
+socket as the Emacsclient does.
 
-The commands `with-editor-async-shell-command' and
-`with-editor-shell-command' are intended as drop in replacements
+It provides the commands `with-editor-async-shell-command' and
+`with-editor-shell-command', which are intended as replacements
 for `async-shell-command' and `shell-command'.  They automatically
 export `$EDITOR' making sure the executed command uses the current
 Emacs instance as "the editor".  With a prefix argument these
@@ -29,7 +30,7 @@ current Emacs instance to be used as editor by adding it to the
 appropriate mode hooks:
 
   (add-hook 'shell-mode-hook  'with-editor-export-editor)
-  (add-hook 'term-mode-hook   'with-editor-export-editor)
+  (add-hook 'term-exec-hook   'with-editor-export-editor)
   (add-hook 'eshell-mode-hook 'with-editor-export-editor)
 
 Some variants of this function exist, these two forms are
