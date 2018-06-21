@@ -96,6 +96,8 @@ defbindings("WScreen", {
                "_chld:non-nil"),
     }),
 
+    -- testing for tom.
+
     -- audio control
     kpress("XF86AudioMicMute", "mod_query.exec_on_merr(_, 'microphone-mute-toggle')"),
 
@@ -145,6 +147,16 @@ defbindings("WGroupCW", {
 -- contexts/objects always gets to handle the key press.
 
 defbindings("WMPlex", {
+
+	       -- grab the current WFrame, find it's screen, attach a new ws, find the current tile in the wtiling, attach the current wframe, and change focus to it.
+	       -- non tiling: kpress(META.."F8", "_sub:screen_of():attach_new{type=\"WGroupWS\"}:current():attach(_sub);_sub:goto_focus()");
+	       --
+	       -- there is probably something else where I need to
+	       -- write a bigger lua function, that given the
+	       -- WGroupCW, navigate up to it's screen, attach a new
+	       -- WGroupWS which then has a WTiling within it.
+	       kpress(META.."F8", "_sub:screen_of():attach_new{type=\"WTiling\"}:current():attach(_sub);_sub:goto_focus()");
+
 	       submap(META.."K", {
 			 bdoc("Close current object."),
 			 kpress_wait(META.."C", "WRegion.rqclose_propagate(_, _sub)"),

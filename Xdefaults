@@ -99,14 +99,15 @@ urxvt*shading:			30
 !urxvt*boldFont:			xft:Terminus:pixelsize=12
 !urxvt*italicFont:		-*-terminus-medium-i-normal--12-120-72-72-c-0-iso8859-1
 !urxvt*font:				xft:Terminus:pixelsize=12
-urxvt*font:					-windows-dina-medium-r-normal--13-80-96-96-c-70-*-*
+!urxvt*font:					-windows-dina-medium-r-normal--13-80-96-96-c-70-*-*
 !urxvt*font:				xft:Consolas:pixelsize=14
 !urxvt*font:				xft:Bitstream Vera Sans Mono:pixelsize=11
+urxvt*font:                             xft:DejaVu Sans Mono:pixelsize=13
 !urxvt*font:				-bitstream-bitstream vera sans mono-*-r-normal-*-12-120-75-75-m-0-iso8859-1
 !urxvt*font:				-xos4-terminus-medium-r-normal--12-120-72-72-c-60-iso8859-1
 !urxvt*boldFont:			-xos4-terminus-medium-r-normal--12-120-72-72-c-60-iso8859-1
 urxvt*perl-lib:         /usr/lib/urxvt/perl
-urxvt*perl-ext-common:  selection,option-popup,selection-popup,readline,matcher,searchable-scrollback,pwsafe
+urxvt*perl-ext-common:  selection,option-popup,selection-popup,readline,matcher,searchable-scrollback
 urxvt*matcher.button:	1
 URxvt.searchable-scrollback: CM-s
 urxvt*urlLauncher:      firefox
@@ -539,6 +540,7 @@ urxvt*background: #000000
 urxvt*cursorColor: yellow
 urxvt*cursorColor2: white
 urxvt*pointerColor: yellow
+
 !# Most recent update: Tue 02 Feb 2010 03:06:52 PM EST
 xterm*toolBar:	false
 xterm*utf8: 2
@@ -558,9 +560,6 @@ xterm*color6:				#009999
 xterm*color14:				#00FFFF
 xterm*color7:				#BBBBBB
 xterm*color15:				#FFFFFF
-!xterm*font:					-windows-dina-medium-r-normal--13-80-96-96-c-70-*-*
-xterm*faceName:                             xft:DejaVu Sans Mono
-xterm*faceSize: 11
 xterm*foreground: #DDDDDD
 xterm*background: #000000
 xterm*cursorColor: yellow
@@ -570,5 +569,36 @@ xterm*savelines: 100000
 
 !!
 vncviewer*grabKeyboard: true
-xterm*termName: xterm-256color
 XTerm*metaSendsEscape: true
+XTerm*termName: xterm-256color
+XTerm*faceName: xft:DejaVu Sans Mono
+XTerm*faceSize: 11
+
+UXTerm*toolBar:	false
+UXTerm*utf8: 2
+UXTerm*color0:				#000000
+UXTerm*color8:				#555555
+UXTerm*color1:				#EE3C3C
+UXTerm*color9:				#FF5555
+UXTerm*color2:				#00BB00
+UXTerm*color10:				#55FF55
+UXTerm*color3:				#FFD955
+UXTerm*color11:				#FFFF55
+UXTerm*color4:				#5555FF
+UXTerm*color12:				#008ED1
+UXTerm*color5:				#992299
+UXTerm*color13:				#FF55FF
+UXTerm*color6:				#009999
+UXTerm*color14:				#00FFFF
+UXTerm*color7:				#BBBBBB
+UXTerm*color15:				#FFFFFF
+UXTerm*foreground: #DDDDDD
+UXTerm*background: #000000
+UXTerm*cursorColor: yellow
+UXTerm*cursorColor2: white
+UXTerm*pointerColor: yellow
+UXTerm*savelines: 100000
+UXTerm*metaSendsEscape: true
+UXTerm*termName: xterm-256color
+UXTerm*faceName: xft:DejaVu Sans Mono
+UXTerm*faceSize: 11

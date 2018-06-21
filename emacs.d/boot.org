@@ -42,7 +42,7 @@ configured manually, as detection can lead to other trust bugs.
     ((string-prefix-p "nordic" system-name) "/etc/ssl/certs/ca-certificates.crt")
     ((string-prefix-p "novaria" system-name) "/etc/ssl/certs/ca-certificates.crt")
     ((string-prefix-p "neah" system-name) "/etc/ssl/certs/ca-certificates.crt")
-    ((string-prefix-p "jmickey-glaptop0" system-name) "/etc/ssl/certs/ca-certificates.crt")
+    ((string-prefix-p "jmickey-glaptop" system-name) "/etc/ssl/certs/ca-certificates.crt")
     ((string-prefix-p "manatee" system-name) "/etc/ssl/certs/ca-certificates.crt")
     (t (error "No tls trust set for this host! Add exception or find cert.pem you trust"))))
 #+end_src
@@ -71,6 +71,31 @@ gotta configure tls super manually.
   (setq gnutls-verify-error t)
   (setq gnutls-trustfiles (list cm/machine-trust-file))
 #+end_src
+* Utility Functions
+** async-shell-command-to-string
+#+begin_src emacs-lisp
+  (defun async-shell-command-to-string (command callback)
+    "Execute shell command COMMAND asynchronously in the
+  background.
+
+  Return the temporary output buffer which command is writing to
+  during execution.
+
+  When the command is finished, call CALLBACK with the resulting
+  output as a string."
+    (lexical-let ((output-buffer (generate-new-buffer " *temp*"))
+	  (callback-fun callback))
+      (set-process-sentinel
+       (start-process "Shell" output-buffer shell-file-name shell-command-switch command)
+       (lambda (process signal)
+	 (when (memq (process-status process) '(exit signal))
+	   (with-current-buffer output-buffer
+	     (let ((output-string
+		    (buffer-substring-no-properties (point-min) (point-max))))
+	       (funcall callback-fun output-string)))
+	   (kill-buffer output-buffer))))
+      output-buffer))
+#+end_src
 * User Interface
   :PROPERTIES:
   :ID:       174da1e1-650e-41f1-a5de-48a0e77b8538
@@ -87,16 +112,19 @@ gotta configure tls super manually.
   (if (boundp 'scroll-bar-mode)
       (scroll-bar-mode -1))
 #+end_src
+
 I love the empty-lines notification. However, it does seem to fail on
 the very last line? I haven't solved this yet.
 #+begin_src emacs-lisp
   (set-default 'indicate-empty-lines t)
 #+end_src
+
 Display all the warnings! I've had this forever, I'm not so sure how
 important it actually is.
 #+begin_src emacs-lisp
   (setq warning-suppress-types nil)
 #+end_src
+
 Also, I hate the audible bell, lots.
 #+begin_src emacs-lisp
   (setq visible-bell 1)
@@ -137,14 +165,22 @@ And of course, transparency!
     :ID:       cbf11e79-808e-4e25-8071-0ccdd748052a
     :END:
 #+begin_src emacs-lisp  
-  ;; Turn on the clock!
+  (defun cm/display-time-mail-function ()
+    "Return t if new important mail, else nil"
+    (let* ((s (shell-command-to-string
+	       "notmuch count tag:inbox AND tag:unread"))
+	   (st (string-trim s))
+	   (newmail (string= "0" st)))
+      (not newmail)))
+
+  (setq display-time-mail-function nil) ;; not actually useful, always have mail
+  (setq display-time-format "%Y-%m-%d %H:%M")
   (setq display-time-day-and-date t)
   (setq display-time-24hr-format t)
   (setq display-time-use-mail-icon t)
   (setq display-time-default-load-average nil)
-  
+
   (display-time-mode t)
-  
 #+end_src
 *** Emacs Title Bar
 RescueTime and other resources use the title bar to assess what an
@@ -244,7 +280,6 @@ Also, let's get angry about using C-x until I'm used to it actually being C-t.
      (setq ring-bell-function nil)
      (error "Don't press that button.")))
 #+end_src
-
 ** Shell paths
    :PROPERTIES:
    :ID:       0e40240f-a2c3-4c03-b55d-d66e5cc0ce44
@@ -313,12 +348,15 @@ who provided this original functionality for me.
       foo))
 
   ;; Automagically load all folders in site-lisp as well! Thank you benny!
-  (mapc (lambda (x) (add-to-list 'load-path x))
-        (dirs-inside-directory "~/.emacs.d/site-lisp/"))
-  (mapc (lambda (x) (add-to-list 'load-path x))
-        (dirs-inside-directory "~/.emacs.d/site-lisp/xelb"))
-  (mapc (lambda (x) (add-to-list 'load-path x))
-        (dirs-inside-directory "~/.guix-profile/share/emacs/site-lisp/guix.d"))
+  (setq cm/lisp-dirs '("~/.emacs.d/site-lisp"
+                       "~/.emacs.d/site-lisp/xelb"
+                       "~/.guix-profile/share/emacs/site-lisp"
+                       "~/.guix-profile/share/emacs/site-lisp/guix.d"))
+  (mapc (lambda (x) (when (file-directory-p x)
+                      (mapc (lambda (y)
+                              (add-to-list 'load-path y))
+                            (dirs-inside-directory x))))
+        cm/lisp-dirs)
 #+end_src
 
 *** Guix Support
@@ -550,8 +588,9 @@ it just passes on arguments. It's wonderful!
     "Set to true when I'm using rc as my main shell")
 
   (defun cm/advise-shell-quote-argument (fun &rest args)
-    (if cm/using-rc
-        (concat "'" (replace-regexp-in-string "'" "''" (if (listp args) (car args) args) t t) "'")
+    (if (and cm/using-rc
+	     (not (file-remote-p default-directory)))
+	(concat "'" (replace-regexp-in-string "'" "''" (if (listp args) (car args) args) t t) "'")
       (apply fun args)))
 
   (advice-add #'shell-quote-argument :around #'cm/advise-shell-quote-argument)
@@ -567,6 +606,37 @@ the brackets that rc parses.
   (eval-after-load "grep"
     (lambda ()
       (grep-apply-setting 'grep-find-template "find . <X> -type f <F> -exec grep <C> -nH -e <R> '{}' '+'")))
+#+end_src
+** Performance improvement of vertical window scroll
+
+https://emacs.stackexchange.com/questions/28736/emacs-pointcursor-movement-lag/28746
+
+This just removes some of the window scroll calculus, which improves
+=C-n= speed. This should really not be something I have to set
+however.
+
+#+begin_src emacs-lisp
+  (setq auto-window-vscroll nil)
+#+end_src
+** defun-local
+This uses two macros, that make it easier for me to define commands
+(like =org-agenda=, =notmuch-search=, etc) that shouldn't regularly
+depend on TRAMP. If they do, make sure it's not because of the current
+buffer.
+
+This may mess up org-agenda if I'm doing crazier agenda stuff later.
+#+begin_src emacs-lisp
+  (defmacro cm/defun-local (funcname args &rest body)
+    "Create a function that always operates without tramp on the local system."
+    `(defun ,funcname ,args
+       (interactive)
+       (with-current-buffer (get-buffer-create "*scratch*")
+	 ,@body)))
+
+  (defmacro cm/defun-local-wrap (funcname towrap)
+    "Create a function that always operates without tramp on the local system."
+    `(cm/defun-local ,funcname () (,towrap)))
+
 #+end_src
 * ELPA
   :PROPERTIES:
@@ -606,6 +676,7 @@ For now we just check that the name is valid.
    :END:
 #+begin_src emacs-lisp
   (put 'downcase-region 'disabled nil)
+  (put 'upcase-region 'disabled nil)
 #+end_src
 ** Open files with root
    :PROPERTIES:
@@ -752,23 +823,23 @@ may or may not be always true though.
    :END:
 Inspired by [[http://www.reddit.com/r/emacs/comments/gjqki/is_there_any_way_to_tell_emacs_to_not/c1o26uk][a reddit comment]].
 #+begin_src emacs-lisp
-  (defadvice pop-to-buffer (before cancel-other-window first)
-    (ad-set-arg 1 nil))
-  
-  (ad-activate 'pop-to-buffer)
-  
+  ;;  (defadvice pop-to-buffer (before cancel-other-window first)
+  ;;    (ad-set-arg 1 nil))
+
+  ;;  (ad-activate 'pop-to-buffer)
+
   ;; Toggle window dedication
   (defun toggle-window-dedicated ()
     "Toggle whether the current active window is dedicated or not"
     (interactive)
     (message
      (if (let (window (get-buffer-window (current-buffer)))
-           (set-window-dedicated-p window 
-                                   (not (window-dedicated-p window))))
-         "Window '%s' is dedicated"
+	     (set-window-dedicated-p window 
+				     (not (window-dedicated-p window))))
+	   "Window '%s' is dedicated"
        "Window '%s' is normal")
      (current-buffer)))
-  
+
   ;; Press [pause] key in each window you want to "freeze"
   (global-set-key [f11] 'toggle-window-dedicated)
 #+end_src
@@ -818,10 +889,10 @@ To revert a buffer easily, put the char back where I had it.
    :END:
 Easy navigation around lots of splits. C-x o isn't that geographical.
 #+begin_src emacs-lisp
-  (global-set-key [M-left] 'windmove-left)
-  (global-set-key [M-right] 'windmove-right)
-  (global-set-key [M-up] 'windmove-up)
-  (global-set-key [M-down] 'windmove-down)
+  (global-set-key (kbd "s-<left>") 'windmove-left)
+  (global-set-key (kbd "s-<right>") 'windmove-right)
+  (global-set-key (kbd "s-<up>") 'windmove-up)
+  (global-set-key (kbd "s-<down>") 'windmove-down)
 #+end_src
 ** Dired
    :PROPERTIES:
@@ -862,6 +933,20 @@ we'll roll with this.
   ;;   ; was dired-up-directory
   ;;   (define-key dired-mode-map (kbd "^")
   ;;     (lambda () (interactive) (find-alternate-file "..")))))
+#+end_src
+*** Insert subdirectory while folding the parent directory
+Useful when navigating down through a hierachy that you may care about
+later, but aren't sure.
+
+#+begin_src emacs-lisp
+  (defun cm/insert-n-hide-dired ()
+    (interactive)
+    (let ((fn (dired-get-filename)))
+      (dired-hide-subdir 1)
+      (dired-maybe-insert-subdir fn)))
+
+  (require 'dired)
+  (define-key dired-mode-map "I" 'cm/insert-n-hide-dired)
 #+end_src
 ** Info
    :PROPERTIES:
@@ -948,19 +1033,21 @@ scrollback, but not sure how it would handle it given it doesn't
 really interpret anything.
 
 #+begin_src emacs-lisp
-  (defvar cm/ssh-dtach-history-host nil
-    "History list for reading host names from ssh-dtach")
-  (defvar cm/ssh-dtach-history-session nil
-    "History list for reading sessions from ssh-dtach")
+  (defun cm/ssh-dtach-list-sessions (host)
+    (map 'list (lambda (x) (string-remove-prefix ".dtach.emacs." x))
+	 (directory-files (concat "/ssh:" host ":/tmp/") nil "^\\.dtach\\.emacs\\.." t)))
 
-  (defun cm/ssh-dtach (host user session cwd)
+  (defun cm/ssh-dtach (host session)
     "Open SSH connection to HOST with SESSION and start dtach session."
-    (interactive "sSSH Host: \nsSSH User: \nsSession name: \nsWorking directory: ")
+    (interactive
+     (let* ((host (completing-read "Host: " cm/machines nil 'confirm))
+	    (session  (completing-read "Session: " (cm/ssh-dtach-list-sessions host) nil 'confirm)))
+       (list host session)))
     (let ((explicit-shell-file-name "dtach")
-          (explicit-dtach-args `("-A" ,(concat "/tmp/.dtach.emacs." session) "-z"
-                                 "/bin/bash" "--noediting" "-login"))
-          (default-directory (concat "/ssh:" user "@" host ":" cwd)))
-      (shell (format "*ssh shell:%s*" host))))
+	  (explicit-dtach-args `("-A" ,(concat "/tmp/.dtach.emacs." session) "-z"
+				 "/usr/bin/rc" "-l"))
+	  (default-directory (concat "/ssh:" host ":/")))
+      (shell (format "*shell:%s-%s*" host session))))
 #+end_src
 *** Use a login shell 
     :PROPERTIES:
@@ -1384,10 +1471,16 @@ C situation (they both chose lisp like adults).
 
 #+begin_src emacs-lisp
   (use-package ivy
+    :diminish ivy-mode
     :config
     (ivy-mode 1)
     (setq ivy-use-virtual-buffers t)
     (setq ivy-count-format ""))
+#+end_src
+*** Hydra
+Useful for hydras.
+#+begin_src emacs-lisp
+  (use-package hyrda)
 #+end_src
 *** Undo Tree
 Undo tree is excellent! =C-x u= to browse. Now the larger question is
@@ -1395,6 +1488,7 @@ how it works with browse-kill-ring? I like both modes I guess.
 #+begin_src emacs-lisp
   (use-package undo-tree
     :ensure t
+    :diminish undo-tree-mode
     :init
     (global-undo-tree-mode))
 #+end_src
@@ -1558,10 +1652,15 @@ out semantically.
 #+begin_src emacs-lisp
   (use-package projectile
     :diminish projectile-mode
+    :init
+    (put 'projectile-project-name 'safe-local-variable 'stringp)
+    (put 'projectile-project-compilation-cmd 'safe-local-variable 'stringp)
+    (put 'projectile-use-git-grep 'safe-local-variable 'booleanp)
     :config
     (projectile-global-mode)
-    (setq projectile-use-git-grep t)
     (setq projectile-completion-system 'ivy)
+    (setq projectile-indexing-method 'native)
+    (setq projectile-enable-caching t)
     ;; this replaces the old `projectile-compile-project' to use the
     ;; project name in the compilation buffer. Let's me run all ze
     ;; compilations!
@@ -1586,7 +1685,9 @@ out semantically.
 			   (lambda ()
 			     (projectile-project-buffer-p (current-buffer)
 							  project-root)))
-	(compilation-start compilation-cmd nil '(lambda (x) (concat "*compilation:" (projectile-project-name) "*")))))
+	(with-current-buffer
+	    (compilation-start compilation-cmd nil '(lambda (x) (concat "*compilation:" (projectile-project-name) "*")))
+	  (setq-local projectile-project-name (projectile-project-name)))))
 
     (advice-add 'projectile-compile-project :override #'cm/projectile-compile-project))
 #+end_src
@@ -1594,8 +1695,9 @@ out semantically.
 #+begin_src emacs-lisp
   (use-package multiple-cursors
     :bind (("C->" . mc/mark-next-like-this)
-           ("C-<" . mc/mark-previous-like-this)
-           ("C-c C->" . mc/mark-all-like-this)))
+	   ("C-<" . mc/mark-previous-like-this)
+	   ("C-c C->" . mc/mark-all-like-this)
+	   ("C-S-<mouse-1>" . mc/add-cursor-on-click)))
 #+end_src
 *** fill column indicator (fci)
 This draws a vertical line at the fill column. Nice for languages
@@ -1604,6 +1706,21 @@ without things like =gofmt=.
 #+begin_src emacs-lisp
   (use-package fill-column-indicator
     :commands (fci-mode))
+#+end_src
+*** Mixed Pitch (disabled, buggy on org files)
+This makes things just a tad nicer to read.
+#+begin_src emacs-lisp
+  ;;  (use-package mixed-pitch
+  ;;    :commands mixed-pitch-mode
+  ;;    :diminish mixed-pitch-mode
+  ;;    :init
+  ;;    (add-hook 'org-mode-hook #'mixed-pitch-mode)
+  ;;    :config
+  ;;;    (setq mixed-pitch-variable-pitch-cursor nil)
+  ;;;    (add-to-list 'mixed-pitch-fixed-pitch-faces 'org-todo)
+  ;;;    (add-to-list 'mixed-pitch-fixed-pitch-faces 'org-done)
+  ;;;    (add-to-list 'mixed-pitch-fixed-pitch-faces 'org-link)
+  ;;)
 #+end_src
 ** Major Modes
    :PROPERTIES:
@@ -1739,7 +1856,15 @@ For some reason that does not include evil-local-mode.
     :END:
 Get the jarfile in the correct place...
 #+begin_src emacs-lisp
-  (setq plantuml-jar-path (expand-file-name "/opt/plantuml/plantuml.jar"))
+  (setq cm/plantuml-paths
+	(list
+	 (concat (getenv "HOME") "/bin/plantuml.jar")
+	 "/usr/share/plantuml/plantuml.jar"))
+  (setq plantuml-jar-path
+	(reduce
+	 (lambda (x y) (if (and x (file-exists-p x)) x y))
+	 cm/plantuml-paths))
+
   (setenv "GRAPHVIZ_DOT" "/usr/bin/dot")
 #+end_src
 *** Scheme
@@ -2105,8 +2230,8 @@ No seriously, I wrote lots of Ruby.
   (eval-after-load 'tramp
     (progn
       (setq tramp-histfile-override nil)
-      (setq tramp-use-ssh-controlmaster-options nil)
-      (setq tramp-verbose 1)))
+      (setq tramp-use-ssh-controlmaster-options nil) ;; use ssh config
+      (setq tramp-verbose 6)))
 #+end_src
 *** GNU Global
     :PROPERTIES:
@@ -2182,13 +2307,6 @@ Thank you Britt.
   (autoload 'android-mode "android-mode.el" "Android minor mode" t)
   (autoload 'android "/opt/android-sdk/tools/lib/android.el" "Google provided android emacs" t)
 #+end_src
-*** Smart tab
-    :PROPERTIES:
-    :ID:       0015eb36-2e29-44f8-8fec-12696fa5070f
-    :END:
-#+begin_src emacs-lisp
-  (require 'smart-tab)
-#+end_src
 *** Python
     :PROPERTIES:
     :ID:       19ef428e-9397-4ebe-9f0a-d2c75bdb4c13
@@ -2213,10 +2331,27 @@ default to serving =~/public_html=, so I turn that off here.
    (setq httpd-root "")
    (setq httpd-serve-files nil))
 #+end_src
+*** PDF Tools
+This adds much better support for pdfs in emacs.
+#+begin_src emacs-lisp
+  (use-package pdf-tools
+    :pin manual
+    :config
+    (pdf-tools-install))
+#+end_src
 ** Programs
    :PROPERTIES:
    :ID:       cb65de78-396a-4243-8bd8-4132d982e360
    :END:
+*** Elfeed
+[[https://github.com/skeeto/elfeed][elfeed]] is a great RSS reader in the style of notmuch. Super useful.
+#+begin_src emacs-lisp
+  (use-package elfeed
+    :commands elfeed
+    :bind ("C-c f" . elfeed)
+    :config
+    (elfeed-load-opml (concat (getenv "HOME") "/config/feeds.opml")))
+#+end_src
 *** EMMS - Emacs MultiMedia System
     :PROPERTIES:
     :ID:       0e42f65c-aca2-4cbb-9633-1d8cedaefaa8
@@ -2459,9 +2594,7 @@ me over.
     :END:
 Let's get our scheme on!
 #+begin_src emacs-lisp
-  (when (file-exists-p "~/.guix-profile/share/emacs/site-lisp")
-    (add-to-list 'load-path "~/.guix-profile/share/emacs/site-lisp")
-    (require 'geiser-install))
+  (require 'geiser-install nil t)
 #+end_src
 *** Jabber
     :PROPERTIES:
@@ -2698,7 +2831,7 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
        ((todo "PROJECT")
 	(todo "WAITING"))
        ,cm/org-sort-style)
-      ,(cm/org-ctx-agenda "v" '("INTERNET" "COMPUTER") "Internet Agenda")
+      ,(cm/org-ctx-agenda "v" "INTERNET" "Internet Agenda")
       ,(cm/org-ctx-agenda "c" "COMPUTER" "Computer Agenda")
       ,(cm/org-ctx-agenda "w" "WORK" "Work Agenda")
       ,(cm/org-ctx-agenda "h" "HOME" "Home Agenda")
@@ -2733,7 +2866,7 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
 	;; GET CURRENT
 	(tags-todo "noop" ,(cm/review-section "Get Current!"))
 	(tags-todo "-TODO=\"PROJECT\"-BLOCKED=\"t\"-TODO=\"WAITING\""
-		   (,@(cm/review-header "Review Actions Lists")
+		   (,@(cm/review-header "Review Actions Lists: Mark things that are invalid/done from the past week")
 		    (org-agenda-skip-function '(org-agenda-skip-entry-if 'scheduled))))
 	(todo "DONE|NVM")
 	(tags-todo "-TODO=\"PROJECT\"-BLOCKED=\"t\"-TODO=\"WAITING\""
@@ -2741,8 +2874,8 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
 		    (org-agenda-skip-function '(org-agenda-skip-entry-if 'notscheduled))))
 	(agenda "" (,@(cm/review-header "Review Previous Week Calendar Data")
 		    (org-agenda-skip-function nil)
-		    (org-agenda-span 7)
-		    (org-agenda-start-day ,(concat "-" (number-to-string (+ 7 (cm/days-back-to-monday))) "d"))))
+		    (org-agenda-span 14)
+		    (org-agenda-start-day ,(concat "-" (number-to-string (+ 14 (cm/days-back-to-monday))) "d"))))
 	(agenda "" (,@(cm/review-header "Review Current Week Calendar Data")
 		    (org-agenda-skip-function nil)
 		    (org-agenda-span 7)
@@ -2750,11 +2883,11 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
 
 	(agenda "" (,@(cm/review-header "Review Next Week Calendar Data")
 		    (org-agenda-skip-function nil)
-		    (org-agenda-span 7)
+		    (org-agenda-span 14)
 		    (org-agenda-start-day ,(concat "+" (number-to-string (- 7 (cm/days-back-to-monday))) "d"))))
-	(todo "WAITING" ,(cm/review-header "Review Waiting For List"))
-	(todo "PROJECT" ,(cm/review-header "Review Projects and Larger Outcomes"))
-	(tags "CHECKLIST" ,(cm/review-header "Review Relevant Checklists"))
+	(todo "WAITING" ,(cm/review-header "Review Waiting For List: Mark things as done, add things you're waiting for"))
+	(todo "PROJECT" ,(cm/review-header "Review Projects and Larger Outcomes: Add missing next actions, make sure each is naturally planned"))
+	(tags "CHECKLIST" ,(cm/review-header "Review Relevant Checklists: Any missing? Any new ones that could be added?"))
 
 	;; GET CREATIVE
 	(tags-todo "noop" ,(cm/review-section "Get Creative!"))
@@ -2896,29 +3029,60 @@ out how long tasks took that you start and stop.
   (defun org-clock-in-if-starting ()
     "Clock in when the task is marked STARTED."
     (when (and (string= org-state "STARTED")
-               (not (string= org-last-state org-state)))
+	       (not (string= org-last-state org-state)))
       (org-clock-in)))
-  
-  (defadvice org-clock-in (after cm activate)
-    "Set this task's status to 'STARTED'."
-    (org-todo "STARTED"))
-  
+
   (defun org-clock-out-if-waiting ()
     "Clock in when the task is marked STARTED."
     (when (and (string= org-state "WAITING")
-               (not (string= org-last-state org-state)))
+	       (not (string= org-last-state org-state))
+	       (org-clocking-p))
       (org-clock-out)))
-  
+
   (defun org-clock-out-if-started-todo ()
     (when (and (or (string= org-state "TODO")
-                   (string= org-state "NEXT"))
-               (string= org-last-state "STARTED"))
-      (if (org-clocking-p)
-          (org-clock-out))))
-  
+		   (string= org-state "NEXT"))
+	       (string= org-last-state "STARTED")
+	       (org-clocking-p))
+      (org-clock-out)))
+
   (add-hook 'org-after-todo-state-change-hook 'org-clock-in-if-starting)
   (add-hook 'org-after-todo-state-change-hook 'org-clock-out-if-waiting)
   (add-hook 'org-after-todo-state-change-hook 'org-clock-out-if-started-todo)
+#+end_src
+
+#+begin_src emacs-lisp
+  (defun cm/org-currently-scheduled ()
+    "Find what is currently scheduled for right now."
+    (interactive)
+    (message "Not implemented."))
+
+
+  (defun cm/org-currently-doing ()
+    "Find what is currently clocked as STARTED.
+
+  Looks over the `org-agenda-files' and finds all headings that are
+  tagged STARTED."
+    (interactive)
+    (setq files (org-agenda-files nil 'ifmode)
+	  allitems nil)
+    (while (setq file (pop files))
+      (catch 'nextfile
+	(org-check-agenda-file file)
+	(setq rtn (org-agenda-get-day-entries file (calendar-gregorian-from-absolute (org-today)) :todo))
+	(setq allitems (append allitems rtn))))
+    (org-agenda-propertize-selected-todo-keywords "STARTED")
+    (org-agenda-finalize-entries allitems 'todo))
+#+end_src
+***** Clocking hydra
+This add some commands for managing and clocking my time in a hydra.
+#+begin_src emacs-lisp
+  (defhydra hydra-org-clock (global-map "C-c x")
+    "Navigate your clocking"
+    ("x" (lambda ()
+	   (interactive)
+	   (let ((current-prefix-arg 4))
+	     (call-interactively #'org-clock-in)))))
 #+end_src
 **** Useful setq's
      :PROPERTIES:
@@ -2930,12 +3094,24 @@ out how long tasks took that you start and stop.
 
   (add-to-list 'auto-mode-alist '("\\.org'$" . org-mode))
   (global-set-key (kbd "C-c l") 'org-store-link)
-  (global-set-key (kbd "C-c a") 'cm/org-load-agenda)
+  (cm/defun-local-wrap cm/org-load-agenda-wrapped cm/org-load-agenda)
+  (global-set-key (kbd "C-c a") 'cm/org-load-agenda-wrapped)
   (setq org-fontify-done-headline t)
   (setq org-clock-persist 'history)
   (org-clock-persistence-insinuate)
   (setq org-clock-idle-time 10)
 
+  (setq counsel-org-goto-display-style 'path)
+  (setq counsel-org-goto-separator " ➜ ")
+  (setq counsel-org-goto-face-style 'org)
+
+  (defun cm/counsel-org-goto (arg)
+    (interactive "P")
+    (if arg
+	(counsel-org-goto)
+      (counsel-org-goto-all)))
+
+  (define-key org-mode-map (kbd "C-c C-j") 'cm/counsel-org-goto)
 
   (setq org-agenda-files '("~/org/"))
   (setq org-refile-targets '((nil
@@ -2954,6 +3130,7 @@ out how long tasks took that you start and stop.
   (setq org-agenda-skip-deadline-if-done t)
   (setq org-agenda-skip-scheduled-if-done t)
   (setq org-agenda-span 'week)
+  (setq org-agenda-sticky t)
   (setq org-agenda-tags-column -90)
   (setq org-agenda-use-tag-inheritance '(search timeline agenda))
   (setq org-attach-archive-delete 'query)
@@ -2974,6 +3151,7 @@ out how long tasks took that you start and stop.
   (setq org-tags-column -90)
   (setq org-use-speed-commands t)
   (setq org-use-sub-superscripts nil)
+  (setq org-use-tag-inheritance nil)
   ;(setq org-completion-use-ido t)
   ;; disable dumb-ass git crap for now
   (advice-add 'org-attach-commit :override #'list)
@@ -2981,8 +3159,12 @@ out how long tasks took that you start and stop.
   ;; actually - let's do more file-local settings. Remove these asap.
   (setq org-global-properties '(("Effort_ALL" . "0:10 0:20 0:30 0:40 0:50 1:00 2:00 3:00 4:00 5:00 6:00 7:00 8:00 9:00 10:00 11:00 12:00")))
   (setq org-columns-default-format "%TODO %50ITEM(Task) %17Effort(Estimated Effort){:} %CLOCKSUM")
+  (setq org-imenu-depth 99)
 
   (global-set-key (kbd "<f6>") 'org-clock-goto)
+
+  (setq org-structure-template-alist
+	(map 'list (lambda (x) (list (car x) (downcase (cadr x)))) org-structure-template-alist))
 #+end_src
 **** Org Contacts
 #+begin_src emacs-lisp
@@ -3156,9 +3338,19 @@ or something else. For now, it's manual.
 #+begin_src emacs-lisp  
   (if cm/using-rc
       (setq org-babel-default-header-args:ditaa '((:results . "file")
-                                                  (:exports . "results")
-                                                  (:java . "'-Dfile.encoding=UTF-8'"))))
-  (setq org-ditaa-jar-path "/usr/share/java/ditaa/ditaa-0_9.jar")
+						  (:exports . "results")
+						  (:java . "'-Dfile.encoding=UTF-8'"))))
+  (setq cm/ditaa-paths
+	(list
+	 (concat (getenv "HOME") "/bin/ditaa.jar")
+	 "/usr/share/ditaa/ditaa.jar"
+	 "/usr/share/java/ditaa/ditaa-0_9.jar"))
+
+  (setq org-ditaa-jar-path
+	(reduce
+	 (lambda (x y) (if (and x (file-exists-p x)) x y))
+	 cm/ditaa-paths))
+
   (setq org-plantuml-jar-path plantuml-jar-path)
   (add-hook 'org-babel-after-execute-hook 'org-display-inline-images)
 
@@ -3297,6 +3489,61 @@ How I deploy my personal website.
               (kill-new (match-string-no-properties 1)) ; Save the link to kill-ring
               (replace-regexp "\\[\\[.*?\\(\\]\\[\\(.*?\\)\\)*\\]\\]" "\\2" nil start end)))))))
 #+end_src
+**** Checklist Creation
+This generates a set of TODOs based on a heading and a checklist. This
+allows me to create checklist templates per-project.
+#+begin_src emacs-lisp
+  (defun cm/org-convert-checklist-to-todos (beg end)
+    "Converts a list in the format:
+  ,* Checklist Name :CHECKLIST:
+
+  - [ ] one
+  - [ ] two
+
+  Into a list that looks like:
+
+  ,* PROJECT Checklist name
+  ,** TODO one
+  ,** TODO two
+
+  With ID's regenerated and CREATED timestamps included."
+    (interactive (list
+		  (save-excursion (org-back-to-heading t) (point))
+		  (save-excursion (org-end-of-subtree t t) (point))))
+    (goto-char end)
+    (let ((template (buffer-substring beg end)))
+      ;; Prepare clone.
+      (with-temp-buffer
+	(insert template)
+	(org-mode)
+	(goto-char (point-min))
+	(org-show-subtree)
+	(re-search-forward "^[[:space:]]*- ")
+	(move-beginning-of-line nil)
+	(push-mark (point-max) t t)
+	(org-toggle-heading)
+	(pop-mark)
+
+	;; Add "PROJECT" todo state to parent heading
+	(goto-char (point-min))
+	(org-todo "PROJECT")
+	(org-set-tags-to nil)
+
+	;; loop over children, adding ID and CREATED timestamps
+	(goto-char (point-max))
+	(while (outline-previous-heading)
+	  (org-id-get-create t)
+	  (org-set-property "CREATED" (with-temp-buffer
+					(org-mode)
+					(org-time-stamp-inactive '(16))
+					(buffer-string))))
+	(goto-char (point-max))
+	(insert "\n")
+	(mark-whole-buffer)
+	(let* ((inboxloc (org-id-find "492952f0-e1cf-41e8-a66d-cf1808f91619"))
+	       (refileloc (list "Inbox" (car inboxloc) nil (cdr inboxloc))))
+	  (org-refile nil nil refileloc nil)))))
+#+end_src
 **** Link Types
      :PROPERTIES:
      :ID:       dab4061f-b05e-4689-ba82-82ab90ce1d69
@@ -3357,6 +3604,7 @@ How I deploy my personal website.
     (shell-command (concat "open \"http://burtweb-prd.eng.netapp.com/burt/burt-bin/profile?user=" path "\"")))
   (org-add-link-type "netapp" 'org-link-type-netapp-open)
 
+
   ;; capture for mac os x popup
   (defun cm/org-capture-other-frame ()
     "Create a new frame and run org-capture."
@@ -3375,10 +3623,30 @@ How I deploy my personal website.
 	(delete-other-windows)
       (cm/org-capture-other-frame-cleanup)))
 
+  (defun cm/org-capture-other-frame-hook (orig-fun &optional goto keys)
+    "Hook for org-capture to pop-up a frame instead of embed in emacs."
+    (interactive)
+    (make-frame '((name . "Org-Capture")
+		  (width . 120)
+		  (height . 40)
+		  (menu-bar-lines . 0)
+		  (tool-bar-lines . 0)
+		  (auto-lower . nil)
+		  (auto-raise . t)))
+    (select-frame-by-name "Org-Capture")
+    (if (condition-case nil
+	    (progn (funcall orig-fun goto keys) t)
+	  (error nil))
+	(delete-other-windows)
+      (cm/org-capture-other-frame-cleanup)))
+
+
   (defun cm/org-capture-other-frame-cleanup ()
     "Close the Org-Capture frame."
     (if (equal "Org-Capture" (frame-parameter nil 'name))
 	(delete-frame)))
+
+  (advice-add 'org-capture :around #'cm/org-capture-other-frame-hook)
   (add-hook 'org-capture-after-finalize-hook 'cm/org-capture-other-frame-cleanup)
 #+end_src
 **** Search through my _notes directory
@@ -3434,27 +3702,48 @@ THIS WAS WAY OVER THE TOP. We can just use =org-search-view=.
        (goto-char position))
       (_ (error "Connot find target ID \"%s\"" id))))
 
+  (setq cm/humble-todo-template (list "* TODO %?\n:PROPERTIES:\n:CREATED: %U\n:END:\n%i\n%a\n\n" :prepend nil :empty-lines 1))
   (setq org-directory "~/org")
   (setq org-default-notes-file (concat org-directory "/gtd.org"))
   (setq org-board-capture-file (concat org-directory "/_notes/www.org"))
   (define-key global-map "\C-cr" 'org-capture)
   (setq org-capture-templates
-	`(("t" "Todo" entry (file+headline "~/org/gtd.org" "Inbox") "* TODO %?\n  :PROPERTIES:\n  :CREATED:  %U\n  :END:\n  %i\n  %a\n\n" :prepend t :empty-lines 1)
-	  ("p" "Project" entry (id "a262e411-ff66-43fc-9124-341694564dda") "* PROJECT %?\n  :PROPERTIES:\n  :CREATED:  %U\n  :END:\n\n** Actions\n\n** Archive :ARCHIVE:\n\n" :empty-lines 1)
-	  ("j" "Journal" entry (file "~/org/_editorial/journal.org") "* %T %?\n\n  %i\n  %a\n\n" :prepend nil :empty-lines 1)
-	  ("c" "Add note to currently clocked task" entry (clock) "* %U %?\n%a\n\n%i\n\n" :empty-lines 1)
-	  ("a" "Address Book" entry (file "~/org/_notes/contacts.org") "* %(org-contacts-template-name)\n:PROPERTIES:\n:EMAIL: %(org-contacts-template-email)\n:END:" :empty-lines 1)
-	  ("n" "Timed Notes" entry (file "~/org/_notes/notes.org") "* %T %?\n\n  %i\n  %a\n\n" :prepend nil :empty-lines 1)
+	`(("t" "Todo" entry (file+headline "~/org/gtd.org" "Inbox")
+	   ,@cm/humble-todo-template)
+	  ("p" "Project" entry (id "a262e411-ff66-43fc-9124-341694564dda")
+	   "* PROJECT %?\n:PROPERTIES:\n:CREATED:%U\n:END:\n\n** Actions\n\n** Archive :ARCHIVE:\n\n" :empty-lines 1)
+	  ("j" "Journal" entry (file "~/org/_editorial/journal.org")
+	   "* %T %?\n\n  %i\n  %a\n\n" :prepend nil :empty-lines 1)
+	  ("c" "Add note to currently clocked task" entry (clock)
+	   "* %U %?\n%a\n\n%i\n\n" :empty-lines 1)
+	  ("a" "Address Book" entry (file "~/org/_notes/contacts.org")
+	   "* %(org-contacts-template-name)\n:PROPERTIES:\n:EMAIL: %(org-contacts-template-email)\n:END:" :empty-lines 1)
+	  ("n" "Timed Notes" entry (file "~/org/_notes/notes.org")
+	   "* %T %?\n\n  %i\n  %a\n\n" :prepend nil :empty-lines 1)
+	  ("d" "Logged distraction entry" entry (file+headline "~/org/gtd.org" "Inbox")
+	   ,@cm/humble-todo-template
+	   :clock-in t
+	   :clock-resume t)
 	  ("w" "Work captures")
-	  ("wt" "Work Action" entry (file+headline "~/org/work.org" "Actions") "* %U %?\n\n  %i\n  %a\n\n" :prepend nil :empty-lines 1)
-	  ("wn" "Work Note" entry (file "~/org/work.org") "* %U %?\n\n  %i\n  %a\n\n" :prepend nil :empty-lines 1)
-	  ("wj" "Work journal entry" plain (file+olp+datetree "~/org/work.org" "Lab Notes") "\n\n%?\n\n" :tree-type week :empty-lines 1)
-	  ("ws" "Snippet Log" entry (file+headline "~/org/work.org" "Snippets") "* S: %?\n  %T\n\n" :prepend nil :empty-lines 1)
+	  ("wt" "Work Action" entry (file+headline "~/org/work.org" "Actions")
+	   ,@cm/humble-todo-template)
+	  ("wn" "Work Note" entry (file "~/org/work.org")
+	   "* %U %?\n\n  %i\n  %a\n\n" :prepend nil :empty-lines 1)
+	  ("wj" "Work journal entry" plain (file+olp+datetree "~/org/work.org" "Lab Notes")
+	   "\n\n%?\n\n" :tree-type week :empty-lines 1)
+	  ("ws" "Snippet Log" entry (file+headline "~/org/work.org" "Snippets")
+	   "* S: %?\n  %T\n\n" :prepend nil :empty-lines 1)
 	  ("r" "Review Captures")
-	  ("ry" "Review Entry For The Year" entry (id "256745aa-ece4-4649-a616-52b0194850d0") "* Review for %<%Y>\n:PROPERTIES:\n:CREATED:   %U\n:END:\n\n** Review previous year\n\n- What was completed?\n- What was not completed?\n- What was the best spent time?\n- What was the worst spent time?\n- What is the current financial, physical, emotional, mental, spiritual state?\n\n** Project future year\n\n- What to spend more time on in new year?\n- What to spend less time on in new year?\n- What projects should be started in the next year?\n- What project should be completed in the next year?\n\n" :empty-lines 1)
-	  ("b" "Agenda Project" entry (function cm/org-child-location) "* TODO %?\n  %U\n  %i\n\n" :prepend nil :empty-lines 1)
-	  ("l" "Life Fitness" table-line (file+headline "~/org/fitness.org" "Fitness") ,(concat (format-time-string "| %Y.%m.%d-%H:%M |") " %^{Weight} | | %^{RHR} |") :table-line-pos "II-1" :empty-lines 1)
-	  ("x" "org-capture" entry (file "~/org/_notes/www.org") "* %U %:description\n  :PROPERTIES:\n  :URL: %:link\n  :END:\n\n%:body\n\n" :empty-lines 1)))
+	  ("ry" "Review Entry For The Year" entry (id "256745aa-ece4-4649-a616-52b0194850d0")
+	   "* Review for %<%Y>\n:PROPERTIES:\n:CREATED:   %U\n:END:\n\n** Review previous year\n\n- What was completed?\n- What was not completed?\n- What was the best spent time?\n- What was the worst spent time?\n- What is the current financial, physical, emotional, mental, spiritual state?\n\n** Project future year\n\n- What to spend more time on in new year?\n- What to spend less time on in new year?\n- What projects should be started in the next year?\n- What project should be completed in the next year?\n\n" :empty-lines 1)
+	  ("b" "Agenda Project" entry (function cm/org-child-location)
+	   ,@cm/humble-todo-template)
+	  ("f" "Fitness" table-line (file+headline "~/org/fitness.org" "Fitness")
+	   ,(concat (format-time-string "| %Y.%m.%d-%H:%M |") " %^{Weight} | | %^{RHR} |") :table-line-pos "II-1" :empty-lines 1)
+	  ("xw" "org-capture reference" entry (file "~/org/_notes/www.org")
+	   "* %U %?%:description\n:PROPERTIES:\n:URL: %:link\n:END:\n\n%:body\n\n" :empty-lines 1)
+	  ("xi" "org-capture inbox" entry (file+headline "~/org/gtd.org" "Inbox")
+	   "* TODO %?%:annotation\n:PROPERTIES:\n:CREATED: %U\n:END:\n\n%:link\n\n%i\n\n" :empty-lines 1)))
 
   (defun cm/org-board-dl-hook ()
     (when (equal (buffer-name)
@@ -4019,8 +4308,11 @@ horrifying.
     (interactive)
     (notmuch-search-tag-all notmuch-archive-tags))
 
+  (defvar cm/private-notmuch-saved-searches '()
+    "Saved searches not to be published publicly")
+
   (setq notmuch-saved-searches
-	'((:name "inbox"         :query "tag:inbox"                 :key "i" :sort-order newest-first)
+	'((:name "inbox"         :query "tag:inbox"                 :key "i" :sort-order oldest-first)
 	  (:name "unread"        :query "tag:unread"                :key "u" :sort-order newest-first)
 	  (:name "work-inbox"    :query "tag:work AND tag:inbox"    :key "wi" :sort-order oldest-first)
 	  (:name "work-bulk"     :query "tag:work AND tag:unread"
@@ -4030,7 +4322,9 @@ horrifying.
 	  (:name "today"         :query "date:today..!"             :key "t" :sort-order oldest-first)
 	  (:name "sent"          :query "tag:sent"                  :key "n")))
 
-  (global-set-key (kbd "C-c i") 'notmuch-jump-search)
+  (cm/defun-local-wrap cm/notmuch-jump-search notmuch-jump-search)
+
+  (global-set-key (kbd "C-c i") #'cm/notmuch-jump-search)
 
   ;; keep the "goto address" logic consistent with org mode
   (define-key notmuch-show-mode-map (kbd "C-c C-o") 'goto-address-at-point)
@@ -4049,6 +4343,11 @@ horrifying.
 	  (,(kbd "d")
 	   ("+deleted" "-inbox")
 	   "Delete")))
+
+  (cm/defun-local cm/read-mail-command-notmuch ()
+    (notmuch-search "tag:inbox" t))
+
+  (setq read-mail-command #'cm/read-mail-command-notmuch)
 #+end_src
 What is this sillyness? =g= should always refresh a buffer, shit man.
 #+begin_src emacs-lisp
@@ -4088,16 +4387,28 @@ defaults.
                                     ("flagged" . (:foreground "khaki"))))
 #+end_src
 #+begin_src emacs-lisp
+  (require 'messages-are-flowing)
   (defun cm/message-mode-hook ()
     (local-set-key (kbd "C-c M-o") 'org-mime-htmlize)
     ;; orgstruct mode conflicts with hard-newlines. format=flowed is
     ;; *more* important than org-mime-htmlize.
     ;; (orgstruct-mode 1)
-    (auto-fill-mode -1)
-    (use-hard-newlines nil 'guess))
+    (turn-off-auto-fill)
+    (setq truncate-lines nil
+	  word-wrap t
+	  use-hard-newlines t)
+    (visual-line-mode t)
+    (messages-are-flowing-use-and-mark-hard-newlines))
 
   (add-hook 'message-mode-hook 'cm/message-mode-hook)
 #+end_src
+Indentations get really silly in corporate mail. I wish there was an
+easier way to visually see "this is a reply" without indenting into
+the future.
+#+begin_src emacs-lisp
+  (setq notmuch-show-indent-messages-width 0)
+#+end_src
+
 ** Custom
    :PROPERTIES:
    :ID:       3897ecf3-7d82-47a2-b736-abf8204a83b4
@@ -4425,7 +4736,8 @@ The david allen special inbox magic
 				   "\n")
 			"t"))
 
-  (global-set-key (kbd "C-c x") 'cm/close-n-capture)
+  ;; I never use this
+  ;;(global-set-key (kbd "C-c x") 'cm/close-n-capture)
 #+end_src
 
 
