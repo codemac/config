@@ -33,7 +33,10 @@
  '(protect-buffer-bury-p nil t)
  '(safe-local-variable-values
    (quote
-    ((tab-width 8)
+    ((projectile-project-name . "fig_codelab_0")
+     (projectile-project-compilation-cmd . "blaze build //blobstore2/")
+     (projectile-project-name . "backfill_noop_0")
+     (tab-width 8)
      (eval when
 	   (require
 	    (quote rainbow-mode)

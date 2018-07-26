@@ -1,8 +1,9 @@
 deflogin on
 autodetach on
-
+mousetrack on
+escape ^Jj
 startup_message off
-shell -$SHELL
+shell -$HOME/bin/rc
 activity "active: %n (%t) [%w:%s]"
 bell "bell: %n (%t) [%w:%s]^G"
 vbell off
@@ -43,9 +44,8 @@ sorendition +b kG
 ##############################
 # Default apps
 screen -t root su
-screen $SHELL
-screen $SHELL
-#screen -t irc /home/codemac/bin/whichweechat
+screen
+screen
 
 select 1
 
