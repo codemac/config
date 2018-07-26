@@ -1,0 +1,39 @@
+* Extempore
+
+#+begin_src emacs-lisp
+  (use-package extempore
+    )
+#+end_src
+
+* Dvorak
+
+The dvorak keyboard layout is really advantageous to those of us who
+write emails all day (read: me). However, it does create some problem
+with things like =C-x= in Emacs. In dvorak, =x= is =b= on the
+keyboard, meaning you're reaching quite far with your hand.
+
+I'm going to try out switching =C-t= and =C-x= as per suggested by [[http://ergoemacs.org/emacs/emacs_dvorak_C-x.html][Xah
+Lee's page]] on the dvorak =C-x= problem.
+
+#+begin_src emacs-lisp
+  (keyboard-translate ?\C-x ?\C-t)
+  (keyboard-translate ?\C-t ?\C-x)
+#+end_src
+
+Also, let's get angry about using C-x until I'm used to it actually being C-t.
+
+#+begin_src emacs-lisp
+  (global-set-key
+   (kbd "C-t") 
+   (lambda ()
+     (interactive)
+     (run-with-timer 
+      0.3 nil 
+      (lambda ()
+        ;; Assuming these are the default values
+        (setq visible-bell nil)
+        (setq ring-bell-function 'ignore)))
+     (setq visible-bell t)
+     (setq ring-bell-function nil)
+     (error "Don't press that button.")))
+#+end_src
