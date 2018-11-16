@@ -384,7 +384,7 @@
 	 ((:keywords "convenience" "languages")
 	  (:url . "https://github.com/joaotavora/eglot"))])
  (el-search .
-	    [(1 7 2)
+	    [(1 7 3)
 	     ((emacs
 	       (25))
 	      (stream
@@ -439,9 +439,9 @@
 	       ((:keywords "calendar")
 		(:url . "http://elpa.gnu.org/packages/excorporate.html"))])
  (exwm .
-       [(0 18)
+       [(0 19)
 	((xelb
-	  (0 14)))
+	  (0 15)))
 	"Emacs X Window Manager" tar
 	((:keywords "unix")
 	 (:url . "https://github.com/ch11ng/exwm"))])
@@ -481,7 +481,7 @@
        ((:url . "http://elpa.gnu.org/packages/fsm.html")
 	(:keywords "extensions"))])
  (ggtags .
-	 [(0 8 12)
+	 [(0 8 13)
 	  ((emacs
 	    (24))
 	   (cl-lib
@@ -1248,7 +1248,7 @@
 	 ((:url . "http://elpa.gnu.org/packages/xclip.html")
 	  (:keywords "convenience" "tools"))])
  (xelb .
-       [(0 14)
+       [(0 15)
 	((emacs
 	  (24 4))
 	 (cl-generic
