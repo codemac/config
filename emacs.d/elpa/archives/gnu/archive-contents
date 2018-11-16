@@ -12,7 +12,7 @@
        ((:keywords "tools" "processes" "convenience")
 	(:url . "https://github.com/leoliu/ack-el"))])
  (ada-mode .
-	   [(5 3 1)
+	   [(5 3 2)
 	    ((wisi
 	      (1 1 6))
 	     (cl-lib
@@ -186,7 +186,7 @@
 		      ((:url . "https://github.com/cpitclaudel/compact-docstrings")
 		       (:keywords "convenience" "faces" "lisp" "maint" "c"))])
  (company .
-	  [(0 9 6)
+	  [(0 9 7)
 	   ((emacs
 	     (24 3)))
 	   "Modular text completion framework" tar
@@ -389,7 +389,7 @@
 	 ((:keywords "convenience" "languages")
 	  (:url . "https://github.com/joaotavora/eglot"))])
  (el-search .
-	    [(1 7 14)
+	    [(1 7 15)
 	     ((emacs
 	       (25))
 	      (stream
@@ -527,7 +527,7 @@
 		 ((:keywords "gnome" "c" "coding style")
 		  (:url . "http://elpa.gnu.org/packages/gnome-c-style.html"))])
  (gnorb .
-	[(1 5 7)
+	[(1 6 0)
 	 ((cl-lib
 	   (0 5)))
 	 "Glue code between Gnus, Org, and BBDB" tar
@@ -545,7 +545,7 @@
 	 ((:keywords "games" "processes")
 	  (:url . "http://www.gnuvola.org/software/gnugo/"))])
  (gnus-mock .
-	    [(0 2 0)
+	    [(0 2 1)
 	     nil "Mock Gnus installation for testing" tar
 	     ((:url . "http://elpa.gnu.org/packages/gnus-mock.html"))])
  (heap .
@@ -806,7 +806,7 @@
 	 ((:keywords "extensions" "lisp")
 	  (:url . "https://github.com/Malabarba/names"))])
  (nhexl-mode .
-	     [(0 9)
+	     [(1 0)
 	      ((emacs
 		(24 4))
 	       (cl-lib
@@ -856,7 +856,7 @@
        ((:keywords "outlines" "hypermedia" "calendar" "wp")
 	(:url . "http://elpa.gnu.org/packages/org.html"))])
  (org-edna .
-	   [(1 0 -2 6)
+	   [(1 0 -2 8)
 	    ((emacs
 	      (25 1))
 	     (seq
@@ -1319,7 +1319,7 @@
 			      ((:keywords "snippets")
 			       (:url . "http://elpa.gnu.org/packages/yasnippet-classic-snippets.html"))])
  (zones .
-	[(2018 11 1)
+	[(2018 11 13)
 	 nil "Zones of text - like multiple regions" single
 	 ((:url . "https://elpa.gnu.org/packages/zones.html")
 	  (:keywords "narrow" "restriction" "widen" "region" "zone"))])
