@@ -192,6 +192,20 @@ projectile project as well, as this would make it easy to see what was
 #+begin_src emacs-lisp
   (setq frame-title-format '("%m " invocation-name "@" system-name))
 #+end_src
+** GUI Scrolling
+I desperately wish this worked in the emacs GUI. One of the biggest ergonomics that annoys me.
+#+begin_src emacs-lisp
+  ;;(pixel-scroll-mode)
+
+  ;;(setq pixel-dead-time 0)
+  ;;(setq pixel-resolution-fine-flag t)
+
+  (setq mouse-wheel-scroll-amount '(2))
+  ;;(setq mouse-wheel-progressive-speed nil)
+
+  ;;(setq fast-but-imprecise-scrolling t)
+  ;;(setq jit-lock-defer-time 0)
+#+end_src
 ** System sepecific settings
    :PROPERTIES:
    :ID:       9af79705-bbb1-4b52-bfe7-0e05831d87b0
@@ -219,11 +233,13 @@ screen DPI's.
      (cm/produce-font 11)))
 
   ;; gotta figure out a better way for unicode
-  (cond
-   ((member "Noto Emoji" (font-family-list))
-    (set-fontset-font t 'unicode "Noto Emoji" nil 'prepend))
-   ((member "symbola" (font-family-list))
-    (set-fontset-font t 'unicode "Symbola" nil 'prepend)))
+  ;;
+  ;; This doesn't work currently because emacs doesn't support color bitmaps.
+  ;  (cond
+  ;   ((member "Noto Color Emoji" (font-family-list))
+  ;    (set-fontset-font t 'unicode "Noto Color Emoji" nil 'prepend))
+  ;   ((member "symbola" (font-family-list))
+  ;    (set-fontset-font t 'unicode "Symbola" nil 'prepend)))
 
 
 #+end_src
@@ -742,9 +758,14 @@ Split the Ediff window depending on the orientation/size of the emacs
 frame. I've found this very convenient.
 #+begin_src emacs-lisp
   (setq ediff-split-window-function (lambda (&optional arg)
-                                      (if (> (frame-width) 150)
-                                          (split-window-horizontally arg)
-                                        (split-window-vertically arg))))
+				      (if (> (frame-width) 150)
+					  (split-window-horizontally arg)
+					(split-window-vertically arg))))
+#+end_src
+Keep the diff in a single window, easier on tiling window managers to
+handle diff sessions.
+#+begin_src emacs-lisp
+  (setq ediff-window-setup-function #'ediff-setup-windows-plain)
 #+end_src
 ** Useful window functions
    :PROPERTIES:
@@ -1607,9 +1628,19 @@ Incredibly useful way to browse your buffers.
     :END:
 Navigate visually through the entire kill ring.
 #+begin_src emacs-lisp
-  (autoload 'browse-kill-ring "browse-kill-ring" "")
-  
-  (global-set-key (kbd "M-y") 'browse-kill-ring)
+  (defun cm/kill-ring-insert ()
+    (interactive)
+    (let ((result (completing-read
+		   "Yank: "
+		   (delete-duplicates kill-ring :test #'equal))))
+      (when (and result (region-active-p))
+	;; the currently highlighted section is to be replaced by the yank
+	(delete-region (region-beginning) (region-end)))
+      (insert result)))
+
+  (global-set-key (kbd "M-y") 'cm/kill-ring-insert)
+
+
 #+end_src
 
 *** Expand region
@@ -1659,8 +1690,15 @@ out semantically.
     :config
     (projectile-global-mode)
     (setq projectile-completion-system 'ivy)
-    (setq projectile-indexing-method 'native)
+    ;; seting the remote file exists cache to an hour, I'd rather things
+    ;; error out weirdly than slow down all find-files!
+    (setq projectile-file-exists-remote-cache-expire (* 60 60))
+
+    ;; I use alien because native is slow. I think I used to use native
+    ;; for reasons that escape me now.
+    (setq projectile-indexing-method 'alien)
     (setq projectile-enable-caching t)
+
     ;; this replaces the old `projectile-compile-project' to use the
     ;; project name in the compilation buffer. Let's me run all ze
     ;; compilations!
@@ -1687,9 +1725,9 @@ out semantically.
 							  project-root)))
 	(with-current-buffer
 	    (compilation-start compilation-cmd nil '(lambda (x) (concat "*compilation:" (projectile-project-name) "*")))
-	  (setq-local projectile-project-name (projectile-project-name)))))
+	  (setq-local projectile-project-name (projectile-project-name))))))
 
-    (advice-add 'projectile-compile-project :override #'cm/projectile-compile-project))
+  ;  (advice-remove 'projectile-compile-project #'cm/projectile-compile-project))
 #+end_src
 *** Multiple Cursors
 #+begin_src emacs-lisp
@@ -2316,6 +2354,12 @@ Thank you Britt.
             '(lambda ()
                (setq show-trailing-whitespace t)))
 #+end_src
+*** Racket
+#+begin_src emacs-lisp
+  (use-package racket-mode
+    :mode "\\.rkt$")
+#+end_src
+
 *** simple httpd
     :PROPERTIES:
     :ID:       4f1c60ce-0986-45bd-b5dc-4dc596675e68
@@ -2348,7 +2392,7 @@ This adds much better support for pdfs in emacs.
 #+begin_src emacs-lisp
   (use-package elfeed
     :commands elfeed
-    :bind ("C-c f" . elfeed)
+    :bind ("C-c e" . elfeed)
     :config
     (elfeed-load-opml (concat (getenv "HOME") "/config/feeds.opml")))
 #+end_src
@@ -2903,10 +2947,10 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
 
 	;; GET CURRENT
 	(tags-todo "noop" ,(cm/review-section "Get Current!"))
-	(tags "PRIORITY+50K" ,(cm/review-header "Read and Review Life Purpose"))
-	(tags "PRIORITY+40K" ,(cm/review-header "Read and Review Visions"))
-	(tags "PRIORITY+30K" ,(cm/review-header "Read and Review Goals and Objectives"))
-	(tags "PRIORITY+20K" ,(cm/review-header "Read and Review Areas of Focus and Responsibility"))
+	(tags "50K" ,(cm/review-header "Read and Review Life Purpose"))
+	(tags "40K" ,(cm/review-header "Read and Review Visions"))
+	(tags "30K" ,(cm/review-header "Read and Review Goals and Objectives"))
+	(tags "20K" ,(cm/review-header "Read and Review Areas of Focus and Responsibility"))
 	(todo "PROJECT" ,(cm/review-header "Read and Review Projects and Alignment"))
 
 	;; GET CREATIVE
@@ -3077,12 +3121,33 @@ out how long tasks took that you start and stop.
 ***** Clocking hydra
 This add some commands for managing and clocking my time in a hydra.
 #+begin_src emacs-lisp
-  (defhydra hydra-org-clock (global-map "C-c x")
-    "Navigate your clocking"
-    ("x" (lambda ()
-	   (interactive)
-	   (let ((current-prefix-arg 4))
-	     (call-interactively #'org-clock-in)))))
+    (defhydra hydra-org-clock (global-map "C-c x")
+      "Navigate your clocking:"
+      ("c" org-clock-in
+       "clock into current task")
+      ("o" org-clock-out
+       "clock out of current task")
+      ("x" (let ((current-prefix-arg '(4)))
+	     (call-interactively #'org-clock-in)
+	     (org-save-all-org-buffers))
+       "switch to recent clocked task")
+      ("d" (let ((current-prefix-arg '(16)))
+	     (call-interactively #'org-clock-in)
+	     (org-save-all-org-buffers))
+       "clock and set default task")
+      ("l" (let ((current-prefix-arg '(64)))
+	     (call-interactively #'org-clock-in)
+	     (org-save-all-org-buffers))
+       "clock in at last clock-out time")
+      ("g" (call-interactively #'org-clock-goto)
+       "goto last clocked-in task")
+      ("G" (let ((current-prefix-arg '(4)))
+	     (call-interactively #'org-clock-goto))
+       "goto recent clocked-in tasks")
+      ("q" nil "quit"))
+  (global-set-key (kbd "C-c x") 'hydra-org-clock/body)
+
+
 #+end_src
 **** Useful setq's
      :PROPERTIES:
@@ -3100,25 +3165,19 @@ This add some commands for managing and clocking my time in a hydra.
   (setq org-clock-persist 'history)
   (org-clock-persistence-insinuate)
   (setq org-clock-idle-time 10)
-
-  (setq counsel-org-goto-display-style 'path)
-  (setq counsel-org-goto-separator " ➜ ")
-  (setq counsel-org-goto-face-style 'org)
-
-  (defun cm/counsel-org-goto (arg)
-    (interactive "P")
-    (if arg
-	(counsel-org-goto)
-      (counsel-org-goto-all)))
-
-  (define-key org-mode-map (kbd "C-c C-j") 'cm/counsel-org-goto)
-
   (setq org-agenda-files '("~/org/"))
   (setq org-refile-targets '((nil
 			      :maxlevel . 5)
 			     (("~/org/gtd.org"
 			       "~/org/work.org")
 			      :maxlevel . 5)))
+
+  ;; my dimmed face isn't that dim
+  (face-spec-set
+   'org-agenda-dimmed-todo-face
+   '((((background light)) (:foreground "dark orange"))
+     (((background dark)) (:foreground "light goldenrod")))
+   'face-defface-spec)
 
   (setq calendar-mark-diary-entries-flag t)
   (setq org-adapt-indentation nil)
@@ -3133,10 +3192,17 @@ This add some commands for managing and clocking my time in a hydra.
   (setq org-agenda-sticky t)
   (setq org-agenda-tags-column -90)
   (setq org-agenda-use-tag-inheritance '(search timeline agenda))
+  (setq org-agenda-window-setup 'current-window)
   (setq org-attach-archive-delete 'query)
   (setq org-attach-directory "~/org/_attachments/")
   (setq org-enforce-todo-dependencies t)
   (setq org-export-with-sub-superscripts nil)
+  (setq org-file-apps '((auto-mode . emacs)
+			("\\.mm\\'" . default)
+			("\\.x?html?\\'" . default)
+			;; firefox no longer supports mhtml :(
+			("\\.mhtml\\'" . "google-chrome %s")
+			("\\.pdf\\'" . default)))
   (setq org-fontify-done-headline t)
   (setq org-hide-leading-stars t)
   (setq org-log-done t)
@@ -3165,6 +3231,7 @@ This add some commands for managing and clocking my time in a hydra.
 
   (setq org-structure-template-alist
 	(map 'list (lambda (x) (list (car x) (downcase (cadr x)))) org-structure-template-alist))
+
 #+end_src
 **** Org Contacts
 #+begin_src emacs-lisp
@@ -3396,65 +3463,73 @@ How I deploy my personal website.
   (setq org-export-html-inline-images t)
 
   ;; Use org.css from the norang website for export document stylesheets
-  ;(setq org-export-html-style-extra "<link rel=\"stylesheet\" href=\"http://doc.norang.ca/org.css\" type=\"text/css\" />")
-  ;(setq org-export-html-style-include-default nil)
-
+  ;;(setq org-export-html-style-extra "<link rel=\"stylesheet\" href=\"http://doc.norang.ca/org.css\" type=\"text/css\" />")
+  ;;(setq org-export-html-style-include-default nil)
+  ;; (setq org-export-html-style-extra "<link rel=\"stylesheet\" href=\":\" type=\"text/css\" />")
   ;; Do not generate internal css formatting for HTML exports
   (setq org-export-htmlize-output-type nil)
   ;; Export with LaTeX fragments
   (setq org-export-with-LaTeX-fragments t)
 
+  (require 'ox-tufte)
+
   ;; List of projects
   ;; - codemac.net -- My personal website
   ;; - org-doc -- export all org documents
   (setq org-publish-project-alist
-        '(("codemac-org"
-           :base-directory "~/org/_www/codemac.net"
-           :publishing-directory "/tmp/codemac.net"
-           :recursive t
-           :base-extension "org"
-           :publishing-function org-html-publish-to-html
-           :exclude-tags ("noexport" "todo")
-           :html-preamble ""
-           :html-postamble ""
-           :style nil
-           :section-numbers nil
-           :style-include-default nil
-           :auto-sitemap t
-           :sitemap-filename "sitemap.html")
-          ("codemac-static"
-           :base-directory "~/org/_www/codemac.net"
-           :publishing-directory "/tmp/codemac.net"
-           :base-extension "css\\|pdf\\|png\\|jpg\\|gif\\|js\\|txt\\|mp3\\|ogg\\|swf"
-           :publishing-function org-publish-attachment
-           :recursive t)
-          ("codemac" :components ("codemac-org" "codemac-static"))
-          ("org-doc-org"
-           :base-directory "~/org/"
-           :publishing-directory "/tmp/published-org"
-           :recursive t
-           :section-numbers nil
-           :table-of-contents nil
-           :base-extension "org"
-           :publishing-function (org-html-publish-to-html org-org-publish-to-org)
-           :plain-source t
-           :htmlized-source t
-           :style-include-default nil
-           :style "<link rel=\"stylesheet\" href=\"/org.css\" type=\"text/css\" />"
-           :auto-sitemap t
-           :sitemap-filename "index.html"
-           :sitemap-title "Test Publishing Area"
-           :sitemap-style "tree"
-           :author-info nil
-           :creator-info nil)
-          ("org-doc-static"
-           :base-directory "~/org/"
-           :publishing-directory "/tmp/published-org"
-           :base-extension "css\\|pdf\\|png\\|jpg\\|gif"
-           :publishing-function org-publish-attachment
-           :recursive t
-           :author nil)
-          ("org-doc" :components ("org-doc-org" "org-doc-static"))))
+	'(("codemac-org"
+	   :base-directory "~/org/_www/codemac.net"
+	   :publishing-directory "/tmp/codemac.net"
+  ;;	 :preparation-function nil
+  ;;	 :completion-function nil
+	   :recursive t
+	   :base-extension "org"
+	   :publishing-function org-html-publish-to-tufte-html
+	   :exclude-tags ("noexport" "todo")
+  ;;	 :html-preamble ""
+  ;;	 :html-postamble ""
+	   :html-head-extra "<link rel=\"stylesheet\" href=\"tufte.css\" type=\"text/css\" />"
+	   :html-head-include-default-style nil
+	   :html-head-include-scripts nil
+	   :section-numbers nil
+	   :html-validation-link nil
+	   :with-toc nil
+  ;;	 :auto-sitemap t
+  ;;	 :sitemap-filename "sitemap.html")
+	   )
+	  ("codemac-static"
+	   :base-directory "~/org/_www/codemac.net"
+	   :publishing-directory "/tmp/codemac.net"
+	   :base-extension "css\\|pdf\\|png\\|jpg\\|gif\\|js\\|txt\\|mp3\\|ogg\\|swf\\|svg"
+	   :publishing-function org-publish-attachment
+	   :recursive t)
+	  ("codemac" :components ("codemac-org" "codemac-static"))
+	  ("org-doc-org"
+	   :base-directory "~/org/"
+	   :publishing-directory "/tmp/published-org"
+	   :recursive t
+	   :section-numbers nil
+	   :table-of-contents nil
+	   :base-extension "org"
+	   :publishing-function (org-html-publish-to-html org-org-publish-to-org)
+	   :plain-source t
+	   :htmlized-source t
+	   :style-include-default nil
+	   :style "<link rel=\"stylesheet\" href=\"/org.css\" type=\"text/css\" />"
+	   :auto-sitemap t
+	   :sitemap-filename "index.html"
+	   :sitemap-title "Test Publishing Area"
+	   :sitemap-style "tree"
+	   :author-info nil
+	   :creator-info nil)
+	  ("org-doc-static"
+	   :base-directory "~/org/"
+	   :publishing-directory "/tmp/published-org"
+	   :base-extension "css\\|pdf\\|png\\|jpg\\|gif"
+	   :publishing-function org-publish-attachment
+	   :recursive t
+	   :author nil)
+	  ("org-doc" :components ("org-doc-org" "org-doc-static"))))
 
   (defun org-save-then-publish ()
     (interactive)
@@ -3605,7 +3680,6 @@ allows me to create checklist templates per-project.
   (org-add-link-type "netapp" 'org-link-type-netapp-open)
 
 
-  ;; capture for mac os x popup
   (defun cm/org-capture-other-frame ()
     "Create a new frame and run org-capture."
     (interactive)
@@ -3623,9 +3697,9 @@ allows me to create checklist templates per-project.
 	(delete-other-windows)
       (cm/org-capture-other-frame-cleanup)))
 
-  (defun cm/org-capture-other-frame-hook (orig-fun &optional goto keys)
+  (defun cm/org-capture-other-frame-hook (orig-fun &rest args)
     "Hook for org-capture to pop-up a frame instead of embed in emacs."
-    (interactive)
+    (message (format "org-capture args: %s" args))
     (make-frame '((name . "Org-Capture")
 		  (width . 120)
 		  (height . 40)
@@ -3635,18 +3709,17 @@ allows me to create checklist templates per-project.
 		  (auto-raise . t)))
     (select-frame-by-name "Org-Capture")
     (if (condition-case nil
-	    (progn (funcall orig-fun goto keys) t)
+	    (progn (funcall-interactively orig-fun args) t)
 	  (error nil))
 	(delete-other-windows)
       (cm/org-capture-other-frame-cleanup)))
-
 
   (defun cm/org-capture-other-frame-cleanup ()
     "Close the Org-Capture frame."
     (if (equal "Org-Capture" (frame-parameter nil 'name))
 	(delete-frame)))
 
-  (advice-add 'org-capture :around #'cm/org-capture-other-frame-hook)
+  ;;(advice-add 'org-capture :around #'cm/org-capture-other-frame-hook)
   (add-hook 'org-capture-after-finalize-hook 'cm/org-capture-other-frame-cleanup)
 #+end_src
 **** Search through my _notes directory
@@ -3729,7 +3802,7 @@ THIS WAS WAY OVER THE TOP. We can just use =org-search-view=.
 	   ,@cm/humble-todo-template)
 	  ("wn" "Work Note" entry (file "~/org/work.org")
 	   "* %U %?\n\n  %i\n  %a\n\n" :prepend nil :empty-lines 1)
-	  ("wj" "Work journal entry" plain (file+olp+datetree "~/org/work.org" "Lab Notes")
+	  ("wj" "Work journal entry" plain (file+olp+datetree "~/org/_notes/work.org" "Notes")
 	   "\n\n%?\n\n" :tree-type week :empty-lines 1)
 	  ("ws" "Snippet Log" entry (file+headline "~/org/work.org" "Snippets")
 	   "* S: %?\n  %T\n\n" :prepend nil :empty-lines 1)
@@ -3738,7 +3811,7 @@ THIS WAS WAY OVER THE TOP. We can just use =org-search-view=.
 	   "* Review for %<%Y>\n:PROPERTIES:\n:CREATED:   %U\n:END:\n\n** Review previous year\n\n- What was completed?\n- What was not completed?\n- What was the best spent time?\n- What was the worst spent time?\n- What is the current financial, physical, emotional, mental, spiritual state?\n\n** Project future year\n\n- What to spend more time on in new year?\n- What to spend less time on in new year?\n- What projects should be started in the next year?\n- What project should be completed in the next year?\n\n" :empty-lines 1)
 	  ("b" "Agenda Project" entry (function cm/org-child-location)
 	   ,@cm/humble-todo-template)
-	  ("f" "Fitness" table-line (file+headline "~/org/fitness.org" "Fitness")
+	  ("f" "Fitness" table-line (file+headline "~/org/_notes/fitness.org" "Fitness")
 	   ,(concat (format-time-string "| %Y.%m.%d-%H:%M |") " %^{Weight} | | %^{RHR} |") :table-line-pos "II-1" :empty-lines 1)
 	  ("xw" "org-capture reference" entry (file "~/org/_notes/www.org")
 	   "* %U %?%:description\n:PROPERTIES:\n:URL: %:link\n:END:\n\n%:body\n\n" :empty-lines 1)
@@ -3794,6 +3867,42 @@ help with my forgetfulness.
 	appt-message-warning-time 6)
   (appt-activate)
   (org-agenda-to-appt)
+#+end_src
+**** Better Org Goto
+#+begin_src emacs-lisp
+  (defvar cm/org-goto-dirs '("~/org/*.org" "~/org/_notes/*.org")
+    "Org directories to search with goto")
+
+  (setq counsel-org-goto-display-style 'path)
+  (setq counsel-org-goto-separator "/")
+  (setq counsel-org-goto-face-style 'org)
+
+  (defun cm/add-filename (buf pair)
+    (let* ((bufname (buffer-name buf))
+	   (name (car pair))
+	   (rest (cdr pair)))
+      (cons (concat bufname counsel-org-goto-separator name) rest)))
+
+  (defun cm/org-goto ()
+    (interactive)
+    (require 'counsel)
+    (mapcar (lambda (x) (mapcar #'bury-buffer (find-file-noselect x t nil t))) cm/org-goto-dirs)
+    (let (entries)
+      (dolist (b (buffer-list))
+	(with-current-buffer b
+	  (when (derived-mode-p 'org-mode)
+	    (setq entries
+		  (nconc entries
+			 (mapcar
+			  (lambda (x) (cm/add-filename b x))
+			  (counsel-org-goto--get-headlines)))))))
+      (ivy-read "Goto: " entries
+		:history 'cm/org-goto-history
+		:action 'counsel-org-goto-action
+		:caller 'cm/org-goto)))
+
+  (define-key org-mode-map (kbd "C-c C-j") 'cm/org-goto)
+  (define-key global-map (kbd "C-c g") 'cm/org-goto)
 #+end_src
 *** RCIRC
     :PROPERTIES:
@@ -4312,8 +4421,9 @@ horrifying.
     "Saved searches not to be published publicly")
 
   (setq notmuch-saved-searches
-	'((:name "inbox"         :query "tag:inbox"                 :key "i" :sort-order oldest-first)
-	  (:name "unread"        :query "tag:unread"                :key "u" :sort-order newest-first)
+	'((:name "inbox"         :query "tag:inbox"                 :key "i"  :sort-order oldest-first)
+	  (:name "flagged"       :query "tag:flagged"               :key "f"  :sort-order newest-first)
+	  (:name "unread"        :query "tag:unread"                :key "u"  :sort-order newest-first)
 	  (:name "work-inbox"    :query "tag:work AND tag:inbox"    :key "wi" :sort-order oldest-first)
 	  (:name "work-bulk"     :query "tag:work AND tag:unread"
 		 :key "wb" :sort-order newest-first)
@@ -4574,6 +4684,17 @@ A wholly owned subsidiary of Cisco.
 #+begin_src emacs-lisp
   (require 'tup-mode)
 #+end_src
+*** Find file hydra
+#+begin_src emacs-lisp
+  (defhydra hydra-find-file (global-map "C-c f")
+    "Find a file"
+    ("f" ffap "file at point")
+    ("h" (let ((default-directory (file-name-as-directory (getenv "HOME"))))
+	   (call-interactively #'find-file))
+     "home files")
+    ("q" nil "quit"))
+  (global-set-key (kbd "C-c f") 'hydra-find-file/body)
+#+end_src
 * Tools
 ** Time Saved Calculater
 The =cm/timesaved= function is a user interface for calculating how
@@ -4755,8 +4876,16 @@ accomplish that across x11 apps though.
     '(("//" . (text "  //  mickey"))))
 
   (setq cm/emacs-expander-alist
-	'(("//" . (text "  //  mickey"))
-	  ("sg." . (text "Sounds good."))))
+	'(("//" . (cmd ("<space>" "<space>"  "/" "/" "<space>" "<space>" "m" "i" "c" "k" "e" "y")))
+	  ("sg." . (cmd ("S-s" "o" "u" "n" "d" "s" " " "g" "o" "o" "d" ".")))))
+
+  (defun cm/youinput-command (cmd)
+    (make-process
+     :name "youinput command process"
+     :buffer "youinput-process-buffer"
+     :command `("youinput" ,@cmd)
+     :connection-type 'pipe
+     :sentinel #'cm/expander-sentinel))
 
   (defun cm/xdotool-key (key)
     (make-process
@@ -4790,7 +4919,8 @@ accomplish that across x11 apps though.
 	(setq cm/expander-temp-storage-reply (cddr pls))
 	(pcase sym
 	  ('text (cm/xdotool-type val))
-	  ('key (cm/xdotool-key val))))))
+	  ('key (cm/xdotool-key val))
+	  ('cmd (cm/youinput-command val))))))
 
   (defun cm/emacs-expander ()
     (interactive)
