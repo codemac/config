@@ -102,10 +102,10 @@ defbindings("WScreen", {
     kpress("XF86AudioMicMute", "mod_query.exec_on_merr(_, 'microphone-mute-toggle')"),
 
     -- brightness control
-    kpress("XF86MonBrightnessUp", "mod_query.exec_on_merr(_, 'xbacklight -inc 1')"),
-    kpress("XF86MonBrightnessDown", "mod_query.exec_on_merr(_, 'xbacklight -dec 1')"),
-    kpress(META.."XF86MonBrightnessUp", "mod_query.exec_on_merr(_, 'xbacklight -inc 10')"),
-    kpress(META.."XF86MonBrightnessDown", "mod_query.exec_on_merr(_, 'xbacklight -dec 10')"),
+    kpress("XF86MonBrightnessUp", "mod_query.exec_on_merr(_, 'backlight set +1%')"),
+    kpress("XF86MonBrightnessDown", "mod_query.exec_on_merr(_, 'backlight set -1%')"),
+    kpress(META.."XF86MonBrightnessUp", "mod_query.exec_on_merr(_, 'backlight set +5%')"),
+    kpress(META.."XF86MonBrightnessDown", "mod_query.exec_on_merr(_, 'backlight set -5%')"),
 
     kpress(META.."C", "mod_query.exec_on_merr(_, 'org-capture')"),
     kpress(META.."H", "mod_query.exec_on_merr(_, 'emacs-expander')"),

@@ -1,0 +1,10 @@
+{
+  "name": "My personal home page",
+  "description": "Override the new tab page with a custom one",
+  "version": "0.1",
+  "incognito": "not_allowed",
+  "chrome_url_overrides": {
+    "newtab": "home.html"
+  },
+  "manifest_version": 2
+}
