@@ -566,6 +566,8 @@ xterm*cursorColor: yellow
 xterm*cursorColor2: white
 xterm*pointerColor: yellow
 xterm*savelines: 100000
+xterm*fullscren: never
+xterm*omitTranslation: fullscreen
 
 !!
 vncviewer*grabKeyboard: true
@@ -602,3 +604,5 @@ UXTerm*metaSendsEscape: true
 UXTerm*termName: xterm-256color
 UXTerm*faceName: xft:DejaVu Sans Mono
 UXTerm*faceSize: 11
+UXTerm*fullscren: never
+UXTerm*omitTranslation: fullscreen
