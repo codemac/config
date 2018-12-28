@@ -12,3 +12,5 @@
 	hooksPath = /home/jmickey/config/githooks
 [push]
 	default = current
+[http]
+	cookiefile = /home/jmickey/.gitcookies

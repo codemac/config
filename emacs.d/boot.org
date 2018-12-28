@@ -675,10 +675,38 @@ If zenburn isn't available, we should use wombat. So how do we detect
 that?
 
 #+begin_src emacs-lisp
-    ;; (if (custom-theme-name-valid-p 'zenburn)
-    ;;     (load-theme 'zenburn t)
-    ;;    (load-theme 'wombat t))
-  (load-theme 'wombat t)
+  (defadvice load-theme (before theme-dont-propagate activate)
+    "Disable theme before loading new one."
+    (mapc #'disable-theme custom-enabled-themes))
+
+  (defvar cm/theme-style 'dark
+    "What style of preferred theme I'm using")
+
+  (defvar cm/theme-before-hook '()
+    "Hooks to run before setting a theme")
+
+  (defvar cm/theme-after-hook '()
+    "Hooks to run after setting a theme")
+
+
+  (defun cm/set-theme (theme)
+    (run-hooks 'cm/theme-before-hook)
+    (pcase theme
+      ('dark
+       (progn (setq cm/theme-style 'dark)
+	      (load-theme 'wombat t)))
+      ('light
+       (progn (setq cm/theme-style 'light)
+	      (load-theme 'adwaita t))))
+    (run-hooks 'cm/theme-after-hook))
+
+  (defun cm/swap-theme ()
+    (interactive)
+    (pcase cm/theme-style
+      ('dark (cm/set-theme 'light))
+      ('light (cm/set-theme 'dark))))
+
+  (cm/set-theme 'dark)
 #+end_src
 
 For now we just check that the name is valid.
@@ -1580,7 +1608,8 @@ Incredibly useful way to browse your buffers.
 	     (filename . "/google/")
 	     (filename . "/work/")))
 	   ("GTD"
-	    (filename . "/org/"))
+	    (filename . "/org/")
+	    (mode . org-agenda-mode))
 	   ("Mail"
 	    (or (mode . mu4e-compose-mode)
 		(mode . mu4e-main-mode)
@@ -1672,9 +1701,16 @@ out semantically.
   (make-variable-buffer-local 'global-hl-line-mode)
 
   ;; wombat and others set underlines. they are assholes.
-  (set-face-underline hl-line-face nil)
-  (set-face-background 'highlight "#303030")
-  (set-face-foreground 'highlight nil)
+  (defun cm/hl-line-theme-hook ()
+    (set-face-underline hl-line-face nil)
+    (set-face-foreground 'highlight nil)
+    (if (eq cm/theme-style 'light)
+	(set-face-background 'highlight "#CFCFCF")
+      (set-face-background 'highlight "#303030")))
+
+  (cm/hl-line-theme-hook)
+
+  (add-hook 'cm/theme-after-hook 'cm/hl-line-theme-hook)
 #+end_src
 *** Projectile
     :PROPERTIES:
@@ -2881,7 +2917,7 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
       ,(cm/org-ctx-agenda "h" "HOME" "Home Agenda")
       ,(cm/org-ctx-agenda "r" "ERRAND" "Errand Agenda")
       ,(cm/org-ctx-agenda "f" "PHONE" "Phone Agenda")
-      ,(cm/org-ctx-agenda "l" "AGENDA" "People Agenda")
+      ,(cm/org-ctx-agenda "a" "AGENDA" "People Agenda")
       ("ct" "Tickler Agenda"
        ((tags-todo "-TODO=\"PROJECT\"-BLOCKED=\"t\"-TODO=\"WAITING\"")
 	(todo "PROJECT"))
@@ -3733,30 +3769,78 @@ of some form as well.
 
 Let's first layout what we want the keymap to be like:
 #+begin_src emacs-lisp
-  (defvar cm/org-notes-command-prefix)
-  (defvar cm/org-notes-command-map
-    (let ((map (make-sparse-keymap)))
-      (define-key map (kbd "s") 'cm/org-notes-search)
-      (define-key map (kbd "r") 'cm/org-notes-capture)
-      map))
+  (defhydra hydra-cm-org-notes (global-map "C-c n")
+    "Use your notes wisely, Luke:"
+    ("b" cm/org-scratch-buffer "buffer for org scratch notes")
+    ("f" deft-new-file "new file for org notes, named by the date")
+    ("n" deft "search through all notes")
+    ("r" deft-new-file-named "new file for notes, named by the user")
+    ("q" nil "quit"))
 
-  (define-prefix-command 'cm/org-notes-command-prefix)
-  (fset 'cm/org-notes-command-prefix cm/org-notes-command-map)
-  (setq  cm/org-notes-command-prefix cm/org-notes-command-map)
-
-  (global-set-key (kbd "C-c n") 'cm/org-notes-command-prefix)
+  (global-set-key (kbd "C-c n") 'hydra-cm-org-notes/body)
 #+end_src
 
-THIS WAS WAY OVER THE TOP. We can just use =org-search-view=.
 #+begin_src emacs-lisp
-  (defun cm/org-notes-search ()
-    (interactive)
-    (let ((org-agenda-files (append org-agenda-files '("~/org/_notes"))))
+  (use-package deft
+    :commands (deft)
+    :config
+    (setq deft-default-extension "org")
+    (setq deft-directory "~/org/_notes/")
+    (setq deft-archive-directory "~/org/_attic/")
+    (setq deft-file-naming-rules '((noslash . "-")
+				   (nospace . "_")
+				   (case-fn . downcase)))
+    (setq deft-use-filter-string-for-filename t)
+    (setq deft-strip-title-regexp
+	  (concat "\\(?:"
+		  "^%+" ; line beg with %
+		  "\\|^#\\+TITLE: *" ; org-mode title
+		  "\\|^#\\+title: *" ; org-mode lowercase title
+		  "\\|^[#* ]+" ; line beg with #, * and/or space
+		  "\\|-\\*-[[:alpha:]]+-\\*-" ; -*- .. -*- lines
+		  "\\|^Title:[\t ]*" ; MultiMarkdown metadata
+		  "\\|#+" ; line with just # chars
+		  "$\\)"))
+    (setq deft-strip-summary-regexp
+	  "\\([\n\t]\\|^#\\+[[:alpha:]_]+:.*$\\)"))
+#+end_src
+
+THIS WAS WAY OVER THE TOP. We can just use =org-search-view= if we
+want, though it requires more regex-y stuff and is slower across all
+the files.
+
+#+begin_src emacs-lisp
+  (defun cm/org-notes-search (arg)
+    (interactive "P")
+    (let ((org-agenda-files (if arg
+				(append org-agenda-files '("~/org/_notes/"))
+			      '("~/org/_notes/")))
+	  (org-agenda-sticky nil))
       (org-search-view)))
+
+  (defun cm/deft-new-file-named (slug)
+    (interactive "sNew file title (will be converted to filename): ")
+    (let* ((file (deft-absolute-filename slug))
+	   (deft-filter-regexp (reverse (split-string slug))))
+      (if (file-exists-p file)
+	  (message "Aborting, file already exists: %s" file)
+	(write-region (concat "#+title: " (deft-whole-filter-regexp)
+			      "\n#+date: <" (format-time-string "%Y-%m-%d %a %H:%M") ">\n\n")
+		      nil file nil)
+	(deft-cache-update-file file)
+	(deft-refresh-filter)
+	(deft-open-file file)
+	(with-current-buffer (get-file-buffer file)
+	  (goto-char (point-max))))))
 
   (defun cm/org-notes-capture ()
     (interactive)
     (org-capture nil "n"))
+
+  (defun cm/org-scratch-buffer ()
+    (interactive)
+    (switch-to-buffer (generate-new-buffer "*note-scratch*"))
+    (org-mode))
 #+end_src
 
 **** Org Capture
@@ -5376,20 +5460,29 @@ settings that occur above. Much easier this way.
 
 
   (setq cursor-type 'box)
-  ;(add-hook 'post-command-hook 'cm/cursor)
-  ; oh god it flashes so much. Don't know how to do this better yet.
-  (blink-cursor-mode 0)
-  (setq cm/cursor-color "#ffff00")
-  (set-cursor-color cm/cursor-color)
-  (set-mouse-color cm/cursor-color)
+  ;;(add-hook 'post-command-hook 'cm/cursor)
+  ;; oh god it flashes so much. Don't know how to do this better yet.
+
+  (defun cm/cursor-theme-hook ()
+    (blink-cursor-mode 0)
+    (setq cm/cursor-color
+     (pcase cm/theme-style
+       ('dark "#ffff00")
+       ('light "#eeee00")))
+    (set-cursor-color cm/cursor-color)
+    (set-mouse-color cm/cursor-color))
+
+  (add-hook 'cm/theme-after-hook 'cm/cursor-theme-hook)
+
+  (cm/cursor-theme-hook)
 
   (require 'frame)
-  (defun cm/cursor-hook (frame)
+  (defun cm/cursor-frame-hook (frame)
     (set-cursor-color cm/cursor-color)
     (modify-frame-parameters
      frame (list (cons 'cursor-color cm/cursor-color))))
 
-  (add-hook 'after-make-frame-functions 'cm/cursor-hook)
+  (add-hook 'after-make-frame-functions 'cm/cursor-frame-hook)
 #+end_src
 ** Server process
    :PROPERTIES:
