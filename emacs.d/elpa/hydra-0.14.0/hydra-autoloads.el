@@ -1,10 +1,14 @@
 ;;; hydra-autoloads.el --- automatically extracted autoloads
 ;;
 ;;; Code:
-(add-to-list 'load-path (directory-file-name (or (file-name-directory #$) (car load-path))))
+
+(add-to-list 'load-path (directory-file-name
+                         (or (file-name-directory #$) (car load-path))))
+
 
-;;;### (autoloads nil "hydra" "hydra.el" (22915 19718 851195 170000))
-;;; Generated autoloads from hydra.el
+;;;### (autoloads nil "hydra" "../../../../.emacs.d/elpa/hydra-0.14.0/hydra.el"
+;;;;;;  "d2942960e31092de3f6902676ddbc8ce")
+;;; Generated autoloads from ../../../../.emacs.d/elpa/hydra-0.14.0/hydra.el
 
 (autoload 'defhydra "hydra" "\
 Create a Hydra - a family of functions with prefix NAME.
@@ -59,11 +63,55 @@ result of `defhydra'.
 \(fn NAME BODY &optional DOCSTRING &rest HEADS)" nil t)
 
 (function-put 'defhydra 'lisp-indent-function 'defun)
+
+;;;### (autoloads "actual autoloads are elsewhere" "hydra" "../../../../.emacs.d/elpa/hydra-0.14.0/hydra.el"
+;;;;;;  (0 0 0 0))
+;;; Generated autoloads from ../../../../.emacs.d/elpa/hydra-0.14.0/hydra.el
+
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "hydra" '("hydra-" "defhydradio")))
+
+;;;***
 
 ;;;***
 
-;;;### (autoloads nil nil ("hydra-examples.el" "hydra-ox.el" "hydra-pkg.el"
-;;;;;;  "hydra-test.el" "lv.el") (22915 19718 883195 268000))
+;;;### (autoloads "actual autoloads are elsewhere" "hydra-examples"
+;;;;;;  "../../../../.emacs.d/elpa/hydra-0.14.0/hydra-examples.el"
+;;;;;;  (0 0 0 0))
+;;; Generated autoloads from ../../../../.emacs.d/elpa/hydra-0.14.0/hydra-examples.el
+
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "hydra-examples" '("hydra-" "org-agenda-cts" "whitespace-mode")))
+
+;;;***
+
+;;;### (autoloads "actual autoloads are elsewhere" "hydra-ox" "../../../../.emacs.d/elpa/hydra-0.14.0/hydra-ox.el"
+;;;;;;  (0 0 0 0))
+;;; Generated autoloads from ../../../../.emacs.d/elpa/hydra-0.14.0/hydra-ox.el
+
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "hydra-ox" '("hydra-ox")))
+
+;;;***
+
+;;;### (autoloads "actual autoloads are elsewhere" "hydra-test" "../../../../.emacs.d/elpa/hydra-0.14.0/hydra-test.el"
+;;;;;;  (0 0 0 0))
+;;; Generated autoloads from ../../../../.emacs.d/elpa/hydra-0.14.0/hydra-test.el
+
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "hydra-test" '("hydra-" "remap")))
+
+;;;***
+
+;;;### (autoloads "actual autoloads are elsewhere" "lv" "../../../../.emacs.d/elpa/hydra-0.14.0/lv.el"
+;;;;;;  (0 0 0 0))
+;;; Generated autoloads from ../../../../.emacs.d/elpa/hydra-0.14.0/lv.el
+
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "lv" '("lv-")))
+
+;;;***
+
+;;;### (autoloads nil nil ("../../../../.emacs.d/elpa/hydra-0.14.0/hydra-autoloads.el"
+;;;;;;  "../../../../.emacs.d/elpa/hydra-0.14.0/hydra-examples.el"
+;;;;;;  "../../../../.emacs.d/elpa/hydra-0.14.0/hydra-ox.el" "../../../../.emacs.d/elpa/hydra-0.14.0/hydra-pkg.el"
+;;;;;;  "../../../../.emacs.d/elpa/hydra-0.14.0/hydra-test.el" "../../../../.emacs.d/elpa/hydra-0.14.0/hydra.el"
+;;;;;;  "../../../../.emacs.d/elpa/hydra-0.14.0/lv.el") (0 0 0 0))
 
 ;;;***
 
@@ -71,5 +119,6 @@ result of `defhydra'.
 ;; version-control: never
 ;; no-byte-compile: t
 ;; no-update-autoloads: t
+;; coding: utf-8
 ;; End:
 ;;; hydra-autoloads.el ends here
