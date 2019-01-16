@@ -1,7 +1,7 @@
 deflogin on
 autodetach on
 mousetrack on
-escape ^Jj
+escape ^||
 startup_message off
 shell -$HOME/bin/rc
 activity "active: %n (%t) [%w:%s]"
@@ -24,7 +24,7 @@ bind ^k
 bind K kill
 bind v digraph
 bind ^v version
-
+bindkey "^[ " command
 #caption splitonly
 #caption always "%{+b bw}[%n:%t] %{-b kw} %= %?%-Lw%?%{+b kb}[%n:%t]%?(%u)%?%{-b kw}%?%+Lw%?"
 caption always "%{= kb}[ %{G}%H::$USER %{b}][ %=%{w}%?%-Lw%?%{b}(%{W}%n*%f %t%?(%u)%?%{b})%{w}%?%+Lw%?%= %{b}][%{kB} %Y-%m-%d %{kW}%0c %{kb}]"
@@ -43,8 +43,8 @@ sorendition +b kG
 
 ##############################
 # Default apps
-screen -t root su
-screen
+screen -t irc weechat-curses
+screen -t emacs google-emacs -nw
 screen
 
 select 1
