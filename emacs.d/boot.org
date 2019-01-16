@@ -193,18 +193,19 @@ projectile project as well, as this would make it easy to see what was
   (setq frame-title-format '("%m " invocation-name "@" system-name))
 #+end_src
 ** GUI Scrolling
-I desperately wish this worked in the emacs GUI. One of the biggest ergonomics that annoys me.
+I desperately wish this worked in the emacs GUI. One of the biggest
+ergonomics that annoys me.
 #+begin_src emacs-lisp
-  ;;(pixel-scroll-mode)
+  ;;   (pixel-scroll-mode)
 
-  ;;(setq pixel-dead-time 0)
-  ;;(setq pixel-resolution-fine-flag t)
+  ;;   (setq pixel-dead-time 0)
+  ;;   (setq pixel-resolution-fine-flag t)
 
-  (setq mouse-wheel-scroll-amount '(2))
-  ;;(setq mouse-wheel-progressive-speed nil)
+  ;; ;;  (setq mouse-wheel-scroll-amount '(2))
+  ;;   (setq mouse-wheel-progressive-speed nil)
 
-  ;;(setq fast-but-imprecise-scrolling t)
-  ;;(setq jit-lock-defer-time 0)
+  ;;   ;;(setq fast-but-imprecise-scrolling t)
+  ;;   ;;(setq jit-lock-defer-time 0)
 #+end_src
 ** System sepecific settings
    :PROPERTIES:
@@ -215,17 +216,18 @@ VPN settings are. Also, set different font sizes for the different
 screen DPI's.
 #+begin_src emacs-lisp
   (defun cm/produce-font (size)
-    (let ((font (concat "DejaVu Sans Mono-"
-                        (if (numberp size) (number-to-string size) size)
-                        ":hinting=true:autohint=true")))
-      (add-to-list 'initial-frame-alist `(font . ,font))
-      (add-to-list 'default-frame-alist `(font . ,font))))
-           
+    (set-face-attribute 'default nil
+			:family "DejaVu Sans Mono" :height (* size 10))
+    (set-face-attribute 'fixed-pitch nil
+			:family "DejaVu Sans Mono" :height (* size 10))
+    (set-face-attribute 'variable-pitch nil
+			:family "EtBembo" :height (* size 14)))
+
   (cond
     ((or (string-prefix-p "phoenix-mta" system-name)
-         (string-prefix-p "vpn2ntap-" system-name)
-         (string-prefix-p "novaria" system-name)
-         (string-prefix-p "moc.ppaten" (apply 'string (reverse (string-to-list system-name)))))
+	 (string-prefix-p "vpn2ntap-" system-name)
+	 (string-prefix-p "novaria" system-name)
+	 (string-prefix-p "moc.ppaten" (apply 'string (reverse (string-to-list system-name)))))
      (cm/produce-font 12))
     ((equal system-name "penolpe")
      (cm/produce-font 9))
@@ -688,8 +690,11 @@ that?
   (defvar cm/theme-after-hook '()
     "Hooks to run after setting a theme")
 
+  (defvar cm/configured-theme-styles '(dark light author)
+    "Which styles are currently configured for use")
 
   (defun cm/set-theme (theme)
+    (interactive "Theme to swap to: ")
     (run-hooks 'cm/theme-before-hook)
     (pcase theme
       ('dark
@@ -697,7 +702,10 @@ that?
 	      (load-theme 'wombat t)))
       ('light
        (progn (setq cm/theme-style 'light)
-	      (load-theme 'adwaita t))))
+	      (load-theme 'adwaita t)))
+      ('author
+       (progn (setq cm/theme-style 'author)
+	      (load-theme 'poet t))))
     (run-hooks 'cm/theme-after-hook))
 
   (defun cm/swap-theme ()
@@ -1529,7 +1537,7 @@ C situation (they both chose lisp like adults).
 *** Hydra
 Useful for hydras.
 #+begin_src emacs-lisp
-  (use-package hyrda)
+  (use-package hydra)
 #+end_src
 *** Undo Tree
 Undo tree is excellent! =C-x u= to browse. Now the larger question is
@@ -1781,21 +1789,24 @@ without things like =gofmt=.
   (use-package fill-column-indicator
     :commands (fci-mode))
 #+end_src
-*** Mixed Pitch (disabled, buggy on org files)
-This makes things just a tad nicer to read.
+*** Mixed Pitch
+This makes things just a tad nicer to read in org-mode. Currently only
+enabled there.
 #+begin_src emacs-lisp
-  ;;  (use-package mixed-pitch
-  ;;    :commands mixed-pitch-mode
-  ;;    :diminish mixed-pitch-mode
-  ;;    :init
-  ;;    (add-hook 'org-mode-hook #'mixed-pitch-mode)
-  ;;    :config
-  ;;;    (setq mixed-pitch-variable-pitch-cursor nil)
-  ;;;    (add-to-list 'mixed-pitch-fixed-pitch-faces 'org-todo)
-  ;;;    (add-to-list 'mixed-pitch-fixed-pitch-faces 'org-done)
-  ;;;    (add-to-list 'mixed-pitch-fixed-pitch-faces 'org-link)
-  ;;)
+  (use-package mixed-pitch
+    :commands mixed-pitch-mode
+    :diminish mixed-pitch-mode
+    :init
+    (add-hook 'org-mode-hook #'mixed-pitch-mode)
+    :config
+    (setq mixed-pitch-variable-pitch-cursor nil)
+    (add-to-list 'mixed-pitch-fixed-pitch-faces 'org-date)
+    (add-to-list 'mixed-pitch-fixed-pitch-faces 'org-done)
+    (add-to-list 'mixed-pitch-fixed-pitch-faces 'org-formula)
+    (add-to-list 'mixed-pitch-fixed-pitch-faces 'org-tag)
+    (add-to-list 'mixed-pitch-fixed-pitch-faces 'org-todo))
 #+end_src
+
 ** Major Modes
    :PROPERTIES:
    :ID:       04fe1433-561d-453a-a3c7-3ec248df0175
@@ -2895,14 +2906,11 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
   (defun cm/day-agendas ()
     `(("d" "Full Day Agenda"
        ((agenda "Today" ((org-agenda-span 1)))
-	(todo "NEXT" ,cm/org-sort-style)
-	(tags-todo "-TODO=\"PROJECT\"-TODO=\"WAITING\"" ,cm/org-sort-style)
-	(todo "PROJECT" ,cm/org-sort-style)))
+	(todo "NEXT" ,cm/org-sort-style)))
       ("i" "Inbox"
-       ((tags-todo "-{.*}-TODO=\"PROJECT\"")))
+       ((tags-todo "-{.*}-TODO=\"PROJECT\"-TODO=\"WAITING\"")))
       ("n" "Next agenda"
        ((todo "NEXT")
-	(todo "WAITING")
 	(todo "STARTED"))
        ,cm/org-sort-style)))
 
@@ -2917,7 +2925,12 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
       ,(cm/org-ctx-agenda "h" "HOME" "Home Agenda")
       ,(cm/org-ctx-agenda "r" "ERRAND" "Errand Agenda")
       ,(cm/org-ctx-agenda "f" "PHONE" "Phone Agenda")
-      ,(cm/org-ctx-agenda "a" "AGENDA" "People Agenda")
+      ("ca" "People Agenda"
+       ((tags-todo "AGENDA-TODO=\"PROJECT\"-BLOCKED=\"t\"-TODO=\"WAITING\"|TODO=\"WAITING\""))
+       ((org-agenda-skip-function '(org-agenda-skip-entry-if 'scheduled))
+	(org-agenda-sorting-strategy
+	 '((agenda habit-down time-up priority-down category-keep)
+	   (tags alpha-down)))))
       ("ct" "Tickler Agenda"
        ((tags-todo "-TODO=\"PROJECT\"-BLOCKED=\"t\"-TODO=\"WAITING\"")
 	(todo "PROJECT"))
@@ -2940,7 +2953,7 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
        (;; GET CLEAR
 	(tags-todo "noop" ,(cm/review-section "Get Clear!"))
 	(tags-todo "noop" ,(cm/review-header "Collect Loose Papers and Materials"))
-	(tags-todo "-{.*}-TODO=\"PROJECT\"" ,(cm/review-header "Get IN to ZERO"))
+	(tags-todo "-{.*}-TODO=\"PROJECT\"-TODO=\"WAITING\"" ,(cm/review-header "Get IN to ZERO"))
 	(tags-todo "noop" ,(cm/review-header "Empty Your Head!"))
 
 	;; GET CURRENT
@@ -2975,6 +2988,7 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
 	(tags-todo "noop" ,(cm/review-header "Empty Your Head!")))
        ((org-agenda-span 22)
 	(org-agenda-start-on-weekday 1)
+	(org-agenda-dim-blocked-tasks t)
 	(org-agenda-start-day ,(concat "-" (number-to-string (cm/days-back-to-monday)) "d"))))
       ("rq" "Quarterly Review Agenda"
        (;; GET CLEAR
@@ -3217,17 +3231,17 @@ This add some commands for managing and clocking my time in a hydra.
 
   (setq calendar-mark-diary-entries-flag t)
   (setq org-adapt-indentation nil)
-  (setq org-agenda-dim-blocked-tasks t)
+  (setq org-agenda-dim-blocked-tasks nil)
   (setq org-agenda-include-all-todo t)
   (setq org-agenda-include-diary t)
-  (setq org-agenda-inhibit-startup t)
   (setq org-agenda-show-all-dates t)
+  (setq org-startup-folded nil)
   (setq org-agenda-skip-deadline-if-done t)
   (setq org-agenda-skip-scheduled-if-done t)
   (setq org-agenda-span 'week)
   (setq org-agenda-sticky t)
   (setq org-agenda-tags-column -90)
-  (setq org-agenda-use-tag-inheritance '(search timeline agenda))
+  (setq org-agenda-use-tag-inheritance nil)
   (setq org-agenda-window-setup 'current-window)
   (setq org-attach-archive-delete 'query)
   (setq org-attach-directory "~/org/_attachments/")
@@ -3242,7 +3256,7 @@ This add some commands for managing and clocking my time in a hydra.
   (setq org-fontify-done-headline t)
   (setq org-hide-leading-stars t)
   (setq org-log-done t)
-  (setq org-outline-path-complete-in-steps nil) ;ido lol
+  (setq org-outline-path-complete-in-steps nil)
   (setq org-pretty-entities-include-sub-superscripts nil)
   (setq org-refile-use-outline-path 'file)
   (setq org-return-follows-link nil)
@@ -3254,6 +3268,8 @@ This add some commands for managing and clocking my time in a hydra.
   (setq org-use-speed-commands t)
   (setq org-use-sub-superscripts nil)
   (setq org-use-tag-inheritance nil)
+  (setq org-pretty-entities t)
+
   ;(setq org-completion-use-ido t)
   ;; disable dumb-ass git crap for now
   (advice-add 'org-attach-commit :override #'list)
@@ -3264,9 +3280,6 @@ This add some commands for managing and clocking my time in a hydra.
   (setq org-imenu-depth 99)
 
   (global-set-key (kbd "<f6>") 'org-clock-goto)
-
-  (setq org-structure-template-alist
-	(map 'list (lambda (x) (list (car x) (downcase (cadr x)))) org-structure-template-alist))
 
 #+end_src
 **** Org Contacts
@@ -3306,7 +3319,11 @@ it the normal way.
 	(outline-show-all)
 	(let ((toret nil))
 	  (dotimes (i (- (org-current-level) 1) toret)
-	    (outline-up-heading 1 t)
+	    ;; handle errors when levels are not uniform, we may go "up"
+	    ;; too many times.
+	    (condition-case nil
+		(outline-up-heading 1 t)
+	      (error nil))
 	    (setq toret
 		  (or toret
 		      (string-equal "PROJECT"
@@ -3319,65 +3336,6 @@ it the normal way.
 	(org-archive-subtree)))
 
   (setq org-archive-default-command #'cm/gtd-archiver)
-#+end_src
-**** MobileOrg
-#+begin_src emacs-lisp
-  (setq org-mobile-directory "~/org/.mobileorg-staging")
-  (add-hook 'org-mobile-post-push-hook
-            (lambda ()
-              (shell-command "pushorg")))
-
-  (add-hook 'org-mobile-pre-pull-hook
-            (lambda ()
-              (progn
-                (shell-command "cd $HOME/org/.mobileorg-staging && find . -type f -exec rm '{}' ';'")
-                (shell-command "pullorg"))))
-  (add-hook 'org-mobile-post-pull-hook
-            (lambda () (shell-command "cd $HOME/org/.mobileorg-staging && curl -n -T mobileorg.org https://dav.messagingengine.com/codemac.fastmail.com/files/org/mobileorg.org &")))
-
-#+end_src
-
-Sync my mobile-org files in a single function. This grabs everything
-in "from-mobile.org" after an org-mobile-pull and puts it into
-gtd.org/Inbox. At some point I'd love to call this from =emacsclient=,
-but I don't know what it would do if I was in the middle of refiling
-or something else. For now, it's manual.
-
-#+begin_src emacs-lisp
-  (defun cm/get-inbox-pos ()
-    (save-excursion
-      (with-current-buffer "gtd.org"
-	(goto-char (point-min))
-	(re-search-forward "^\\* Inbox[        ]*$")
-	(move-beginning-of-line nil)
-	(point))))
-
-  (defun cm/org-sync ()
-    (interactive)
-    (save-excursion
-      (org-save-all-org-buffers)
-      ;; skip the review agendas (which are slow)
-      (setq org-agenda-custom-commands
-	    (append (cm/day-agendas)
-		    (cm/context-agendas)
-		    (cm/checklist-agendas)))
-
-      (org-mobile-pull)
-      (with-current-buffer "from-mobile.org"
-	(if (equalp (point-max) (point-min))
-	    (message "Nothing to move in from-mobile.org, pushing current files.")
-	  (goto-char (point-max))
-	  (push-mark (point-min) t t)
-	  (org-refile nil nil `("gtd.org/Inbox" ,(buffer-file-name (get-buffer "gtd.org")) "" ,(cm/get-inbox-pos)))
-	(org-save-all-org-buffers))
-      (org-mobile-push)
-      (org-save-all-org-buffers)))
-    ;; set it back to normal
-    (cm/org-set-agenda)
-    (org-agenda nil "i")
-    (message "cm/org-sync completed"))
-
-  (global-set-key (kbd "C-c y") #'cm/org-sync)
 #+end_src
 **** Tags and todo keywords
      :PROPERTIES:
@@ -3403,8 +3361,6 @@ or something else. For now, it's manual.
   (setq org-todo-keywords
 	'((sequence "TODO(t@)" "NEXT(n!)" "STARTED(s)" "WAITING(w@)" "PROJECT(p)" "|" "DONE(d@)" "NVM(v@)")))
   (setq org-tags-exclude-from-inheritance '("CHECKLIST"))
-  ;(setq org-agenda-category-icon-alist
-  ;      '(("netapp" "" nil t)
 #+end_src
 **** org export
      :PROPERTIES:
@@ -3774,7 +3730,7 @@ Let's first layout what we want the keymap to be like:
     ("b" cm/org-scratch-buffer "buffer for org scratch notes")
     ("f" deft-new-file "new file for org notes, named by the date")
     ("n" deft "search through all notes")
-    ("r" deft-new-file-named "new file for notes, named by the user")
+    ("r" cm/deft-new-file-named "new file for notes, named by the user")
     ("q" nil "quit"))
 
   (global-set-key (kbd "C-c n") 'hydra-cm-org-notes/body)
@@ -3782,7 +3738,6 @@ Let's first layout what we want the keymap to be like:
 
 #+begin_src emacs-lisp
   (use-package deft
-    :commands (deft)
     :config
     (setq deft-default-extension "org")
     (setq deft-directory "~/org/_notes/")
@@ -3947,14 +3902,14 @@ appointments in the org mode calendar. It's not perfect, but it does
 help with my forgetfulness.
 
 #+begin_src emacs-lisp
-  (setq appt-display-interval 2
-	appt-message-warning-time 6)
+  (setq appt-display-interval 1
+	appt-message-warning-time 3)
   (appt-activate)
   (org-agenda-to-appt)
 #+end_src
 **** Better Org Goto
 #+begin_src emacs-lisp
-  (defvar cm/org-goto-dirs '("~/org/*.org" "~/org/_notes/*.org")
+  (defvar cm/org-goto-dirs '("~/org/*.org")
     "Org directories to search with goto")
 
   (setq counsel-org-goto-display-style 'path)
@@ -3988,6 +3943,40 @@ help with my forgetfulness.
   (define-key org-mode-map (kbd "C-c C-j") 'cm/org-goto)
   (define-key global-map (kbd "C-c g") 'cm/org-goto)
 #+end_src
+
+**** Face settings for mixed-pitch-mode
+This makes the headings look as pretty as everything else, without
+worrying about how the face was inherited.
+
+#+begin_src emacs-lisp
+  (defun cm/set-face-attribute-mixed (face)
+    (set-face-attribute
+     face nil
+     :family (face-attribute 'variable-pitch :family)
+     :height (face-attribute 'variable-pitch :height)))
+
+  (mapc #'cm/set-face-attribute-mixed org-level-faces)
+
+  (defun cm/org-level-face-height (ratio)
+    (truncate (* (face-attribute 'variable-pitch :height nil 'default) ratio)))
+
+  (defun cm/org-level-set-face-height (part)
+    (set-face-attribute (car part) nil :height (cm/org-level-face-height (cdr part))))
+
+  (defvar cm/org-level-height-alist
+    '((org-level-1 . 1.2)
+      (org-level-2 . 1.1)
+      (org-level-3 . 1.05)
+      (org-level-4 . 1)
+      (org-level-5 . 1)
+      (org-level-6 . 1)
+      (org-level-7 . 1)
+      (org-level-8 . 1))
+    "List of org-level faces to ratio of default variable height")
+
+  (mapc #'cm/org-level-set-face-height cm/org-level-height-alist)
+#+end_src
+
 *** RCIRC
     :PROPERTIES:
     :ID:       63cf268e-8426-426f-a6fe-62492899d659
@@ -5468,7 +5457,8 @@ settings that occur above. Much easier this way.
     (setq cm/cursor-color
      (pcase cm/theme-style
        ('dark "#ffff00")
-       ('light "#eeee00")))
+       ('light "#000000")
+       ('author "#000000")))
     (set-cursor-color cm/cursor-color)
     (set-mouse-color cm/cursor-color))
 
