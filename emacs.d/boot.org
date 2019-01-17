@@ -1727,6 +1727,7 @@ out semantically.
 #+begin_src emacs-lisp
   (use-package projectile
     :diminish projectile-mode
+    :bind-keymap ("C-c p" . projectile-command-map)
     :init
     (put 'projectile-project-name 'safe-local-variable 'stringp)
     (put 'projectile-project-compilation-cmd 'safe-local-variable 'stringp)
