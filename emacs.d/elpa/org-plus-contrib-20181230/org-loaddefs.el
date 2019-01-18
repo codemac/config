@@ -1242,6 +1242,18 @@ This command is set with the variable `org-archive-default-command'.
 
 ;;;***
 
+;;;### (autoloads nil "org-attach" "../../../../.emacs.d/elpa/org-plus-contrib-20181230/org-attach.el"
+;;;;;;  "ff30fb24490ad60a9b4d33c1184fecb9")
+;;; Generated autoloads from ../../../../.emacs.d/elpa/org-plus-contrib-20181230/org-attach.el
+
+(autoload 'org-attach "org-attach" "\
+The dispatcher for attachment commands.
+Shows a list of commands and prompts for another key to execute a command.
+
+\(fn)" t nil)
+
+;;;***
+
 ;;;### (autoloads nil "org-attach-embedded-images" "org-attach-embedded-images.el"
 ;;;;;;  (0 0 0 0))
 ;;; Generated autoloads from org-attach-embedded-images.el
@@ -2557,8 +2569,9 @@ Load FILE with optional arguments NOERROR and MUSTSUFFIX.
 
 ;;;***
 
-;;;### (autoloads nil "org-mobile" "org-mobile.el" (0 0 0 0))
-;;; Generated autoloads from org-mobile.el
+;;;### (autoloads nil "org-mobile" "../../../../.emacs.d/elpa/org-plus-contrib-20181230/org-mobile.el"
+;;;;;;  "b96081937337b5b7a0aeffc149d8ba91")
+;;; Generated autoloads from ../../../../.emacs.d/elpa/org-plus-contrib-20181230/org-mobile.el
 
 (autoload 'org-mobile-push "org-mobile" "\
 Push the current state of Org affairs to the target directory.
@@ -2573,8 +2586,6 @@ Apply all flagged actions, flag entries to be flagged and then call an
 agenda view showing the flagged items.
 
 \(fn)" t nil)
-
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "org-mobile" '("org-mobile-")))
 
 ;;;***
 
@@ -2639,8 +2650,9 @@ With a double prefix arg \\[universal-argument] \\[universal-argument], open the
 
 ;;;***
 
-;;;### (autoloads nil "org-plot" "org-plot.el" (0 0 0 0))
-;;; Generated autoloads from org-plot.el
+;;;### (autoloads nil "org-plot" "../../../../.emacs.d/elpa/org-plus-contrib-20181230/org-plot.el"
+;;;;;;  "85b14ab93a67abe34c254eb6c55bd79c")
+;;; Generated autoloads from ../../../../.emacs.d/elpa/org-plus-contrib-20181230/org-plot.el
 
 (autoload 'org-plot/gnuplot "org-plot" "\
 Plot table using gnuplot.  Gnuplot options can be specified with PARAMS.
@@ -2648,8 +2660,6 @@ If not given options will be taken from the +PLOT
 line directly before or after the table.
 
 \(fn &optional PARAMS)" t nil)
-
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "org-plot" '("org-plot")))
 
 ;;;***
 
@@ -2788,8 +2798,9 @@ Open A Dired buffer with unused screenshots marked
 
 ;;;***
 
-;;;### (autoloads nil "org-table" "org-table.el" (0 0 0 0))
-;;; Generated autoloads from org-table.el
+;;;### (autoloads nil "org-table" "../../../../.emacs.d/elpa/org-plus-contrib-20181230/org-table.el"
+;;;;;;  "e10ec51252b722ee5e71d79cb5182074")
+;;; Generated autoloads from ../../../../.emacs.d/elpa/org-plus-contrib-20181230/org-table.el
 
 (autoload 'org-table-create-with-table\.el "org-table" "\
 Use the table.el package to insert a new table.
@@ -3324,11 +3335,6 @@ Toggle the formula debugger in tables.
 (autoload 'orgtbl-mode "org-table" "\
 The Org mode table editor as a minor mode for use in other modes.
 
-If called interactively, enable Orgtbl mode if ARG is positive, and
-disable it if ARG is zero or negative.  If called from Lisp,
-also enable the mode if ARG is omitted or nil, and toggle it
-if ARG is `toggle'; disable the mode otherwise.
-
 \(fn &optional ARG)" t nil)
 
 (defvar orgtbl-exp-regexp "^\\([-+]?[0-9][0-9.]*\\)[eE]\\([-+]?[0-9]+\\)$" "\
@@ -3535,8 +3541,6 @@ which will prompt for the width.
 
 \(fn &optional ASK)" t nil)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "org-table" '("org")))
-
 ;;;***
 
 ;;;### (autoloads nil "org-tempo" "org-tempo.el" (0 0 0 0))
@@ -3546,8 +3550,9 @@ which will prompt for the width.
 
 ;;;***
 
-;;;### (autoloads nil "org-timer" "org-timer.el" (0 0 0 0))
-;;; Generated autoloads from org-timer.el
+;;;### (autoloads nil "org-timer" "../../../../.emacs.d/elpa/org-plus-contrib-20181230/org-timer.el"
+;;;;;;  "51d283ecbde4fba2cb58c8cca8ad19a5")
+;;; Generated autoloads from ../../../../.emacs.d/elpa/org-plus-contrib-20181230/org-timer.el
 
 (autoload 'org-timer-start "org-timer" "\
 Set the starting time for the relative timer to now.
@@ -3620,8 +3625,6 @@ minutes in the Effort property, if any.  You can ignore this by
 using three `C-u' prefix arguments.
 
 \(fn &optional OPT)" t nil)
-
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "org-timer" '("org-timer-")))
 
 ;;;***
 
@@ -3923,8 +3926,199 @@ Call the customize function with org as argument.
 
 ;;;***
 
-;;;### (autoloads nil "ox-ascii" "ox-ascii.el" (0 0 0 0))
-;;; Generated autoloads from ox-ascii.el
+;;;### (autoloads nil "ox" "../../../../.emacs.d/elpa/org-plus-contrib-20181230/ox.el"
+;;;;;;  "603df06831b528c9759293539f90b954")
+;;; Generated autoloads from ../../../../.emacs.d/elpa/org-plus-contrib-20181230/ox.el
+
+(autoload 'org-export-get-backend "ox" "\
+Return export back-end named after NAME.
+NAME is a symbol.  Return nil if no such back-end is found.
+
+\(fn NAME)" nil nil)
+
+(autoload 'org-export-get-environment "ox" "\
+Collect export options from the current buffer.
+
+Optional argument BACKEND is an export back-end, as returned by
+`org-export-create-backend'.
+
+When optional argument SUBTREEP is non-nil, assume the export is
+done against the current sub-tree.
+
+Third optional argument EXT-PLIST is a property list with
+external parameters overriding Org default settings, but still
+inferior to file-local settings.
+
+\(fn &optional BACKEND SUBTREEP EXT-PLIST)" nil nil)
+
+(autoload 'org-export-as "ox" "\
+Transcode current Org buffer into BACKEND code.
+
+BACKEND is either an export back-end, as returned by, e.g.,
+`org-export-create-backend', or a symbol referring to
+a registered back-end.
+
+If narrowing is active in the current buffer, only transcode its
+narrowed part.
+
+If a region is active, transcode that region.
+
+When optional argument SUBTREEP is non-nil, transcode the
+sub-tree at point, extracting information from the headline
+properties first.
+
+When optional argument VISIBLE-ONLY is non-nil, don't export
+contents of hidden elements.
+
+When optional argument BODY-ONLY is non-nil, only return body
+code, without surrounding template.
+
+Optional argument EXT-PLIST, when provided, is a property list
+with external parameters overriding Org default settings, but
+still inferior to file-local settings.
+
+Return code as a string.
+
+\(fn BACKEND &optional SUBTREEP VISIBLE-ONLY BODY-ONLY EXT-PLIST)" nil nil)
+
+(autoload 'org-export-string-as "ox" "\
+Transcode STRING into BACKEND code.
+
+BACKEND is either an export back-end, as returned by, e.g.,
+`org-export-create-backend', or a symbol referring to
+a registered back-end.
+
+When optional argument BODY-ONLY is non-nil, only return body
+code, without preamble nor postamble.
+
+Optional argument EXT-PLIST, when provided, is a property list
+with external parameters overriding Org default settings, but
+still inferior to file-local settings.
+
+Return code as a string.
+
+\(fn STRING BACKEND &optional BODY-ONLY EXT-PLIST)" nil nil)
+
+(autoload 'org-export-replace-region-by "ox" "\
+Replace the active region by its export to BACKEND.
+BACKEND is either an export back-end, as returned by, e.g.,
+`org-export-create-backend', or a symbol referring to
+a registered back-end.
+
+\(fn BACKEND)" nil nil)
+
+(autoload 'org-export-insert-default-template "ox" "\
+Insert all export keywords with default values at beginning of line.
+
+BACKEND is a symbol referring to the name of a registered export
+back-end, for which specific export options should be added to
+the template, or `default' for default template.  When it is nil,
+the user will be prompted for a category.
+
+If SUBTREEP is non-nil, export configuration will be set up
+locally for the subtree through node properties.
+
+\(fn &optional BACKEND SUBTREEP)" t nil)
+
+(autoload 'org-export-to-buffer "ox" "\
+Call `org-export-as' with output to a specified buffer.
+
+BACKEND is either an export back-end, as returned by, e.g.,
+`org-export-create-backend', or a symbol referring to
+a registered back-end.
+
+BUFFER is the name of the output buffer.  If it already exists,
+it will be erased first, otherwise, it will be created.
+
+A non-nil optional argument ASYNC means the process should happen
+asynchronously.  The resulting buffer should then be accessible
+through the `org-export-stack' interface.  When ASYNC is nil, the
+buffer is displayed if `org-export-show-temporary-export-buffer'
+is non-nil.
+
+Optional arguments SUBTREEP, VISIBLE-ONLY, BODY-ONLY and
+EXT-PLIST are similar to those used in `org-export-as', which
+see.
+
+Optional argument POST-PROCESS is a function which should accept
+no argument.  It is always called within the current process,
+from BUFFER, with point at its beginning.  Export back-ends can
+use it to set a major mode there, e.g,
+
+  (defun org-latex-export-as-latex
+    (&optional async subtreep visible-only body-only ext-plist)
+    (interactive)
+    (org-export-to-buffer \\='latex \"*Org LATEX Export*\"
+      async subtreep visible-only body-only ext-plist (lambda () (LaTeX-mode))))
+
+This function returns BUFFER.
+
+\(fn BACKEND BUFFER &optional ASYNC SUBTREEP VISIBLE-ONLY BODY-ONLY EXT-PLIST POST-PROCESS)" nil nil)
+
+(function-put 'org-export-to-buffer 'lisp-indent-function '2)
+
+(autoload 'org-export-to-file "ox" "\
+Call `org-export-as' with output to a specified file.
+
+BACKEND is either an export back-end, as returned by, e.g.,
+`org-export-create-backend', or a symbol referring to
+a registered back-end.  FILE is the name of the output file, as
+a string.
+
+A non-nil optional argument ASYNC means the process should happen
+asynchronously.  The resulting buffer will then be accessible
+through the `org-export-stack' interface.
+
+Optional arguments SUBTREEP, VISIBLE-ONLY, BODY-ONLY and
+EXT-PLIST are similar to those used in `org-export-as', which
+see.
+
+Optional argument POST-PROCESS is called with FILE as its
+argument and happens asynchronously when ASYNC is non-nil.  It
+has to return a file name, or nil.  Export back-ends can use this
+to send the output file through additional processing, e.g,
+
+  (defun org-latex-export-to-latex
+    (&optional async subtreep visible-only body-only ext-plist)
+    (interactive)
+    (let ((outfile (org-export-output-file-name \".tex\" subtreep)))
+      (org-export-to-file \\='latex outfile
+        async subtreep visible-only body-only ext-plist
+        (lambda (file) (org-latex-compile file)))
+
+The function returns either a file name returned by POST-PROCESS,
+or FILE.
+
+\(fn BACKEND FILE &optional ASYNC SUBTREEP VISIBLE-ONLY BODY-ONLY EXT-PLIST POST-PROCESS)" nil nil)
+
+(function-put 'org-export-to-file 'lisp-indent-function '2)
+
+(autoload 'org-export-dispatch "ox" "\
+Export dispatcher for Org mode.
+
+It provides an access to common export related tasks in a buffer.
+Its interface comes in two flavors: standard and expert.
+
+While both share the same set of bindings, only the former
+displays the valid keys associations in a dedicated buffer.
+Scrolling (resp. line-wise motion) in this buffer is done with
+SPC and DEL (resp. C-n and C-p) keys.
+
+Set variable `org-export-dispatch-use-expert-ui' to switch to one
+flavor or the other.
+
+When ARG is `\\[universal-argument]', repeat the last export action, with the same
+set of options used back then, on the current buffer.
+
+When ARG is `\\[universal-argument] \\[universal-argument]', display the asynchronous export stack.
+
+\(fn &optional ARG)" t nil)
+
+;;;***
+
+;;;### (autoloads nil "ox-ascii" "../../../../.emacs.d/elpa/org-plus-contrib-20181230/ox-ascii.el"
+;;;;;;  "2269beab8fcb19d5a83be0817735ffd3")
+;;; Generated autoloads from ../../../../.emacs.d/elpa/org-plus-contrib-20181230/ox-ascii.el
 
 (autoload 'org-ascii-convert-region-to-ascii "ox-ascii" "\
 Assume region has Org syntax, and convert it to plain ASCII.
@@ -4031,20 +4225,14 @@ Return output file name.
 
 \(fn PLIST FILENAME PUB-DIR)" nil nil)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "ox-ascii" '("org-ascii-")))
-
 ;;;***
 
-;;;### (autoloads nil "ox-beamer" "ox-beamer.el" (0 0 0 0))
-;;; Generated autoloads from ox-beamer.el
+;;;### (autoloads nil "ox-beamer" "../../../../.emacs.d/elpa/org-plus-contrib-20181230/ox-beamer.el"
+;;;;;;  "3c972a529365e0fd53f27db37a4e5e91")
+;;; Generated autoloads from ../../../../.emacs.d/elpa/org-plus-contrib-20181230/ox-beamer.el
 
 (autoload 'org-beamer-mode "ox-beamer" "\
 Support for editing Beamer oriented Org mode files.
-
-If called interactively, enable Org-Beamer mode if ARG is positive, and
-disable it if ARG is zero or negative.  If called from Lisp,
-also enable the mode if ARG is omitted or nil, and toggle it
-if ARG is `toggle'; disable the mode otherwise.
 
 \(fn &optional ARG)" t nil)
 
@@ -4173,8 +4361,6 @@ Return output file name.
 
 \(fn PLIST FILENAME PUB-DIR)" nil nil)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "ox-beamer" '("org-beamer-")))
-
 ;;;***
 
 ;;;### (autoloads nil "ox-bibtex" "ox-bibtex.el" (0 0 0 0))
@@ -4249,8 +4435,9 @@ Return output file's name.
 
 ;;;***
 
-;;;### (autoloads nil "ox-html" "ox-html.el" (0 0 0 0))
-;;; Generated autoloads from ox-html.el
+;;;### (autoloads nil "ox-html" "../../../../.emacs.d/elpa/org-plus-contrib-20181230/ox-html.el"
+;;;;;;  "f7035c00bca6b7bac5f32111c278e009")
+;;; Generated autoloads from ../../../../.emacs.d/elpa/org-plus-contrib-20181230/ox-html.el
 
 (put 'org-html-head-include-default-style 'safe-local-variable 'booleanp)
 
@@ -4353,12 +4540,11 @@ Return output file name.
 
 \(fn PLIST FILENAME PUB-DIR)" nil nil)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "ox-html" '("org-html-")))
-
 ;;;***
 
-;;;### (autoloads nil "ox-icalendar" "ox-icalendar.el" (0 0 0 0))
-;;; Generated autoloads from ox-icalendar.el
+;;;### (autoloads nil "ox-icalendar" "../../../../.emacs.d/elpa/org-plus-contrib-20181230/ox-icalendar.el"
+;;;;;;  "9d179af5b2a082e77567ef226b3b132b")
+;;; Generated autoloads from ../../../../.emacs.d/elpa/org-plus-contrib-20181230/ox-icalendar.el
 
 (autoload 'org-icalendar-export-to-ics "ox-icalendar" "\
 Export current buffer to an iCalendar file.
@@ -4404,8 +4590,6 @@ The file is stored under the name chosen in
 `org-icalendar-combined-agenda-file'.
 
 \(fn &optional ASYNC)" t nil)
-
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "ox-icalendar" '("org-icalendar-")))
 
 ;;;***
 
@@ -4512,8 +4696,9 @@ Return PDF file's name.
 
 ;;;***
 
-;;;### (autoloads nil "ox-latex" "ox-latex.el" (0 0 0 0))
-;;; Generated autoloads from ox-latex.el
+;;;### (autoloads nil "ox-latex" "../../../../.emacs.d/elpa/org-plus-contrib-20181230/ox-latex.el"
+;;;;;;  "12fca0e4f44122c2bd9e6ad786708382")
+;;; Generated autoloads from ../../../../.emacs.d/elpa/org-plus-contrib-20181230/ox-latex.el
 
 (autoload 'org-latex-make-preamble "ox-latex" "\
 Return a formatted LaTeX preamble.
@@ -4646,8 +4831,6 @@ Return output file name.
 
 \(fn PLIST FILENAME PUB-DIR)" nil nil)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "ox-latex" '("org-latex-")))
-
 ;;;***
 
 ;;;### (autoloads nil "ox-man" "ox-man.el" (0 0 0 0))
@@ -4657,8 +4840,9 @@ Return output file name.
 
 ;;;***
 
-;;;### (autoloads nil "ox-md" "ox-md.el" (0 0 0 0))
-;;; Generated autoloads from ox-md.el
+;;;### (autoloads nil "ox-md" "../../../../.emacs.d/elpa/org-plus-contrib-20181230/ox-md.el"
+;;;;;;  "a33f3fa75c44cb8803214c09b8d95d98")
+;;; Generated autoloads from ../../../../.emacs.d/elpa/org-plus-contrib-20181230/ox-md.el
 
 (autoload 'org-md-export-as-markdown "ox-md" "\
 Export current buffer to a Markdown buffer.
@@ -4727,12 +4911,11 @@ Return output file name.
 
 \(fn PLIST FILENAME PUB-DIR)" nil nil)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "ox-md" '("org-md-")))
-
 ;;;***
 
-;;;### (autoloads nil "ox-odt" "ox-odt.el" (0 0 0 0))
-;;; Generated autoloads from ox-odt.el
+;;;### (autoloads nil "ox-odt" "../../../../.emacs.d/elpa/org-plus-contrib-20181230/ox-odt.el"
+;;;;;;  "804250dccfe868776a39603aed7adfc1")
+;;; Generated autoloads from ../../../../.emacs.d/elpa/org-plus-contrib-20181230/ox-odt.el
 
 (put 'org-odt-preferred-output-format 'safe-local-variable 'stringp)
 
@@ -4791,12 +4974,11 @@ is non-nil then the newly converted file is opened using
 
 \(fn &optional IN-FILE OUT-FMT OPEN)" t nil)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "ox-odt" '("org-odt-")))
-
 ;;;***
 
-;;;### (autoloads nil "ox-org" "ox-org.el" (0 0 0 0))
-;;; Generated autoloads from ox-org.el
+;;;### (autoloads nil "ox-org" "../../../../.emacs.d/elpa/org-plus-contrib-20181230/ox-org.el"
+;;;;;;  "ea094eb99cb96f34ba3de251953b44a8")
+;;; Generated autoloads from ../../../../.emacs.d/elpa/org-plus-contrib-20181230/ox-org.el
 
 (autoload 'org-org-export-as-org "ox-org" "\
 Export current buffer to an Org buffer.
@@ -4871,12 +5053,11 @@ Return output file name.
 
 \(fn PLIST FILENAME PUB-DIR)" nil nil)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "ox-org" '("org-org-")))
-
 ;;;***
 
-;;;### (autoloads nil "ox-publish" "ox-publish.el" (0 0 0 0))
-;;; Generated autoloads from ox-publish.el
+;;;### (autoloads nil "ox-publish" "../../../../.emacs.d/elpa/org-plus-contrib-20181230/ox-publish.el"
+;;;;;;  "8788ad3f46283d5661961be7bd67f7ad")
+;;; Generated autoloads from ../../../../.emacs.d/elpa/org-plus-contrib-20181230/ox-publish.el
 
 (defalias 'org-publish-project 'org-publish)
 
@@ -4915,8 +5096,6 @@ With a prefix argument, force publishing of all files in
 the project.
 
 \(fn &optional FORCE ASYNC)" t nil)
-
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "ox-publish" '("org-publish-")))
 
 ;;;***
 
@@ -5082,8 +5261,9 @@ the reports is done using the TaskJuggler GUI.
 
 ;;;***
 
-;;;### (autoloads nil "ox-texinfo" "ox-texinfo.el" (0 0 0 0))
-;;; Generated autoloads from ox-texinfo.el
+;;;### (autoloads nil "ox-texinfo" "../../../../.emacs.d/elpa/org-plus-contrib-20181230/ox-texinfo.el"
+;;;;;;  "62f639dfd506091603c00a99c9414e00")
+;;; Generated autoloads from ../../../../.emacs.d/elpa/org-plus-contrib-20181230/ox-texinfo.el
 
 (autoload 'org-texinfo-export-to-texinfo "ox-texinfo" "\
 Export current buffer to a Texinfo file.
@@ -5166,8 +5346,6 @@ itemized list in Org syntax in an Texinfo buffer and use this
 command to convert it.
 
 \(fn)" t nil)
-
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "ox-texinfo" '("org-texinfo-")))
 
 ;;;***
 

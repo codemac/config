@@ -22,8 +22,8 @@
         ("gnu"          . "http://elpa.gnu.org/packages/")))
 
 (setq package-archive-priorities
-      '(("gnu"          . 100)
-	("org"          . 90)
+      '(("org"          . 100)
+	("gnu"          . 90)
 	("melpa-stable" . 80)
 	("melpa"        . 70)
 	("marmalade"    . 60)))

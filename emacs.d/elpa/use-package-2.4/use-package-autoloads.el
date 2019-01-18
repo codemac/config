@@ -6,9 +6,9 @@
                          (or (file-name-directory #$) (car load-path))))
 
 
-;;;### (autoloads nil "use-package-bind-key" "use-package-bind-key.el"
-;;;;;;  (0 0 0 0))
-;;; Generated autoloads from use-package-bind-key.el
+;;;### (autoloads nil "use-package-bind-key" "../../../../.emacs.d/elpa/use-package-2.4/use-package-bind-key.el"
+;;;;;;  "c90d37deb10a62f6f9a71142c85f0513")
+;;; Generated autoloads from ../../../../.emacs.d/elpa/use-package-2.4/use-package-bind-key.el
 
 (autoload 'use-package-autoload-keymap "use-package-bind-key" "\
 Loads PACKAGE and then binds the key sequence used to invoke
@@ -55,14 +55,21 @@ deferred until the prefix key sequence is pressed.
 
 
 \(fn NAME KEYWORD ARG REST STATE)" nil nil)
+
+;;;### (autoloads "actual autoloads are elsewhere" "use-package-bind-key"
+;;;;;;  "../../../../.emacs.d/elpa/use-package-2.4/use-package-bind-key.el"
+;;;;;;  (0 0 0 0))
+;;; Generated autoloads from ../../../../.emacs.d/elpa/use-package-2.4/use-package-bind-key.el
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "use-package-bind-key" '("use-package-handler/:bind*")))
 
 ;;;***
+
+;;;***
 
-;;;### (autoloads nil "use-package-core" "use-package-core.el" (0
-;;;;;;  0 0 0))
-;;; Generated autoloads from use-package-core.el
+;;;### (autoloads nil "use-package-core" "../../../../.emacs.d/elpa/use-package-2.4/use-package-core.el"
+;;;;;;  "8c156a6c7cfad1477c12426914c7b8bf")
+;;; Generated autoloads from ../../../../.emacs.d/elpa/use-package-2.4/use-package-core.el
 
 (autoload 'use-package "use-package-core" "\
 Declare an Emacs package by specifying a group of configuration options.
@@ -122,14 +129,21 @@ this file.  Usage:
 \(fn NAME &rest ARGS)" nil t)
 
 (function-put 'use-package 'lisp-indent-function '1)
+
+;;;### (autoloads "actual autoloads are elsewhere" "use-package-core"
+;;;;;;  "../../../../.emacs.d/elpa/use-package-2.4/use-package-core.el"
+;;;;;;  (0 0 0 0))
+;;; Generated autoloads from ../../../../.emacs.d/elpa/use-package-2.4/use-package-core.el
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "use-package-core" '("use-package-")))
 
 ;;;***
+
+;;;***
 
-;;;### (autoloads nil "use-package-delight" "use-package-delight.el"
-;;;;;;  (0 0 0 0))
-;;; Generated autoloads from use-package-delight.el
+;;;### (autoloads nil "use-package-delight" "../../../../.emacs.d/elpa/use-package-2.4/use-package-delight.el"
+;;;;;;  "746f268bae17ced2d74b26af26a6dff0")
+;;; Generated autoloads from ../../../../.emacs.d/elpa/use-package-2.4/use-package-delight.el
 
 (autoload 'use-package-normalize/:delight "use-package-delight" "\
 Normalize arguments to delight.
@@ -140,14 +154,21 @@ Normalize arguments to delight.
 
 
 \(fn NAME KEYWORD ARGS REST STATE)" nil nil)
+
+;;;### (autoloads "actual autoloads are elsewhere" "use-package-delight"
+;;;;;;  "../../../../.emacs.d/elpa/use-package-2.4/use-package-delight.el"
+;;;;;;  (0 0 0 0))
+;;; Generated autoloads from ../../../../.emacs.d/elpa/use-package-2.4/use-package-delight.el
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "use-package-delight" '("use-package-normalize-delight")))
 
 ;;;***
+
+;;;***
 
-;;;### (autoloads nil "use-package-diminish" "use-package-diminish.el"
-;;;;;;  (0 0 0 0))
-;;; Generated autoloads from use-package-diminish.el
+;;;### (autoloads nil "use-package-diminish" "../../../../.emacs.d/elpa/use-package-2.4/use-package-diminish.el"
+;;;;;;  "b69844ce6ed740f161629bb81bdbeca4")
+;;; Generated autoloads from ../../../../.emacs.d/elpa/use-package-2.4/use-package-diminish.el
 
 (autoload 'use-package-normalize/:diminish "use-package-diminish" "\
 
@@ -158,14 +179,21 @@ Normalize arguments to delight.
 
 
 \(fn NAME KEYWORD ARG REST STATE)" nil nil)
+
+;;;### (autoloads "actual autoloads are elsewhere" "use-package-diminish"
+;;;;;;  "../../../../.emacs.d/elpa/use-package-2.4/use-package-diminish.el"
+;;;;;;  (0 0 0 0))
+;;; Generated autoloads from ../../../../.emacs.d/elpa/use-package-2.4/use-package-diminish.el
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "use-package-diminish" '("use-package-normalize-diminish")))
 
 ;;;***
+
+;;;***
 
-;;;### (autoloads nil "use-package-ensure" "use-package-ensure.el"
-;;;;;;  (0 0 0 0))
-;;; Generated autoloads from use-package-ensure.el
+;;;### (autoloads nil "use-package-ensure" "../../../../.emacs.d/elpa/use-package-2.4/use-package-ensure.el"
+;;;;;;  "df4023c75815a91268b0d47df882bebe")
+;;; Generated autoloads from ../../../../.emacs.d/elpa/use-package-2.4/use-package-ensure.el
 
 (autoload 'use-package-normalize/:ensure "use-package-ensure" "\
 
@@ -176,14 +204,21 @@ Normalize arguments to delight.
 
 
 \(fn NAME KEYWORD ENSURE REST STATE)" nil nil)
+
+;;;### (autoloads "actual autoloads are elsewhere" "use-package-ensure"
+;;;;;;  "../../../../.emacs.d/elpa/use-package-2.4/use-package-ensure.el"
+;;;;;;  (0 0 0 0))
+;;; Generated autoloads from ../../../../.emacs.d/elpa/use-package-2.4/use-package-ensure.el
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "use-package-ensure" '("use-package-")))
 
 ;;;***
+
+;;;***
 
-;;;### (autoloads nil "use-package-jump" "use-package-jump.el" (0
-;;;;;;  0 0 0))
-;;; Generated autoloads from use-package-jump.el
+;;;### (autoloads nil "use-package-jump" "../../../../.emacs.d/elpa/use-package-2.4/use-package-jump.el"
+;;;;;;  "04180cfab94d3c8a0c1706b824291120")
+;;; Generated autoloads from ../../../../.emacs.d/elpa/use-package-2.4/use-package-jump.el
 
 (autoload 'use-package-jump-to-package-form "use-package-jump" "\
 Attempt to find and jump to the `use-package' form that loaded
@@ -193,14 +228,21 @@ function will jump to the file that originally required PACKAGE
 instead.
 
 \(fn PACKAGE)" t nil)
+
+;;;### (autoloads "actual autoloads are elsewhere" "use-package-jump"
+;;;;;;  "../../../../.emacs.d/elpa/use-package-2.4/use-package-jump.el"
+;;;;;;  (0 0 0 0))
+;;; Generated autoloads from ../../../../.emacs.d/elpa/use-package-2.4/use-package-jump.el
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "use-package-jump" '("use-package-find-require")))
 
 ;;;***
+
+;;;***
 
-;;;### (autoloads nil "use-package-lint" "use-package-lint.el" (0
-;;;;;;  0 0 0))
-;;; Generated autoloads from use-package-lint.el
+;;;### (autoloads nil "use-package-lint" "../../../../.emacs.d/elpa/use-package-2.4/use-package-lint.el"
+;;;;;;  "dd09dee893c571ce90086743c3704b28")
+;;; Generated autoloads from ../../../../.emacs.d/elpa/use-package-2.4/use-package-lint.el
 
 (autoload 'use-package-lint "use-package-lint" "\
 Check for errors in use-package declarations.
@@ -208,12 +250,28 @@ For example, if the module's `:if' condition is met, but even
 with the specified `:load-path' the module cannot be found.
 
 \(fn)" t nil)
+
+;;;### (autoloads "actual autoloads are elsewhere" "use-package-lint"
+;;;;;;  "../../../../.emacs.d/elpa/use-package-2.4/use-package-lint.el"
+;;;;;;  (0 0 0 0))
+;;; Generated autoloads from ../../../../.emacs.d/elpa/use-package-2.4/use-package-lint.el
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "use-package-lint" '("use-package-lint-declaration")))
 
 ;;;***
+
+;;;***
 
-;;;### (autoloads nil nil ("use-package-pkg.el" "use-package.el")
+;;;### (autoloads nil nil ("../../../../.emacs.d/elpa/use-package-2.4/use-package-autoloads.el"
+;;;;;;  "../../../../.emacs.d/elpa/use-package-2.4/use-package-bind-key.el"
+;;;;;;  "../../../../.emacs.d/elpa/use-package-2.4/use-package-core.el"
+;;;;;;  "../../../../.emacs.d/elpa/use-package-2.4/use-package-delight.el"
+;;;;;;  "../../../../.emacs.d/elpa/use-package-2.4/use-package-diminish.el"
+;;;;;;  "../../../../.emacs.d/elpa/use-package-2.4/use-package-ensure.el"
+;;;;;;  "../../../../.emacs.d/elpa/use-package-2.4/use-package-jump.el"
+;;;;;;  "../../../../.emacs.d/elpa/use-package-2.4/use-package-lint.el"
+;;;;;;  "../../../../.emacs.d/elpa/use-package-2.4/use-package-pkg.el"
+;;;;;;  "../../../../.emacs.d/elpa/use-package-2.4/use-package.el")
 ;;;;;;  (0 0 0 0))
 
 ;;;***
