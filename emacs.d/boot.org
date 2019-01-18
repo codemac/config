@@ -1078,7 +1078,6 @@ I need to tie this into projectile, but for now have a way to create a
 
   (global-set-key (kbd "<f2>") 'cm/shell-find-or-new)
   (global-set-key (kbd "<f7>") 'cm/shell-main)
-  (global-set-key (kbd "C-c p $") 'cm/shell-projectile)
 #+end_src
 **** Remote Shells
 This is to manage remote shells. I hope for this to get a *lot* more
@@ -1736,6 +1735,9 @@ out semantically.
     ;; seting the remote file exists cache to an hour, I'd rather things
     ;; error out weirdly than slow down all find-files!
     (setq projectile-file-exists-remote-cache-expire (* 60 60))
+
+    ;; use my handy dandy shell hook
+    (global-set-key (kbd "C-c p $") 'cm/shell-projectile)
 
     ;; I use alien because native is slow. I think I used to use native
     ;; for reasons that escape me now.
@@ -2827,7 +2829,6 @@ org-mouse in case I already have a pointing device. I imagine
   (require 'org)
   (require 'org-protocol)
   (require 'org-mouse)
-  (require 'org-notmuch)
 #+end_src
 **** Org Agenda
      :PROPERTIES:
@@ -2917,7 +2918,8 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
     `(("p" "Project Agenda"
        ((todo "PROJECT")
 	(todo "WAITING"))
-       ,cm/org-sort-style)
+       ((org-agenda-dim-blocked-tasks t)
+	,@cm/org-sort-style))
       ,(cm/org-ctx-agenda "v" "INTERNET" "Internet Agenda")
       ,(cm/org-ctx-agenda "c" "COMPUTER" "Computer Agenda")
       ,(cm/org-ctx-agenda "w" "WORK" "Work Agenda")
@@ -3533,10 +3535,6 @@ How I deploy my personal website.
      :ID:       ef5ab78f-e0b9-4e28-b1b1-256a1253ec39
      :END:
 #+begin_src emacs-lisp
-  (defun org-insert-datetime ()
-    (interactive)
-    (insert (format-time-string "%Y-%m-%d %a %H:%M %z")))
-
   (defun cm/org-delete-link ()
     "Replace an org link of the format [[LINK][DESCRIPTION]] with DESCRIPTION.
   If the link is of the format [[LINK]], delete the whole org link.
@@ -3976,6 +3974,12 @@ worrying about how the face was inherited.
   (mapc #'cm/org-level-set-face-height cm/org-level-height-alist)
 #+end_src
 
+**** Auto save to real buffer for org files
+
+#+begin_src emacs-lisp
+  (add-hook 'auto-save-hook 'org-save-all-org-buffers)
+#+end_src
+
 *** RCIRC
     :PROPERTIES:
     :ID:       63cf268e-8426-426f-a6fe-62492899d659
@@ -4227,9 +4231,12 @@ channels correctly. The format is: =#channela,#channelb ,passwordb=
     :ID:       bb361611-de0c-480f-8919-e1ed77b583e0
     :END:
 #+begin_src emacs-lisp
-  (setq inferior-lisp-program "sbcl")
-  (require 'slime-autoloads)
-  (slime-setup '(slime-fancy))
+  (use-package slime
+    :commands slime
+    :init
+    (setq inferior-lisp-program "sbcl")
+    :config
+    (slime-setup '(slime-fancy)))
   ;(load (expand-file-name "/home/codemac/.quicklisp/slime-helper.el"))
 
 #+end_src
