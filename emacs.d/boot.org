@@ -389,43 +389,6 @@ the icecat / firefox crap keeps me using arch as my base system.
 #+begin_src emacs-lisp
   (add-to-list 'load-path "~/.guix-profile/share/emacs/site-lisp")
 #+end_src
-** Emacs backup files
-   :PROPERTIES:
-   :ID:       5f120dba-6abc-4e26-b11f-ea4769945a2c
-   :END:
-I like putting these all in one place. It helps to not have them
-scattered accross my entire filesystem, and then they aren't pushed
-out onto NFS mounted directories.
-
-There are drawbacks. If you edit the same file over an NFS mount from
-different emacs instances over time, they wont have eachother's
-autosaves. I have never run into this being a problem, however.
-
-A lot of this was borrowed from
-http://snarfed.org/space/gnu%20emacs%20backup%20files, however it
-appears this as changed significantly..
-#+begin_src emacs-lisp
-  (defvar autosave-dir
-   (concat "/tmp/emacs_autosaves/" (user-login-name) "/"))
-  
-  (make-directory autosave-dir t)
-  
-  (defun auto-save-file-name-p (filename)
-    (string-match "^#.*#$" (file-name-nondirectory filename)))
-  
-  (defun make-auto-save-file-name ()
-    (concat autosave-dir
-     (if buffer-file-name
-        (concat "#" (file-name-nondirectory buffer-file-name) "#")
-      (expand-file-name
-       (concat "#%" (buffer-name) "#")))))
-  
-  ;; Put backup files (ie foo~) in one place too. (The backup-directory-alist
-  ;; list contains regexp=>directory mappings; filenames matching a regexp are
-  ;; backed up in the corresponding directory. Emacs will mkdir it if necessary.)
-  (defvar backup-dir (concat "/tmp/emacs_backups/" (user-login-name) "/"))
-  (setq backup-directory-alist (list (cons "." backup-dir)))
-#+end_src
 ** Yes or no, let's do y/p
    :PROPERTIES:
    :ID:       8a6a8bc1-7cd0-4016-9381-a04bca6592cf
