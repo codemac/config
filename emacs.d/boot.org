@@ -1737,7 +1737,7 @@ out semantically.
     (setq projectile-file-exists-remote-cache-expire (* 60 60))
 
     ;; use my handy dandy shell hook
-    (global-set-key (kbd "C-c p $") 'cm/shell-projectile)
+    (define-key projectile-command-map (kbd "$") 'cm/shell-projectile)
 
     ;; I use alien because native is slow. I think I used to use native
     ;; for reasons that escape me now.
