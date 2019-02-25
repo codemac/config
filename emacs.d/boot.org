@@ -3711,7 +3711,8 @@ allows me to create checklist templates per-project.
 #+end_src
 
 **** Org Capture in new frames
-#+begin_src
+
+#+begin_src emacs-lisp
   (defun cm/org-capture-other-frame ()
     "Create a new frame and run org-capture."
     (interactive)
