@@ -368,6 +368,7 @@ who provided this original functionality for me.
   ;; Automagically load all folders in site-lisp as well! Thank you benny!
   (setq cm/lisp-dirs '("~/.emacs.d/site-lisp"
                        "~/.emacs.d/site-lisp/xelb"
+                       "~/.emacs.d/site-lisp/org-contrib"
                        "~/.guix-profile/share/emacs/site-lisp"
                        "~/.guix-profile/share/emacs/site-lisp/guix.d"))
   (mapc (lambda (x) (when (file-directory-p x)
@@ -1798,8 +1799,35 @@ enabled there.
     :commands mixed-pitch-mode
     :diminish mixed-pitch-mode
     :init
-    (add-hook 'org-mode-hook #'mixed-pitch-mode)
+    ;; disabled mixed pitch mode for a bit, seeing if I miss it.
+    ; (add-hook 'org-mode-hook #'mixed-pitch-mode)
     :config
+    (defun cm/set-face-attribute-mixed (face)
+      (set-face-attribute
+       face nil
+       :family (face-attribute 'variable-pitch :family)
+       :height (face-attribute 'variable-pitch :height)))
+
+    (defun cm/org-level-face-height (ratio)
+      (truncate (* (face-attribute 'variable-pitch :height nil 'default) ratio)))
+
+    (defun cm/org-level-set-face-height (part)
+      (set-face-attribute (car part) nil :height (cm/org-level-face-height (cdr part))))
+
+    (defvar cm/org-level-height-alist
+      '((org-level-1 . 1.2)
+	(org-level-2 . 1.1)
+	(org-level-3 . 1.05)
+	(org-level-4 . 1)
+	(org-level-5 . 1)
+	(org-level-6 . 1)
+	(org-level-7 . 1)
+	(org-level-8 . 1))
+      "List of org-level faces to ratio of default variable height")
+  
+    (mapc #'cm/set-face-attribute-mixed org-level-faces)
+    (mapc #'cm/org-level-set-face-height cm/org-level-height-alist)
+
     (setq mixed-pitch-variable-pitch-cursor nil)
     (add-to-list 'mixed-pitch-fixed-pitch-faces 'org-date)
     (add-to-list 'mixed-pitch-fixed-pitch-faces 'org-done)
@@ -2814,6 +2842,35 @@ Good for person wikis, however I pretty much exclusively use =org-blog=/=org-exp
     :ID:       2a2bc3dc-a714-4bd9-adb1-c262ffcd5f62
     :END:
 Holy god. Let it begin.
+
+**** Install org mode correctly
+I install the stable version of org from ELPA and then I manually
+install org-contrib because the org packages are not layed out sanely.
+
+As of [2019-01-28 Mon 10:44] they have an org package and an
+org-plus-contrib package. A lot of packages directly require the org
+package, so you end up installing both. What happens then is
+org-plus-contrib is not provided at a stable version number
+(reasonable for the contrib part) but then the org part get's updated
+to an unstable version as well. I don't want to deal with that every
+time.
+
+So, I install org, and then manually copy contrib.
+
+#+begin_src sh :results none
+  cd $HOME/config/emacs.d/site-lisp
+
+  git clone https://code.orgmode.org/bzg/org-mode.git tmp.org-mode
+  cd tmp.org-mode
+
+  org_vers=`{ls -d ../../elpa/* | egrep '/org-[0-9\.]+$' | sed -r 's#.*/org-([0-9\.]+)$#\1#'} #`
+  git checkout release_$org_vers
+  rm -r ../org-contrib
+  cp -r contrib ../org-contrib
+  cd ..
+  rm -rf tmp.org-mode
+#+end_src
+
 **** Initialize org mode
      :PROPERTIES:
      :ID:       9c315d7c-fa8f-4e3c-843c-a9c37b06486f
@@ -2874,7 +2931,7 @@ to see my review adgendas, and easier on the eyes to follow.
   (defun cm/org-ctx-agenda (key ctx title)
     (let ((ctxlist (if (listp ctx) ctx (list ctx))))
       `(,(concat "c" key) ,title
-	((tags-todo ,(mapconcat #'(lambda (x) (concat x "-TODO=\"PROJECT\"-BLOCKED=\"t\"-TODO=\"WAITING\"")) ctxlist "|")))
+	((tags-todo ,(mapconcat #'(lambda (x) (concat x "-TODO=\"PROJECT\"-TODO=\"WAITING\"")) ctxlist "|")))
 	,cm/org-sort-style)))
 #+end_src
 
@@ -2906,7 +2963,7 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
   (defun cm/day-agendas ()
     `(("d" "Full Day Agenda"
        ((agenda "Today" ((org-agenda-span 1)))
-	(todo "NEXT" ,cm/org-sort-style)))
+	(todo "NEXT")))
       ("i" "Inbox"
        ((tags-todo "-{.*}-TODO=\"PROJECT\"-TODO=\"WAITING\"")))
       ("n" "Next agenda"
@@ -2916,24 +2973,23 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
 
   (defun cm/context-agendas ()
     `(("p" "Project Agenda"
-       ((todo "PROJECT")
-	(todo "WAITING"))
-       ((org-agenda-dim-blocked-tasks t)
-	,@cm/org-sort-style))
-      ,(cm/org-ctx-agenda "v" "INTERNET" "Internet Agenda")
+       ((stuck "")
+	(todo "PROJECT"))
+       ,cm/org-sort-style)
+      ,(cm/org-ctx-agenda "i" "INTERNET" "Internet Agenda")
       ,(cm/org-ctx-agenda "c" "COMPUTER" "Computer Agenda")
       ,(cm/org-ctx-agenda "w" "WORK" "Work Agenda")
       ,(cm/org-ctx-agenda "h" "HOME" "Home Agenda")
       ,(cm/org-ctx-agenda "r" "ERRAND" "Errand Agenda")
       ,(cm/org-ctx-agenda "f" "PHONE" "Phone Agenda")
       ("ca" "People Agenda"
-       ((tags-todo "AGENDA-TODO=\"PROJECT\"-BLOCKED=\"t\"-TODO=\"WAITING\"|TODO=\"WAITING\""))
+       ((tags-todo "AGENDA-TODO=\"PROJECT\"-TODO=\"WAITING\"|TODO=\"WAITING\""))
        ((org-agenda-skip-function '(org-agenda-skip-entry-if 'scheduled))
 	(org-agenda-sorting-strategy
 	 '((agenda habit-down time-up priority-down category-keep)
 	   (tags alpha-down)))))
       ("ct" "Tickler Agenda"
-       ((tags-todo "-TODO=\"PROJECT\"-BLOCKED=\"t\"-TODO=\"WAITING\"")
+       ((tags-todo "-TODO=\"PROJECT\"-TODO=\"WAITING\"")
 	(todo "PROJECT"))
        ((org-agenda-skip-function '(org-agenda-skip-entry-if 'notscheduled))
        (org-agenda-sorting-strategy '(tsia-up))))))
@@ -2959,11 +3015,11 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
 
 	;; GET CURRENT
 	(tags-todo "noop" ,(cm/review-section "Get Current!"))
-	(tags-todo "-TODO=\"PROJECT\"-BLOCKED=\"t\"-TODO=\"WAITING\""
-		   (,@(cm/review-header "Review Actions Lists: Mark things that are invalid/done from the past week")
+	(tags-todo "-TODO=\"PROJECT\"-TODO=\"WAITING\""
+		   (,@(cm/review-header "Review Actions Lists:\n- Mark things that are invalid/done from the past week\n- Ensure all next actions are physically described")
 		    (org-agenda-skip-function '(org-agenda-skip-entry-if 'scheduled))))
 	(todo "DONE|NVM")
-	(tags-todo "-TODO=\"PROJECT\"-BLOCKED=\"t\"-TODO=\"WAITING\""
+	(tags-todo "-TODO=\"PROJECT\"-TODO=\"WAITING\""
 		   (,@(cm/review-header "Review Scheduled Actions Lists")
 		    (org-agenda-skip-function '(org-agenda-skip-entry-if 'notscheduled))))
 	(agenda "" (,@(cm/review-header "Review Previous Week Calendar Data")
@@ -2980,6 +3036,7 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
 		    (org-agenda-span 14)
 		    (org-agenda-start-day ,(concat "+" (number-to-string (- 7 (cm/days-back-to-monday))) "d"))))
 	(todo "WAITING" ,(cm/review-header "Review Waiting For List: Mark things as done, add things you're waiting for"))
+	(stuck "" ,(cm/review-header "Review Stuck Projects: Someday/Maybe or Next Actions!"))
 	(todo "PROJECT" ,(cm/review-header "Review Projects and Larger Outcomes: Add missing next actions, make sure each is naturally planned"))
 	(tags "CHECKLIST" ,(cm/review-header "Review Relevant Checklists: Any missing? Any new ones that could be added?"))
 
@@ -2989,7 +3046,6 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
 	(tags-todo "noop" ,(cm/review-header "Empty Your Head!")))
        ((org-agenda-span 22)
 	(org-agenda-start-on-weekday 1)
-	(org-agenda-dim-blocked-tasks t)
 	(org-agenda-start-day ,(concat "-" (number-to-string (cm/days-back-to-monday)) "d"))))
       ("rq" "Quarterly Review Agenda"
        (;; GET CLEAR
@@ -3206,7 +3262,7 @@ This add some commands for managing and clocking my time in a hydra.
      :END:
 #+begin_src emacs-lisp  
   (setq org-stuck-projects
-	    '("TODO=\"PROJECT\"" ("TODO" "NEXT" "STARTED") () ""))
+	    '("TODO=\"PROJECT\"" ("TODO" "NEXT" "STARTED" "WAITING") () ""))
 
   (add-to-list 'auto-mode-alist '("\\.org'$" . org-mode))
   (global-set-key (kbd "C-c l") 'org-store-link)
@@ -3240,7 +3296,6 @@ This add some commands for managing and clocking my time in a hydra.
   (setq org-agenda-skip-deadline-if-done t)
   (setq org-agenda-skip-scheduled-if-done t)
   (setq org-agenda-span 'week)
-  (setq org-agenda-sticky t)
   (setq org-agenda-tags-column -90)
   (setq org-agenda-use-tag-inheritance nil)
   (setq org-agenda-window-setup 'current-window)
@@ -3270,6 +3325,11 @@ This add some commands for managing and clocking my time in a hydra.
   (setq org-use-sub-superscripts nil)
   (setq org-use-tag-inheritance nil)
   (setq org-pretty-entities t)
+  (setq org-agenda-prefix-format
+	'((agenda . " %i %-16:c%?-12t% s")
+	  (todo . " %i %-16:c")
+	  (tags . " %i %-16:c")
+	  (search . " %i %-16:c")))
 
   ;(setq org-completion-use-ido t)
   ;; disable dumb-ass git crap for now
@@ -3284,6 +3344,7 @@ This add some commands for managing and clocking my time in a hydra.
 
 #+end_src
 **** Org Contacts
+This is part of org-contrib.
 #+begin_src emacs-lisp
   (use-package org-contacts
     :init
@@ -3322,9 +3383,7 @@ it the normal way.
 	  (dotimes (i (- (org-current-level) 1) toret)
 	    ;; handle errors when levels are not uniform, we may go "up"
 	    ;; too many times.
-	    (condition-case nil
-		(outline-up-heading 1 t)
-	      (error nil))
+	    (ignore-errors (outline-up-heading 1 t))
 	    (setq toret
 		  (or toret
 		      (string-equal "PROJECT"
@@ -3646,32 +3705,19 @@ allows me to create checklist templates per-project.
 	(match-string 1 (buffer-name))
       (error "Cannot create link to this man page")))
 
-  ;; cisco links
-  (defun org-link-type-cisco-open (path)
-    "path is the userid"
-    (shell-command (concat "open \"http://wwwin-tools.cisco.com/dir/details/" path "\"")))
+  (defun cm/org-link-tel-open (number)
+    (browse-url-firefox (concat "http://hangouts.google.com/?action=chat&pn=" number)))
+  (org-add-link-type "tel" 'cm/org-link-tel-open)
+#+end_src
 
-  (org-add-link-type "cisco" 'org-link-type-cisco-open)
-
-  (defun org-link-type-websec-open (path)
-    "path is the jira number"
-    (shell-command (concat "open \"https://jira.ironport.com/browse/WEBSEC-" path "\"")))
-  (org-add-link-type "websec" 'org-link-type-websec-open)
-
-  (defun org-link-type-sas-open (path)
-    "path is the jira number"
-    (shell-command (concat "open \"https://jira.ironport.com/browse/ENGSAS-" path "\"")))
-  (org-add-link-type "engsas" 'org-link-type-sas-open)
-
-  (defun org-link-type-netapp-open (path)
-    "path is username"
-    (shell-command (concat "open \"http://burtweb-prd.eng.netapp.com/burt/burt-bin/profile?user=" path "\"")))
-  (org-add-link-type "netapp" 'org-link-type-netapp-open)
-
-
+**** Org Capture in new frames
+#+begin_src
   (defun cm/org-capture-other-frame ()
     "Create a new frame and run org-capture."
     (interactive)
+    ;; TODO: gather information about current window, assume this is
+    ;; being called potentially in the background.
+
     (make-frame '((name . "Org-Capture")
 		  (width . 120)
 		  (height . 20)
@@ -3680,15 +3726,12 @@ allows me to create checklist templates per-project.
 		  (auto-lower . nil)
 		  (auto-raise . t)))
     (select-frame-by-name "Org-Capture")
-    (if (condition-case nil
-	    (progn (org-capture) t)
-	  (error nil))
+    (if (ignore-errors (progn (org-capture) t))
 	(delete-other-windows)
       (cm/org-capture-other-frame-cleanup)))
 
   (defun cm/org-capture-other-frame-hook (orig-fun &rest args)
     "Hook for org-capture to pop-up a frame instead of embed in emacs."
-    (message (format "org-capture args: %s" args))
     (make-frame '((name . "Org-Capture")
 		  (width . 120)
 		  (height . 40)
@@ -3697,9 +3740,12 @@ allows me to create checklist templates per-project.
 		  (auto-lower . nil)
 		  (auto-raise . t)))
     (select-frame-by-name "Org-Capture")
-    (if (condition-case nil
-	    (progn (funcall-interactively orig-fun args) t)
-	  (error nil))
+    (if (condition-case err
+	    (progn (apply 'funcall-interactively `(,orig-fun ,@args)) t)
+	  ((debug error)
+	   (progn
+	     (message "org-capture-other-hook: err: %s" err)
+	     nil)))
 	(delete-other-windows)
       (cm/org-capture-other-frame-cleanup)))
 
@@ -3709,6 +3755,7 @@ allows me to create checklist templates per-project.
 	(delete-frame)))
 
   ;;(advice-add 'org-capture :around #'cm/org-capture-other-frame-hook)
+  (advice-add :around #'org-protocol-capture #'cm/org-capture-other-frame-hook)
   (add-hook 'org-capture-after-finalize-hook 'cm/org-capture-other-frame-cleanup)
 #+end_src
 **** Search through my _notes directory
@@ -3952,7 +3999,7 @@ worrying about how the face was inherited.
      :family (face-attribute 'variable-pitch :family)
      :height (face-attribute 'variable-pitch :height)))
 
-  (mapc #'cm/set-face-attribute-mixed org-level-faces)
+
 
   (defun cm/org-level-face-height (ratio)
     (truncate (* (face-attribute 'variable-pitch :height nil 'default) ratio)))
@@ -3971,7 +4018,10 @@ worrying about how the face was inherited.
       (org-level-8 . 1))
     "List of org-level faces to ratio of default variable height")
 
-  (mapc #'cm/org-level-set-face-height cm/org-level-height-alist)
+  (defun cm/mixed-pitch-mode ()
+    (mapc #'cm/set-face-attribute-mixed org-level-faces)
+    (mapc #'cm/org-level-set-face-height cm/org-level-height-alist)
+    (mixed-pitch-mode 1))
 #+end_src
 
 **** Auto save to real buffer for org files
