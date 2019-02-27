@@ -797,11 +797,30 @@ frame. I've found this very convenient.
 					  (split-window-horizontally arg)
 					(split-window-vertically arg))))
 #+end_src
+*** Single frame ediff
 Keep the diff in a single window, easier on tiling window managers to
 handle diff sessions.
 #+begin_src emacs-lisp
   (setq ediff-window-setup-function #'ediff-setup-windows-plain)
 #+end_src
+*** Combine both in clashing diff
+Stolen from https://stackoverflow.com/questions/9656311/conflict-resolution-with-emacs-ediff-how-can-i-take-the-changes-of-both-version/29757750#29757750
+
+#+begin_src emacs-lisp
+  (defun cm/ediff-copy-both-to-C ()
+    (interactive)
+    (ediff-copy-diff
+     ediff-current-difference
+     nil 'C nil
+     (concat
+      (ediff-get-region-contents ediff-current-difference 'A ediff-control-buffer)
+      (ediff-get-region-contents ediff-current-difference 'B ediff-control-buffer))))
+  (defun cm/add-d-to-ediff-mode-map ()
+    (define-key ediff-mode-map "B" 'cm/ediff-copy-both-to-C))
+
+  (add-hook 'ediff-keymap-setup-hook 'cm/add-d-to-ediff-mode-map)
+#+end_src
+
 ** Useful window functions
    :PROPERTIES:
    :ID:       6fdd1fc3-0b07-4d30-b351-289529bfa72c
@@ -3756,7 +3775,7 @@ allows me to create checklist templates per-project.
 	(delete-frame)))
 
   ;;(advice-add 'org-capture :around #'cm/org-capture-other-frame-hook)
-  (advice-add :around #'org-protocol-capture #'cm/org-capture-other-frame-hook)
+  (advice-add 'org-protocol-capture :around #'cm/org-capture-other-frame-hook)
   (add-hook 'org-capture-after-finalize-hook 'cm/org-capture-other-frame-cleanup)
 #+end_src
 **** Search through my _notes directory
@@ -3859,7 +3878,7 @@ the files.
        (goto-char position))
       (_ (error "Connot find target ID \"%s\"" id))))
 
-  (setq cm/humble-todo-template (list "* TODO %?\n:PROPERTIES:\n:CREATED: %U\n:END:\n%i\n%a\n\n" :prepend nil :empty-lines 1))
+  (setq cm/humble-todo-template (list "* TODO %?\n:PROPERTIES:\n:CREATED: %U\n:END:\n%i\n\n" :prepend nil :empty-lines 1))
   (setq org-directory "~/org")
   (setq org-default-notes-file (concat org-directory "/gtd.org"))
   (setq org-board-capture-file (concat org-directory "/_notes/www.org"))
