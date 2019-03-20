@@ -3341,7 +3341,7 @@ This add some commands for managing and clocking my time in a hydra.
   (setq org-start-on-weekday nil)
   (setq org-tags-column -90)
   (setq org-use-speed-commands t)
-  (setq org-use-sub-superscripts nil)
+  (setq org-use-sub-superscripts '{})
   (setq org-use-tag-inheritance nil)
   (setq org-pretty-entities t)
   (setq org-agenda-prefix-format
@@ -3887,7 +3887,7 @@ the files.
 	`(("t" "Todo" entry (file+headline "~/org/gtd.org" "Inbox")
 	   ,@cm/humble-todo-template)
 	  ("p" "Project" entry (id "a262e411-ff66-43fc-9124-341694564dda")
-	   "* PROJECT %?\n:PROPERTIES:\n:CREATED:%U\n:END:\n\n** Actions\n\n** Archive :ARCHIVE:\n\n" :empty-lines 1)
+	   "* PROJECT %?\n:PROPERTIES:\n:CATEGORY:\n:CREATED:%U\n:END:\n\n** Actions\n\n** Archive :ARCHIVE:\n\n" :empty-lines 1)
 	  ("j" "Journal" entry (file "~/org/_editorial/journal.org")
 	   "* %T %?\n\n  %i\n  %a\n\n" :prepend nil :empty-lines 1)
 	  ("c" "Add note to currently clocked task" entry (clock)
@@ -3970,6 +3970,63 @@ help with my forgetfulness.
 	appt-message-warning-time 3)
   (appt-activate)
   (org-agenda-to-appt)
+#+end_src
+**** Two pane outline mode
+Stolen this from here:
+
+https://emacs.stackexchange.com/questions/9530/how-can-i-get-an-org-mode-outline-in-a-2nd-buffer-as-a-dynamic-table-of-contents/14987#14987
+
+Working on figuring out how to get a basic tree -> content two pane
+view on things.
+#+begin_src emacs-lisp
+  (defun cm/open-tree-view ()
+    "Open a clone of the current buffer to the left, resize it to 30 columns, and bind <mouse-1> to jump to the same position in the base buffer."
+    (interactive)
+    (let ((new-buffer-name (concat "<org-tree>-" (buffer-name))))
+      ;; Create tree buffer
+      (split-window-right 100)
+      (balance-windows)
+      (if (get-buffer new-buffer-name)
+	  (switch-to-buffer new-buffer-name)  ; Use existing tree buffer
+	;; Make new tree buffer
+	(progn  (clone-indirect-buffer new-buffer-name nil t)
+		(switch-to-buffer new-buffer-name)
+		(read-only-mode)
+		(hide-body)
+		(toggle-truncate-lines)
+
+		;; Do this twice in case the point is in a hidden line
+		(dotimes (_ 2 (forward-line 0)))
+
+		;; Map keys
+		(use-local-map (copy-keymap outline-mode-map))
+		(local-set-key (kbd "TAB") 'org-cycle)
+		(local-set-key (kbd "<tab>") 'org-cycle)
+		(local-set-key (kbd "q") 'delete-window)
+		(mapc (lambda (key) (local-set-key (kbd key) 'cm/jump-to-point-and-show))
+		      '("<mouse-1>" "RET"))))))
+
+  (defun cm/jump-to-point-and-show ()
+    "Switch to a cloned buffer's base buffer and move point to the cursor position in the clone."
+    (interactive)
+    (let ((buf (buffer-base-buffer)))
+      (unless buf
+	(error "You need to be in a cloned buffer!"))
+      (let ((pos (point))
+	    (win (car (get-buffer-window-list buf))))
+	(if win
+	    (select-window win)
+	  (other-window 1)
+	  (switch-to-buffer buf))
+
+	(widen)
+	(goto-char pos)
+	;; (olivetti-mode 1)
+	(org-narrow-to-element)
+	(org-show-all)
+
+	(when (invisible-p (point))
+	  (show-branches)))))
 #+end_src
 **** Better Org Goto
 #+begin_src emacs-lisp

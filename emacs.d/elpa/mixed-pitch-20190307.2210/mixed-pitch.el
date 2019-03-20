@@ -5,8 +5,8 @@
 ;; Author: J. Alexander Branham <branham@utexas.edu>
 ;; Maintainer: J. Alexander Branham <branham@utexas.edu>
 ;; URL: https://gitlab.com/jabranham/mixed-pitch
-;; Package-Version: 20181119.2303
-;; Version: 0.1
+;; Package-Version: 20190307.2210
+;; Version: 1.0.1
 ;; Package-Requires: ((emacs "24.3"))
 
 ;; This file is not part of GNU Emacs.

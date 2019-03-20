@@ -101,7 +101,7 @@ function so it can be a menu target."
 (defun racket-racket ()
   "Do `racket <file>` in `*shell*` buffer."
   (interactive)
-  (racket--shell (concat racket-program
+  (racket--shell (concat (shell-quote-argument racket-program)
                          " "
                          (shell-quote-argument (racket--buffer-file-name)))))
 
@@ -159,7 +159,7 @@ See also:
   "Do `raco test -x <file>` in `*shell*` buffer.
 To run <file>'s `test` submodule."
   (interactive)
-  (racket--shell (concat racket-program
+  (racket--shell (concat (shell-quote-argument racket-program)
                          " -l raco test -x "
                          (shell-quote-argument (racket--buffer-file-name)))))
 
@@ -202,8 +202,8 @@ Please keep in mind the following limitations:
   (pcase (racket--symbol-at-point-or-prompt prefix "Visit definition of: ")
     (`nil nil)
     (str (if (and (eq major-mode 'racket-mode)
-                  (not (equal (racket--cmd/await `(path+md5))
-                              (cons (racket--buffer-file-name) (md5 (current-buffer)))))
+                  (not (equal (racket--repl-file-name+md5)
+                              (cons (racket--buffer-file-name t) (md5 (current-buffer)))))
                   (y-or-n-p "Run current buffer first? "))
              (racket--repl-run nil nil
                                (lambda (_what)
@@ -245,7 +245,7 @@ See also: `racket-find-collection'."
   (pcase (racket--cmd/await (list cmd str))
     (`(,path ,line ,col)
      (racket--push-loc)
-     (find-file path)
+     (find-file (funcall racket-path-from-racket-to-emacs-function path))
      (goto-char (point-min))
      (forward-line (1- line))
      (forward-char col)

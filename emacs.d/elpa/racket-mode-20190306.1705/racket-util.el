@@ -41,17 +41,24 @@ strings."
           spec)
     m))
 
-(defun racket--buffer-file-name ()
-  "Like `buffer-file-name' but always a non-propertized string."
-  (and (buffer-file-name)
-       (substring-no-properties (buffer-file-name))))
+(defun racket--buffer-file-name (&optional no-adjust)
+  "Like `buffer-file-name' but always a non-propertized string.
+
+Unless NO-ADJUST is not nil, applies the name to the function
+variable `racket-path-from-emacs-to-racket-function'."
+  (let ((v (and (buffer-file-name)
+                (substring-no-properties (buffer-file-name)))))
+    (if no-adjust
+        v
+      (funcall racket-path-from-emacs-to-racket-function
+               v))))
 
 (defun racket--save-if-changed ()
   (unless (eq major-mode 'racket-mode)
     (user-error "Current buffer is not a racket-mode buffer"))
   (when (or (buffer-modified-p)
-            (and (racket--buffer-file-name)
-                 (not (file-exists-p (racket--buffer-file-name)))))
+            (and (buffer-file-name)
+                 (not (file-exists-p (buffer-file-name)))))
     (save-buffer)))
 
 (add-hook 'racket--repl-before-run-hook #'racket--save-if-changed)

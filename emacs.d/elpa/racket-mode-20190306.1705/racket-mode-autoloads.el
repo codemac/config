@@ -260,6 +260,13 @@ can turn it off by setting `input-method-highlight-flag' to nil via
 
 ;;;***
 
+;;;### (autoloads nil "racket-wsl" "racket-wsl.el" (0 0 0 0))
+;;; Generated autoloads from racket-wsl.el
+
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "racket-wsl" '("racket-")))
+
+;;;***
+
 ;;;### (autoloads nil nil ("racket-mode-pkg.el") (0 0 0 0))
 
 ;;;***

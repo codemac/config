@@ -1,7 +1,7 @@
 ;;; rust-mode.el --- A major emacs mode for editing Rust source code -*-lexical-binding: t-*-
 
-;; Version: 0.3.0
-;; Package-Version: 0.3.0
+;; Version: 0.4.0
+;; Package-Version: 0.4.0
 ;; Author: Mozilla
 ;; Url: https://github.com/rust-lang/rust-mode
 ;; Keywords: languages
@@ -19,8 +19,13 @@
                    (require 'compile)
                    (require 'url-vars))
 
+(require 'json)
+
 (defvar electric-pair-inhibit-predicate)
 (defvar electric-indent-chars)
+
+(defvar rust-buffer-project)
+(make-variable-buffer-local 'rust-buffer-project)
 
 ;; for GNU Emacs < 24.3
 (eval-when-compile
@@ -33,67 +38,22 @@
 (defconst rust-re-lc-ident "[[:lower:][:multibyte:]_][[:word:][:multibyte:]_[:digit:]]*")
 (defconst rust-re-uc-ident "[[:upper:]][[:word:][:multibyte:]_[:digit:]]*")
 (defconst rust-re-vis "pub")
+(defconst rust-re-unsafe "unsafe")
+(defconst rust-re-extern "extern")
+(defconst rust-re-union
+  (rx-to-string
+   `(seq
+    (or space line-start)
+    (group symbol-start "union" symbol-end)
+    (+ space) (regexp ,rust-re-ident))))
 
-(defconst rust-re-non-standard-string
-  (rx
-   (or
-    ;; Raw string: if it matches, it ends up with the starting character
-    ;; of the string as group 1, any ending backslashes as group 4, and
-    ;; the ending character as either group 5 or group 6.
-    (seq
-     ;; The "r" starts the raw string.  Capture it as group 1 to mark it as such syntactically:
-     (group "r")
-
-     ;; Then either:
-     (or
-      ;; a sequence at least one "#" (followed by quote).  Capture all
-      ;; but the last "#" as group 2 for this case.
-      (seq (group (* "#")) "#\"")
-
-      ;; ...or a quote without any "#".  Capture it as group 3. This is
-      ;; used later to match the opposite quote only if this capture
-      ;; occurred
-      (group "\""))
-
-     ;; The contents of the string:
-     (*? anything)
-
-     ;; If there are any backslashes at the end of the string, capture
-     ;; them as group 4 so we can suppress the normal escape syntax
-     ;; parsing:
-     (group (* "\\"))
-
-     ;; Then the end of the string--the backreferences ensure that we
-     ;; only match the kind of ending that corresponds to the beginning
-     ;; we had:
-     (or
-      ;; There were "#"s - capture the last one as group 5 to mark it as
-      ;; the end of the string:
-      (seq "\"" (backref 2) (group "#"))
-
-      ;; No "#"s - capture the ending quote (using a backref to group 3,
-      ;; so that we can't match a quote if we had "#"s) as group 6
-      (group (backref 3))
-
-      ;; If the raw string wasn't actually closed, go all the way to the end
-      string-end))
-
-    ;; Character literal: match the beginning ' of a character literal
-    ;; as group 7, and the ending one as group 8
-    (seq
-     (group "'")
-     (or
-      (seq
-       "\\"
-       (or
-        (: "u{" (** 1 6 xdigit) "}")
-        (: "x" (= 2 xdigit))
-        (any "'nrt0\"\\")))
-      (not (any "'\\"))
-      )
-     (group "'"))
-    )
-   ))
+;;; Start of a Rust item
+(defvar rust-top-item-beg-re
+  (concat "\\s-*\\(?:priv\\|pub\\)?\\s-*"
+          (regexp-opt
+           '("enum" "struct" "union" "type" "mod" "use" "fn" "static" "impl"
+             "extern" "trait"))
+	  "\\_>"))
 
 (defun rust-looking-back-str (str)
   "Like `looking-back' but for fixed strings rather than regexps (so that it's not so slow)"
@@ -125,15 +85,15 @@
   (let ((table (make-syntax-table)))
 
     ;; Operators
-    (dolist (i '(?+ ?- ?* ?/ ?& ?| ?^ ?! ?< ?> ?~ ?@))
+    (dolist (i '(?+ ?- ?* ?/ ?% ?& ?| ?^ ?! ?< ?> ?~ ?@))
       (modify-syntax-entry i "." table))
 
     ;; Strings
     (modify-syntax-entry ?\" "\"" table)
     (modify-syntax-entry ?\\ "\\" table)
 
-    ;; Angle brackets.  We suppress this with syntactic fontification when
-    ;; needed
+    ;; Angle brackets.  We suppress this with syntactic propertization
+    ;; when needed
     (modify-syntax-entry ?< "(>" table)
     (modify-syntax-entry ?> ")<" table)
 
@@ -147,7 +107,7 @@
 
 (defgroup rust-mode nil
   "Support for Rust code."
-  :link '(url-link "http://www.rust-lang.org/")
+  :link '(url-link "https://www.rust-lang.org/")
   :group 'languages)
 
 (defcustom rust-indent-offset 4
@@ -162,7 +122,7 @@
   :group 'rust-mode
   :safe #'booleanp)
 
-(defcustom rust-indent-where-clause t
+(defcustom rust-indent-where-clause nil
   "Indent the line starting with the where keyword following a
 function or trait.  When nil, where will be aligned with fn or trait."
   :type 'boolean
@@ -173,7 +133,7 @@ function or trait.  When nil, where will be aligned with fn or trait."
   "Format string to use when submitting code to the playpen"
   :type 'string
   :group 'rust-mode)
-(defcustom rust-shortener-url-format "http://is.gd/create.php?format=simple&url=%s"
+(defcustom rust-shortener-url-format "https://is.gd/create.php?format=simple&url=%s"
   "Format string to use for creating the shortened link of a playpen submission"
   :type 'string
   :group 'rust-mode)
@@ -188,18 +148,47 @@ function or trait.  When nil, where will be aligned with fn or trait."
 (defcustom rust-format-on-save nil
   "Format future rust buffers before saving using rustfmt."
   :type 'boolean
-  :safe #'booleanp)
+  :safe #'booleanp
+  :group 'rust-mode)
 
 (defcustom rust-rustfmt-bin "rustfmt"
   "Path to rustfmt executable."
-  :type 'string)
+  :type 'string
+  :group 'rust-mode)
+
+(defcustom rust-cargo-bin "cargo"
+  "Path to cargo executable."
+  :type 'string
+  :group 'rust-mode)
+
+(defcustom rust-always-locate-project-on-open nil
+  "Whether to run `cargo locate-project' every time `rust-mode'
+  is activated."
+  :type 'boolean
+  :group 'rust-mode)
 
 (defface rust-unsafe-face
   '((t :inherit font-lock-warning-face))
   "Face for the `unsafe' keyword."
   :group 'rust-mode)
 
+(defface rust-question-mark-face
+  '((t :weight bold :inherit font-lock-builtin-face))
+  "Face for the question mark operator."
+  :group 'rust-mode)
+
+(defface rust-builtin-formatting-macro-face
+  '((t :inherit font-lock-builtin-face))
+  "Face for builtin formatting macros (print! &c.)."
+  :group 'rust-mode)
+
+(defface rust-string-interpolation-face
+  '((t :slant italic :inherit font-lock-string-face))
+  "Face for interpolating braces in builtin formatting macro strings."
+  :group 'rust-mode)
+
 (defun rust-paren-level () (nth 0 (syntax-ppss)))
+(defun rust-in-str () (nth 3 (syntax-ppss)))
 (defun rust-in-str-or-cmnt () (nth 8 (syntax-ppss)))
 (defun rust-rewind-past-str-cmnt () (goto-char (nth 8 (syntax-ppss))))
 
@@ -332,7 +321,7 @@ buffer."
                 (- (current-column) rust-indent-offset)))))
         (cond
          ;; foo.bar(...)
-         ((rust-looking-back-str ")")
+         ((looking-back "[)?]" (1- (point)))
           (backward-list 1)
           (funcall skip-dot-identifier))
 
@@ -452,6 +441,10 @@ buffer."
                   ;; our search for "where ".
                   (let ((function-start nil) (function-level nil))
                     (save-excursion
+                      ;; If we're already at the start of a function,
+                      ;; don't go back any farther.  We can easily do
+                      ;; this by moving to the end of the line first.
+                      (end-of-line)
                       (rust-beginning-of-defun)
                       (back-to-indentation)
                       ;; Avoid using multiple-value-bind
@@ -495,6 +488,10 @@ buffer."
                        ;; baseline as well.
                        (looking-at "\\<else\\>\\|{\\|/[/*]")
 
+                       ;; If this is the start of a top-level item,
+                       ;; stay on the baseline.
+                       (looking-at rust-top-item-beg-re)
+
                        (save-excursion
                          (rust-rewind-irrelevant)
                          ;; Point is now at the end of the previous line
@@ -505,7 +502,7 @@ buffer."
                           ;; ..or if the previous line ends with any of these:
                           ;;     { ? : ( , ; [ }
                           ;; then we are at the beginning of an expression, so stay on the baseline...
-                          (looking-back "[(,:;?[{}]\\|[^|]|" (- (point) 2))
+                          (looking-back "[(,:;[{}]\\|[^|]|" (- (point) 2))
                           ;; or if the previous line is the end of an attribute, stay at the baseline...
                           (progn (rust-rewind-to-beginning-of-current-level-expr) (looking-at "#")))))
                       baseline
@@ -529,7 +526,7 @@ buffer."
   '("as"
     "box" "break"
     "const" "continue" "crate"
-    "do"
+    "do" "dyn"
     "else" "enum" "extern"
     "false" "fn" "for"
     "if" "impl" "in"
@@ -541,16 +538,18 @@ buffer."
     "true" "trait" "type"
     "use"
     "virtual"
-    "where" "while"))
+    "where" "while"
+    "yield"))
 
 (defconst rust-special-types
   '("u8" "i8"
     "u16" "i16"
     "u32" "i32"
     "u64" "i64"
+    "u128" "i128"
 
     "f32" "f64"
-    "float" "int" "uint" "isize" "usize"
+    "isize" "usize"
     "bool"
     "str" "char"))
 
@@ -568,6 +567,10 @@ buffer."
 (defun rust-re-item-def-imenu (itype)
   (concat "^[[:space:]]*"
           (rust-re-shy (concat (rust-re-word rust-re-vis) "[[:space:]]+")) "?"
+          (rust-re-shy (concat (rust-re-word "default") "[[:space:]]+")) "?"
+          (rust-re-shy (concat (rust-re-word rust-re-unsafe) "[[:space:]]+")) "?"
+          (rust-re-shy (concat (rust-re-word rust-re-extern) "[[:space:]]+"
+                               (rust-re-shy "\"[^\"]+\"[[:space:]]+") "?")) "?"
           (rust-re-item-def itype)))
 
 (defconst rust-re-special-types (regexp-opt rust-special-types 'symbols))
@@ -590,11 +593,63 @@ the desired identifiers), but does not match type annotations \"foo::<\"."
             ((not (looking-at (rx (0+ space) "<")))
 	     (throw 'rust-path-font-lock-matcher match))))))))
 
+(defun rust-next-string-interpolation (limit)
+  "Search forward from point for next Rust interpolation marker
+before LIMIT.
+Set point to the end of the occurrence found, and return match beginning
+and end."
+  (catch 'match
+    (save-match-data
+      (save-excursion
+        (while (search-forward "{" limit t)
+          (if (eql (char-after (point)) ?{)
+              (forward-char)
+            (let ((start (match-beginning 0)))
+              ;; According to fmt_macros::Parser::next, an opening brace
+              ;; must be followed by an optional argument and/or format
+              ;; specifier, then a closing brace. A single closing brace
+              ;; without a corresponding unescaped opening brace is an
+              ;; error. We don't need to do anything special with
+              ;; arguments, specifiers, or errors, so we only search for
+              ;; the single closing brace.
+              (when (search-forward "}" limit t)
+                (throw 'match (list start (point)))))))))))
+
+(defun rust-string-interpolation-matcher (limit)
+  "Match next Rust interpolation marker before LIMIT and set
+match data if found. Returns nil if not within a Rust string."
+  (when (rust-in-str)
+    (let ((match (rust-next-string-interpolation limit)))
+      (when match
+        (set-match-data match)
+        (goto-char (cadr match))
+        match))))
+
+(defvar rust-builtin-formatting-macros
+  '("eprint"
+    "eprintln"
+    "format"
+    "print"
+    "println")
+  "List of builtin Rust macros for string formatting used by `rust-mode-font-lock-keywords'. (`write!' is handled separately.)")
+
+(defvar rust-formatting-macro-opening-re
+  "[[:space:]\n]*[({[][[:space:]\n]*"
+  "Regular expression to match the opening delimiter of a Rust formatting macro.")
+
+(defvar rust-start-of-string-re
+  "\\(?:r#*\\)?\""
+  "Regular expression to match the start of a Rust raw string.")
+
 (defvar rust-mode-font-lock-keywords
   (append
    `(
      ;; Keywords proper
      (,(regexp-opt rust-mode-keywords 'symbols) . font-lock-keyword-face)
+
+     ;; Contextual keywords
+     ("\\_<\\(default\\)[[:space:]]+fn\\_>" 1 font-lock-keyword-face)
+     (,rust-re-union 1 font-lock-keyword-face)
 
      ;; Special types
      (,(regexp-opt rust-special-types 'symbols) . font-lock-type-face)
@@ -606,12 +661,34 @@ the desired identifiers), but does not match type annotations \"foo::<\"."
      (,(rust-re-grab (concat "#\\!?\\[" rust-re-ident "[^]]*\\]"))
       1 font-lock-preprocessor-face keep)
 
+     ;; Builtin formatting macros
+     (,(concat (rust-re-grab (concat (regexp-opt rust-builtin-formatting-macros) "!")) (concat rust-formatting-macro-opening-re "\\(?:" rust-start-of-string-re) "\\)?")
+      (1 'rust-builtin-formatting-macro-face)
+      (rust-string-interpolation-matcher
+       (rust-end-of-string)
+       nil
+       (0 'rust-string-interpolation-face t nil)))
+
+     ;; write! macro
+     (,(concat (rust-re-grab "write\\(ln\\)?!") (concat rust-formatting-macro-opening-re "[[:space:]]*[^\"]+,[[:space:]]*" rust-start-of-string-re))
+      (1 'rust-builtin-formatting-macro-face)
+      (rust-string-interpolation-matcher
+       (rust-end-of-string)
+       nil
+       (0 'rust-string-interpolation-face t nil)))
+
      ;; Syntax extension invocations like `foo!`, highlight including the !
      (,(concat (rust-re-grab (concat rust-re-ident "!")) "[({[:space:][]")
       1 font-lock-preprocessor-face)
 
      ;; Field names like `foo:`, highlight excluding the :
      (,(concat (rust-re-grab rust-re-ident) ":[^:]") 1 font-lock-variable-name-face)
+
+     ;; CamelCase Means Type Or Constructor
+     (,rust-re-type-or-constructor 1 font-lock-type-face)
+
+     ;; Type-inferred binding
+     (,(concat "\\_<\\(?:let\\s-+ref\\|let\\|ref\\)\\s-+\\(?:mut\\s-+\\)?" (rust-re-grab rust-re-ident) "\\_>") 1 font-lock-variable-name-face)
 
      ;; Type names like `Foo::`, highlight excluding the ::
      (,(rust-path-font-lock-matcher rust-re-uc-ident) 1 font-lock-type-face)
@@ -622,108 +699,21 @@ the desired identifiers), but does not match type annotations \"foo::<\"."
      ;; Lifetimes like `'foo`
      (,(concat "'" (rust-re-grab rust-re-ident) "[^']") 1 font-lock-variable-name-face)
 
-     ;; CamelCase Means Type Or Constructor
-     (,rust-re-type-or-constructor 1 font-lock-type-face)
+     ;; Question mark operator
+     ("\\?" . 'rust-question-mark-face)
      )
 
-   ;; Item definitions
+   ;; Ensure we highlight `Foo` in `struct Foo` as a type.
    (mapcar #'(lambda (x)
                (list (rust-re-item-def (car x))
                      1 (cdr x)))
            '(("enum" . font-lock-type-face)
              ("struct" . font-lock-type-face)
+             ("union" . font-lock-type-face)
              ("type" . font-lock-type-face)
              ("mod" . font-lock-constant-face)
              ("use" . font-lock-constant-face)
              ("fn" . font-lock-function-name-face)))))
-
-(defvar font-lock-beg)
-(defvar font-lock-end)
-
-(defun rust-font-lock-extend-region ()
-  "Extend the region given by `font-lock-beg' and `font-lock-end'
-  to include the beginning of a string or comment if it includes
-  part of it.  Adjusts to include the r[#] of a raw string as
-  well."
-
-  (save-excursion
-    (let ((orig-beg font-lock-beg)
-          (orig-end font-lock-end))
-
-      (let*
-          ;; It's safe to call `syntax-ppss' here on positions that are
-          ;; already syntactically fontified
-          ((beg-ppss (syntax-ppss font-lock-beg))
-           (beg-in-cmnt (and beg-ppss (nth 4 beg-ppss) (nth 8 beg-ppss)))
-           (beg-in-str (and beg-ppss (nth 3 beg-ppss) (nth 8 beg-ppss))))
-
-        (when (and beg-in-str (>= font-lock-beg beg-in-str))
-          (setq font-lock-beg (nth 8 beg-ppss))
-          (while (equal ?# (char-before font-lock-beg))
-            (setq font-lock-beg (1- font-lock-beg)))
-          (when (equal ?r (char-before font-lock-beg))
-            (setq font-lock-beg (1- font-lock-beg))))
-
-        (when (and beg-in-cmnt (> font-lock-beg beg-in-cmnt))
-          (setq font-lock-beg beg-in-cmnt)))
-
-      ;; We need to make sure that if the region ends inside a raw string, we
-      ;; extend it out past the end of it.  But we can't use `syntax-ppss' to
-      ;; detect that, becaue that depends on font-lock already being done, and we
-      ;; are trying to figure out how much to font-lock before that.  So we use
-      ;; the regexp directly.
-      (save-match-data
-        (goto-char font-lock-beg)
-        (while (and (< (point) font-lock-end)
-                    (re-search-forward rust-re-non-standard-string (buffer-end 1) t)
-                    (<= (match-beginning 0) font-lock-end))
-          (setq font-lock-end (max font-lock-end (match-end 0)))
-          (goto-char (1+ (match-beginning 0)))))
-
-      (or (/= font-lock-beg orig-beg)
-          (/= font-lock-end orig-end))
-      )))
-
-(defun rust-conditional-re-search-forward (regexp bound condition)
-  ;; Search forward for regexp (with bound).  If found, call condition and return the found
-  ;; match only if it returns true.
-  (let* (found
-         found-ret-list
-         (ret-list (save-excursion
-                     (while (and (not found) (re-search-forward regexp bound t))
-                       (setq
-                        found-ret-list (list (point) (match-data))
-                        found (save-match-data (save-excursion (ignore-errors (funcall condition)))))
-                       ;; If the condition filters out a match, need to search
-                       ;; again just after its beginning.  This will allow
-                       ;; cases such as:
-                       ;;    "bar" r"foo"
-                       ;; where the filtered out search (r" r") should not
-                       ;; prevent finding another one that begins in the middle
-                       ;; of it (r"foo")
-                       (when (not found)
-                         (goto-char (1+ (match-beginning 0))))
-                       )
-                     (when found found-ret-list))))
-    (when ret-list
-      (goto-char (nth 0 ret-list))
-      (set-match-data (nth 1 ret-list))
-      (nth 0 ret-list))))
-
-(defun rust-look-for-non-standard-string (bound)
-  ;; Find a raw string or character literal, but only if it's not in the middle
-  ;; of another string or a comment.
-
-  (rust-conditional-re-search-forward
-   rust-re-non-standard-string
-   bound
-   (lambda ()
-     (let ((pstate (syntax-ppss (match-beginning 0))))
-       (not
-        (or
-         (nth 4 pstate) ;; Skip if in a comment
-         (and (nth 3 pstate) (wholenump (nth 8 pstate)) (< (nth 8 pstate) (match-beginning 0))) ;; Skip if in a string that isn't starting here
-         ))))))
 
 (defun rust-syntax-class-before-point ()
   (when (> (point) 1)
@@ -766,13 +756,13 @@ the desired identifiers), but does not match type annotations \"foo::<\"."
   can have a where clause, rewind back to just before the name of
   the subject of that where clause and return the new point.
   Otherwise return nil"
-  
+
   (let* ((ident-pos (point))
          (newpos (save-excursion
                    (rust-rewind-irrelevant)
                    (rust-rewind-type-param-list)
                    (cond
-                       ((rust-looking-back-symbols '("fn" "trait" "enum" "struct" "impl" "type")) ident-pos)
+                       ((rust-looking-back-symbols '("fn" "trait" "enum" "struct" "union" "impl" "type")) ident-pos)
 
                        ((equal 5 (rust-syntax-class-before-point))
                         (backward-sexp)
@@ -809,7 +799,7 @@ the desired identifiers), but does not match type annotations \"foo::<\"."
       ;; A type alias or ascription could have a type param list.  Skip backwards past it.
       (when (member token '(ambiguous-operator open-brace))
         (rust-rewind-type-param-list))
-      
+
       (cond
 
        ;; Certain keywords always introduce expressions
@@ -824,7 +814,10 @@ the desired identifiers), but does not match type annotations \"foo::<\"."
        ;; An ident! followed by an open brace is a macro invocation.  Consider
        ;; it to be an expression.
        ((and (equal token 'open-brace) (rust-looking-back-macro)) t)
-       
+
+       ;; In a brace context a "]" introduces an expression.
+       ((and (eq token 'open-brace) (rust-looking-back-str "]")))
+
        ;; An identifier is right after an ending paren, bracket, angle bracket
        ;; or curly brace.  It's a type if the last sexp was a type.
        ((and (equal token 'ident) (equal 5 (rust-syntax-class-before-point)))
@@ -838,7 +831,7 @@ the desired identifiers), but does not match type annotations \"foo::<\"."
         (backward-sexp)
         (rust-rewind-irrelevant)
         (looking-back "[{;]" (1- (point))))
-       
+
        ((rust-looking-back-ident)
         (rust-rewind-qualified-ident)
         (rust-rewind-irrelevant)
@@ -859,9 +852,9 @@ the desired identifiers), but does not match type annotations \"foo::<\"."
             (not (and (rust-rewind-to-decl-name)
                       (progn
                         (rust-rewind-irrelevant)
-                        (rust-looking-back-symbols '("enum" "struct" "trait" "type"))))))
+                        (rust-looking-back-symbols '("enum" "struct" "union" "trait" "type"))))))
            ))
-         
+
          ((equal token 'ambiguous-operator)
           (cond
            ;; An ampersand after an ident has to be an operator rather than a & at the beginning of a ref type
@@ -892,7 +885,7 @@ the desired identifiers), but does not match type annotations \"foo::<\"."
                   (rust-rewind-irrelevant)
                   (rust-looking-back-str "enum")))))
             t)
-           
+
            ;; Otherwise the ambiguous operator is a type if the identifier is a type
            ((rust-is-in-expression-context 'ident) t)))
 
@@ -941,7 +934,7 @@ the desired identifiers), but does not match type annotations \"foo::<\"."
 
        ;; A :: introduces a type (or module, but not an expression in any case)
        ((rust-looking-back-str "::") nil)
-       
+
        ((rust-looking-back-str ":")
         (backward-char)
         (rust-is-in-expression-context 'colon))
@@ -954,8 +947,11 @@ the desired identifiers), but does not match type annotations \"foo::<\"."
        ((or
          (equal 4 (rust-syntax-class-before-point))
          (rust-looking-back-str ","))
-        (backward-up-list)
-        (rust-is-in-expression-context 'open-brace))
+	(condition-case nil
+	    (progn
+	      (backward-up-list)
+	      (rust-is-in-expression-context 'open-brace))
+	  (scan-error nil)))
 
        ;; A => introduces an expression
        ((rust-looking-back-str "=>") t)
@@ -977,7 +973,7 @@ the desired identifiers), but does not match type annotations \"foo::<\"."
 (defun rust-is-lt-char-operator ()
   "Return t if the < sign just after point is an operator rather
   than an opening angle bracket, otherwise nil."
-  
+
   (let ((case-fold-search nil))
     (save-excursion
       (rust-rewind-irrelevant)
@@ -989,7 +985,7 @@ the desired identifiers), but does not match type annotations \"foo::<\"."
        ((and (rust-looking-back-str "<")
              (not (equal 4 (rust-syntax-class-before-point)))
              (not (rust-looking-back-str "<<"))))
-       
+
        ;; On the other hand, if we are after a closing paren/brace/bracket it
        ;; can only be an operator, not an angle bracket.  Likewise, if we are
        ;; after a string it's an operator.  (The string case could actually be
@@ -1006,6 +1002,9 @@ the desired identifiers), but does not match type annotations \"foo::<\"."
        ((rust-looking-back-symbols rust-mode-keywords)
         (rust-looking-back-symbols '("self" "true" "false")))
 
+       ((rust-looking-back-str "?")
+	(rust-is-in-expression-context 'ambiguous-operator))
+
        ;; If we're looking back at an identifier, this depends on whether
        ;; the identifier is part of an expression or a type
        ((rust-looking-back-ident)
@@ -1014,7 +1013,7 @@ the desired identifiers), but does not match type annotations \"foo::<\"."
          ;; The special types can't take type param lists, so a < after one is
          ;; always an operator
          (looking-at rust-re-special-types)
-         
+
          (rust-is-in-expression-context 'ident)))
 
        ;; Otherwise, assume it's an angle bracket
@@ -1031,56 +1030,42 @@ the desired identifiers), but does not match type annotations \"foo::<\"."
        (rust-is-lt-char-operator)))
    (funcall (default-value 'electric-pair-inhibit-predicate) char)))
 
-(defun rust-look-for-non-angle-bracket-lt-gt (bound)
-  "Find an angle bracket (\"<\" or \">\") that should be part of
-  a matched pair Relies on the fact that when it finds a < or >,
-  we have already decided which previous ones are angle brackets
-  and which ones are not.  So this only really works as a
-  font-lock-syntactic-keywords matcher--it won't work at
-  arbitrary positions without the earlier parts of the buffer
-  having already been covered."
+(defun rust-ordinary-lt-gt-p ()
+  "Test whether the `<' or `>' at point is an ordinary operator of some kind.
 
-  (rust-conditional-re-search-forward
-   "[<>]" bound
-   (lambda ()
-     (goto-char (match-beginning 0))
-     (cond
-      ;; If matching is turned off suppress all of them
-      ((not rust-match-angle-brackets) t)
+This returns t if the `<' or `>' is an ordinary operator (like
+less-than) or part of one (like `->'); and nil if the character
+should be considered a paired angle bracket."
+  (cond
+   ;; If matching is turned off suppress all of them
+   ((not rust-match-angle-brackets) t)
 
-      ;; We don't take < or > in strings or comments to be angle brackets
-      ((rust-in-str-or-cmnt) t)
+   ;; We don't take < or > in strings or comments to be angle brackets
+   ((rust-in-str-or-cmnt) t)
 
-      ;; Inside a macro we don't really know the syntax.  Any < or > may be an
-      ;; angle bracket or it may not.  But we know that the other braces have
-      ;; to balance regardless of the < and >, so if we don't treat any < or >
-      ;; as angle brackets it won't mess up any paren balancing.
-      ((rust-in-macro) t)
-      
-      ((looking-at "<")
-       (rust-is-lt-char-operator))
+   ;; Inside a macro we don't really know the syntax.  Any < or > may be an
+   ;; angle bracket or it may not.  But we know that the other braces have
+   ;; to balance regardless of the < and >, so if we don't treat any < or >
+   ;; as angle brackets it won't mess up any paren balancing.
+   ((rust-in-macro) t)
 
-      ((looking-at ">")
-       (cond
-        ;; Don't treat the > in -> or => as an angle bracket
-        ((member (char-before (point)) '(?- ?=)) t)
+   ((looking-at "<")
+    (rust-is-lt-char-operator))
 
-        ;; If we are at top level and not in any list, it can't be a closing
-        ;; angle bracket
-        ((>= 0 (rust-paren-level)) t)
+   ((looking-at ">")
+    (cond
+     ;; Don't treat the > in -> or => as an angle bracket
+     ((member (char-before (point)) '(?- ?=)) t)
 
-        ;; Otherwise, treat the > as a closing angle bracket if it would
-        ;; match an opening one
-        ((save-excursion
-           (backward-up-list)
-           (not (looking-at "<"))))))))))
+     ;; If we are at top level and not in any list, it can't be a closing
+     ;; angle bracket
+     ((>= 0 (rust-paren-level)) t)
 
-(defvar rust-mode-font-lock-syntactic-keywords
-  (append
-   ;; Handle raw strings and character literals:
-   `((rust-look-for-non-standard-string (1 "|" nil t) (4 "_" nil t) (5 "|" nil t) (6 "|" nil t) (7 "\"" nil t) (8 "\"" nil t)))
-   ;; Find where < and > characters represent operators rather than angle brackets:
-   '((rust-look-for-non-angle-bracket-lt-gt (0 "." t)))))
+     ;; Otherwise, treat the > as a closing angle bracket if it would
+     ;; match an opening one
+     ((save-excursion
+	(backward-up-list)
+	(not (looking-at "<"))))))))
 
 (defun rust-mode-syntactic-face-function (state)
   "Syntactic face function to distinguish doc comments from other comments."
@@ -1091,6 +1076,68 @@ the desired identifiers), but does not match type annotations \"foo::<\"."
           'font-lock-doc-face
         'font-lock-comment-face
     ))))
+
+(eval-and-compile
+  (defconst rust--char-literal-rx
+    (rx (seq
+	 (group "'")
+	 (or
+	  (seq
+	   "\\"
+	   (or
+	    (: "u{" (** 1 6 xdigit) "}")
+	    (: "x" (= 2 xdigit))
+	    (any "'nrt0\"\\")))
+	  (not (any "'\\"))
+	  )
+	 (group "'")))
+    "A regular expression matching a character literal."))
+
+(defun rust--syntax-propertize-raw-string (end)
+  "A helper for rust-syntax-propertize.
+
+If point is already in a raw string, this will apply the
+appropriate string syntax to the character up to the end of the
+raw string, or to `end', whichever comes first."
+  (let ((str-start (nth 8 (syntax-ppss))))
+    (when str-start
+      (when (save-excursion
+	      (goto-char str-start)
+	      (looking-at "r\\(#*\\)\\(\"\\)"))
+	;; In a raw string, so try to find the end.
+	(let ((hashes (match-string 1)))
+	  ;; Match \ characters at the end of the string to suppress
+	  ;; their normal character-quote syntax.
+	  (when (re-search-forward (concat "\\(\\\\*\\)\\(\"" hashes "\\)") end t)
+	    (put-text-property (match-beginning 1) (match-end 1)
+			       'syntax-table (string-to-syntax "_"))
+	    (put-text-property (1- (match-end 2)) (match-end 2)
+			       'syntax-table (string-to-syntax "|"))
+	    (goto-char (match-end 0))))))))
+
+(defun rust-syntax-propertize (start end)
+  "A `syntax-propertize-function' for `rust-mode'."
+  (goto-char start)
+  (rust--syntax-propertize-raw-string end)
+  (funcall
+   (syntax-propertize-rules
+    ;; Character literals.
+    (rust--char-literal-rx (1 "\"") (2 "\""))
+    ;; Raw strings.
+    ("\\(r\\)#*\""
+     (1 (prog1 "|"
+	  (goto-char (match-end 0))
+	  (rust--syntax-propertize-raw-string end))))
+    ("[<>]"
+     (0 (ignore
+	 (when (save-match-data
+		 (save-excursion
+		   (goto-char (match-beginning 0))
+		   (rust-ordinary-lt-gt-p)))
+	   (put-text-property (match-beginning 0) (match-end 0)
+			      'syntax-table (string-to-syntax "."))
+	   (goto-char (match-end 0)))))))
+   (point) end))
 
 (defun rust-fill-prefix-for-comment-start (line-start)
   "Determine what to use for `fill-prefix' based on what is at the beginning of a line."
@@ -1214,7 +1261,7 @@ the desired identifiers), but does not match type annotations \"foo::<\"."
 (defvar rust-imenu-generic-expression
   (append (mapcar #'(lambda (x)
                       (list (capitalize x) (rust-re-item-def-imenu x) 1))
-                  '("enum" "struct" "type" "mod" "fn" "trait" "impl"))
+                  '("enum" "struct" "union" "type" "mod" "fn" "trait" "impl"))
           `(("Macro" ,(rust-re-item-def-imenu "macro_rules!") 1)))
   "Value for `imenu-generic-expression' in Rust mode.
 
@@ -1224,13 +1271,6 @@ Imenu will show all the enums, structs, etc. in their own subheading.
 Use idomenu (imenu with `ido-mode') for best mileage.")
 
 ;;; Defun Motions
-
-;;; Start of a Rust item
-(defvar rust-top-item-beg-re
-  (concat "^\\s-*\\(?:priv\\|pub\\)?\\s-*"
-          (regexp-opt
-           '("enum" "struct" "type" "mod" "use" "fn" "static" "impl"
-             "extern" "trait"))))
 
 (defun rust-beginning-of-defun (&optional arg)
   "Move backward to the beginning of the current defun.
@@ -1242,8 +1282,22 @@ This is written mainly to be used as `beginning-of-defun-function' for Rust.
 Don't move to the beginning of the line. `beginning-of-defun',
 which calls this, does that afterwards."
   (interactive "p")
-  (re-search-backward (concat "^\\(" rust-top-item-beg-re "\\)\\_>")
-                      nil 'move (or arg 1)))
+  (let* ((arg (or arg 1))
+	 (magnitude (abs arg))
+	 (sign (if (< arg 0) -1 1)))
+    ;; If moving forward, don't find the defun we might currently be
+    ;; on.
+    (when (< sign 0)
+      (end-of-line))
+    (catch 'done
+      (dotimes (_ magnitude)
+	;; Search until we find a match that is not in a string or comment.
+	(while (if (re-search-backward (concat "^\\(" rust-top-item-beg-re "\\)")
+				       nil 'move sign)
+		   (rust-in-str-or-cmnt)
+		 ;; Did not find it.
+		 (throw 'done nil)))))
+    t))
 
 (defun rust-end-of-defun ()
   "Move forward to the next end of defun.
@@ -1269,18 +1323,123 @@ This is written mainly to be used as `end-of-defun-function' for Rust."
     ;; There is no opening brace, so consider the whole buffer to be one "defun"
     (goto-char (point-max))))
 
+(defun rust-end-of-string ()
+  "Skip to the end of the current string."
+  (save-excursion
+    (skip-syntax-forward "^\"|")
+    (skip-syntax-forward "\"|")
+    (point)))
+
 ;; Formatting using rustfmt
 (defun rust--format-call (buf)
   "Format BUF using rustfmt."
   (with-current-buffer (get-buffer-create "*rustfmt*")
     (erase-buffer)
     (insert-buffer-substring buf)
-    (if (zerop (call-process-region (point-min) (point-max) rust-rustfmt-bin t t nil))
-        (progn
-          (if (not (string= (buffer-string) (with-current-buffer buf (buffer-string))))
-              (copy-to-buffer buf (point-min) (point-max)))
-          (kill-buffer))
-      (error "Rustfmt failed, see *rustfmt* buffer for details"))))
+    (let* ((tmpf (make-temp-file "rustfmt"))
+           (ret (call-process-region (point-min) (point-max) rust-rustfmt-bin
+                                     t `(t ,tmpf) nil)))
+      (unwind-protect
+          (cond
+           ((zerop ret)
+            (if (not (string= (buffer-string)
+                              (with-current-buffer buf (buffer-string))))
+                (copy-to-buffer buf (point-min) (point-max)))
+            (kill-buffer))
+           ((= ret 3)
+            (if (not (string= (buffer-string)
+                              (with-current-buffer buf (buffer-string))))
+                (copy-to-buffer buf (point-min) (point-max)))
+            (erase-buffer)
+            (insert-file-contents tmpf)
+            (error "Rustfmt could not format some lines, see *rustfmt* buffer for details"))
+           (t
+            (erase-buffer)
+            (insert-file-contents tmpf)
+            (error "Rustfmt failed, see *rustfmt* buffer for details"))))
+      (delete-file tmpf))))
+
+(defconst rust--format-word "\\b\\(else\\|enum\\|fn\\|for\\|if\\|let\\|loop\\|match\\|struct\\|union\\|unsafe\\|while\\)\\b")
+(defconst rust--format-line "\\([\n]\\)")
+
+;; Counts number of matches of regex beginning up to max-beginning,
+;; leaving the point at the beginning of the last match.
+(defun rust--format-count (regex max-beginning)
+  (let ((count 0)
+        save-point
+        beginning)
+    (while (and (< (point) max-beginning)
+                (re-search-forward regex max-beginning t))
+      (setq count (1+ count))
+      (setq beginning (match-beginning 1)))
+    ;; try one more in case max-beginning lies in the middle of a match
+    (setq save-point (point))
+    (when (re-search-forward regex nil t)
+      (let ((try-beginning (match-beginning 1)))
+        (if (> try-beginning max-beginning)
+            (goto-char save-point)
+          (setq count (1+ count))
+          (setq beginning try-beginning))))
+    (when beginning (goto-char beginning))
+    count))
+
+;; Gets list describing pos or (point).
+;; The list contains:
+;; 1. the number of matches of rust--format-word,
+;; 2. the number of matches of rust--format-line after that,
+;; 3. the number of columns after that.
+(defun rust--format-get-loc (buffer &optional pos)
+  (with-current-buffer buffer
+    (save-excursion
+      (let ((pos (or pos (point)))
+            words lines columns)
+        (goto-char (point-min))
+        (setq words (rust--format-count rust--format-word pos))
+        (setq lines (rust--format-count rust--format-line pos))
+        (if (> lines 0)
+            (if (= (point) pos)
+                (setq columns -1)
+              (forward-char 1)
+              (goto-char pos)
+              (setq columns (current-column)))
+          (let ((initial-column (current-column)))
+            (goto-char pos)
+            (setq columns (- (current-column) initial-column))))
+        (list words lines columns)))))
+
+;; Moves the point forward by count matches of regex up to max-pos,
+;; and returns new max-pos making sure final position does not include another match.
+(defun rust--format-forward (regex count max-pos)
+  (when (< (point) max-pos)
+    (let ((beginning (point)))
+      (while (> count 0)
+        (setq count (1- count))
+        (re-search-forward regex nil t)
+        (setq beginning (match-beginning 1)))
+      (when (re-search-forward regex nil t)
+        (setq max-pos (min max-pos (match-beginning 1))))
+      (goto-char beginning)))
+  max-pos)
+
+;; Gets the position from a location list obtained using rust--format-get-loc.
+(defun rust--format-get-pos (buffer loc)
+  (with-current-buffer buffer
+    (save-excursion
+      (goto-char (point-min))
+      (let ((max-pos (point-max))
+            (words (pop loc))
+            (lines (pop loc))
+            (columns (pop loc)))
+        (setq max-pos (rust--format-forward rust--format-word words max-pos))
+        (setq max-pos (rust--format-forward rust--format-line lines max-pos))
+        (when (> lines 0) (forward-char))
+        (let ((initial-column (current-column))
+              (save-point (point)))
+          (move-end-of-line nil)
+          (when (> (current-column) (+ initial-column columns))
+            (goto-char save-point)
+            (forward-char columns)))
+        (min (point) max-pos)))))
 
 (defun rust-format-buffer ()
   "Format the current buffer using rustfmt."
@@ -1288,22 +1447,41 @@ This is written mainly to be used as `end-of-defun-function' for Rust."
   (unless (executable-find rust-rustfmt-bin)
     (error "Could not locate executable \"%s\"" rust-rustfmt-bin))
 
-  (let ((cur-line (line-number-at-pos))
-        (cur-column (current-column))
-        (cur-win-start (window-start)))
-    (rust--format-call (current-buffer))
-    ;; Move to the same line and column as before.  This is best
-    ;; effort: if rustfmt inserted lines before point, we end up in
-    ;; the wrong place. See issue #162.
-    (goto-char (point-min))
-    (forward-line (1- cur-line))
-    (forward-char cur-column)
-    (set-window-start (selected-window) cur-win-start))
-
-  ;; Issue #127: Running this on a buffer acts like a revert, and could cause
-  ;; the fontification to get out of sync.  Call the same hook to ensure it is
-  ;; restored.
-  (rust--after-revert-hook)
+  (let* ((current (current-buffer))
+         (base (or (buffer-base-buffer current) current))
+         buffer-loc
+         window-loc)
+    (dolist (buffer (buffer-list))
+      (when (or (eq buffer base)
+                (eq (buffer-base-buffer buffer) base))
+        (push (list buffer
+                    (rust--format-get-loc buffer nil))
+              buffer-loc)))
+    (dolist (window (window-list))
+      (let ((buffer (window-buffer window)))
+        (when (or (eq buffer base)
+                  (eq (buffer-base-buffer buffer) base))
+          (let ((start (window-start window))
+                (point (window-point window)))
+            (push (list window
+                        (rust--format-get-loc buffer start)
+                        (rust--format-get-loc buffer point))
+                  window-loc)))))
+    (unwind-protect
+        (rust--format-call (current-buffer))
+      (dolist (loc buffer-loc)
+        (let* ((buffer (pop loc))
+               (pos (rust--format-get-pos buffer (pop loc))))
+          (with-current-buffer buffer
+            (goto-char pos))))
+      (dolist (loc window-loc)
+        (let* ((window (pop loc))
+               (buffer (window-buffer window))
+               (start (rust--format-get-pos buffer (pop loc)))
+               (pos (rust--format-get-pos buffer (pop loc))))
+          (unless (eq buffer current)
+            (set-window-start window start))
+          (set-window-point window pos)))))
 
   (message "Formatted buffer with rustfmt."))
 
@@ -1316,6 +1494,11 @@ This is written mainly to be used as `end-of-defun-function' for Rust."
   "Disable formatting using rustfmt when saving buffer."
   (interactive)
   (setq-local rust-format-on-save nil))
+
+(defun rust-compile ()
+  "Compile using `cargo build`"
+  (interactive)
+  (compile "cargo build"))
 
 (defvar rust-mode-map
   (let ((map (make-sparse-keymap)))
@@ -1331,14 +1514,15 @@ This is written mainly to be used as `end-of-defun-function' for Rust."
   :group 'rust-mode
   :syntax-table rust-mode-syntax-table
 
+  ;; Syntax.
+  (setq-local syntax-propertize-function #'rust-syntax-propertize)
+
   ;; Indentation
   (setq-local indent-line-function 'rust-mode-indent-line)
 
   ;; Fonts
-  (add-to-list 'font-lock-extend-region-functions 'rust-font-lock-extend-region)
   (setq-local font-lock-defaults '(rust-mode-font-lock-keywords
                                    nil nil nil nil
-                                   (font-lock-syntactic-keywords . rust-mode-font-lock-syntactic-keywords)
                                    (font-lock-syntactic-face-function . rust-mode-syntactic-face-function)
                                    ))
 
@@ -1346,6 +1530,7 @@ This is written mainly to be used as `end-of-defun-function' for Rust."
   (setq-local comment-start "// ")
   (setq-local comment-end   "")
   (setq-local indent-tabs-mode nil)
+  (setq-local open-paren-in-column-0-is-defun-start nil)
 
   ;; Auto indent on }
   (setq-local
@@ -1370,8 +1555,13 @@ This is written mainly to be used as `end-of-defun-function' for Rust."
   (setq-local end-of-defun-function 'rust-end-of-defun)
   (setq-local parse-sexp-lookup-properties t)
   (setq-local electric-pair-inhibit-predicate 'rust-electric-pair-inhibit-predicate-wrap)
-  (add-hook 'after-revert-hook 'rust--after-revert-hook nil t)
-  (add-hook 'before-save-hook 'rust--before-save-hook nil t))
+
+  (add-hook 'before-save-hook 'rust--before-save-hook nil t)
+
+  (setq-local rust-buffer-project nil)
+
+  (when rust-always-locate-project-on-open
+    (rust-update-buffer-project)))
 
 ;;;###autoload
 (add-to-list 'auto-mode-alist '("\\.rs\\'" . rust-mode))
@@ -1382,46 +1572,27 @@ This is written mainly to be used as `end-of-defun-function' for Rust."
   (require 'rust-mode)
   (rust-mode))
 
-;; Issue #104: When reverting the buffer, make sure all fontification is redone
-;; so that we don't end up missing a non-angle-bracket '<' or '>' character.
-(defun rust--after-revert-hook ()
-  ;; In Emacs 25 and later, the preferred method to force fontification is
-  ;; to use `font-lock-ensure', which doesn't exist in Emacs 24 and earlier.
-  ;; If it's not available, fall back to calling `font-lock-fontify-region'
-  ;; on the whole buffer.
-  (save-excursion
-    (if (fboundp 'font-lock-ensure)
-        (font-lock-ensure)
-      (font-lock-fontify-region (point-min) (point-max)))))
-
 (defun rust--before-save-hook ()
   (when rust-format-on-save (rust-format-buffer)))
 
-;; Issue #6887: Rather than inheriting the 'gnu compilation error
-;; regexp (which is broken on a few edge cases), add our own 'rust
-;; compilation error regexp and use it instead.
 (defvar rustc-compilation-regexps
-  (let ((file "\\([^\n]+\\)")
-        (start-line "\\([0-9]+\\)")
-        (start-col  "\\([0-9]+\\)")
-        (end-line   "\\([0-9]+\\)")
-        (end-col    "\\([0-9]+\\)")
-        (msg-type   "\\(?:[Ee]rror\\|\\([Ww]arning\\)\\|\\([Nn]ote\\|[Hh]elp\\)\\)"))
-    (let ((re (concat "^" file ":" start-line ":" start-col
-                      ": " end-line ":" end-col
-                      " " msg-type ":")))
-      (cons re '(1 (2 . 4) (3 . 5) (6 . 7)))))
-  "Specifications for matching errors in rustc invocations.
-See `compilation-error-regexp-alist' for help on their format.")
-
-(defvar rustc-new-compilation-regexps
   (let ((file "\\([^\n]+\\)")
         (start-line "\\([0-9]+\\)")
         (start-col  "\\([0-9]+\\)"))
     (let ((re (concat "^ *--> " file ":" start-line ":" start-col ; --> 1:2:3
                       )))
       (cons re '(1 2 3))))
-  "Specifications for matching errors in rustc invocations (new style).
+  "Specifications for matching errors in rustc invocations.
+See `compilation-error-regexp-alist' for help on their format.")
+
+(defvar rustc-colon-compilation-regexps
+  (let ((file "\\([^\n]+\\)")
+        (start-line "\\([0-9]+\\)")
+        (start-col  "\\([0-9]+\\)"))
+    (let ((re (concat "^ *::: " file ":" start-line ":" start-col ; ::: foo/bar.rs
+                      )))
+      (cons re '(1 2 3 0)))) ;; 0 for info type
+  "Specifications for matching `:::` hints in rustc invocations.
 See `compilation-error-regexp-alist' for help on their format.")
 
 ;; Match test run failures and panics during compilation as
@@ -1439,7 +1610,7 @@ See `compilation-error-regexp-alist' for help on their format.")
    the compilation window until the top of the error is visible."
   (save-selected-window
     (when (eq major-mode 'rust-mode)
-      (select-window (get-buffer-window next-error-last-buffer))
+      (select-window (get-buffer-window next-error-last-buffer 'visible))
       (when (save-excursion
               (beginning-of-line)
               (looking-at " *-->"))
@@ -1454,15 +1625,15 @@ See `compilation-error-regexp-alist' for help on their format.")
 (eval-after-load 'compile
   '(progn
      (add-to-list 'compilation-error-regexp-alist-alist
-                  (cons 'rustc-new rustc-new-compilation-regexps))
-     (add-to-list 'compilation-error-regexp-alist 'rustc-new)
-     (add-hook 'next-error-hook 'rustc-scroll-down-after-next-error)
-     (add-to-list 'compilation-error-regexp-alist-alist
                   (cons 'rustc rustc-compilation-regexps))
      (add-to-list 'compilation-error-regexp-alist 'rustc)
      (add-to-list 'compilation-error-regexp-alist-alist
+                  (cons 'rustc-colon rustc-colon-compilation-regexps))
+     (add-to-list 'compilation-error-regexp-alist 'rustc-colon)
+     (add-to-list 'compilation-error-regexp-alist-alist
                   (cons 'cargo cargo-compilation-regexps))
-     (add-to-list 'compilation-error-regexp-alist 'cargo)))
+     (add-to-list 'compilation-error-regexp-alist 'cargo)
+     (add-hook 'next-error-hook 'rustc-scroll-down-after-next-error)))
 
 ;;; Functions to submit (parts of) buffers to the rust playpen, for
 ;;; sharing.
@@ -1519,6 +1690,30 @@ visit the new file."
           (mkdir mod-dir t)
           (rename-file filename new-name 1)
           (set-visited-file-name new-name))))))
+
+(defun rust-run-clippy ()
+  "Run `cargo clippy'."
+  (interactive)
+  (when (null rust-buffer-project)
+    (rust-update-buffer-project))
+  (let* ((args (list rust-cargo-bin "clippy" (concat "--manifest-path=" rust-buffer-project)))
+         ;; set `compile-command' temporarily so `compile' doesn't
+         ;; clobber the existing value
+         (compile-command (mapconcat #'shell-quote-argument args " ")))
+    (compile compile-command)))
+
+(defun rust-update-buffer-project ()
+  (setq-local rust-buffer-project (rust-buffer-project)))
+
+(defun rust-buffer-project ()
+  "Get project root if possible."
+  (with-temp-buffer
+    (let ((ret (call-process rust-cargo-bin nil t nil "locate-project")))
+      (when (/= ret 0)
+        (error "`cargo locate-project' returned %s status: %s" ret (buffer-string)))
+      (goto-char 0)
+      (let ((output (json-read)))
+        (cdr (assoc-string "root" output))))))
 
 (provide 'rust-mode)
 
