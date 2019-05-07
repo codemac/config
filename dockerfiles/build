@@ -1,0 +1,12 @@
+#!/usr/bin/env rc
+
+dir=$1
+
+fn runner {
+  pwd
+  echo running $*
+  $*
+}
+
+cd $dir
+runner docker build -t 'jmickey-'^$dir .

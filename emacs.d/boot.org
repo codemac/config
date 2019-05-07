@@ -717,7 +717,7 @@ that?
 #+end_src
 
 For now we just check that the name is valid.
-* Builtin
+* Builtin Fetaures/Modes
   :PROPERTIES:
   :ID:       7fc227dc-419d-435a-bbe3-3ca707d2c234
   :END:
@@ -729,6 +729,28 @@ For now we just check that the name is valid.
   (put 'downcase-region 'disabled nil)
   (put 'upcase-region 'disabled nil)
 #+end_src
+** Backups
+
+This enables file backups to N versions of saves, as opposed to only
+backing up the very first save. I don't re-launch emacs that often so
+this is necessary to get useful backups.
+
+#+begin_src emacs-lisp
+  (setq vc-make-backup-files t
+	version-control t
+	kept-new-versions 10
+	kept-old-versions 0
+	delete-old-versions t
+	backup-by-copying t
+	backup-directory-alist '(("" . "~/.emacs-backup")))
+
+  (defun cm/force-backup-of-buffer ()
+    (let ((buffer-backed-up nil))
+      (backup-buffer)))
+
+  (add-hook 'before-save-hook 'cm/force-backup-of-buffer)
+#+end_src
+
 ** Open files with root
    :PROPERTIES:
    :ID:       0e0b7076-92fc-45a0-a89d-e1051988c44d
@@ -1022,6 +1044,28 @@ later, but aren't sure.
 
   (require 'dired)
   (define-key dired-mode-map "I" 'cm/insert-n-hide-dired)
+#+end_src
+** Image Mode
+Set an image to fit the current window
+#+begin_src emacs-lisp
+  (require 'image-mode)
+
+  (defun cm/image-transform-fit-to-window ()
+    (interactive)
+    (let* ((wh (image-display-size (image-get-display-property) t))
+	   (width (car wh))
+	   (height (cdr wh))
+	   (ratio (/ (float height) (float width)))
+	   (edges (window-inside-pixel-edges (get-buffer-window (current-buffer))))
+	   (window-width (- (nth 2 edges) (nth 0 edges)))
+	   (window-height (- (nth 3 edges) (nth 1 edges)))
+	   (window-ratio (/ (float window-height) (float window-width))))
+
+      (if (> window-ratio ratio)
+	  (image-transform-fit-to-width)
+	(image-transform-fit-to-height))))
+
+  (define-key image-mode-map (kbd "=") 'cm/image-transform-fit-to-window)
 #+end_src
 ** Info
    :PROPERTIES:
@@ -2623,12 +2667,14 @@ me over.
 *** EXWM - Emacs as X window manager
 
 #+begin_src emacs-lisp
-  (when (equal x-resource-name "emacs-as-x")
-    (require 'exwm)
+  (use-package exwm
+    :demand t
+    :config
     (require 'exwm-config)
     (require 'exwm-randr)
 
-    (setq exwm-randr-workspace-output-plist '(0 "eDP1" 1 "HDMI2"))
+    ;; not using this - single monitor lyfe.
+    ;; (setq exwm-randr-workspace-monitor-plist '(0 "eDP1" 1 "HDMI2"))
     (exwm-randr-enable)
 
     ;; I swap C-t and C-x, so this is a very useful thing to also have
@@ -2644,45 +2690,108 @@ me over.
 	      (lambda ()
 		(when (or (not exwm-instance-name)
 			  (string-prefix-p "sun-awt-X11-" exwm-instance-name)
-			(string= "gimp" exwm-instance-name))
+			  (string= "gimp" exwm-instance-name))
 		  (exwm-workspace-rename-buffer exwm-title))))
-
-    (setq exwm-workspace-number 10)
-
+  
+    (setq cm/exwm-workspace-starting-number 1)
+  
     (defun cm/exwm-workspace-next ()
       (interactive)
-      (exwm-workspace-switch (mod (+ 1 exwm-workspace-current-index) exwm-workspace-number)))
-
+      (exwm-workspace-switch (mod (+ 1 exwm-workspace-current-index) (exwm-workspace--count))))
+  
     (defun cm/exwm-workspace-previous ()
       (interactive)
-      (exwm-workspace-switch (mod (- exwm-workspace-current-index 1) exwm-workspace-number)))
-
+      (exwm-workspace-switch (mod (- exwm-workspace-current-index 1) (exwm-workspace--count))))
+  
+    (defun cm/async-shell-no-output (cmd)
+      (interactive)
+      (call-process-shell-command (concat cmd " &")))
+  
+    (defun cm/exwm-lock ()
+      (interactive)
+      (cm/async-shell-no-output "notion-lock"))
+    
+    (defun cm/launch-term ()
+      (interactive)
+      (cm/async-shell-no-output "term"))
+  
+    (defun cm/launch-org-capture ()
+      (interactive)
+      (cm/async-shell-no-output "org-capture"))
+  
+    ;; Find all binaries in exec-path / (exec-path)
+    (defun cm/all-binaries ()
+      (let* ((path-dirs
+	      ;; Ignore `exec-directory', the last entry in `exec-path'.
+	      (append (cdr (reverse (if (fboundp 'exec-path) (exec-path) exec-path)))
+		      (if (and (memq system-type '(windows-nt ms-dos))
+			       (not (file-remote-p default-directory)))
+			  '("."))))
+	     (completions '()))
+      
+	;; Go thru each dir in the search path, finding completions.
+	(while path-dirs
+	  (setq dir (file-name-as-directory (comint-directory (or (car path-dirs) ".")))
+		comps-in-dir (and (file-accessible-directory-p dir)
+				  (directory-files dir nil nil 'nosort)))
+	  ;; Go thru each completion found, to see whether it should be used.
+	  (while comps-in-dir
+	    (setq file (car comps-in-dir)
+		  abs-file-name (concat dir file))
+	    (if (and (not (member file completions))
+		     (not (file-directory-p abs-file-name))
+		     (or (null shell-completion-execonly)
+			 (file-executable-p abs-file-name)))
+		(setq completions (cons file completions)))
+	    (setq comps-in-dir (cdr comps-in-dir)))
+	  (setq path-dirs (cdr path-dirs)))
+	completions))
+  
+    (defun cm/launch-shell-cmd (cmd)
+      (interactive
+       (list
+	(completing-read "Command: " (cm/all-binaries))))
+      (cm/async-shell-no-output cmd))
+  
+    (exwm-input-set-key (kbd "s-<f2>") #'cm/launch-term)
+    (exwm-input-set-key (kbd "s-<f3>") #'cm/launch-shell-cmd)
+  
+    (exwm-input-set-key (kbd "s-<return>") #'exwm-layout-toggle-fullscreen)
     (exwm-input-set-key (kbd "s-r") #'exwm-reset)
+    (exwm-input-set-key (kbd "s-c") #'cm/launch-org-capture)
     (exwm-input-set-key (kbd "s-n") #'cm/exwm-workspace-next)
-
-    ;; s-p does not work on lenovo :( so we'll do s-o and s-n so they're
-    ;; opposite hands for directions in dvorak.
-    (exwm-input-set-key (kbd "s-o") #'cm/exwm-workspace-previous)
-
-    (exwm-input-set-simulation-keys
-     '(([?\C-b] . left)
-       ([?\C-f] . right)
-       ([?\C-p] . up)
-       ([?\C-n] . down)
-       ([?\C-a] . home)
-       ([?\C-e] . end)
-       ([?\M-v] . prior)
-       ([?\C-v] . next)
-       ([?\C-d] . delete)
-       ([?\C-k] . (S-end delete))))
-
-    (dotimes (i exwm-workspace-number)
+    (exwm-input-set-key (kbd "s-p") #'cm/exwm-workspace-previous)
+    (exwm-input-set-key (kbd "s-l") #'cm/exwm-lock) 
+  
+    (setq async-shell-command-display-buffer nil)
+    (setq exwm-workspace-show-all-buffers t)
+    (setq exwm-layout-show-all-buffers t)
+  
+    ;; set none for now
+    ;; (exwm-input-set-simulation-keys
+    ;;  '(([?\C-b] . left)
+    ;;    ([?\C-f] . right)
+    ;;    ([?\C-p] . up)
+    ;;    ([?\C-n] . down)
+    ;;    ([?\C-a] . home)
+    ;;    ([?\C-e] . end)
+    ;;    ([?\M-v] . prior)
+    ;;    ([?\C-v] . next)
+    ;;    ([?\C-d] . delete)
+    ;;    ([?\C-k] . (S-end delete))))
+  
+    (dotimes (i cm/exwm-workspace-starting-number)
       (exwm-input-set-key (kbd (format "s-%d" i))
 			  `(lambda ()
 			     (interactive)
 			     (exwm-workspace-switch-create ,i))))
+  
+    ;; enable systemtray
+    (require 'exwm-systemtray)
+    (exwm-systemtray-enable)
 
-    (exwm-enable))
+    ;; exwm-enable should be called from -f, we do not call it in our init.
+    )
 #+end_src
 
 *** Flymake
@@ -2995,12 +3104,14 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
        ((stuck "")
 	(todo "PROJECT"))
        ,cm/org-sort-style)
-      ,(cm/org-ctx-agenda "i" "INTERNET" "Internet Agenda")
-      ,(cm/org-ctx-agenda "c" "COMPUTER" "Computer Agenda")
-      ,(cm/org-ctx-agenda "w" "WORK" "Work Agenda")
+      ,(cm/org-ctx-agenda "c" "COMPOSE" "Write/Compose/R&D Agenda")
+      ,(cm/org-ctx-agenda "e" "ERRAND" "Errand Agenda")
+      ,(cm/org-ctx-agenda "k" "HACK" "Hack/Programming Agenda")
       ,(cm/org-ctx-agenda "h" "HOME" "Home Agenda")
-      ,(cm/org-ctx-agenda "r" "ERRAND" "Errand Agenda")
-      ,(cm/org-ctx-agenda "f" "PHONE" "Phone Agenda")
+      ,(cm/org-ctx-agenda "i" "INTERNET" "Internet Agenda")
+      ,(cm/org-ctx-agenda "o" "OFFLINE" "Offline computer Agenda")
+      ,(cm/org-ctx-agenda "p" "PHONE" "Phone Agenda")
+      ,(cm/org-ctx-agenda "w" "WORK" "Work")
       ("ca" "People Agenda"
        ((tags-todo "AGENDA-TODO=\"PROJECT\"-TODO=\"WAITING\"|TODO=\"WAITING\""))
        ((org-agenda-skip-function '(org-agenda-skip-entry-if 'scheduled))
@@ -3422,17 +3533,16 @@ it the normal way.
      :END:
 #+begin_src emacs-lisp
   (setq org-tag-alist '((:startgroup)
-			("HOME"   . ?h)
-			("WORK"   . ?w)
-			("ERRAND" . ?r)
-			(:endgroup)
 			("AGENDA"    . ?a)
-			("COMPUTER"  . ?c)
-			("INTERNET"  . ?v)
-			("PHONE"     . ?f)
-			("EMAIL"     . ?m)
-			("OUTREACH"  . ?h)
-			("DISPATCH"  . ?d)
+			("COMPOSE" . ?c)
+			("ERRAND" . ?e)
+			("HACK" . ?k)
+			("HOME"   . ?h)
+			("INTERNET"  . ?i)
+			("OFFLINE"  . ?o)
+			("PHONE"     . ?p)
+			("WORK"   . ?w)
+			(:endgroup)
 			("CHECKLIST" . ?x)))
 
   (setq org-log-done '(note))
@@ -3533,16 +3643,106 @@ How I deploy my personal website.
   ;; Inline images in HTML instead of producting links to the image
   (setq org-export-html-inline-images t)
 
-  ;; Use org.css from the norang website for export document stylesheets
-  ;;(setq org-export-html-style-extra "<link rel=\"stylesheet\" href=\"http://doc.norang.ca/org.css\" type=\"text/css\" />")
-  ;;(setq org-export-html-style-include-default nil)
-  ;; (setq org-export-html-style-extra "<link rel=\"stylesheet\" href=\":\" type=\"text/css\" />")
   ;; Do not generate internal css formatting for HTML exports
   (setq org-export-htmlize-output-type nil)
+
   ;; Export with LaTeX fragments
   (setq org-export-with-LaTeX-fragments t)
 
   (require 'ox-tufte)
+
+  ;; add advice around org-html-headline to not generate the <div> at
+  ;; all, just the <section> wrapper.
+
+  (defun cm/org-html-headline (headline contents info)
+    "Transcode a HEADLINE element from Org to HTML.
+  CONTENTS holds the contents of the headline.  INFO is a plist
+  holding contextual information."
+    (unless (org-element-property :footnote-section-p headline)
+      (let* ((numberedp (org-export-numbered-headline-p headline info))
+	     (numbers (org-export-get-headline-number headline info))
+	     (level (+ (org-export-get-relative-level headline info)
+		       (1- (plist-get info :html-toplevel-hlevel))))
+	     (todo (and (plist-get info :with-todo-keywords)
+			(let ((todo (org-element-property :todo-keyword headline)))
+			  (and todo (org-export-data todo info)))))
+	     (todo-type (and todo (org-element-property :todo-type headline)))
+	     (priority (and (plist-get info :with-priority)
+			    (org-element-property :priority headline)))
+	     (text (org-export-data (org-element-property :title headline) info))
+	     (tags (and (plist-get info :with-tags)
+			(org-export-get-tags headline info)))
+	     (full-text (funcall (plist-get info :html-format-headline-function)
+				 todo todo-type priority text tags info))
+	     (contents (or contents ""))
+	     (id (or (org-element-property :CUSTOM_ID headline)
+		     (org-export-get-reference headline info))))
+	(if (org-export-low-level-p headline info)
+	    ;; This is a deep sub-tree: export it as a list item.
+	    (let* ((html-type (if numberedp "ol" "ul")))
+	      (concat
+	       (and (org-export-first-sibling-p headline info)
+		    (apply #'format "<%s class=\"org-%s\">\n"
+			   (make-list 2 html-type)))
+	       (org-html-format-list-item
+		contents (if numberedp 'ordered 'unordered)
+		nil info nil
+		(concat (org-html--anchor id nil nil info) full-text)) "\n"
+	       (and (org-export-last-sibling-p headline info)
+		    (format "</%s>\n" html-type))))
+	  ;; Standard headline.  Export it as a section.
+	  (let ((extra-class (org-element-property :HTML_CONTAINER_CLASS headline))
+		(first-content (car (org-element-contents headline))))
+
+	    (format "%s%s%s%s\n"
+		    (pcase level
+		      ('1 "")
+		      ('2 "<section>")
+		      (_ ""))
+		    (format "\n<h%d id=\"%s\">%s</h%d>\n"
+			    level
+			    id
+			    (concat
+			     (and numberedp
+				  (format
+				   "<span class=\"section-number-%d\">%s</span> "
+				   level
+				   (mapconcat #'number-to-string numbers ".")))
+			     full-text)
+			    level)
+		    ;; When there is no section, pretend there is an
+		    ;; empty one to get the correct <div
+		    ;; class="outline-...> which is needed by
+		    ;; `org-info.js'.
+		    (if (eq (org-element-type first-content) 'section) contents
+		      (concat (org-html-section first-content "" info) contents))
+		    (pcase level
+		      ('1 "")
+		      ('2 "</section>")
+		      (_ ""))))))))
+
+  (defun cm/org-html-section (section contents info)
+    "Transcode a SECTION element from Org to HTML.
+  CONTENTS holds the contents of the section.  INFO is a plist
+  holding contextual information."
+    (let ((parent (org-export-get-parent-headline section)))
+      ;; Before first headline: no container, just return CONTENTS.
+      (if (not parent) contents
+	;; Get div's class and id references.
+	(let* ((class-num (+ (org-export-get-relative-level parent info)
+			     (1- (plist-get info :html-toplevel-hlevel))))
+	       (section-number
+		(and (org-export-numbered-headline-p parent info)
+		     (mapconcat
+		      #'number-to-string
+		      (org-export-get-headline-number parent info) "-"))))
+	  ;; Build return value.
+	  (format "%s\n" (or contents ""))))))
+
+  (advice-add #'org-html-headline :override #'cm/org-html-headline)
+  (advice-add #'org-html-section :override #'cm/org-html-section)
+
+
 
   ;; List of projects
   ;; - codemac.net -- My personal website
@@ -3550,34 +3750,38 @@ How I deploy my personal website.
   (setq org-publish-project-alist
 	'(("codemac-org"
 	   :base-directory "~/org/_www/codemac.net"
-	   :publishing-directory "/tmp/codemac.net"
-  ;;	 :preparation-function nil
-  ;;	 :completion-function nil
+	   :publishing-directory "~/tmp/codemac.net"
 	   :recursive t
 	   :base-extension "org"
 	   :publishing-function org-html-publish-to-tufte-html
 	   :exclude-tags ("noexport" "todo")
-  ;;	 :html-preamble ""
-  ;;	 :html-postamble ""
 	   :html-head-extra "<link rel=\"stylesheet\" href=\"tufte.css\" type=\"text/css\" />"
 	   :html-head-include-default-style nil
 	   :html-head-include-scripts nil
+
+	   ;; These are for tufte.css. It seems ox-tufte is very out of
+	   ;; date.
+	   :html-html5-fancy t
+	   :html-container "section"
+	   :html-divs ((preamble "div" "preamble")
+		       (content "article" "content")
+		       (postamble "div" "postamble"))
+	   :html-doctype "xhtml5"
 	   :section-numbers nil
 	   :html-validation-link nil
 	   :with-toc nil
-  ;;	 :auto-sitemap t
-  ;;	 :sitemap-filename "sitemap.html")
-	   )
+	   :with-smart-quotes t
+	   :auto-sitemap t)
 	  ("codemac-static"
 	   :base-directory "~/org/_www/codemac.net"
-	   :publishing-directory "/tmp/codemac.net"
-	   :base-extension "css\\|pdf\\|png\\|jpg\\|gif\\|js\\|txt\\|mp3\\|ogg\\|swf\\|svg"
+	   :publishing-directory "~/tmp/codemac.net"
+	   :base-extension "css\\|pdf\\|png\\|jpg\\|gif\\|js\\|txt\\|mp3\\|ogg\\|swf\\|svg\\|woff\\|eot\\|ttf\\|html"
 	   :publishing-function org-publish-attachment
 	   :recursive t)
 	  ("codemac" :components ("codemac-org" "codemac-static"))
 	  ("org-doc-org"
 	   :base-directory "~/org/"
-	   :publishing-directory "/tmp/published-org"
+	   :publishing-directory "~/tmp/published-org"
 	   :recursive t
 	   :section-numbers nil
 	   :table-of-contents nil
@@ -3595,7 +3799,7 @@ How I deploy my personal website.
 	   :creator-info nil)
 	  ("org-doc-static"
 	   :base-directory "~/org/"
-	   :publishing-directory "/tmp/published-org"
+	   :publishing-directory "~/tmp/published-org"
 	   :base-extension "css\\|pdf\\|png\\|jpg\\|gif"
 	   :publishing-function org-publish-attachment
 	   :recursive t
@@ -3607,6 +3811,16 @@ How I deploy my personal website.
     (save-buffer)
     (org-save-all-org-buffers)
     (org-publish-current-project))
+
+  (defun cm/org-publish-codemac-net ()
+    (interactive)
+    (org-save-all-org-buffers)
+    ;; delete everything in ~/tmp/codemac.net
+    (delete-directory "~/tmp/codemac.net" 'recursive)
+    (org-publish-project "codemac" 'force)
+    (if (yes-or-no-p "Upload to public bucket? ")
+	(async-shell-command "cd /home/jmickey/tmp/codemac.net && /home/jmickey/opt/google-cloud-sdk/bin/gsutil -m rsync -r -d . gs://codemac.net")))
+
 #+end_src
 **** Misc Funcs
      :PROPERTIES:
@@ -3732,15 +3946,21 @@ allows me to create checklist templates per-project.
 **** Org Capture in new frames
 
 #+begin_src emacs-lisp
+  (defvar cm/org-capture-frame-height 50
+    "Height of org-capture frame.")
+
+  (defvar cm/org-capture-frame-width 160
+    "Width of org-capture frame.")
+
   (defun cm/org-capture-other-frame ()
     "Create a new frame and run org-capture."
     (interactive)
     ;; TODO: gather information about current window, assume this is
     ;; being called potentially in the background.
 
-    (make-frame '((name . "Org-Capture")
-		  (width . 120)
-		  (height . 20)
+    (make-frame `((name . "Org-Capture")
+		  (width . ,cm/org-capture-frame-width)
+		  (height . ,cm/org-capture-frame-height)
 		  (menu-bar-lines . 0)
 		  (tool-bar-lines . 0)
 		  (auto-lower . nil)
@@ -3778,6 +3998,20 @@ allows me to create checklist templates per-project.
   (advice-add 'org-protocol-capture :around #'cm/org-capture-other-frame-hook)
   (add-hook 'org-capture-after-finalize-hook 'cm/org-capture-other-frame-cleanup)
 #+end_src
+
+**** Org Capture w/Window Information
+#+begin_src emacs-lisp
+  (defun cm/org-capture-with-window (wm_class wm_name)
+    (interactive)
+    ;; get content based on class & wm_name
+    (org-capture))
+
+  (defun cm/org-capture-with-window-other-frame (wm_class wm_name)
+    (interactive)
+    ;; get content based on class & wm_name, and insert into templates generically??
+    (cm/org-capture-other-frame))
+
+#+end_src
 **** Search through my _notes directory
 I like to record notes about various things in a long lived way via
 plain text. However, I haven't actually used them that much because I
@@ -3789,7 +4023,7 @@ of some form as well.
 
 Let's first layout what we want the keymap to be like:
 #+begin_src emacs-lisp
-  (defhydra hydra-cm-org-notes (global-map "C-c n")
+  (defhydra hydra-cm-org-notes (global-map "C-c n" :exit t)
     "Use your notes wisely, Luke:"
     ("b" cm/org-scratch-buffer "buffer for org scratch notes")
     ("f" deft-new-file "new file for org notes, named by the date")
@@ -3862,7 +4096,7 @@ the files.
     (org-mode))
 #+end_src
 
-**** Org Capture
+**** Org Capture Templates
      :PROPERTIES:
      :ID:       47a9dc31-f51e-4ee3-b06f-44848cbe9a04
      :END:
@@ -3936,9 +4170,12 @@ the files.
   ;; Set up my diary file
   (setq diary-file "~/org/diary") ;; deal with the fact that it's in the org folder
 
-  ;;
-
   (setq org-src-fontify-natively nil)
+
+  (defun cm/region-html-to-org (start end)
+    (interactive "r")
+    (shell-command-on-region start end "pandoc -f html -t org '--wrap=none'" nil 'replace))
+
 #+end_src
 
 Also - remember to give everything an id number. This will really help
@@ -4105,6 +4342,27 @@ worrying about how the face was inherited.
 
 #+begin_src emacs-lisp
   (add-hook 'auto-save-hook 'org-save-all-org-buffers)
+#+end_src
+
+**** My GTD-style agenda WAITING hook
+
+This creates an inactive heading in the outline title that shows me when the
+task was switched to WAITING. This helps me track how long something has been
+waiting. Probably should use something like org-expiry.
+
+#+begin_src emacs-lisp
+  (defun cm/org-add-inactive-ts ()
+    (interactive)
+    (org-edit-headline
+     (concat
+      (format-time-string "[%Y-%m-%d %H:%M] ")
+      (org-get-heading 'notags 'notodo 'nopriority 'nocomment))))
+
+  (defun cm/org-todo-state-change-inactive-ts-waiting-hook ()
+    (if (string= org-state "WAITING")
+	(cm/org-add-inactive-ts)))
+
+  (add-hook 'org-after-todo-state-change-hook 'cm/org-todo-state-change-inactive-ts-waiting-hook)
 #+end_src
 
 *** RCIRC
@@ -4902,6 +5160,21 @@ A wholly owned subsidiary of Cisco.
   (global-set-key (kbd "C-c f") 'hydra-find-file/body)
 #+end_src
 * Tools
+** Tea Timer
+#+begin_src emacs-lisp
+  (defun cm/timer (timeval msg)
+    "Ask how long the tea should draw and start a timer.
+  Cancel prevoius timer, started by this function"
+    (interactive "sHow long (mins or h:mm:ss)? \nsMessage: ")
+    (with-temp-buffer
+      (rename-buffer msg)
+      (org-mode)
+      (org-timer-set-timer timeval)))
+
+  (defun cm/gtd-timer ()
+    (interactive)
+    (cm/timer "2" "Two minute task is complete!"))
+#+end_src
 ** Time Saved Calculater
 The =cm/timesaved= function is a user interface for calculating how
 much time someone saves if they shave off some amount of time per
