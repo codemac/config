@@ -3096,8 +3096,12 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
        ((tags-todo "-{.*}-TODO=\"PROJECT\"-TODO=\"WAITING\"")))
       ("n" "Next agenda"
        ((todo "NEXT")
-	(todo "STARTED"))
-       ,cm/org-sort-style)))
+	(todo "STARTED")
+	(todo "TODO"))
+       ((org-agenda-skip-function '(org-agenda-skip-entry-if 'scheduled))
+	(org-agenda-sorting-strategy
+	 '((todo tag-up tsia-up)
+	   (search tsia-up)))))))
 
   (defun cm/context-agendas ()
     `(("p" "Project Agenda"
@@ -5207,8 +5211,8 @@ The idea for this comes from https://xkcd.com/1205/
     (message messagestring)))
 
 (defun cm/timesaved-times-per-year (time)
-  (/ (cm/seconds-in-time "year")
-     (cm/seconds-in-time time)))
+  (/ (cm/time-saved-seconds-in-time "year")
+     (cm/time-saved-seconds-in-time time)))
 
 (defun cm/timesaved-seconds-in-time (time)
   (message (format "intern time: %S" (intern time)))
