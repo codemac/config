@@ -1,17 +1,15 @@
 ;;; org-registry.el --- a registry for Org links
 ;;
-;; Copyright 2007-2014 Bastien Guerry
+;; Copyright 2007 2008 Bastien Guerry
 ;;
 ;; Emacs Lisp Archive Entry
 ;; Filename: org-registry.el
 ;; Version: 0.1a
-;; Author: Bastien Guerry <bzg@gnu.org>
-;; Maintainer: Bastien Guerry <bzg@gnu.org>
+;; Author: Bastien Guerry <bzg AT altern DOT org>
+;; Maintainer: Bastien Guerry <bzg AT altern DOT org>
 ;; Keywords: org, wp, registry
 ;; Description: Shows Org files where the current buffer is linked
 ;; URL: http://www.cognition.ens.fr/~guerry/u/org-registry.el
-;;
-;; This file is not part of GNU Emacs.
 ;;
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -24,7 +22,8 @@
 ;; GNU General Public License for more details.
 ;;
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with this program; if not, write to the Free Software
+;; Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 ;;; Commentary:
 ;;
@@ -40,25 +39,25 @@
 ;;
 ;; This is were org-registry comes in handy.
 ;;
-;;     M-x org-registry-show will tell you the name of the file
+;;     M-x org-registry-show will tell you the name of the file 
 ;; C-u M-x org-registry-show will directly jump to the file
 ;;
-;; In case there are several files where the link lives in:
+;; In case there are several files where the link lives in: 
 ;;
 ;;     M-x org-registry-show will display them in a new window
 ;; C-u M-x org-registry-show will prompt for a file to visit
 ;;
 ;; Add this to your Org configuration:
-;;
+;; 
 ;; (require 'org-registry)
 ;; (org-registry-initialize)
 ;;
 ;; If you want to update the registry with newly inserted links in the
 ;; current buffer: M-x org-registry-update
-;;
+;; 
 ;; If you want this job to be done each time you save an Org buffer,
 ;; hook 'org-registry-update to the local 'after-save-hook in org-mode:
-;;
+;; 
 ;; (org-registry-insinuate)
 
 ;;; Code:
@@ -84,6 +83,12 @@
 (defvar org-registry-alist nil
   "An alist containing the Org registry.")
 
+;; FIXME name this org-before-first-heading-p?
+(defun org-registry-before-first-heading-p ()
+  "Before first heading?"
+  (save-excursion
+    (null (re-search-backward "^\\*+ " nil t))))
+
 ;;;###autoload
 (defun org-registry-show (&optional visit)
   "Show Org files where there are links pointing to the current
@@ -95,7 +100,7 @@ buffer."
 		 (match-string-no-properties 1 blink)))
 	 (desc (or (and (string-match org-bracket-link-regexp blink)
 			(match-string-no-properties 3 blink)) "No description"))
-	 (files (org-registry-assoc-all link))
+	 (files (org-registry-assoc-all link)) 
 	 file point selection tmphist)
     (cond ((and files visit)
 	   ;; result(s) to visit
@@ -104,7 +109,7 @@ buffer."
 		  (setq tmphist (mapcar (lambda(entry)
 					  (format "%s (%d) [%s]"
 						  (nth 3 entry) ; file
-						  (nth 2 entry) ; point
+						  (nth 2 entry) ; point 
 						  (nth 1 entry))) files))
 		  (setq selection (completing-read "File: " tmphist
 						   nil t nil 'tmphist))
@@ -118,13 +123,13 @@ buffer."
 	   ;; visit the (selected) file
 	   (funcall org-registry-find-file file)
 	   (goto-char point)
-	   (unless (org-before-first-heading-p)
+	   (unless (org-registry-before-first-heading-p)
 	     (org-show-context)))
 	  ((and files (not visit))
 	   ;; result(s) to display
 	   (cond  ((eq 1 (length files))
 		   ;; show one file
-		   (message "Link in file %s (%d) [%s]"
+		   (message "Link in file %s (%d) [%s]" 
 			    (nth 3 (car files))
 			    (nth 2 (car files))
 			    (nth 1 (car files))))
@@ -133,29 +138,24 @@ buffer."
 
 (defun org-registry-display-files (files link)
   "Display files in a separate window."
-  (switch-to-buffer-other-window
+  (switch-to-buffer-other-window 
    (get-buffer-create " *Org registry info*"))
   (erase-buffer)
   (insert (format "Files pointing to %s:\n\n" link))
   (let (file)
     (while (setq file (pop files))
-      (insert (format "%s (%d) [%s]\n" (nth 3 file)
+      (insert (format "%s (%d) [%s]\n" (nth 3 file) 
 		      (nth 2 file) (nth 1 file)))))
   (shrink-window-if-larger-than-buffer)
   (other-window 1))
 
 (defun org-registry-assoc-all (link &optional registry)
   "Return all associated entries of LINK in the registry."
-  (org-registry-find-all
-   (lambda (entry) (string= link (car entry)))
-   registry))
-
-(defun org-registry-find-all (test &optional registry)
-  "Return all entries satisfying `test' in the registry."
-  (delq nil
-        (mapcar
-         (lambda (x) (and (funcall test x) x))
-         (or registry org-registry-alist))))
+  (let ((reg (or org-registry-alist registry)) entry output)
+    (while (setq entry (assoc link reg))
+      (add-to-list 'output entry)
+      (setq reg (delete entry reg)))
+    (nreverse output)))
 
 ;;;###autoload
 (defun org-registry-visit ()
@@ -166,7 +166,7 @@ this file."
 
 ;;;###autoload
 (defun org-registry-initialize (&optional from-scratch)
-  "Initialize `org-registry-alist'.
+  "Initialize `org-registry-alist'. 
 If FROM-SCRATCH is non-nil or the registry does not exist yet,
 create a new registry from scratch and eval it. If the registry
 exists, eval `org-registry-file' and make it the new value for
@@ -180,7 +180,7 @@ exists, eval `org-registry-file' and make it the new value for
 	  (mapc (lambda (entry)
 		  (add-to-list 'org-registry-alist entry))
 		(org-registry-get-entries file)))
-	(when from-scratch
+	(when from-scratch 
 	  (org-registry-create org-registry-alist)))
     ;; eval the registry file
     (with-temp-buffer
@@ -192,8 +192,8 @@ exists, eval `org-registry-file' and make it the new value for
   "Call `org-registry-update' after saving in Org-mode.
 Use with caution.  This could slow down things a bit."
   (interactive)
-  (add-hook 'org-mode-hook
-	    (lambda() (add-hook 'after-save-hook
+  (add-hook 'org-mode-hook 
+	    (lambda() (add-hook 'after-save-hook 
 				'org-registry-update t t))))
 
 (defun org-registry-get-entries (file)
@@ -220,7 +220,7 @@ Use with caution.  This could slow down things a bit."
 (defun org-registry-update ()
   "Update the registry for the current Org file."
   (interactive)
-  (unless (eq major-mode 'org-mode) (error "Not in org-mode"))
+  (unless (org-mode-p) (error "Not in org-mode"))
   (let* ((from-file (expand-file-name (buffer-file-name)))
 	 (new-entries (org-registry-get-entries from-file)))
     (with-temp-buffer
@@ -237,7 +237,7 @@ Use with caution.  This could slow down things a bit."
       (re-search-forward "^(\"" nil t)
       (goto-char (match-beginning 0))
       (mapc (lambda (elem)
-	      (insert (with-output-to-string (prin1 elem)) "\n"))
+	      (insert (with-output-to-string (prin1 elem)) "\n")) 
 	    new-entries)
       (save-buffer)
       (kill-buffer (current-buffer)))

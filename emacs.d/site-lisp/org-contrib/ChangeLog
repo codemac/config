@@ -1,0 +1,78 @@
+2008-04-15  Jason Riedy  <jason@acm.org>
+
+	* lisp/orgtbl-sqlinsert.el: New file.
+	* README: Add to list.
+
+2008-04-07  Carsten Dominik  <dominik@science.uva.nl>
+
+	* lisp/org-iswitchb.el: File removed, because the functionality is
+	now in org.el, in the core.
+
+	* lisp/org-mew.el: File moved into the core.
+
+2008-03-14  Carsten Dominik  <dominik@science.uva.nl>
+
+	* lisp/org-depend.el: Add `provide' for the module system.
+
+	* lisp/org-man.el: Add `provide' for the module system.
+
+	* lisp/org-interactive-query.el: Renamed from org-iq.el.
+
+2008-03-05  Bastien Guerry  <bzg@altern.org>
+
+	* lisp/org-elisp-symbol.el (org-elisp-symbol-store-link):
+	Correctly handle function with no documentation.
+
+2008-02-29  Tokuya Kameshima <kames@fa2.so-net.ne.jp>
+
+	* lisp/org-bookmark.el (org-bookmark-store-link): Use
+	`bookmark-all-names' instead of `bookmark-alist'.
+
+2008-02-29  Bastien Guerry  <bzg@altern.org>
+
+	* lisp/org-bookmark.el (org-bookmark-in-dired)
+	(org-bookmark-when-visiting-a-file)
+	(org-bookmark-use-first-bookmark): New options.
+	(org-bookmark-store-link): Behave according to options.
+
+2008-02-29  Bastien Guerry  <bzg@altern.org>
+
+	* lisp/org-mairix.el (org-mairix): Use `org-link' group.
+
+2008-02-28  Bastien Guerry  <bzg@altern.org>
+
+	* lisp/org-bookmark.el: New file.
+
+2008-02-26  Carsten Dominik  <dominik@science.uva.nl>
+
+	* lisp/org-id.el: New file.
+
+2008-02-21  Carsten Dominik  <dominik@science.uva.nl>
+
+	* lisp/org-screen.el: New file.
+
+2008-02-17  Christian Egli  <christian.egli@alumni.ethz.ch>
+
+	* scripts/org2hpda: Added a Makefile for generation of hipster pda
+	style printouts
+
+2008-02-08  Phil Jackson  <phil@shellarchive.co.uk>
+
+	* scripts/dir2org.zsh: New file.
+
+2008-02-07  Phil Jackson  <phil@shellarchive.co.uk>
+
+	* lisp/org-annotate-file.el: New file.
+
+2008-02-07  Bastien Guerry  <bzg@altern.org>
+
+	* Added org-expiry.el org-registry.el org-iswitchb.el org2rem.el
+	to CONTRIB/lisp/.
+
+2008-02-07  Phil Jackson  <phil@shellarchive.co.uk>
+
+	* lisp/org-irc.el: New file.
+
+	* ChangeLog: New file.
+
+

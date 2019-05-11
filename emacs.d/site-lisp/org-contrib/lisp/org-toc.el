@@ -1,13 +1,11 @@
 ;;; org-toc.el --- Table of contents for Org-mode buffer
 
-;; Copyright 2007-2018 Free Software Foundation, Inc.
+;; Copyright 2007 Bastien Guerry
 ;;
-;; Author: Bastien Guerry <bzg@gnu.org>
+;; Author: Bastien Guerry <bzg AT altern DOT org>
 ;; Keywords: Org table of contents
 ;; Homepage: http://www.cognition.ens.fr/~guerry/u/org-toc.el
 ;; Version: 0.8
-
-;; This file is not part of GNU Emacs.
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -20,7 +18,8 @@
 ;; GNU General Public License for more details.
 ;;
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with this program; if not, write to the Free Software
+;; Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 ;;; Commentary:
 
@@ -109,7 +108,7 @@ echo-area. The COLUMNS property is always exluded."
   (setq major-mode 'org-toc-mode))
 
 ;; toggle modes
-(define-key org-toc-mode-map "F" 'org-toc-follow-mode)
+(define-key org-toc-mode-map "f" 'org-toc-follow-mode)
 (define-key org-toc-mode-map "S" 'org-toc-show-subtree-mode)
 (define-key org-toc-mode-map "s" 'org-toc-store-config)
 (define-key org-toc-mode-map "g" 'org-toc-restore-config)
@@ -119,10 +118,8 @@ echo-area. The COLUMNS property is always exluded."
 ;; navigation keys
 (define-key org-toc-mode-map "p" 'org-toc-previous)
 (define-key org-toc-mode-map "n" 'org-toc-next)
-(define-key org-toc-mode-map "f" 'org-toc-forward)
-(define-key org-toc-mode-map "b" 'org-toc-back)
-(define-key org-toc-mode-map [(left)] 'org-toc-back)
-(define-key org-toc-mode-map [(right)] 'org-toc-forward)
+(define-key org-toc-mode-map [(left)] 'org-toc-previous)
+(define-key org-toc-mode-map [(right)] 'org-toc-next)
 (define-key org-toc-mode-map [(up)] 'org-toc-previous)
 (define-key org-toc-mode-map [(down)] 'org-toc-next)
 (define-key org-toc-mode-map "1" (lambda() (interactive) (org-toc-show 1 (point))))
@@ -191,45 +188,45 @@ specified, then make `org-toc-recenter' use this value."
   (interactive)
   (let ((beg (point))
 	(end (save-excursion (end-of-line) (point)))
-	(ov (car (overlays-at (point))))
+	(ov (car (org-overlays-at (point))))
 	status)
-    (if ov (setq status (overlay-get ov 'status))
-      (setq ov (make-overlay beg end)))
+    (if ov (setq status (org-overlay-get ov 'status))
+      (setq ov (org-make-overlay beg end)))
     ;; change the folding status of this headline
     (cond ((or (null status) (eq status 'folded))
-	   (org-show-children)
+	   (show-children)
 	   (message "CHILDREN")
-	   (overlay-put ov 'status 'children))
+	   (org-overlay-put ov 'status 'children))
 	  ((eq status 'children)
 	   (show-branches)
 	   (message "BRANCHES")
-	   (overlay-put ov 'status 'branches))
+	   (org-overlay-put ov 'status 'branches))
 	  (t (hide-subtree)
 	     (message "FOLDED")
-	     (overlay-put ov 'status 'folded)))))
+	     (org-overlay-put ov 'status 'folded)))))
 
 ;;; Main show function:
 ;; FIXME name this org-before-first-heading-p?
 (defun org-toc-before-first-heading-p ()
   "Before first heading?"
   (save-excursion
-    (null (re-search-backward org-outline-regexp-bol nil t))))
+    (null (re-search-backward "^\\*+ " nil t))))
 
 ;;;###autoload
 (defun org-toc-show (&optional depth position)
   "Show the table of contents of the current Org-mode buffer."
   (interactive "P")
-  (if (eq major-mode 'org-mode)
+  (if (org-mode-p)
       (progn (setq org-toc-base-buffer (current-buffer))
 	     (setq org-toc-odd-levels-only org-odd-levels-only))
     (if (eq major-mode 'org-toc-mode)
-	(org-pop-to-buffer-same-window org-toc-base-buffer)
+	(switch-to-buffer org-toc-base-buffer)
       (error "Not in an Org buffer")))
   ;; create the new window display
   (let ((pos (or position
 		 (save-excursion
 		   (if (org-toc-before-first-heading-p)
-		       (progn (re-search-forward org-outline-regexp-bol nil t)
+		       (progn (re-search-forward "^\\*+ " nil t)
 			      (match-beginning 0))
 		     (point))))))
     (setq org-toc-cycle-global-status org-cycle-global-status)
@@ -242,11 +239,11 @@ specified, then make `org-toc-recenter' use this value."
     (let* ((beg (point-min))
 	   (end (and (re-search-forward "^\\*" nil t)
 		     (1- (match-beginning 0))))
-	   (ov (make-overlay beg end))
+	   (ov (org-make-overlay beg end))
 	   (help (format "Table of contents for %s (press ? for a quick help):\n"
 			 (buffer-name org-toc-base-buffer))))
-      (overlay-put ov 'invisible t)
-      (overlay-put ov 'before-string help))
+      (org-overlay-put ov 'invisible t)
+      (org-overlay-put ov 'before-string help))
     ;; build the browsable TOC
     (cond (depth
 	   (let* ((dpth (if org-toc-odd-levels-only
@@ -279,7 +276,7 @@ specified, then make `org-toc-recenter' use this value."
 ;;; Navigation functions:
 (defun org-toc-goto (&optional jump cycle)
   "From Org TOC buffer, follow the targeted subtree in the Org window.
-If JUMP is non-nil, go to the base buffer.
+If JUMP is non-nil, go to the base buffer.  
 If JUMP is 'delete, go to the base buffer and delete other windows.
 If CYCLE is non-nil, cycle the targeted subtree in the Org window."
   (interactive)
@@ -333,28 +330,10 @@ If DELETE is non-nil, delete other windows when in the Org buffer."
   (if org-toc-info-mode (org-toc-info))
   (if org-toc-follow-mode (org-toc-goto)))
 
-(defun org-toc-forward ()
-  "Go to the next headline at the same level in the TOC."
-  (interactive)
-  (condition-case nil
-      (outline-forward-same-level 1)
-    (error (message "No next headline at this level")))
-  (if org-toc-info-mode (org-toc-info))
-  (if org-toc-follow-mode (org-toc-goto)))
-
-(defun org-toc-back ()
-  "Go to the previous headline at the same level in the TOC."
-  (interactive)
-  (condition-case nil
-      (outline-backward-same-level 1)
-    (error (message "No previous headline at this level")))
-  (if org-toc-info-mode (org-toc-info))
-  (if org-toc-follow-mode (org-toc-goto)))
-
 (defun org-toc-quit ()
   "Quit the current Org TOC buffer."
   (interactive)
-  (kill-buffer)
+  (kill-this-buffer)
   (other-window 1)
   (delete-other-windows))
 
@@ -363,13 +342,13 @@ If DELETE is non-nil, delete other windows when in the Org buffer."
   "Toggle columns view in the Org buffer from Org TOC."
   (interactive)
   (let ((indirect-buffer (current-buffer)))
-    (org-pop-to-buffer-same-window org-toc-base-buffer)
+    (switch-to-buffer org-toc-base-buffer)
     (if (not org-toc-columns-shown)
 	(progn (org-columns)
 	       (setq org-toc-columns-shown t))
       (progn (org-columns-remove-overlays)
 	     (setq org-toc-columns-shown nil)))
-    (org-pop-to-buffer-same-window indirect-buffer)))
+    (switch-to-buffer indirect-buffer)))
 
 (defun org-toc-info ()
   "Show properties of current subtree in the echo-area."
@@ -377,7 +356,7 @@ If DELETE is non-nil, delete other windows when in the Org buffer."
   (let ((pos (point))
 	(indirect-buffer (current-buffer))
 	props prop msg)
-    (org-pop-to-buffer-same-window org-toc-base-buffer)
+    (switch-to-buffer org-toc-base-buffer)
     (goto-char pos)
     (setq props (org-entry-properties))
     (while (setq prop (pop props))
@@ -390,7 +369,7 @@ If DELETE is non-nil, delete other windows when in the Org buffer."
 	  (setq p (concat p ":"))
 	  (add-text-properties 0 (length p) '(face org-special-keyword) p)
 	  (setq msg (concat msg p " " v "  ")))))
-    (org-pop-to-buffer-same-window indirect-buffer)
+    (switch-to-buffer indirect-buffer)
     (message msg)))
 
 ;;; Store and restore TOC configuration:
@@ -437,17 +416,17 @@ current table of contents to it."
       (save-excursion
 	(goto-char (point-min))
 	(when (search-forward (car hlcfg0) nil t)
-	  (unless (overlays-at (match-beginning 0))
-	    (setq ov (make-overlay (match-beginning 0)
-				   (match-end 0))))
+	  (unless (org-overlays-at (match-beginning 0))
+	    (setq ov (org-make-overlay (match-beginning 0)
+				       (match-end 0))))
 	  (cond ((eq (cdr hlcfg0) 'children)
-		 (org-show-children)
+		 (show-children)
 		 (message "CHILDREN")
-		 (overlay-put ov 'status 'children))
+		 (org-overlay-put ov 'status 'children))
 		((eq (cdr hlcfg0) 'branches)
 		 (show-branches)
 		 (message "BRANCHES")
-		 (overlay-put ov 'status 'branches))))))
+		 (org-overlay-put ov 'status 'branches))))))
     (goto-char pos)
     (if org-toc-follow-mode (org-toc-goto))
     (message "Last TOC configuration restored")
@@ -462,7 +441,7 @@ status."
       (goto-char (point-min))
       (while (and (not (eobp))
 		  (goto-char (next-overlay-change (point))))
-	(when (looking-at org-outline-regexp-bol)
+	(when (looking-at "^\\*+ ")
 	  (add-to-list
 	   'output
 	   (cons (buffer-substring-no-properties
@@ -478,16 +457,15 @@ status."
 (defun org-toc-help ()
   "Display a quick help message in the echo-area for `org-toc-mode'."
   (interactive)
-  (let ((st-start 0)
+  (let ((st-start 0) 
 	(help-message
 	 "\[space\]   show heading                     \[1-4\] hide headlines below this level
-\[TAB\]     jump to heading                  \[F\]   toggle follow mode (currently %s)
+\[TAB\]     jump to heading                  \[f\]   toggle follow mode (currently %s)
 \[return\]  jump and delete others windows   \[i\]   toggle info mode (currently %s)
 \[S-TAB\]   cycle subtree (in Org)           \[S\]   toggle show subtree mode (currently %s)
-\[C-S-TAB\] global cycle (in Org)            \[r\]   toggle recenter mode (currently %s)
+\[C-S-TAB\] global cycle (in Org)            \[r\]   toggle recenter mode (currently %s)   
 \[:\]       cycle subtree (in TOC)           \[c\]   toggle column view (currently %s)
-\[n/p\]     next/previous heading            \[s\]   save TOC configuration
-\[f/b\]     next/previous heading of same level
+\[n/p\]     next/previous heading            \[s\]   save TOC configuration 
 \[q\]       quit the TOC                     \[g\]   restore last TOC configuration"))
     (while (string-match "\\[[^]]+\\]" help-message st-start)
       (add-text-properties (match-beginning 0)
@@ -504,5 +482,7 @@ status."
 ;;;;##########################################################################
 ;;;;  User Options, Variables
 ;;;;##########################################################################
+
+
 
 ;;; org-toc.el ends here

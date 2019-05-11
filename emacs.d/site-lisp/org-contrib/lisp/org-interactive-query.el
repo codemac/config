@@ -1,12 +1,10 @@
 ;;; org-interactive-query.el --- Interactive modification of agenda query
 ;;
-;; Copyright 2007-2018 Free Software Foundation, Inc.
+;; Copyright 2007 Free Software Foundation, Inc.
 ;;
 ;; Author: Christopher League <league at contrapunctus dot net>
 ;; Version: 1.0
 ;; Keywords: org, wp
-;;
-;; This file is not part of GNU Emacs.
 ;;
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -19,18 +17,19 @@
 ;; GNU General Public License for more details.
 ;;
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with this program; if not, write to the Free Software
+;; Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 ;;
 ;;; Commentary:
 ;;
 
-;; This library implements interactive modification of a tags/todo query
+;; This ibrary implements interactive modification of a tags/todo query
 ;; in the org-agenda.  It adds 4 keys to the agenda
 ;;
 ;; /   add a keyword as a positive selection criterion
 ;; \   add a keyword as a newgative selection criterion
 ;; =   clear a keyword from the selection string
-;; ;
+;; ;   
 
 (require 'org)
 
@@ -38,11 +37,11 @@
 (org-defkey org-agenda-mode-map "/" 'org-agenda-query-and-cmd)
 (org-defkey org-agenda-mode-map ";" 'org-agenda-query-or-cmd)
 (org-defkey org-agenda-mode-map "\\" 'org-agenda-query-not-cmd)
-
+ 
 ;;; Agenda interactive query manipulation
 
 (defcustom org-agenda-query-selection-single-key t
-  "Non-nil means query manipulation exits after first change.
+  "Non-nil means, query manipulation exits after first change.
 When nil, you have to press RET to exit it.
 During query selection, you can toggle this flag with `C-c'.
 This variable can also have the value `expert'.  In this case, the window
@@ -81,7 +80,7 @@ not change the current one."
 	(split-window-vertically)
 	(org-switch-to-buffer-other-window (get-buffer-create " *Org tags*")))
       (erase-buffer)
-      (setq-local org-done-keywords done-keywords)
+      (org-set-local 'org-done-keywords done-keywords)
       (insert "Query:    " current "\n")
       (org-agenda-query-op-line op)
       (insert "\n\n")
@@ -282,7 +281,7 @@ keyword string."
 (defun org-agenda-query-generic-cmd (op)
   "Activate query manipulation with OP as initial operator."
   (let ((q (org-agenda-query-selection org-agenda-query-string op
-                                       org-tag-alist
+                                       org-tag-alist 
                                        (org-agenda-query-global-todo-keys))))
     (when q
       (setq org-agenda-query-string q)
