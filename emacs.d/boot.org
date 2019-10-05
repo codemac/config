@@ -15,6 +15,7 @@ brighter; it simply makes everything else vanish.
 The goal of this init.org file is to document my emacs configuration
 in a readable manner for those who would like to borrow from it. We'll
 see how this goes!
+
 * Org initialization
   :PROPERTIES:
   :ID:       10b789e5-616b-4d30-a27a-1c4bdd57c08c
@@ -25,51 +26,6 @@ so you have to check [[file:init.el][init.el]] for more information! DRY!
 This must be first, and it makes everything else a little bit easier.
 #+begin_src emacs-lisp
   ;;; -*- lexical-binding: t -*-
-#+end_src
-* Security
-There was a very elucidating and concerning [[https://glyph.twistedmatrix.com/2015/11/editor-malware.html][blog post]] that showed how
-tls is configured in emacs. This is some code to turn on tls
-verification and try to do our best. This can probably be worked
-around by an APT, but this is best effort for now.
-
-First we find the host's ssl certs. For every host this should be
-configured manually, as detection can lead to other trust bugs.
-#+begin_src emacs-lisp
-  (setq
-   cm/machine-trust-file
-   (cond
-    ((string-prefix-p "nevada" system-name) (concat (getenv "HOME") "/.guix-profile/etc/ssl/certs/ca-certificates.crt"))
-    ((string-prefix-p "nordic" system-name) "/etc/ssl/certs/ca-certificates.crt")
-    ((string-prefix-p "novaria" system-name) "/etc/ssl/certs/ca-certificates.crt")
-    ((string-prefix-p "neah" system-name) "/etc/ssl/certs/ca-certificates.crt")
-    ((string-prefix-p "jmickey-glaptop" system-name) "/etc/ssl/certs/ca-certificates.crt")
-    ((string-prefix-p "manatee" system-name) "/etc/ssl/certs/ca-certificates.crt")
-    (t (error "No tls trust set for this host! Add exception or find cert.pem you trust"))))
-#+end_src
-
-The default value for =tls-program= this is:
-
-#+begin_example
-("gnutls-cli --insecure -p %p %h" "gnutls-cli --insecure -p %p %h --protocols ssl3" "openssl s_client -connect %h:%p -no_ssl2 -ign_eof")
-#+end_example
-
-But notice all that =--insecure=.. this is what we get rid of!
-
-Now that we have a =cm/machine-trust-file= we set up our tls-program
-correctly.
-
-#+begin_src emacs-lisp
-  (setq tls-program
-        (concat "gnutls-cli --x509cafile " cm/machine-trust-file " -p %p %h"))
-#+end_src
-
-If emacs is compiled to link against gnutls, it usually totally
-different variables and set up, because go fuck yourself users, you
-gotta configure tls super manually.
-
-#+begin_src emacs-lisp
-  (setq gnutls-verify-error t)
-  (setq gnutls-trustfiles (list cm/machine-trust-file))
 #+end_src
 * Utility Functions
 ** async-shell-command-to-string
@@ -83,11 +39,11 @@ gotta configure tls super manually.
 
   When the command is finished, call CALLBACK with the resulting
   output as a string."
-    (lexical-let ((output-buffer (generate-new-buffer " *temp*"))
+    (let ((output-buffer (generate-new-buffer " *temp*"))
 	  (callback-fun callback))
       (set-process-sentinel
        (start-process "Shell" output-buffer shell-file-name shell-command-switch command)
-       (lambda (process signal)
+       (lambda (process _change_string)
 	 (when (memq (process-status process) '(exit signal))
 	   (with-current-buffer output-buffer
 	     (let ((output-string
@@ -122,6 +78,7 @@ the very last line? I haven't solved this yet.
 Display all the warnings! I've had this forever, I'm not so sure how
 important it actually is.
 #+begin_src emacs-lisp
+  (require 'warnings)
   (setq warning-suppress-types nil)
 #+end_src
 
@@ -164,7 +121,8 @@ And of course, transparency!
     :PROPERTIES:
     :ID:       cbf11e79-808e-4e25-8071-0ccdd748052a
     :END:
-#+begin_src emacs-lisp  
+#+begin_src emacs-lisp
+  (require 'time)
   (defun cm/display-time-mail-function ()
     "Return t if new important mail, else nil"
     (let* ((s (shell-command-to-string
@@ -190,17 +148,19 @@ emacs. Unfortunately, I haven't figured out how to include the
 projectile project as well, as this would make it easy to see what was
 "in scope" for something.
 #+begin_src emacs-lisp
-  (setq frame-title-format '("%m " invocation-name "@" system-name))
+  (setq frame-title-format '("%m " invocation-name "@" (system-name)))
 #+end_src
 ** GUI Scrolling
 I desperately wish this worked in the emacs GUI. One of the biggest
 ergonomics that annoys me.
 #+begin_src emacs-lisp
-  ;;   (pixel-scroll-mode)
+  ;; (pixel-scroll-mode)
 
   ;;   (setq pixel-dead-time 0)
   ;;   (setq pixel-resolution-fine-flag t)
 
+  ;;(setq mouse-wheel-scroll-amount '(2 ((shift) . 5) ((control))))
+  ;; (setq mouse-wheel-progressive-speed nil)
   ;; ;;  (setq mouse-wheel-scroll-amount '(2))
   ;;   (setq mouse-wheel-progressive-speed nil)
 
@@ -224,12 +184,12 @@ screen DPI's.
 			:family "EtBembo" :height (* size 14)))
 
   (cond
-    ((or (string-prefix-p "phoenix-mta" system-name)
-	 (string-prefix-p "vpn2ntap-" system-name)
-	 (string-prefix-p "novaria" system-name)
-	 (string-prefix-p "moc.ppaten" (apply 'string (reverse (string-to-list system-name)))))
+    ((or (string-prefix-p "phoenix-mta" (system-name))
+	 (string-prefix-p "vpn2ntap-" (system-name))
+	 (string-prefix-p "novaria" (system-name))
+	 (string-prefix-p "moc.ppaten" (apply 'string (reverse (string-to-list (system-name))))))
      (cm/produce-font 12))
-    ((equal system-name "penolpe")
+    ((equal (system-name) "penolpe")
      (cm/produce-font 9))
     (t
      (cm/produce-font 11)))
@@ -255,7 +215,7 @@ screen DPI's.
     :END:
 Common lisp has things like =cl-loop=, which are life.
 #+begin_src emacs-lisp
-  (require 'cl)
+  (require 'cl-lib)
 #+end_src
 ** Yes I can scroll left
    :PROPERTIES:
@@ -359,23 +319,25 @@ who provided this original functionality for me.
   (defun dirs-inside-directory (parent)
     (let (foo)
       (dolist (file (directory-files parent t))
-        (when (and (not (member (file-name-nondirectory file)
-                                '("." "..")))
-                   (file-directory-p file))
-          (setq foo (cons file foo))))
+	(when (and (not (member (file-name-nondirectory file)
+				'("." "..")))
+		   (file-directory-p file))
+	  (setq foo (cons file foo))))
       foo))
 
   ;; Automagically load all folders in site-lisp as well! Thank you benny!
-  (setq cm/lisp-dirs '("~/.emacs.d/site-lisp"
-                       "~/.emacs.d/site-lisp/xelb"
-                       "~/.emacs.d/site-lisp/org-contrib"
-                       "~/.guix-profile/share/emacs/site-lisp"
-                       "~/.guix-profile/share/emacs/site-lisp/guix.d"))
+  (defvar cm/lisp-dirs '("~/.emacs.d/site-lisp"
+	 	         "~/.emacs.d/site-lisp/xelb"
+		         "~/.emacs.d/site-lisp/org-contrib"
+		         "~/.emacs.d/site-lisp/org-contrib/lisp"
+		         "~/.guix-profile/share/emacs/site-lisp"
+		         "~/.guix-profile/share/emacs/site-lisp/guix.d")
+    "List of directories to load from lisp.")
   (mapc (lambda (x) (when (file-directory-p x)
-                      (mapc (lambda (y)
-                              (add-to-list 'load-path y))
-                            (dirs-inside-directory x))))
-        cm/lisp-dirs)
+		      (mapc (lambda (y)
+			      (add-to-list 'load-path y))
+			    (dirs-inside-directory x))))
+	cm/lisp-dirs)
 #+end_src
 
 *** Guix Support
@@ -434,16 +396,15 @@ God I love backword-kill-word. Also some bookmarks
   With argument ARG and region inactive, do this that many times."
     (interactive "p")
     (if (use-region-p)
-        (kill-region (mark) (point))
-      (let (count)
-        (dotimes (count arg)
-          (if (bolp)
-              (delete-backward-char 1)
-            (kill-region (max (save-excursion
-                                (funcall killwordf arg)
-                                (point))
-                              (line-beginning-position))
-                         (point)))))))
+	(kill-region (mark) (point))
+      (dotimes (_count arg)
+	(if (bolp)
+	    (delete-char -1)
+	  (kill-region (max (save-excursion
+			      (funcall killwordf arg)
+			      (point))
+			    (line-beginning-position))
+		       (point))))))
 
   ;; handle subword / superword modes as well!
   (defun cm/backward-kill-subword (&optional arg)
@@ -507,13 +468,14 @@ taken from http://blog.akinori.org/2013/05/27/m-g-vs-goto-line/
 #+begin_src emacs-lisp
   (defun cm/goto-line-number ()
     (interactive)
-    (goto-line (string-to-number
-                (read-from-minibuffer
-                 "Goto line: "
-                 (char-to-string last-command-event)))))
+    (goto-char (point-min))
+    (forward-line (1- (string-to-number
+		       (read-from-minibuffer
+			"Goto line: "
+			(char-to-string last-command-event))))))
 
   (cl-loop for n from 1 to 9 do
-        (global-set-key (format "\M-g%d" n) 'cm/goto-line-number))
+	(global-set-key (format "\M-g%d" n) 'cm/goto-line-number))
   (global-set-key "\M-g?" 'describe-prefix-bindings)
 #+end_src
 
@@ -797,14 +759,9 @@ muscle memory searches for a word, THEN you realize you want to see it
 all in one buffer. Rock the =C-c C-e= in occur mode and you can edit
 everything! heck yes!
 
-This was mostly taken from [[http://www.emacswiki.org/emacs/OccurFromIsearch][the emacs wiki]].
+This used to be mostly taken from [[http://www.emacswiki.org/emacs/OccurFromIsearch][the emacs wiki]], but now it's a
+function in emacs!
 #+begin_src emacs-lisp
-  (defun isearch-occur ()
-    "Invoke `occur' from within isearch."
-    (interactive)
-    (let ((case-fold-search isearch-case-fold-search))
-      (occur (if isearch-regexp isearch-string (regexp-quote isearch-string)))))
-  
   (define-key isearch-mode-map (kbd "C-o") 'isearch-occur)
 #+end_src
 ** Ediff
@@ -814,6 +771,7 @@ This was mostly taken from [[http://www.emacswiki.org/emacs/OccurFromIsearch][th
 Split the Ediff window depending on the orientation/size of the emacs
 frame. I've found this very convenient.
 #+begin_src emacs-lisp
+  (require 'ediff)
   (setq ediff-split-window-function (lambda (&optional arg)
 				      (if (> (frame-width) 150)
 					  (split-window-horizontally arg)
@@ -898,7 +856,7 @@ may or may not be always true though.
   (defvar cm/erc-autojoin-channels-alist '("#emacs") "the default list for erc chan.")
   (defvar cm/rcirc-server-alist '() "The password for bitlbee!")
   (defvar cm/ironport-p4port "" "p4port")
-  (defvar cm/mu4e-refile-folder (lambda (x) '()) "refile!")
+  (defvar cm/mu4e-refile-folder (lambda (_) '()) "refile!")
   (defvar cm/erc-track-exclude "" "track exclude")
 
 
@@ -930,10 +888,10 @@ Inspired by [[http://www.reddit.com/r/emacs/comments/gjqki/is_there_any_way_to_t
     "Toggle whether the current active window is dedicated or not"
     (interactive)
     (message
-     (if (let (window (get-buffer-window (current-buffer)))
-	     (set-window-dedicated-p window 
-				     (not (window-dedicated-p window))))
-	   "Window '%s' is dedicated"
+     (if (let ((window (get-buffer-window (current-buffer))))
+	   (set-window-dedicated-p window
+				   (not (window-dedicated-p window))))
+	 "Window '%s' is dedicated"
        "Window '%s' is normal")
      (current-buffer)))
 
@@ -1045,6 +1003,14 @@ later, but aren't sure.
   (require 'dired)
   (define-key dired-mode-map "I" 'cm/insert-n-hide-dired)
 #+end_src
+*** Attach a file to org-mode
+#+begin_src emacs-lisp
+  (add-hook 'dired-mode-hook
+	    (lambda ()
+	      (define-key dired-mode-map
+		(kbd "C-c C-x a")
+		#'org-attach-dired-to-subtree)))
+#+end_src
 ** Image Mode
 Set an image to fit the current window
 #+begin_src emacs-lisp
@@ -1100,7 +1066,7 @@ I need to tie this into projectile, but for now have a way to create a
 #+begin_src emacs-lisp
   ;; give shell advice to load dir-locals
 
-  (defun cm/advise-shell (&rest r)
+  (defun cm/advise-shell (&rest _)
     (hack-dir-local-variables-non-file-buffer))
 
   (advice-add #'shell :before #'cm/advise-shell)
@@ -1151,6 +1117,14 @@ scrollback, but not sure how it would handle it given it doesn't
 really interpret anything.
 
 #+begin_src emacs-lisp
+  (require 'shell)
+
+  (defvar explicit-dtach-args '()
+    "List of explicit arguments to dtach.")
+
+  (defvar cm/machines '()
+    "List of machines to think about.")
+
   (defun cm/ssh-dtach-list-sessions (host)
     (map 'list (lambda (x) (string-remove-prefix ".dtach.emacs." x))
 	 (directory-files (concat "/ssh:" host ":/tmp/") nil "^\\.dtach\\.emacs\\.." t)))
@@ -1173,7 +1147,8 @@ really interpret anything.
     :END:
 #+begin_src emacs-lisp
   (set-default 'explicit-shell-file-name (concat (getenv "HOME") "/bin/rc"))
-  (setq explicit-rc-args '("-l"))
+  (defvar explicit-rc-args '("-l")
+    "List of explicit arguments to rc.")
 
   (when (string-equal (system-name) "jmickey-glaptop0")
     (set-default 'explicit-shell-file-name (concat (getenv "HOME") "/bin/rc"))
@@ -1284,7 +1259,7 @@ command run in shell mode, but we'll see.
   (autoload 'eshell "eshell" "")
 
   (defun cm/eshell-prompt ()
-    (concat user-login-name "@" system-name ":"
+    (concat user-login-name "@" (system-name) ":"
             ((lambda (p-lst)
                (if (> (length p-lst) 4)
                    (concat
@@ -1605,7 +1580,6 @@ Undo tree is excellent! =C-x u= to browse. Now the larger question is
 how it works with browse-kill-ring? I like both modes I guess.
 #+begin_src emacs-lisp
   (use-package undo-tree
-    :ensure t
     :diminish undo-tree-mode
     :init
     (global-undo-tree-mode))
@@ -1756,8 +1730,7 @@ out semantically.
     :ID:       c32057a8-724c-479d-8f20-d3c7b7e2ea7e
     :END:
 #+begin_src emacs-lisp
-  (use-package
-   ace-jump-mode
+  (use-package ace-jump-mode
    :bind ("C-." . ace-jump-mode))
 #+end_src
 *** Hilight line
@@ -1794,7 +1767,7 @@ out semantically.
     (put 'projectile-project-compilation-cmd 'safe-local-variable 'stringp)
     (put 'projectile-use-git-grep 'safe-local-variable 'booleanp)
     :config
-    (projectile-global-mode)
+    (projectile-mode 1)
     (setq projectile-completion-system 'ivy)
     ;; seting the remote file exists cache to an hour, I'd rather things
     ;; error out weirdly than slow down all find-files!
@@ -1858,45 +1831,45 @@ without things like =gofmt=.
 This makes things just a tad nicer to read in org-mode. Currently only
 enabled there.
 #+begin_src emacs-lisp
-  (use-package mixed-pitch
-    :commands mixed-pitch-mode
-    :diminish mixed-pitch-mode
-    :init
-    ;; disabled mixed pitch mode for a bit, seeing if I miss it.
-    ; (add-hook 'org-mode-hook #'mixed-pitch-mode)
-    :config
-    (defun cm/set-face-attribute-mixed (face)
-      (set-face-attribute
-       face nil
-       :family (face-attribute 'variable-pitch :family)
-       :height (face-attribute 'variable-pitch :height)))
+  ;; (use-package mixed-pitch
+  ;;   :commands mixed-pitch-mode
+  ;;   :diminish mixed-pitch-mode
+  ;;   :init
+  ;;   ;; disabled mixed pitch mode for a bit, seeing if I miss it.
+  ;;   ;; (add-hook 'org-mode-hook #'mixed-pitch-mode)
+  ;;   :config
+  ;;   (defun cm/set-face-attribute-mixed (face)
+  ;;     (set-face-attribute
+  ;;      face nil
+  ;;      :family (face-attribute 'variable-pitch :family)
+  ;;      :height (face-attribute 'variable-pitch :height)))
 
-    (defun cm/org-level-face-height (ratio)
-      (truncate (* (face-attribute 'variable-pitch :height nil 'default) ratio)))
+  ;;   (defun cm/org-level-face-height (ratio)
+  ;;     (truncate (* (face-attribute 'variable-pitch :height nil 'default) ratio)))
 
-    (defun cm/org-level-set-face-height (part)
-      (set-face-attribute (car part) nil :height (cm/org-level-face-height (cdr part))))
+  ;;   (defun cm/org-level-set-face-height (part)
+  ;;     (set-face-attribute (car part) nil :height (cm/org-level-face-height (cdr part))))
 
-    (defvar cm/org-level-height-alist
-      '((org-level-1 . 1.2)
-	(org-level-2 . 1.1)
-	(org-level-3 . 1.05)
-	(org-level-4 . 1)
-	(org-level-5 . 1)
-	(org-level-6 . 1)
-	(org-level-7 . 1)
-	(org-level-8 . 1))
-      "List of org-level faces to ratio of default variable height")
-  
-    (mapc #'cm/set-face-attribute-mixed org-level-faces)
-    (mapc #'cm/org-level-set-face-height cm/org-level-height-alist)
+  ;;   (defvar cm/org-level-height-alist
+  ;;     '((org-level-1 . 1.2)
+  ;;       (org-level-2 . 1.1)
+  ;;       (org-level-3 . 1.05)
+  ;;       (org-level-4 . 1)
+  ;;       (org-level-5 . 1)
+  ;;       (org-level-6 . 1)
+  ;;       (org-level-7 . 1)
+  ;;       (org-level-8 . 1))
+  ;;     "List of org-level faces to ratio of default variable height")
 
-    (setq mixed-pitch-variable-pitch-cursor nil)
-    (add-to-list 'mixed-pitch-fixed-pitch-faces 'org-date)
-    (add-to-list 'mixed-pitch-fixed-pitch-faces 'org-done)
-    (add-to-list 'mixed-pitch-fixed-pitch-faces 'org-formula)
-    (add-to-list 'mixed-pitch-fixed-pitch-faces 'org-tag)
-    (add-to-list 'mixed-pitch-fixed-pitch-faces 'org-todo))
+  ;;   (mapc #'cm/set-face-attribute-mixed org-level-faces)
+  ;;   (mapc #'cm/org-level-set-face-height cm/org-level-height-alist)
+
+  ;;   (setq mixed-pitch-variable-pitch-cursor nil)
+  ;;   (add-to-list 'mixed-pitch-fixed-pitch-faces 'org-date)
+  ;;   (add-to-list 'mixed-pitch-fixed-pitch-faces 'org-done)
+  ;;   (add-to-list 'mixed-pitch-fixed-pitch-faces 'org-formula)
+  ;;   (add-to-list 'mixed-pitch-fixed-pitch-faces 'org-tag)
+  ;;   (add-to-list 'mixed-pitch-fixed-pitch-faces 'org-todo))
 #+end_src
 
 ** Major Modes
@@ -1904,21 +1877,6 @@ enabled there.
    :ID:       04fe1433-561d-453a-a3c7-3ec248df0175
    :END:
    
-*** Ledger
-    :PROPERTIES:
-    :ID:       22c83662-0e53-427a-99e8-70e640a87229
-    :END:
-I use ledger to track my finances. I have it align amounts and use ISO
-dates, but other than that pretty normal config
-#+begin_src emacs-lisp
-  (use-package
-   ledger-mode
-   :mode ("\\.ledger$"
-          "\\.journal$")
-   :init
-   (setq ledger-post-auto-adjust-amounts t)
-   (setq ledger-use-iso-dates t))
-#+end_src
 *** Markdown
     :PROPERTIES:
     :ID:       577a0ae4-15dc-4f23-8010-4a2c884afe73
@@ -2033,36 +1991,36 @@ For some reason that does not include evil-local-mode.
     :END:
 Get the jarfile in the correct place...
 #+begin_src emacs-lisp
-  (setq cm/plantuml-paths
-	(list
-	 (concat (getenv "HOME") "/bin/plantuml.jar")
-	 "/usr/share/plantuml/plantuml.jar"))
-  (setq plantuml-jar-path
-	(reduce
-	 (lambda (x y) (if (and x (file-exists-p x)) x y))
-	 cm/plantuml-paths))
+  (defvar cm/plantuml-paths
+    (list
+     (concat (getenv "HOME") "/bin/plantuml.jar")
+     "/usr/share/plantuml/plantuml.jar")
+    "PlantUML paths.")
+
+  (defvar plantuml-jar-path
+    (cl-reduce
+     (lambda (x y) (if (and x (file-exists-p x)) x y))
+     cm/plantuml-paths)
+    "Default plantuml-jar-path.")
 
   (setenv "GRAPHVIZ_DOT" "/usr/bin/dot")
 #+end_src
-*** Scheme
-    :PROPERTIES:
-    :ID:       33d797c6-9e42-4cc8-a04d-8af3d0e2d3ba
-    :END:
+*** Paredit
+:PROPERTIES:
+:ID:       f2621984-6644-4efc-8154-0c2ab06b5bb8
+:END:
+
 [[http://emacswiki.org/emacs/ParEdit][Paredit]] is an amazing minor mode for editing lisp, but it is a bit
-complex. I turn it on for scheme, but not elisp as usually when I'm
-hacking on elisp I want the lowest barrier to entry.
+complex. I turn it on for scheme and cl, but not elisp as usually when
+I'm hacking on elisp I want the lowest barrier to entry.
 
 #+begin_src emacs-lisp
-  (add-hook 'scheme-mode-hook
-            '(lambda ()
-               (paredit-mode 1)))
-#+end_src
-*** Paredit
-    :PROPERTIES:
-    :ID:       f2621984-6644-4efc-8154-0c2ab06b5bb8
-    :END:
-#+begin_src emacs-lisp
-  (use-package paredit)
+  (use-package paredit
+    :init
+    (add-hook 'scheme-mode-hook
+	      '(lambda ()
+		 (paredit-mode 1)))
+    (add-hook 'lisp-mode-hook '(lambda () (paredit-mode 1))))
 #+end_src
 *** Markdown
     :PROPERTIES:
@@ -2542,7 +2500,7 @@ This adds much better support for pdfs in emacs.
 Now w/mopidy
 #+begin_src emacs-lisp
   (require 'emms-setup)
-  (emms-standard)
+  (emms-all)
   (require 'emms-browser)
   (require 'emms-player-mpd)
   (add-to-list 'emms-info-functions 'emms-info-mpd)
@@ -3031,6 +2989,7 @@ org-mouse in case I already have a pointing device. I imagine
           org-agenda-show-all-dates t)
     (org-agenda-list))
 #+end_src
+
 ***** Custom agendas
      :PROPERTIES:
      :ID:       16aafc16-4240-4a4a-98f6-92186bc07d14
@@ -3060,7 +3019,8 @@ to see my review adgendas, and easier on the eyes to follow.
     (let ((ctxlist (if (listp ctx) ctx (list ctx))))
       `(,(concat "c" key) ,title
 	((tags-todo ,(mapconcat #'(lambda (x) (concat x "-TODO=\"PROJECT\"-TODO=\"WAITING\"")) ctxlist "|")))
-	,cm/org-sort-style)))
+	(,@cm/org-sort-style
+	 (org-agenda-overriding-header ,title)))))
 #+end_src
 
 The org agenda. It's mostly for gtd usage, so I have the following views:
@@ -3093,7 +3053,8 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
        ((agenda "Today" ((org-agenda-span 1)))
 	(todo "NEXT")))
       ("i" "Inbox"
-       ((tags-todo "-{.*}-TODO=\"PROJECT\"-TODO=\"WAITING\"")))
+       ((tags-todo "-{.*}-TODO=\"PROJECT\"-TODO=\"WAITING\""))
+       ((org-agenda-overriding-header "Inbox")))
       ("n" "Next agenda"
        ((todo "NEXT")
 	(todo "STARTED")
@@ -3108,14 +3069,12 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
        ((stuck "")
 	(todo "PROJECT"))
        ,cm/org-sort-style)
-      ,(cm/org-ctx-agenda "c" "COMPOSE" "Write/Compose/R&D Agenda")
-      ,(cm/org-ctx-agenda "e" "ERRAND" "Errand Agenda")
-      ,(cm/org-ctx-agenda "k" "HACK" "Hack/Programming Agenda")
-      ,(cm/org-ctx-agenda "h" "HOME" "Home Agenda")
-      ,(cm/org-ctx-agenda "i" "INTERNET" "Internet Agenda")
-      ,(cm/org-ctx-agenda "o" "OFFLINE" "Offline computer Agenda")
-      ,(cm/org-ctx-agenda "p" "PHONE" "Phone Agenda")
-      ,(cm/org-ctx-agenda "w" "WORK" "Work")
+      ,(cm/org-ctx-agenda "h" '("INTERNET" "COMPUTER" "HOME" "ERRAND" "PHONE")  "Home Agenda")
+      ,(cm/org-ctx-agenda "w" '("INTERNET" "COMPUTER" "WORK" "PHONE")  "Work Agenda")
+      ,(cm/org-ctx-agenda "b" '("INTERNET" "COMPUTER" "PHONE")  "Bus Agenda")
+      ,(cm/org-ctx-agenda "t" '("COMPUTER" "PHONE")  "Train Agenda")
+      ,(cm/org-ctx-agenda "p" '("COMPUTER" "PHONE")  "Plane Agenda")
+      ,(cm/org-ctx-agenda "m" '("INTERNET" "ERRAND" "PHONE")  "Mobile Agenda")
       ("ca" "People Agenda"
        ((tags-todo "AGENDA-TODO=\"PROJECT\"-TODO=\"WAITING\"|TODO=\"WAITING\""))
        ((org-agenda-skip-function '(org-agenda-skip-entry-if 'scheduled))
@@ -3435,6 +3394,7 @@ This add some commands for managing and clocking my time in a hydra.
   (setq org-agenda-window-setup 'current-window)
   (setq org-attach-archive-delete 'query)
   (setq org-attach-directory "~/org/_attachments/")
+  (setq org-attach-method 'mv)
   (setq org-enforce-todo-dependencies t)
   (setq org-export-with-sub-superscripts nil)
   (setq org-file-apps '((auto-mode . emacs)
@@ -3465,6 +3425,9 @@ This add some commands for managing and clocking my time in a hydra.
 	  (tags . " %i %-16:c")
 	  (search . " %i %-16:c")))
 
+  (setq org-cycle-separator-lines 0)
+  (setq org-catch-invisible-edits 'show-and-error)
+
   ;(setq org-completion-use-ido t)
   ;; disable dumb-ass git crap for now
   (advice-add 'org-attach-commit :override #'list)
@@ -3478,11 +3441,10 @@ This add some commands for managing and clocking my time in a hydra.
 
 #+end_src
 **** Org Contacts
-This is part of org-contrib.
+This is part of org-contrib, thus is not a "package" for use-package to use.
 #+begin_src emacs-lisp
-  (use-package org-contacts
-    :init
-    (setq org-contacts-files '("~/org/_notes/contacts.org")))
+  (require 'org-contacts (concat (getenv "HOME") "/.emacs.d/site-lisp/org-contrib/lisp/org-contacts.el"))
+  (setq org-contacts-files '("~/org/_notes/contacts.org"))
 #+end_src
 **** Archiving
 
@@ -3538,12 +3500,10 @@ it the normal way.
 #+begin_src emacs-lisp
   (setq org-tag-alist '((:startgroup)
 			("AGENDA"    . ?a)
-			("COMPOSE" . ?c)
+			("COMPUTER" . ?c)
 			("ERRAND" . ?e)
-			("HACK" . ?k)
 			("HOME"   . ?h)
 			("INTERNET"  . ?i)
-			("OFFLINE"  . ?o)
 			("PHONE"     . ?p)
 			("WORK"   . ?w)
 			(:endgroup)
@@ -4004,18 +3964,72 @@ allows me to create checklist templates per-project.
 #+end_src
 
 **** Org Capture w/Window Information
+These functions are called by a script that is written here:
+#+begin_src sh
+#!/usr/bin/env rc
+wm_class=`{xprop -id `{xdotool getwindowfocus} WM_CLASS | sed -r 's/^WM_CLASS\(.*\) = (.*)$/\1/' | sed -r 's/"//g'}
+wm_name=`{xprop -id `{xdotool getwindowfocus} WM_NAME | sed -r 's/^WM_NAME\([^ ]+\) = "(.*)"$/\1/' }
+exec /usr/bin/emacsclient.google-emacs -e '(cm/org-capture-with-window-other-frame "'$"wm_class'" "'$"wm_name'" )'
+#+end_src
+
+***** Org-capture wrappers
+Basic =org-capture= wrappers that pass along the wm_class and wm_name.
+
 #+begin_src emacs-lisp
+  (defvar cm/org-capture-appendix-string ""
+    "String to append to the next org-capture.")
+
+  (defun cm/org-capture-appendix ()
+    (concat cm/org-capture-appendix-string "\n"))
+
   (defun cm/org-capture-with-window (wm_class wm_name)
     (interactive)
     ;; get content based on class & wm_name
-    (org-capture))
+    (setq cm/org-capture-appendix-string (cm/org-capture-create-appendix wm_class wm_name))
+    (org-capture)
+    (setq cm/org-capture-appendix-string ""))
 
   (defun cm/org-capture-with-window-other-frame (wm_class wm_name)
     (interactive)
     ;; get content based on class & wm_name, and insert into templates generically??
-    (cm/org-capture-other-frame))
-
+    (message "Capture called on WM_CLASS: %s WM_NAME: %s" wm_class wm_name)
+    (setq cm/org-capture-appendix-string (cm/org-capture-create-appendix wm_class wm_name))
+    (cm/org-capture-other-frame)
+    (setq cm/org-capture-appendix-string ""))
 #+end_src
+
+***** WM_CLASS and WM_NAME information gathering.
+Now we define the switch statement for wm_class & wm_name matching:
+#+begin_src emacs-lisp
+  (defun cm/org-capture-create-appendix (wm_class wm_name)
+    (let ((appendix
+	   (pcase wm_class
+	     ("Navigator, Firefox-esr" (cm/org-capture-appendix-firefox wm_name))
+	     ("google-chrome, Google-chrome" (cm/org-capture-appendix-chrome wm_name)))))
+      (if appendix appendix "")))
+
+  (defun cm/org-capture-appendix-chrome (wm_name)
+    "Get current focused tab URL from Chrome, and dump them in org
+  format into the capture appendix."
+    (shell-command-to-string "curl -s http://0.0.0.0:9222/json/list | jq -M '[.[] | select(.type == \"page\") | select(.url != \"chrome://newtab/\")]' | jq -M '.[0] | \"[[\" + .url + \"][\" + .title + \"]]\"' | sed -r 's/^\"(.*)\"$/\\1/'"))
+
+  ;; This assumse you have an extension that adds the url to the title
+  ;; of the tab. Makes it much easier to grab the current window. The
+  ;; above for chrome is pretty hacky too, considering doing the same
+  ;; for chrome.
+  (defun cm/org-capture-appendix-firefox (wm_name)
+    "Get current focused tab URL from Firefox, and dump them in org
+  format into the capture appendix."
+    (cm/format-link-in-title wm_name " - Mozilla Firefox$"))
+
+  (defun cm/format-link-in-title (wm_name suffix)
+    (let* ((splits (split-string wm_name " :: "))
+	   (url (string-trim-right (car (last splits)) suffix))
+	   (title (string-join (butlast splits) " :: ")))
+      (concat "[[" url "][" title "]]")))
+#+end_src
+
+
 **** Search through my _notes directory
 I like to record notes about various things in a long lived way via
 plain text. However, I haven't actually used them that much because I
@@ -4077,6 +4091,8 @@ the files.
 
   (defun cm/deft-new-file-named (slug)
     (interactive "sNew file title (will be converted to filename): ")
+    ;; we do this to make sure everything is opened up!
+    (deft)
     (let* ((file (deft-absolute-filename slug))
 	   (deft-filter-regexp (reverse (split-string slug))))
       (if (file-exists-p file)
@@ -4116,7 +4132,7 @@ the files.
        (goto-char position))
       (_ (error "Connot find target ID \"%s\"" id))))
 
-  (setq cm/humble-todo-template (list "* TODO %?\n:PROPERTIES:\n:CREATED: %U\n:END:\n%i\n\n" :prepend nil :empty-lines 1))
+  (setq cm/humble-todo-template (list "* TODO %?\n:PROPERTIES:\n:CREATED: %U\n:END:\n%i\n\n%(cm/org-capture-appendix)" :prepend nil :empty-lines 1))
   (setq org-directory "~/org")
   (setq org-default-notes-file (concat org-directory "/gtd.org"))
   (setq org-board-capture-file (concat org-directory "/_notes/www.org"))
@@ -4125,7 +4141,7 @@ the files.
 	`(("t" "Todo" entry (file+headline "~/org/gtd.org" "Inbox")
 	   ,@cm/humble-todo-template)
 	  ("p" "Project" entry (id "a262e411-ff66-43fc-9124-341694564dda")
-	   "* PROJECT %?\n:PROPERTIES:\n:CATEGORY:\n:CREATED:%U\n:END:\n\n** Actions\n\n** Archive :ARCHIVE:\n\n" :empty-lines 1)
+	   "* PROJECT %?\n:PROPERTIES:\n:CATEGORY:\n:CREATED: %U\n:END:\n\n** Archive :ARCHIVE:\n\n" :empty-lines 1)
 	  ("j" "Journal" entry (file "~/org/_editorial/journal.org")
 	   "* %T %?\n\n  %i\n  %a\n\n" :prepend nil :empty-lines 1)
 	  ("c" "Add note to currently clocked task" entry (clock)
@@ -4144,7 +4160,7 @@ the files.
 	  ("wn" "Work Note" entry (file "~/org/work.org")
 	   "* %U %?\n\n  %i\n  %a\n\n" :prepend nil :empty-lines 1)
 	  ("wj" "Work journal entry" plain (file+olp+datetree "~/org/_notes/work.org" "Notes")
-	   "\n\n%?\n\n" :tree-type week :empty-lines 1)
+	   "\n- %U %?\n\n" :tree-type week :empty-lines 1)
 	  ("ws" "Snippet Log" entry (file+headline "~/org/work.org" "Snippets")
 	   "* S: %?\n  %T\n\n" :prepend nil :empty-lines 1)
 	  ("r" "Review Captures")
@@ -4317,8 +4333,6 @@ worrying about how the face was inherited.
      :family (face-attribute 'variable-pitch :family)
      :height (face-attribute 'variable-pitch :height)))
 
-
-
   (defun cm/org-level-face-height (ratio)
     (truncate (* (face-attribute 'variable-pitch :height nil 'default) ratio)))
 
@@ -4368,6 +4382,35 @@ waiting. Probably should use something like org-expiry.
 
   (add-hook 'org-after-todo-state-change-hook 'cm/org-todo-state-change-inactive-ts-waiting-hook)
 #+end_src
+
+**** Zettelkasten & Org References (org-ref)
+
+Beginning my journey in keeping prodigous references & notes. The
+biggest problem I'm going to have is actually maintaing the PDF's in
+some reasonable way.
+
+***** Org-ref setup
+#+begin_src emacs-lisp
+    (use-package org-ref
+      :init
+      (setq org-ref-completion-library 'org-ref-ivy-cite)
+      :config
+      (require 'ivy-bibtex)
+      (setq org-ref-bibliography-notes "~/org/_zettel/reference_notes.org"
+	    org-ref-bibtex-hydra-key-binding "\C-cj"
+	    org-ref-default-bibliography '("~/org/_zettel/references.bib")
+	    org-ref-pdf-directory "~/org/_zettel/_pdf/"
+	    bibtex-completion-notes-path "~/org/_zettel/"
+	    reftex-default-bibliography '("~/org/_zettel/references.bib"))
+       (require 'org-ref-bibtex)
+      (require 'doi-utils)
+      (require 'org-ref-arxiv)
+      (doi-utils-def-bibtex-type report ("report")
+				 author title publisher year month doi url))
+#+end_src
+
+***** Zettel deft setup
+Not sure what to do about this just yet, we'll see.
 
 *** RCIRC
     :PROPERTIES:
@@ -4755,7 +4798,7 @@ I get to avoid most of the complications. It goes, in order:
         smtpmail-queue-dir   "~/mail/queue")
 
   (setq user-full-name "Jeff Mickey")
-  (if (equalp (system-name) "jmickey-glaptop0")
+  (if (equalp (system-name) "jmickey-glaptop")
       (setq user-mail-address "jmickey@google.com")
     (setq user-mail-address "j@codemac.net"))
 #+end_src
@@ -4849,28 +4892,28 @@ good problem to me :)
       (notmuch-maildir-fcc-write-buffer-to-maildir "~/mail/cm/drafts" t)
       (kill-buffer)))
 
-  (defun notmuch-show-resume-message ()
-    "Resume a postponed message."
-    (interactive)
-    (setq tmpfilename (notmuch-show-get-filename))
-    (notmuch-show-view-raw-message)
-    (setq buffer-file-name tmpfilename)
-    (message "debug: set buffer file name to %s" buffer-file-name)
-    (setq notmuch-draft-filename buffer-file-name)
-    (make-local-variable 'notmuch-draft-filename)
-    (message "debug: set draft file name to %s" notmuch-draft-filename)
-    (message-mode)
-    (cm/draft-insert-mail-header-separator))
+  ;; (defun notmuch-show-resume-message ()
+  ;;   "Resume a postponed message."
+  ;;   (interactive)
+  ;;   (setq tmpfilename (notmuch-show-get-filename))
+  ;;   (notmuch-show-view-raw-message)
+  ;;   (setq buffer-file-name tmpfilename)
+  ;;   (message "debug: set buffer file name to %s" buffer-file-name)
+  ;;   (setq notmuch-draft-filename buffer-file-name)
+  ;;   (make-local-variable 'notmuch-draft-filename)
+  ;;   (message "debug: set draft file name to %s" notmuch-draft-filename)
+  ;;   (message-mode)
+  ;;   (cm/draft-insert-mail-header-separator))
 
-  ;; set these to something damn high I hate elided messages 
-  (setq notmuch-wash-citation-lines-prefix 1024)
-  (setq notmuch-wash-citation-lines-suffix 1024)
-  (setq notmuch-wash-signature-lines-max 0)
-  (setq notmuch-wash-wrap-lines-length (if (< fill-column 100) 100 fill-column))
+  ;; ;; set these to something damn high I hate elided messages
+  ;; (setq notmuch-wash-citation-lines-prefix 1024)
+  ;; (setq notmuch-wash-citation-lines-suffix 1024)
+  ;; (setq notmuch-wash-signature-lines-max 0)
+  ;; (setq notmuch-wash-wrap-lines-length (if (< fill-column 100) 100 fill-column))
 
-  (setq notmuch-maildir-use-notmuch-insert nil)
-  (require 'notmuch-show)
-  (define-key notmuch-show-mode-map "e" 'notmuch-show-resume-message)
+  ;; (setq notmuch-maildir-use-notmuch-insert nil)
+  ;; (require 'notmuch-show)
+  ;; (define-key notmuch-show-mode-map "e" 'notmuch-show-resume-message)
 #+end_src
 **** Keybindings
      :PROPERTIES:
@@ -5438,6 +5481,59 @@ accomplish that across x11 apps though.
 	  (save-window-excursion
 	    (delete-frame elem)))))
 #+end_src
+** PDF Splitting Workflow
+PDF's are generally how I store digital information, and usually I
+just scan them all into one huge PDF, and then split them up back at
+my computer.
+
+#+begin_src emacs-lisp
+  (defun cm/pdf-splitter--create-step-buffer (file)
+    ;; create new buffer in fundamental mode
+    ;; insert commented instructions at the top
+    ;; insert one line per page, with step syntax
+    ;;   step syntax:
+    ;;   (cm/pdf-splitter-page number orientation)
+    ;;
+    ;; On finalize, create a pile of PDFs named
+    ;; <something>_<pagenum>.pdf and rejoin whatever the
+    ;; pdf-splitter-doc says to with the given file names.
+    ;;
+    ;; So something like:
+    ;;
+    ;;  (page 1 'O)
+    ;;  (page 2 'O)
+    ;;  (page 3 'O)
+    ;;  (page 4 'O)
+    ;;   ....
+    ;;  (doc "filename"
+    ;;   '(
+    ;;     1
+    ;;     2
+    ;;     3
+    ;;     4
+    ;;    ))
+    ;;
+
+    nil)
+
+
+  (defun cm/pdf-splitter (file)
+    (interactive "fFile: ")
+    (find-file file)
+    (cm/pdf-splitter--create-step-buffer file)
+    (cm/pdf-splitter--arrange-windows file))
+
+  (defun cm/pdf-splitter--finalize (file)
+    ;; take step buffer
+    ;; execute buffer
+    nil)
+
+  (defun cm/pdf-splitter-doc (pages)
+    nil)
+
+
+#+end_src
+
 * Directory Specific Code
   :PROPERTIES:
   :ID:       2fbd3ec2-ed82-414f-9bf9-bfecad2a9db5
