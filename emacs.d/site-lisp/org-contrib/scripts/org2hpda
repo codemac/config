@@ -1,7 +1,7 @@
 # org2hpda - a small utility to generate hipster pda style printouts from org mode 
-# Copyright (C) 2007  Christian Egli
+# Copyright (C) 2007-2013  Christian Egli
 # 
-# Version: 0.4
+# Version: 0.6
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,14 +17,37 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # Commentary:
-# 
+# ===========
+#
 # set cal-tex-diary to true so that diary entries show up in the calendar 
+#
+# Usage:
+# ======
+#
+# run this makefile with 
+#
+#  make -f org2hpda
+#
+# The makfile will take the entries from your diary file and generate
+# two PDFs containing nicely printed weekly and monthly calendars. One
+# is done in the style of a pocketMod (http://www.pocketmod.com/) and
+# the other is done in the style of the Hipster PDA
+# (http://en.wikipedia.org/wiki/Hipster_PDA). 
+#
+# Requirements:
+# =============
 #
 # the pdf* commands are part of the pdfjam package which can be found
 # at http://www.warwick.ac.uk/go/pdfjam
 
 EMACS = emacs -batch -l ~/.emacs
 LATEX = latex
+DIARY = $($(EMACS) -eval "diary-file")
+
+# Number of weeks to be printed. Should be a multiple of 4, because 4
+# of them are merged on one page. Can be set when invoking the script
+# as follows: make NUMBER_OF_WEEKS=8 -f org2hpda
+NUMBER_OF_WEEKS = 4 
 
 hipsterFiles =  weekCalendar.pdf yearCalendar.pdf monthCalendar3.pdf monthCalendar2.pdf monthCalendar1.pdf
 pocketModFiles =  weekCalendar.pdf yearCalendar-rotated.pdf \
@@ -34,11 +57,14 @@ all: pocketMod.pdf hipsterPDA.pdf
 
 %.dvi: %.tex
 	# Quick hack to massage the LaTeX produced by cal-tex
-	# quote '@', then increase font size of week calendars and 
-	# finaly increase font of diary entries in moth calendar
+	# quote '@', then increase font size of week calendars,
+	# increase font of diary entries in moth calendar and 
+	# finally reduce links to their destination, i.e. 
+	# change '[[http://foo][bar]]' to 'bar'
 	sed 	-e 's/\\verb|@|/\@/g' \
 		-e 's/documentclass\[11pt\]/documentclass[12pt]/g' \
 		-e 's/{\\tiny \\raggedright #3}/{\\small \\raggedright #3}/g' \
+		-e 's/\[\[[^]]\+\]\[\([^]]\+\)\]\]/\1/g' \
 		< $< > /tmp/temp-org-file.$$$$; mv /tmp/temp-org-file.$$$$ $<
 	$(LATEX) $^
 
@@ -48,33 +74,33 @@ all: pocketMod.pdf hipsterPDA.pdf
 %-rotated.pdf: %.pdf
 	cp $^ $@
 	for n in 1 2 3; do \
-		pdf90 --outfile tmp.pdf $@; mv tmp.pdf $@; \
+		pdf90 --quiet --outfile tmp.pdf $@; mv tmp.pdf $@; \
 	done
 
-weekCalendar.tex: ~/diary
-	$(EMACS) -eval "(progn (calendar) (cal-tex-cursor-week-iso 4) (with-current-buffer cal-tex-buffer (write-file \"$@\")))"
+weekCalendar.tex: $(DIARY)
+	$(EMACS) -eval "(progn (calendar) (cal-tex-cursor-week-iso $(NUMBER_OF_WEEKS)) (with-current-buffer cal-tex-buffer (write-file \"$@\")))"
 
-monthCalendar1.tex: ~/diary
+monthCalendar1.tex: $(DIARY)
 	 $(EMACS) -eval "(progn (calendar) (cal-tex-cursor-month-landscape 1) (with-current-buffer cal-tex-buffer (write-file \"$@\")))"
 
-monthCalendar2.tex: ~/diary
+monthCalendar2.tex: $(DIARY)
 	 $(EMACS) -eval "(progn (calendar) (calendar-forward-month 1) (cal-tex-cursor-month-landscape 1) (with-current-buffer cal-tex-buffer (write-file \"$@\")))"
 
-monthCalendar3.tex: ~/diary
+monthCalendar3.tex: $(DIARY)
 	 $(EMACS) -eval "(progn (calendar) (calendar-forward-month 2) (cal-tex-cursor-month-landscape 1) (with-current-buffer cal-tex-buffer (write-file \"$@\")))"
 
-yearCalendar.tex: ~/diary
+yearCalendar.tex: $(DIARY)
 	 $(EMACS) -eval "(progn (calendar) (calendar-forward-month 2) (cal-tex-cursor-year-landscape 1) (with-current-buffer cal-tex-buffer (write-file \"$@\")))"
 
 pocketMod.pdf: $(pocketModFiles)
-	pdfjoin --outfile tmp.pdf $^
-	pdfnup tmp.pdf --outfile $@ --nup 4x2 --frame true
+	pdfjoin --quiet --outfile tmp.pdf $^
+	pdfnup tmp.pdf --quiet --outfile $@ --nup 4x2 --frame true
 
 hipsterPDA.pdf: $(hipsterFiles)
-	pdfnup weekCalendar.pdf --outfile page1.pdf --nup 2x2 --frame true
-	pdfjoin --outfile tmp.pdf monthCalendar[1-3]-rotated.pdf yearCalendar-rotated.pdf
-	pdfnup tmp.pdf --outfile page2.pdf --nup 2x2 --frame true
-	pdfjoin --outfile $@ page1.pdf page2.pdf
+	pdfnup weekCalendar.pdf --quiet --outfile page1.pdf --batch --nup 2x2 --frame true --no-landscape
+	pdfjoin --quiet --outfile tmp.pdf monthCalendar[1-3]-rotated.pdf yearCalendar-rotated.pdf
+	pdfnup tmp.pdf --quiet --outfile page2.pdf --batch --nup 2x2 --frame true --no-landscape
+	pdfjoin --quiet --outfile $@ page1.pdf page2.pdf
 
 clean:
 	rm -rf *.aux *.dvi *.tex *.log *.pdf

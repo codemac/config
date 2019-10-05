@@ -1,9 +1,11 @@
 ;;; orgtbl-sqlinsert.el --- orgtbl to SQL insert statements.
 
-;; Copyright (C) 2008  Free Software Foundation
+;; Copyright (C) 2008-2018  Free Software Foundation
 
 ;; Author: Jason Riedy <jason@acm.org>
 ;; Keywords: org, tables, sql
+
+;; This file is not part of GNU Emacs.
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -64,20 +66,20 @@ this function is called."
 			       org-table-last-alignment ""))
 	 (nowebname (plist-get params :nowebname))
 	 (breakvals (plist-get params :breakvals))
+         (firstheader t)
+         (*orgtbl-default-fmt* 'orgtbl-sql-strip-and-quote)
 	 (params2
 	  (list
-	   :sqlname name
+	   :sqlname (plist-get params :sqlname)
 	   :tstart (lambda () (concat (if nowebname
 					  (format "<<%s>>= \n" nowebname)
 					"")
 				      "BEGIN TRANSACTION;"))
 	   :tend (lambda () (concat "COMMIT;" (if nowebname "\n@ " "")))
-	   :fmt (lambda (str) (orgtbl-sql-strip-and-quote str))
-;	   :hfmt (lambda (f) (push (concat "[" f "]") hdrlist) "")
-	   :hfmt (lambda (f) (push f hdrlist) "")
-	   :hlfmt (lambda (lst) nil)
+	   :hfmt (lambda (f) (progn (if firstheader (push f hdrlist) "")))
+	   :hlfmt (lambda (&rest cells) (setq firstheader nil))
 	   :lstart (lambda () (concat "INSERT INTO "
-				      (plist-get params :sqlname) "( "
+				      sqlname "( "
 				      (mapconcat 'identity (reverse hdrlist)
 						 ", ")
 				      " )" (if breakvals "\n" " ")
@@ -86,7 +88,8 @@ this function is called."
 	   :sep " , "
 	   :hline nil
 	   :remove-nil-lines t))
-	 (params (org-combine-plists params2 params)))
+	 (params (org-combine-plists params2 params))
+         (sqlname (plist-get params :sqlname)))
     (orgtbl-to-generic table params)))
 
 (defun orgtbl-sql-quote (str)
@@ -111,4 +114,5 @@ to sanitize STR for use in SQL statements."
         (t nil)))
 
 (provide 'orgtbl-sqlinsert)
+
 ;;; orgtbl-sqlinsert.el ends here

@@ -1,5 +1,5 @@
 ;;; org-bookmark.el - Support for links to bookmark
-;; Copyright (C) 2008 Free Software Foundation, Inc.
+;; Copyright (C) 2008-2018 Free Software Foundation, Inc.
 ;;
 ;; Author: Tokuya Kameshima <kames AT fa2.so-net.ne.jp>
 ;; Version: 1.0
@@ -12,7 +12,7 @@
 ;; the Free Software Foundation; either version 3, or (at your option)
 ;; any later version.
 
-;; GNU Emacs is distributed in the hope that it will be useful,
+;; This program is distributed in the hope that it will be useful,
 ;; but WITHOUT ANY WARRANTY; without even the implied warranty of
 ;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ;; GNU General Public License for more details.
@@ -47,8 +47,9 @@ Otherwise prompt the user for the right bookmark to use."
   :group 'org-bookmark
   :type 'boolean)
 
-(org-add-link-type "bookmark" 'org-bookmark-open)
-(add-hook 'org-store-link-functions 'org-bookmark-store-link)
+(org-link-set-parameters "bookmark"
+			 :follow #'org-bookmark-open
+			 :store #'org-bookmark-store-link)
 
 (defun org-bookmark-open (bookmark)
   "Visit the bookmark BOOKMARK."
@@ -67,7 +68,7 @@ Otherwise prompt the user for the right bookmark to use."
     (if (not file)
 	(when (eq major-mode 'bookmark-bmenu-mode)
 	  (setq bookmark (bookmark-bmenu-bookmark)))
-      (when (and (setq bmks 
+      (when (and (setq bmks
 		       (mapcar (lambda (name)
 				 (if (equal file
 					    (abbreviate-file-name
@@ -75,12 +76,12 @@ Otherwise prompt the user for the right bookmark to use."
 				     name))
 			       (bookmark-all-names)))
 		 (setq bmks (delete nil bmks)))
-	(setq bookmark 
+	(setq bookmark
 	      (if (or (eq 1 (length bmks)) org-bookmark-use-first-bookmark)
 		  (car bmks)
 		(completing-read "Bookmark: " bmks nil t nil nil (car bmks))))))
     (if bookmark
-	(org-store-link-props :link (org-make-link "bookmark:" bookmark)
+	(org-store-link-props :link (concat "bookmark:" bookmark)
 			      :description bookmark))))
 
 (provide 'org-bookmark)

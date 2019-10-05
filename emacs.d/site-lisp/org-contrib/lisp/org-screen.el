@@ -1,26 +1,24 @@
 ;;; org-screen.el --- Integreate Org-mode with screen.
 
-;; Copyright (c) 2008 Andrew Hyatt
+;; Copyright (c) 2008-2014 Andrew Hyatt
 ;;
 ;; Author: Andrew Hyatt <ahyatt at gmail dot com>
 ;; Maintainer: Carsten Dominik <carsten at orgmode dot org>
 ;;
 ;; This file is not yet part of GNU Emacs.
 ;;
-;; GNU Emacs is free software; you can redistribute it and/or modify
+;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation; either version 3, or (at your option)
 ;; any later version.
 
-;; GNU Emacs is distributed in the hope that it will be useful,
+;; This program is distributed in the hope that it will be useful,
 ;; but WITHOUT ANY WARRANTY; without even the implied warranty of
 ;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs; see the file COPYING.  If not, write to the
-;; Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-;; Boston, MA 02110-1301, USA.
+;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;;; Commentary:
@@ -40,7 +38,7 @@
 ;; associated with that task, go to the end of your item and type:
 ;;
 ;; M-x org-screen
-;; 
+;;
 ;; This will prompt you for a name of a screen session.  Type in a
 ;; name and it will insert a link into your org file at your current
 ;; location.
@@ -79,10 +77,10 @@ is copied from ansi-term method."
 
   ;; Pick the name of the new buffer.
   (let ((term-ansi-buffer-name
-        (generate-new-buffer-name 
+        (generate-new-buffer-name
          (org-screen-buffer-name name))))
     (setq term-ansi-buffer-name
-          (term-ansi-make-term 
+          (term-ansi-make-term
           term-ansi-buffer-name org-screen-program-name nil arg name))
     (set-buffer term-ansi-buffer-name)
     (term-mode)
@@ -96,13 +94,13 @@ is copied from ansi-term method."
   (let ((screen-buffer-name (org-screen-buffer-name name)))
     (if (member screen-buffer-name
                 (mapcar 'buffer-name (buffer-list)))
-        (switch-to-buffer screen-buffer-name)
-      (switch-to-buffer (org-screen-helper name "-dr")))))
+        (org-pop-to-buffer-same-window screen-buffer-name)
+      (org-pop-to-buffer-same-window (org-screen-helper name "-dr")))))
 
 (if org-link-abbrev-alist
     (add-to-list 'org-link-abbrev-alist
 		 '("screen" . "elisp:(org-screen-goto \"%s\")"))
   (setq org-link-abbrev-alist
 	'(("screen" . "elisp:(org-screen-goto \"%s\")"))))
- 
+
 (provide 'org-screen)
