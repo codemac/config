@@ -2972,6 +2972,7 @@ org-mouse in case I already have a pointing device. I imagine
   (require 'org)
   (require 'org-protocol)
   (require 'org-mouse)
+  (require 'org-attach)
 #+end_src
 **** Org Agenda
      :PROPERTIES:
