@@ -39,6 +39,11 @@ defwinprop {
 }
 
 defwinprop {
+   instance = "yas-expand-input",
+   float = true,
+}
+
+defwinprop {
     class = "trayer",
     statusbar = "systray",
 }

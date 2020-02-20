@@ -4,6 +4,7 @@
 	pushf = push --force-with-lease
 	cob = checkout -b
 	lg = log --oneline
+	ca = commit --amend
 [user]
 	email = j@codemac.net
 	name = Jeff Mickey
@@ -14,3 +15,5 @@
 	default = current
 [http]
 	cookiefile = /home/jmickey/.gitcookies
+[diff]
+	renameLimit = 20000
