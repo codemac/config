@@ -568,6 +568,7 @@ xterm*pointerColor: yellow
 xterm*savelines: 100000
 xterm*fullscren: never
 xterm*omitTranslation: fullscreen
+xterm*allowWindowOps: true
 
 !!
 vncviewer*grabKeyboard: true
@@ -606,3 +607,4 @@ UXTerm*faceName: xft:DejaVu Sans Mono
 UXTerm*faceSize: 11
 UXTerm*fullscren: never
 UXTerm*omitTranslation: fullscreen
+xterm*allowWindowOps: true

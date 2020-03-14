@@ -1,0 +1,79 @@
+;; -*-lisp-*-
+(defpackage net.codemac.stumpwm
+  (:use :cl :stumpwm))
+
+(in-package :net.codemac.stumpwm)
+
+(setf *config-path* (uiop:subpathname* (user-homedir-pathname) ".config/stumpwm/"))
+
+;; We probably need to set this to something even shorter..
+(set-prefix-key (kbd "s-t"))
+
+(load (uiop:subpathname* *config-path* "modeline.lisp"))
+(load (uiop:subpathname* *config-path* "window.lisp"))
+(load (uiop:subpathname* *config-path* "scratchpad.lisp"))
+
+(define-key *top-map* (kbd "s-n") "pull-hidden-next")
+(define-key *root-map* (kbd "s-n") "pull-hidden-next")
+
+(define-key *top-map* (kbd "s-p") "pull-hidden-previous")
+(define-key *root-map* (kbd "s-p") "pull-hidden-previous")
+
+(define-key *top-map* (kbd "s-.") "gnext")
+(define-key *top-map* (kbd "s-,") "gprev")
+
+(define-key *top-map* (kbd "s-l") "exec notion-lock")
+(define-key *top-map* (kbd "s-c") "exec org-capture")
+(define-key *top-map* (kbd "s-u") "unfloat-this")
+(define-key *top-map* (kbd "s-h") "exec /usr/bin/emacsclient.google-emacs -e '(cm/emacs-expander-frame)'")
+
+(define-key *top-map* (kbd "s-Up") "move-focus up")
+(define-key *top-map* (kbd "s-Down") "move-focus down")
+(define-key *top-map* (kbd "s-Left") "move-focus left")
+(define-key *top-map* (kbd "s-Right") "move-focus right")
+
+(define-key *top-map* (kbd "s-RET") "fullscreen")
+
+;; run or raise Firefox with prefix + f
+;; (defcommand firefox () ()
+;;   "Start Firefox or switch to it, if it is already running."
+;;   (run-or-raise "firefox" '(:class "Firefox")))
+;; (define-key *root-map* (kbd "f") "firefox")
+
+(defcommand run-or-raise-firefox () () (run-or-raise "firefox" '(:class "Firefox")))
+(defcommand run-or-raise-chrome-debug () () (run-or-raise "chrome-debug" '(:class "Google-chrome")))
+(defcommand run-or-raise-google-emacs () () (run-or-raise "google-emacs" '(:class "GoogleEmacs")))
+(defcommand run-or-raise-manatee () () (run-or-raise "term manatee" '(:class "UXTerm" :instance "manatee")))
+
+;; launch that shit
+(defvar *launch-shit-map*
+  (let ((m (make-sparse-keymap)))
+    (define-key m (kbd "f") "run-or-raise-firefox")
+    (define-key m (kbd "c") "run-or-raise-chrome-debug")
+    (define-key m (kbd "e") "run-or-raise-google-emacs")
+    (define-key m (kbd "m") "run-or-raise-manatee")
+    m))
+
+(define-key *top-map* (kbd "s-g") '*launch-shit-map*)
+
+;; need to define a "hidden group" that I can toggle on and off for
+;; use with my normal scratch. the scratchpad implementation is a
+;; little much.
+
+(defvar *scratch-group-name* ".scratch")
+(defvar *scratch-group-previous-group* nil)
+
+(add-group (current-screen) *scratch-group-name* :background t)
+
+(defcommand scratch-group-toggle () ()
+  (let ((current (current-group)))
+    (if (string= *scratch-group-name* (group-name current))
+	(run-commands (format nil "gselect ~D" (group-number *scratch-group-previous-group*)))
+	(progn
+	  (setf *scratch-group-previous-group* current)
+	  (run-commands (concatenate 'string "gselect " *scratch-group-name*))))))
+
+(define-key *top-map* (kbd "s-SPC") "scratch-group-toggle")
+
+(setf *normal-border-width* 0)
+(setf *mouse-focus-policy* :sloppy)

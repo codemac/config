@@ -1,4 +1,4 @@
-#!/usr/bin/rc
+#!/usr/bin/env rc
 
 agenda_files=($HOME/org/*.org)
 homefile=$HOME/config/chrome/codemac_home/home.html
@@ -16401,12 +16401,12 @@ fn grep_headings {
 
 fn remove_tags {
   sed -r 's/[[:space:]]+:[A-Za-z]+:$//'
-}
+   }
 
 fn add_html {
-  echo '<tr><td width="20%"></td><td text-align="left" width="60%">'
-  cat
-  echo '</td><td width="20%"></td></tr>'
+     echo '<tr><td width="20%"></td><td text-align="left" width="60%">'
+     cat
+     echo '</td><td width="20%"></td></tr>'
 }
 
 echo '<table>' >> $homefile.tmp
@@ -16415,7 +16415,11 @@ echo '<ul>' >> $homefile.tmp
 echo '<h3>The Next Thing:</h3>' | add_html >> $homefile.tmp
 
 for(f in $agenda_files) {
-  grep_headings NEXT $f | remove_tags | add_html
+        echo '<tr><td width="20%"></td><td text-align="left" width="60%">'
+        echo '<pre>'
+        grep_headings NEXT $f | remove_tags
+        echo '</pre>'
+  echo '</td><td width="20%"></td></tr>'
 } >> $homefile.tmp
 
 echo '<br/><h3>Scheduled Now:</h3>' | add_html >> $homefile.tmp
