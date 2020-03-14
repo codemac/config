@@ -14,12 +14,16 @@
 ;; why the fuck aren't these https!
 (setq package-archives
       '(("org"          . "http://orgmode.org/elpa/")
-	;; let's stick with more stable packages for a bit
 	("melpa"        . "http://melpa.org/packages/")
         ("melpa-stable" . "http://stable.melpa.org/packages/")
-	;; ssl not validating!
-	;; ("marmalade"    . "http://marmalade-repo.org/packages/")
         ("gnu"          . "http://elpa.gnu.org/packages/")))
+
+(when (boundp 'package-pinned-packages)
+  (setq package-pinned-packages
+	`((org              . "gnu")
+	  (org-ql           . "melpa")
+	  (org-sidebar      . "melpa")
+	  (org-super-agenda . "melpa"))))
 
 (setq package-archive-priorities
       '(("gnu"          . 100)
