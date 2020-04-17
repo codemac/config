@@ -1576,6 +1576,7 @@ C situation (they both chose lisp like adults).
     :config
     (ivy-mode 1)
     (setq ivy-use-virtual-buffers t)
+    (define-key ivy-minibuffer-map (kbd "S-SPC") nil)
     (setq ivy-count-format ""))
 #+end_src
 *** Hydra
@@ -3315,34 +3316,81 @@ out how long tasks took that you start and stop.
 ***** Clocking hydra
 This add some commands for managing and clocking my time in a hydra.
 #+begin_src emacs-lisp
-    (defhydra hydra-org-clock (global-map "C-c x")
-      "Navigate your clocking"
-      ("c" org-clock-in
-       "clock into current task")
-      ("o" org-clock-out
-       "clock out of current task")
-      ("x" (let ((current-prefix-arg '(4)))
+  (require 'counsel)
+
+  (defun cm/org-clock-switch-to-name ()
+    (when (string= "" cm/org-clock-switch-to-last-name)
+      (error "Bad cm/org-clock-switch-to-last-name"))
+    cm/org-clock-switch-to-last-name)
+
+  (defvar cm/org-clock-switch-to-last-name ""
+    "The last thing we saw as the switch to name.")
+
+  ;; currently cant' take raw in
+  (defun cm/org-clock-switch-to-action (selection)
+    "Swich org clock to selection, either creating heading or selecting it."
+    ;; a new heading instead!
+    (if (stringp selection)
+	(save-window-excursion
+	  (save-excursion
+	    ;; how to non-interactively capture??
+	    (setq cm/org-clock-switch-to-last-name selection)
+	    (org-capture nil "xc")
+	    (org-goto-marker-or-bmk nil "org-capture-last-stored")
+	    (org-clock-in)
+	    (setq cm/org-clock-switch-to-last-name "")))
+      (save-window-excursion
+	(save-excursion
+	  (org-goto-marker-or-bmk (cdr selection))
+	  (org-clock-in)))))
+
+  (defun cm/org-clock-filter-done-archived-headings (headings)
+    (remove-if (lambda (x) (or (string-match-p "/DONE " (car x))
+			       (string-match-p "/Archive/" (car x))))
+	       headings))
+
+  ;; similar to counsel's org-goto, but we filter out DONE headings, and anything under /Archive/
+  (defun cm/org-clock-switch-to ()
+    (interactive)
+    (let ((counsel-org-headline-display-todo t))
+      (let (entries)
+	(dolist (b (buffer-list))
+	  (when (org-agenda-file-p (buffer-file-name b))
+	    (with-current-buffer b
+	      (when (derived-mode-p 'org-mode)
+		(setq entries
+		      (nconc entries
+			     (cm/org-clock-filter-done-archived-headings
+			      (counsel-outline-candidates
+			       (cdr (assq 'org-mode counsel-outline-settings))
+			       (counsel-org-goto-all--outline-path-prefix)))))))))
+	(ivy-read "Clock switch to (or type new): " entries
+		  :history 'cm/org-clock-switch-to-history
+		  :action #'cm/org-clock-switch-to-action))))
+
+  (defhydra hydra-org-clock (global-map "C-c x" :exit t :columns 2)
+    "Navigate your clocking"
+    ("g" (call-interactively #'org-clock-goto)
+     "goto last clocked-in task")
+    ("G" (let ((current-prefix-arg '(4)))
+	   (call-interactively #'org-clock-goto))
+     "goto recent clocked-in tasks")
+    ("c" org-clock-in
+     "in: current task")
+    ("d" (let ((current-prefix-arg '(16)))
+	   (call-interactively #'org-clock-in)
+	   (org-save-all-org-buffers))
+     "in: current and set as default")
+    ("l" (let ((current-prefix-arg '(64)))
 	     (call-interactively #'org-clock-in)
 	     (org-save-all-org-buffers))
-       "switch to recent clocked task")
-      ("d" (let ((current-prefix-arg '(16)))
-	     (call-interactively #'org-clock-in)
-	     (org-save-all-org-buffers))
-       "clock and set default task")
-      ("l" (let ((current-prefix-arg '(64)))
-	     (call-interactively #'org-clock-in)
-	     (org-save-all-org-buffers))
-       "clock in at last clock-out time")
-      ("g" (call-interactively #'org-clock-goto)
-       "goto last clocked-in task")
-      ("G" (let ((current-prefix-arg '(4)))
-	     (call-interactively #'org-clock-goto))
-       "goto recent clocked-in tasks")
-      ("q" nil "quit"))
+     "in: current at last clock-out time")
+    ("o" org-clock-out "out: current task")
+    ("x" cm/org-clock-switch-to "switch: to any or new task")
+    ("q" nil "quit"))
   (global-set-key (kbd "C-c x") 'hydra-org-clock/body)
-
-
 #+end_src
+
 **** Useful setq's
      :PROPERTIES:
      :ID:       8bb80482-a3c3-4e9b-bc23-27fdfdf4d14c
@@ -4207,6 +4255,8 @@ the files.
 	   ,(concat (format-time-string "| %Y.%m.%d-%H:%M |") " %^{Weight} | | %^{RHR} |") :table-line-pos "II-1" :empty-lines 1)
 	  ("xw" "org-capture reference" entry (file "~/org/_notes/www.org")
 	   "* %U %?%:description\n:PROPERTIES:\n:URL: %:link\n:END:\n\n%:body\n\n" :empty-lines 1)
+	  ("xc" "org-capture inbox clock" entry (file+headline "~/org/gtd.org" "Inbox")
+	   "* TODO %(cm/org-clock-switch-to-name)\n:PROPERTIES:\n:CREATED:  %U\n:END:\n\n" :empty-lines 1 :immediate-finish t)
 	  ("xi" "org-capture inbox" entry (file+headline "~/org/gtd.org" "Inbox")
 	   "* TODO %?%:annotation\n:PROPERTIES:\n:CREATED:  %U\n:END:\n\n%:link\n\n%i\n\n" :empty-lines 1)))
 
@@ -4325,36 +4375,13 @@ view on things.
   (defvar cm/org-goto-dirs '("~/org/*.org")
     "Org directories to search with goto")
 
+  (setq counsel-org-goto-all-outline-path-prefix 'file-name)
   (setq counsel-org-goto-display-style 'path)
   (setq counsel-org-goto-separator "/")
   (setq counsel-org-goto-face-style 'org)
 
-  (defun cm/add-filename (buf pair)
-    (let* ((bufname (buffer-name buf))
-	   (name (car pair))
-	   (rest (cdr pair)))
-      (cons (concat bufname counsel-org-goto-separator name) rest)))
-
-  (defun cm/org-goto ()
-    (interactive)
-    (require 'counsel)
-    (mapcar (lambda (x) (mapcar #'bury-buffer (find-file-noselect x t nil t))) cm/org-goto-dirs)
-    (let (entries)
-      (dolist (b (buffer-list))
-	(with-current-buffer b
-	  (when (derived-mode-p 'org-mode)
-	    (setq entries
-		  (nconc entries
-			 (mapcar
-			  (lambda (x) (cm/add-filename b x))
-			  (counsel-org-goto--get-headlines)))))))
-      (ivy-read "Goto: " entries
-		:history 'cm/org-goto-history
-		:action 'counsel-org-goto-action
-		:caller 'cm/org-goto)))
-
-  (define-key org-mode-map (kbd "C-c C-j") 'cm/org-goto)
-  (define-key global-map (kbd "C-c g") 'cm/org-goto)
+  (define-key org-mode-map (kbd "C-c C-j") 'counsel-org-goto-all)
+  (define-key global-map (kbd "C-c g") 'counsel-org-goto-all)
 #+end_src
 
 **** Face settings for mixed-pitch-mode
@@ -5384,7 +5411,7 @@ A wholly owned subsidiary of Cisco.
 #+end_src
 *** Find file hydra
 #+begin_src emacs-lisp
-  (defhydra hydra-find-file (global-map "C-c f")
+  (defhydra hydra-find-file (global-map "C-c f" :exit t)
     "Find a file"
     ("f" ffap "file at point")
     ("h" (let ((default-directory (file-name-as-directory (getenv "HOME"))))
