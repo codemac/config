@@ -56,6 +56,13 @@ annoying.
 	   (kill-buffer output-buffer))))
       output-buffer))
 #+end_src
+** Unwrap lines
+#+begin_src emacs-lisp
+  (defun cm/unwrap-lines ()
+    (interactive)
+    (let ((fill-column 999999999999))
+      (fill-paragraph nil t)))
+#+end_src
 * User Interface
   :PROPERTIES:
   :ID:       174da1e1-650e-41f1-a5de-48a0e77b8538
@@ -1550,12 +1557,9 @@ sanity in many cases.
 #+begin_src emacs-lisp
   (global-set-key (kbd "C-c d") #'diff-buffer-with-file)
 #+end_src
-** Unwrap lines
+** Buffer Outlines (via counsel + semantic/imenu)
 #+begin_src emacs-lisp
-  (defun cm/unwrap-lines ()
-    (interactive)
-    (let ((fill-column 999999999999))
-      (fill-paragraph nil t)))
+  (global-set-key (kbd "C-c i") #'counsel-semantic-or-imenu)
 #+end_src
 * External
   :PROPERTIES:
@@ -2970,11 +2974,15 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
 - =x= :: Checklist agenda, these are largely for pre-flight checklists
          that I maintain. Not sure how to integrate them into my whole
          emacs / org-mode flow just yet.
+- =g= :: gtd lists, a grouping for things that are GTD related, that I
+         check less frequently. Some of the above may move into here just so
+          we don't end up conflicting over time.
 #+begin_src emacs-lisp
   (defun cm/day-agendas ()
     `(("d" "Full Day Agenda"
        ((agenda "Today" ((org-agenda-span 1)))
-	(todo "NEXT")))
+	(todo "NEXT"))
+       ((org-agenda-start-with-log-mode t)))
       ("i" "Inbox"
        ((tags-todo "-{.*}-TODO=\"PROJECT\"-TODO=\"WAITING\""))
        ((org-agenda-overriding-header "Inbox")))
@@ -3009,6 +3017,16 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
 	(todo "PROJECT"))
        ((org-agenda-skip-function '(org-agenda-skip-entry-if 'notscheduled))
        (org-agenda-sorting-strategy '(tsia-up))))))
+
+  (defun cm/gtd-agendas ()
+    `(("gh" "Higher Horizons"
+       ((tags "50K" ,(cm/review-header "Life Purpose & Principles"))
+	(tags "40K" ,(cm/review-header "Life Vision (5 years)"))
+	(tags "30K" ,(cm/review-header "Goals and Objectives (12-24)"))
+	(tags "20K" ,(cm/review-header "Areas of Focus and Responsibility"))
+	(todo "PROJECT" ,(cm/review-header "Projects and Alignment")))
+       ((org-agenda-entry-text-maxlines 10000)
+	(org-agenda-entry-text-mode 1)))))
 
   (defun cm/review-agendas ()
     `(("rd" "Daily Review"
@@ -3110,6 +3128,7 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
 	   (cm/context-agendas)
 	   (cm/review-agendas)
 	   (cm/checklist-agendas)
+	   (cm/gtd-agendas)
 	   '(("Z" "Receipt Agenda"
 	      ((org-receipt-agenda)))))))
 #+end_src
@@ -3441,7 +3460,7 @@ This add some commands for managing and clocking my time in a hydra.
   (setq org-agenda-use-tag-inheritance nil)
   (setq org-agenda-window-setup 'current-window)
   (setq org-attach-archive-delete 'query)
-  (setq org-attach-directory "~/org/_attachments/")
+  (setq org-attach-id-dir "~/org/_attachments/")
   (setq org-attach-method 'mv)
   (setq org-enforce-todo-dependencies t)
   (setq org-export-with-sub-superscripts nil)
@@ -3641,6 +3660,8 @@ it the normal way.
      (sql .t)))
   (setq org-confirm-babel-evaluate t)  ; nah, let's be safe
 
+  (setq org-babel-shell-names (cons "rc" org-babel-shell-names))
+  (org-babel-shell-initialize)
   (autoload 'org-mime-org-buffer-htmlize "org-mime" "org-mime-org-buffer-htmlize" t nil)
   (defun cm/org-mime-send-buffer-hook ()
     (defun org-export-grab-title-from-buffer ()
@@ -5159,7 +5180,8 @@ horrifying.
 
   (cm/defun-local-wrap cm/notmuch-jump-search notmuch-jump-search)
 
-  (global-set-key (kbd "C-c i") #'cm/notmuch-jump-search)
+  ;; we now use this for imenu
+  ;; (global-set-key (kbd "C-c i") #'cm/notmuch-jump-search)
 
   ;; keep the "goto address" logic consistent with org mode
   (define-key notmuch-show-mode-map (kbd "C-c C-o") 'goto-address-at-point)
