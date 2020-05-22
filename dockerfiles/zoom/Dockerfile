@@ -11,14 +11,12 @@ ENV DEBIAN_FRONTEND noninteractive
 RUN apt-get update
 RUN apt-get -qy dist-upgrade
 
-RUN apt-get install -qy curl firefox-esr sudo desktop-file-utils lib32z1 \
-  libx11-6 libegl1-mesa libxcb-shm0 \
-  libglib2.0-0 libgl1-mesa-glx libxrender1 libxcomposite1 libxslt1.1 \
-  libgstreamer1.0-0 libgstreamer-plugins-base1.0-0 libxi6 libsm6 \
-  libfontconfig1 libpulse0 libsqlite3-0 \
-  libxcb-shape0 libxcb-xfixes0 libxcb-randr0 libxcb-image0 \
-  libxcb-keysyms1 libxcb-xtest0 ibus ibus-gtk \
-  libnss3 libxss1
+RUN apt-get install -qy desktop-file-utils firefox-esr ibus ibus-gtk lib32z1 \
+  libegl1-mesa libfontconfig1 libgl1-mesa-glx libglib2.0-0 \
+  libgstreamer-plugins-base1.0-0 libgstreamer1.0-0 libnss3 libpulse0 libsm6 \
+  libsqlite3-0 libx11-6 libxcb-image0 libxcb-keysyms1 libxcb-randr0 \
+  libxcb-shape0 libxcb-shm0 libxcb-xfixes0 libxcb-xtest0 libxcomposite1 libxi6 \
+  libxrender1 libxslt1.1 libxss1 sudo
 
 ARG ZOOM_URL=https://zoom.us/client/latest/zoom_amd64.deb
 
