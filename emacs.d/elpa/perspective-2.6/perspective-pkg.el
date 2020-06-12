@@ -1,2 +1,0 @@
-;;; -*- no-byte-compile: t -*-
-(define-package "perspective" "2.6" "switch between named \"perspectives\" of the editor" '((emacs "24.4") (cl-lib "0.5")) :commit "2ac6aff0569923993a251beddb3046ec44841408" :keywords '("workspace" "convenience" "frames") :authors '(("Natalie Weizenbaum" . "nex342@gmail.com")) :maintainer '("Natalie Weizenbaum" . "nex342@gmail.com") :url "http://github.com/nex3/perspective-el")
