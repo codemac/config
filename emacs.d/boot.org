@@ -176,19 +176,16 @@ screen DPI's.
 
 #+begin_src emacs-lisp
   (defun cm/produce-font (size)
-    (set-face-attribute 'default nil
-			:family "DejaVu Sans Mono" :height (* size 10))
-    (set-face-attribute 'fixed-pitch nil
-			:family "DejaVu Sans Mono" :height (* size 10))
-    (set-face-attribute 'variable-pitch nil
-			:family "EtBembo" :height (* size 14)))
+    (let* ((sizestr (number-to-string size))
+	   (suffix "") ;; manually set hinting things here
+	   (fixed (concat "DejaVu Sans Mono-" (number-to-string size) suffix))
+	   (variable (concat "EtBembo-" (number-to-string (* size 1.3)) suffix)))
+      (set-face-attribute 'default nil :font fixed)
+      (set-face-attribute 'fixed-pitch nil :font fixed)
+      (set-face-attribute 'variable-pitch nil :font variable)))
+
 
   (cond
-    ((or (string-prefix-p "phoenix-mta" (system-name))
-	 (string-prefix-p "vpn2ntap-" (system-name))
-	 (string-prefix-p "novaria" (system-name))
-	 (string-prefix-p "moc.ppaten" (apply 'string (reverse (string-to-list (system-name))))))
-     (cm/produce-font 12))
     ((equal (system-name) "penolpe")
      (cm/produce-font 9))
     (t
@@ -245,8 +242,8 @@ write emails all day (read: me). However, it does create some problem
 with things like =C-x= in Emacs. In dvorak, =x= is =b= on the
 keyboard, meaning you're reaching quite far with your hand.
 
-I'm going to try out switching =C-t= and =C-x= as per suggested by [[http://ergoemacs.org/emacs/emacs_dvorak_C-x.html][Xah
-Lee's page]] on the dvorak =C-x= problem.
+I'm going to try out switching =C-t= and =C-x= as per suggested by
+[[http://ergoemacs.org/emacs/emacs_dvorak_C-x.html][XahLee's page]] on the dvorak =C-x= problem.
 
 #+begin_src emacs-lisp
   (keyboard-translate ?\C-x ?\C-t)
@@ -632,15 +629,30 @@ This may mess up org-agenda if I'm doing crazier agenda stuff later.
     `(cm/defun-local ,funcname () (,towrap)))
 
 #+end_src
+** Delete surrounding whitespace
+Super useful when killing and pasting lines, as selecting regions in
+emacs is not my forte.
+#+begin_src emacs-lisp
+  (defun cm/delete-surrounding-whitespace ()
+    (interactive)
+    (let ((skip-chars "\n\r\t "))
+      (skip-chars-backward skip-chars)
+      (let* ((start (point))
+	     (num (progn
+		    (skip-chars-forward skip-chars)
+		    (point))))
+	(delete-region start num))))
+
+  (global-set-key (kbd "C-<delete>") 'cm/delete-surrounding-whitespace)
+#+end_src
 * ELPA
   :PROPERTIES:
   :ID:       75916850-2b29-435f-8f66-2d17704fe83d
   :END:
 I organize my packages use with the amazing https://github.com/jwiegley/use-package
 #+begin_src emacs-lisp
-  (eval-when-compile
-    (require 'use-package))
-  (require 'diminish)
+  (require 'use-package)
+  (require 'use-package-diminish)
   (require 'bind-key)
 #+end_src
 * Color theme
@@ -719,7 +731,7 @@ this is necessary to get useful backups.
 	kept-old-versions 0
 	delete-old-versions t
 	backup-by-copying t
-	backup-directory-alist '(("." . "~/.emacs-backup")))
+	backup-directory-alist `(("." . ,(concat (getenv "HOME")"/.emacs-backup"))))
 
   (defun cm/force-backup-of-buffer ()
     (let ((buffer-backed-up nil))
@@ -1066,7 +1078,7 @@ Mac fix for info installation location!
    :ID:       0e0b04db-4a10-473d-9a12-a19190b1878e
    :END:
 #+begin_src emacs-lisp
-  (require 'pcmpl-git)
+;  (require 'pcmpl-git)
 #+end_src
 ** Shell (using rakitzis' rc)
    :PROPERTIES:
@@ -1849,49 +1861,54 @@ without things like =gofmt=.
   (use-package fill-column-indicator
     :commands (fci-mode))
 #+end_src
+
 *** Mixed Pitch
+
 This makes things just a tad nicer to read in org-mode. Currently only
 enabled there.
+
 #+begin_src emacs-lisp
-  ;; (use-package mixed-pitch
-  ;;   :commands mixed-pitch-mode
-  ;;   :diminish mixed-pitch-mode
-  ;;   :init
-  ;;   ;; disabled mixed pitch mode for a bit, seeing if I miss it.
-  ;;   ;; (add-hook 'org-mode-hook #'mixed-pitch-mode)
-  ;;   :config
-  ;;   (defun cm/set-face-attribute-mixed (face)
-  ;;     (set-face-attribute
-  ;;      face nil
-  ;;      :family (face-attribute 'variable-pitch :family)
-  ;;      :height (face-attribute 'variable-pitch :height)))
+  (use-package mixed-pitch
+    :commands mixed-pitch-mode
+    :diminish mixed-pitch-mode
+    :hook (org-mode . mixed-pitch-mode)
+    :config
+    (defun cm/set-face-attribute-mixed (face)
+      (set-face-attribute
+       face nil
+       :family (face-attribute 'variable-pitch :family)
+       :height (face-attribute 'variable-pitch :height nil 'default)))
 
-  ;;   (defun cm/org-level-face-height (ratio)
-  ;;     (truncate (* (face-attribute 'variable-pitch :height nil 'default) ratio)))
+    (defun cm/org-level-face-height (ratio)
+      (truncate (* (face-attribute 'variable-pitch :height nil 'default) ratio)))
 
-  ;;   (defun cm/org-level-set-face-height (part)
-  ;;     (set-face-attribute (car part) nil :height (cm/org-level-face-height (cdr part))))
+    (defun cm/org-level-set-face-height (part)
+      (set-face-attribute (car part) nil :height (cm/org-level-face-height (cdr part))))
 
-  ;;   (defvar cm/org-level-height-alist
-  ;;     '((org-level-1 . 1.2)
-  ;;       (org-level-2 . 1.1)
-  ;;       (org-level-3 . 1.05)
-  ;;       (org-level-4 . 1)
-  ;;       (org-level-5 . 1)
-  ;;       (org-level-6 . 1)
-  ;;       (org-level-7 . 1)
-  ;;       (org-level-8 . 1))
-  ;;     "List of org-level faces to ratio of default variable height")
+    (defvar cm/org-level-height-alist
+      '((org-level-1 . 1)
+	(org-level-2 . 1)
+	(org-level-3 . 1)
+	(org-level-4 . 1)
+	(org-level-5 . 1)
+	(org-level-6 . 1)
+	(org-level-7 . 1)
+	(org-level-8 . 1)
+	(org-document-title . 1.5))
+      "List of org-level faces to ratio of default variable height")
 
-  ;;   (mapc #'cm/set-face-attribute-mixed org-level-faces)
-  ;;   (mapc #'cm/org-level-set-face-height cm/org-level-height-alist)
+    (mapc #'cm/set-face-attribute-mixed org-level-faces)
+    (mapc #'cm/org-level-set-face-height cm/org-level-height-alist)
 
-  ;;   (setq mixed-pitch-variable-pitch-cursor nil)
-  ;;   (add-to-list 'mixed-pitch-fixed-pitch-faces 'org-date)
-  ;;   (add-to-list 'mixed-pitch-fixed-pitch-faces 'org-done)
-  ;;   (add-to-list 'mixed-pitch-fixed-pitch-faces 'org-formula)
-  ;;   (add-to-list 'mixed-pitch-fixed-pitch-faces 'org-tag)
-  ;;   (add-to-list 'mixed-pitch-fixed-pitch-faces 'org-todo))
+    (setq mixed-pitch-variable-pitch-cursor nil
+	  mixed-pitch-set-height t)
+
+    (add-to-list 'mixed-pitch-fixed-pitch-faces 'org-date)
+    (add-to-list 'mixed-pitch-fixed-pitch-faces 'org-done)
+    (add-to-list 'mixed-pitch-fixed-pitch-faces 'org-drawer)
+    (add-to-list 'mixed-pitch-fixed-pitch-faces 'org-formula)
+    (add-to-list 'mixed-pitch-fixed-pitch-faces 'org-tag)
+    (add-to-list 'mixed-pitch-fixed-pitch-faces 'org-todo))
 #+end_src
 
 ** Major Modes
@@ -3277,6 +3294,16 @@ to Sacha Chua.
 
   (define-key org-agenda-mode-map "x" #'cm/org-agenda-actions-hydra/body)
 #+end_src
+***** Agenda block "now" line highlighting
+The usual line showing the current time in org-mode is too hard to
+differentiate between it and the timegrid as of
+[2020-07-10 Fri 14:44]. I'm going to change the face to something
+easier to see given my wombat color scheme and how my scheduled TODO
+lines are usually much longer.
+
+#+begin_src emacs-lisp
+  (set-face-attribute 'org-agenda-current-time nil :foreground "red")
+#+end_src
 **** Org Clock
      :PROPERTIES:
      :ID:       fbb22f25-0f77-44c8-ab44-47187909d25a
@@ -3422,7 +3449,6 @@ This add some commands for managing and clocking my time in a hydra.
   (global-set-key (kbd "C-c l") 'org-store-link)
   (cm/defun-local-wrap cm/org-load-agenda-wrapped cm/org-load-agenda)
   (global-set-key (kbd "C-c a") 'cm/org-load-agenda-wrapped)
-  (setq org-fontify-done-headline t)
   (setq org-clock-persist 'history)
   (org-clock-persistence-insinuate)
 
@@ -3445,6 +3471,8 @@ This add some commands for managing and clocking my time in a hydra.
      (((background dark)) (:foreground "light goldenrod")))
    'face-defface-spec)
 
+  (setq org-src-fontify-natively t)
+  (setq org-fontify-done-headline t)
   (setq calendar-mark-diary-entries-flag t)
   (setq org-adapt-indentation nil)
   (setq org-agenda-dim-blocked-tasks nil)
@@ -3471,7 +3499,6 @@ This add some commands for managing and clocking my time in a hydra.
 			;; firefox no longer supports mhtml :(
 			("\\.mhtml\\'" . "google-chrome %s")
 			("\\.pdf\\'" . default)))
-  (setq org-fontify-done-headline t)
   (setq org-hide-leading-stars t)
   (setq org-log-done t)
   (setq org-outline-path-complete-in-steps nil)
@@ -4295,8 +4322,6 @@ the files.
 
   ;; Set up my diary file
   (setq diary-file "~/org/diary") ;; deal with the fact that it's in the org folder
-
-  (setq org-src-fontify-natively nil)
 
   (defun cm/region-html-to-org (start end)
     (interactive "r")
