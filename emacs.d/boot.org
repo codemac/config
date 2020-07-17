@@ -1098,7 +1098,7 @@ I need to tie this into projectile, but for now have a way to create a
 
   (advice-add #'shell :before #'cm/advise-shell)
 
-  (defun cm/shell-new (name)
+  (defun cm/shell-new-emacs-shell (name)
     "Create a shell buffer named NAME."
     (interactive "sShell Name: ")
     (let* ((bn (concat "*shell:" name "*"))
@@ -1106,6 +1106,25 @@ I need to tie this into projectile, but for now have a way to create a
       (if (and eb (get-buffer-process eb))
 	  (switch-to-buffer eb)
 	(shell bn))))
+
+  (use-package vterm
+    :config
+    (defun cm/vterm-mode-hook ()
+      (setq-local global-hl-line-mode nil))    
+    (add-hook 'vterm-mode-hook #'cm/vterm-mode-hook)
+    (defun cm/shell-new-vterm (name)
+      "Create a vterm buffer named NAME."
+      (interactive "sShell Name: ")
+      (let* ((bn (concat "*shell:" name "*"))
+	     (eb (get-buffer bn)))
+	(if (and eb (get-buffer-process eb))
+	    (switch-to-buffer eb)
+	  (vterm bn)))))
+
+  (defun cm/shell-new (name)
+    "Create a shell buffer named NAME."
+    (interactive "sShell Name: ")
+    (cm/shell-new-vterm name))
 
   (defun cm/current-shells ()
     (require 'subr-x)
