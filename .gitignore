@@ -2,6 +2,8 @@
 *.swp
 */cached_headers
 *~
+*.so
+*.o
 .DS_Store
 .\#*
 .emacs.desktop*
@@ -47,3 +49,4 @@ ac-comphist.dat
 /zsh/ironport
 /notion/default-session--0/saved_queryhist.lua
 /emacs.d/elpa/pdf-tools-*/epdfinfo
+/emacs.d/elpa/vterm*/build
