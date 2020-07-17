@@ -1,5 +1,11 @@
 #!/usr/bin/env rc
 
+rebuild=()
+if (~ $1 '--rebuild') {
+  rebuild=--no-cache
+  shift
+}
+
 dir=$1
 
 fn runner {
@@ -9,4 +15,4 @@ fn runner {
 }
 
 cd $dir
-runner docker build -t 'jmickey-'^$dir .
+runner docker build $rebuild -t 'jmickey-'^$dir .
