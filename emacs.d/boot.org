@@ -1124,7 +1124,10 @@ I need to tie this into projectile, but for now have a way to create a
   (defun cm/shell-new (name)
     "Create a shell buffer named NAME."
     (interactive "sShell Name: ")
-    (cm/shell-new-vterm name))
+    ;; Problems with vterm were odd and indegestible. I think I will use
+    ;; vterm directly if I need it. Extremely useful to have around.
+    ;; (cm/shell-new-vterm name)
+    (cm/shell-new-emacs-shell name))
 
   (defun cm/current-shells ()
     (require 'subr-x)
