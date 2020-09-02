@@ -3090,6 +3090,7 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
 		      "Digital Inboxes:\n"
 		      "- [[https://keep.google.com][Google Keep]]\n"
 		      "- [[https://fastmail.com][Personal Inbox]]\n"
+		      "- [[https://www.google.com/maps/timeline][Location History]]\n"
 		      "- [[https://photos.google.com][Recent photos]]\n"
 		      "- [[file:~/downloads][Recent downloads]]\n"
 		      "- Unarchived phone messages\n"
@@ -3497,7 +3498,7 @@ This add some commands for managing and clocking my time in a hydra.
   (setq org-fontify-done-headline t)
   (setq calendar-mark-diary-entries-flag t)
   (setq org-adapt-indentation nil)
-  (setq org-agenda-dim-blocked-tasks nil)
+  (setq org-agenda-dim-blocked-tasks 'invisible)
   (setq org-agenda-include-all-todo t)
   (setq org-agenda-include-diary t)
   (setq org-agenda-show-all-dates t)
@@ -4312,6 +4313,8 @@ the files.
 	   ,@cm/humble-todo-template)
 	  ("wn" "Work Note" entry (file "~/org/work.org")
 	   "* %U %?\n\n  %i\n  %a\n\n" :prepend nil :empty-lines 1)
+	  ("wp" "Work Project" entry (id "76f3a69b-b76a-425c-bc0f-8795cae8e290")
+	   "* PROJECT %?\n:PROPERTIES:\n:CATEGORY:\n:CREATED:  %U\n:END:\n\n** Archive :ARCHIVE:\n\n" :empty-lines 1)
 	  ("wj" "Work journal entry" plain (file+olp+datetree "~/org/_notes/work.org" "Notes")
 	   "\n- %U %?\n\n" :tree-type week :empty-lines 1)
 	  ("ws" "Snippet Log" entry (file+headline "~/org/work.org" "Snippets")
