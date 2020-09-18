@@ -3498,7 +3498,7 @@ This add some commands for managing and clocking my time in a hydra.
   (setq org-fontify-done-headline t)
   (setq calendar-mark-diary-entries-flag t)
   (setq org-adapt-indentation nil)
-  (setq org-agenda-dim-blocked-tasks 'invisible)
+  (setq org-agenda-dim-blocked-tasks t)
   (setq org-agenda-include-all-todo t)
   (setq org-agenda-include-diary t)
   (setq org-agenda-show-all-dates t)
@@ -5910,6 +5910,78 @@ my computer.
     nil)
 
 
+#+end_src
+** Timestamp parsing
+
+This is a utility function to basically turn a big number into it's
+=(hi lo usec psec)= formatting. 
+#+begin_src emacs-lisp
+  (defun cm/number-base-to-time (number base)
+    ;; base = 1, seconds
+    ;; base = 1000, milliseconds
+    ;; base = 1000000 microseconds
+    ;; base = 1000000000 nanoseconds
+    ;; base = 1000000000000 picoseconds
+    (let* ((seconds (truncate (/ number base)))
+	   (hi (lsh seconds -16))
+	   (lo (logand seconds 65535))
+	   (usec (truncate (* (/ (- number (* seconds base 1.0)) base) 1000000)))
+	   (psec (truncate (* (/ (- number (* seconds base 1.0) (* (/ usec 1000000.0) base)) base) 1000000000000))))
+      (list hi lo usec psec)))
+#+end_src
+
+I prefer ISO8601-ish dates.
+#+begin_src emacs-lisp
+  (defvar cm/time-format "%Y-%m-%d %H:%M:%S.%N %Z"
+    "my preferred time format")
+#+end_src
+
+Now for the main formatting function.
+
+#+begin_src emacs-lisp
+  (defun cm/timestamp (input)
+    (interactive "sTimestamp: ")
+    ;; trim leading whitespace
+    (require 'subr-x)
+    (let* ((input (string-trim input))
+	   (no-comma-input (replace-regexp-in-string "," "" input))
+	   (as-number (string-to-number no-comma-input))
+	   (candidate
+	    (cond
+	     ((not (= as-number 0)) as-number)
+	     ((string-match "^0?x?[a-fA-F0-9]+$" input) (string-to-number (string-trim-left input "0x") 10))
+	     (t (error "Not a parseable time: %s" input))))
+	   (y2k 946713600)
+	   ;; is the number too small to be pico, nano, micro milli,
+	   ;; seconds. Basically, if the date is before the year 2000, it's
+	   ;; unlikely I meant that time.
+	   (base-candidate
+	    (cond
+	     ((> candidate (* y2k 1000000000000)) 1000000000000)
+	     ((> candidate (* y2k 1000000000)) 1000000000)
+	     ((> candidate (* y2k 1000000)) 1000000)
+	     ((> candidate (* y2k 1000)) 1000)
+	     (t 1))))
+      (message "%s => %s" input (format-time-string cm/time-format (cm/number-base-to-time candidate base-candidate)))))
+
+  ;; TODO implement string parsing as well, not as useful however.
+    ;; try string dates:
+    ;;   use various string formats, attempting to parse as a date:
+    ;;     NoTz MM/dd/yyyy
+    ;;     NoTz yyyy/MM/dd
+    ;;     NoTz yyyy-MM-dd
+    ;;     NoTz yyyy-MM-dd hh:mm:ss
+    ;;     NoTz yyyy-MM-dd hh:mm:ss.SS
+    ;;     NoTz yyyy/MM/dd-hh:mm:ss
+    ;;     NoTz yyyy/MM/dd-hh:mm:ss.SS
+    ;;     NoTz dd MMM yyyy
+    ;;     NoTz dd MMM yyyy hhaa
+    ;;     NoTz MM/dd/yyyy, hh:mm:ss aa
+    ;;     NoTz MMdd hh:mm:ss.SS
+    ;;     WithTz yyyy-MM-dd hh:mm:ss ZZZ
+    ;;     Utc yyyy-MM-dd\'T\'HH:mm:ss.SSS\'Z\''
+    ;;     Utc yyyyMMddhhmmss\'UTC\''
+    ;; try any emacs string -> date libraries available
 #+end_src
 
 * Directory Specific Code
