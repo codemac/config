@@ -15,7 +15,6 @@
 (setq package-archives
       '(("org"          . "http://orgmode.org/elpa/")
 	("melpa"        . "http://melpa.org/packages/")
-        ("melpa-stable" . "http://stable.melpa.org/packages/")
         ("gnu"          . "http://elpa.gnu.org/packages/")))
 
 (when (boundp 'package-pinned-packages)
@@ -28,9 +27,7 @@
 (setq package-archive-priorities
       '(("gnu"          . 100)
 	("org"          . 90)
-	("melpa-stable" . 80)
-	("melpa"        . 70)
-	("marmalade"    . 60)))
+	("melpa"        . 80)))
 
 (package-initialize)
 

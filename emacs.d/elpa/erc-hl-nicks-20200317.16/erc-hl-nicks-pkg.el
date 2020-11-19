@@ -1,0 +1,2 @@
+;;; Generated package description from /home/jmickey/.emacs.d/elpa/erc-hl-nicks-20200317.16/erc-hl-nicks.el  -*- no-byte-compile: t -*-
+(define-package "erc-hl-nicks" "20200317.16" "ERC nick highlighter that ignores uniquifying chars when colorizing" 'nil :commit "a67fe361c8f2aa20fc235447fbb898f424b51439" :authors '(("David Leatherman" . "leathekd@gmail.com")) :maintainer '("David Leatherman" . "leathekd@gmail.com") :url "http://www.github.com/leathekd/erc-hl-nicks")

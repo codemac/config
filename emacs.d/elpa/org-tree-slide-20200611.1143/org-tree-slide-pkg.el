@@ -1,0 +1,2 @@
+;;; Generated package description from /home/jmickey/.emacs.d/elpa/org-tree-slide-20200611.1143/org-tree-slide.el  -*- no-byte-compile: t -*-
+(define-package "org-tree-slide" "20200611.1143" "A presentation tool for org-mode" '((emacs "24.3")) :commit "18034c476038adcc1c4697168b8068f4d0ce62fe" :keywords '("convenience" "org-mode" "presentation" "narrowing") :authors '(("Takaaki ISHIKAWA <takaxp at ieee dot org>")) :maintainer '("Takaaki ISHIKAWA <takaxp at ieee dot org>") :url "https://github.com/takaxp/org-tree-slide")
