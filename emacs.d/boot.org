@@ -4194,40 +4194,44 @@ search through my notes based on headings, content, and possibly tags
 of some form as well.
 
 Let's first layout what we want the keymap to be like:
+
 #+begin_src emacs-lisp
   (defhydra hydra-cm-org-notes (global-map "C-c n" :exit t)
     "Use your notes wisely, Luke"
-    ("b" cm/org-scratch-buffer "buffer for org scratch notes")
-    ("f" deft-new-file "new file for org notes, named by the date")
-    ("n" deft "search through all notes")
-    ("r" cm/deft-new-file-named "new file for notes, named by the user")
+    ("n" cm/org-rifle-notes "search through all notes")
+    ("a" cm/org-rifle-agenda "search agenda org files in ~/org")
+    ("g" cm/org-rifle-all-org "search global org files in ~/org")
+    ("r" cm/org-notes-capture "new note")
     ("q" nil "quit"))
 
   (global-set-key (kbd "C-c n") 'hydra-cm-org-notes/body)
 #+end_src
 
+Using deft held back me from a lot of syncing, backing up etc by
+having huge directories of notes that I wanted to see in a big file
+either way. With helm-org-rifle this becomes unnecessary.
 #+begin_src emacs-lisp
-  (use-package deft
-    :config
-    (setq deft-default-extension "org")
-    (setq deft-directory "~/org/_notes/")
-    (setq deft-archive-directory "~/org/_attic/")
-    (setq deft-file-naming-rules '((noslash . "-")
-				   (nospace . "_")
-				   (case-fn . downcase)))
-    (setq deft-use-filter-string-for-filename t)
-    (setq deft-strip-title-regexp
-	  (concat "\\(?:"
-		  "^%+" ; line beg with %
-		  "\\|^#\\+TITLE: *" ; org-mode title
-		  "\\|^#\\+title: *" ; org-mode lowercase title
-		  "\\|^[#* ]+" ; line beg with #, * and/or space
-		  "\\|-\\*-[[:alpha:]]+-\\*-" ; -*- .. -*- lines
-		  "\\|^Title:[\t ]*" ; MultiMarkdown metadata
-		  "\\|#+" ; line with just # chars
-		  "$\\)"))
-    (setq deft-strip-summary-regexp
-	  "\\([\n\t]\\|^#\\+[[:alpha:]_]+:.*$\\)"))
+  ;; (use-package deft
+  ;;   :config
+  ;;   (setq deft-default-extension "org")
+  ;;   (setq deft-directory "~/org/_notes/")
+  ;;   (setq deft-archive-directory "~/org/_attic/")
+  ;;   (setq deft-file-naming-rules '((noslash . "-")
+  ;; 				 (nospace . "_")
+  ;; 				 (case-fn . downcase)))
+  ;;   (setq deft-use-filter-string-for-filename t)
+  ;;   (setq deft-strip-title-regexp
+  ;; 	(concat "\\(?:"
+  ;; 		"^%+" ; line beg with %
+  ;; 		"\\|^#\\+TITLE: *" ; org-mode title
+  ;; 		"\\|^#\\+title: *" ; org-mode lowercase title
+  ;; 		"\\|^[#* ]+" ; line beg with #, * and/or space
+  ;; 		"\\|-\\*-[[:alpha:]]+-\\*-" ; -*- .. -*- lines
+  ;; 		"\\|^Title:[\t ]*" ; MultiMarkdown metadata
+  ;; 		"\\|#+" ; line with just # chars
+  ;; 		"$\\)"))
+  ;;   (setq deft-strip-summary-regexp
+  ;; 	"\\([\n\t]\\|^#\\+[[:alpha:]_]+:.*$\\)"))
 #+end_src
 
 THIS WAS WAY OVER THE TOP. We can just use =org-search-view= if we
@@ -4242,7 +4246,28 @@ the files.
 			      '("~/org/_notes/")))
 	  (org-agenda-sticky nil))
       (org-search-view)))
+#+end_src
 
+***** helm-rifle support functions
+#+begin_src emacs-lisp
+  (defun cm/org-rifle-notes ()
+    "search through all notes"
+    (interactive)
+    (helm-org-rifle-files '("~/org/_notes/notes.org")))
+
+  (defun cm/org-rifle-agenda ()
+    "search through agenda files"
+    (interactive)
+    (helm-org-rifle-agenda-files))
+
+  (defun cm/org-rifle-global()
+    "search through all org files"
+    (interactive)
+    (helm-org-rifle-directories '("~/org") t))
+#+end_src
+***** Deft support functions
+
+#+begin_src emacs-lisp
   (defun cm/deft-new-file-named (slug)
     (interactive "sNew file title (will be converted to filename): ")
     ;; we do this to make sure everything is opened up!
@@ -4259,15 +4284,13 @@ the files.
 	(deft-open-file file)
 	(with-current-buffer (get-file-buffer file)
 	  (goto-char (point-max))))))
+#+end_src
 
+***** Capture support functions
+#+begin_src emacs-lisp
   (defun cm/org-notes-capture ()
     (interactive)
     (org-capture nil "n"))
-
-  (defun cm/org-scratch-buffer ()
-    (interactive)
-    (switch-to-buffer (generate-new-buffer "*note-scratch*"))
-    (org-mode))
 #+end_src
 
 **** Org Capture Templates
@@ -5910,6 +5933,16 @@ my computer.
     nil)
 
 
+#+end_src
+** NYT front page
+#+begin_src emacs-lisp
+  (defun cm/read-nyt ()
+    (interactive)
+    (let* ((urldatestr (format-time-string "%Y/%m/%d"))
+	   (filedatestr (format-time-string "%Y-%m-%d"))
+	   (tmpfile (concat (temporary-file-directory) "nyt-" filedatestr ".pdf")))
+      (url-copy-file (concat "https://static01.nyt.com/images/" urldatestr "/nytfrontpage/scan.pdf") tmpfile)
+      (find-file tmpfile)))
 #+end_src
 ** Timestamp parsing
 
