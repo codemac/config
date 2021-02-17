@@ -3,3 +3,11 @@ eval 'PATH='`{cat $HOME/.bashrc | grep PATH | cut -d'=' -f2 | head -n 1}
 GUIX_LOCPATH=$HOME/.guix-profile/lib/locale
 history=$h/.rc_history
 SUDO_ASKPASS=`{which ssh-askpass}
+fn read {
+ x=() {
+   x=``($nl){ gawk '{print; print 0; exit}'^$nl^'END {print 1; print 1}' }
+   echo x = $x
+   $1 = $x(1)
+   return $x(2)
+ }
+}

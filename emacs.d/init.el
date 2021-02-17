@@ -13,13 +13,13 @@
 
 ;; why the fuck aren't these https!
 (setq package-archives
-      '(("org"          . "http://orgmode.org/elpa/")
-	("melpa"        . "http://melpa.org/packages/")
-        ("gnu"          . "http://elpa.gnu.org/packages/")))
+      '(("org"          . "https://orgmode.org/elpa/")
+	("melpa"        . "https://melpa.org/packages/")
+        ("gnu"          . "https://elpa.gnu.org/packages/")))
 
 (when (boundp 'package-pinned-packages)
   (setq package-pinned-packages
-	`((org              . "gnu")
+	`((org              . "org")
 	  (org-ql           . "melpa")
 	  (org-sidebar      . "melpa")
 	  (org-super-agenda . "melpa"))))
@@ -54,5 +54,5 @@
 (load-file work-emacs-file)
 
 (message "My .emacs loaded in %ds"
-         (destructuring-bind (hi lo ms ps) (current-time)
-           (- (+ hi lo) (+ (first *emacs-load-start*) (second *emacs-load-start*)))))
+         (cl-destructuring-bind (hi lo ms ps) (current-time)
+           (- (+ hi lo) (+ (cl-first *emacs-load-start*) (cl-second *emacs-load-start*)))))

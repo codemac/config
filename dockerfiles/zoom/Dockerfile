@@ -14,7 +14,7 @@ RUN apt-get update && apt-get -qy dist-upgrade && apt-get install -qy \
   libgstreamer1.0-0 libnss3 libpulse0 libsm6 libsqlite3-0 libx11-6 \
   libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-shape0 libxcb-shm0 \
   libxcb-xfixes0 libxcb-xtest0 libxcomposite1 libxi6 libxrender1 libxslt1.1 \
-  libxss1 sudo
+  libxss1 sudo libxcb-xinerama0 libxkbcommon-x11-0
 
 ARG ZOOM_URL=https://zoom.us/client/latest/zoom_amd64.deb
 

@@ -11,7 +11,20 @@
 
 (load (uiop:subpathname* *config-path* "modeline.lisp"))
 (load (uiop:subpathname* *config-path* "window.lisp"))
-(load (uiop:subpathname* *config-path* "scratchpad.lisp"))
+
+;; run or rase defcommands (need to macro-it-tize this)
+(defcommand run-or-raise-firefox () () (run-or-raise "firefox" '(:class "Firefox")))
+(defcommand run-or-raise-chrome-debug () () (run-or-raise "chrome-debug" '(:class "Google-chrome")))
+(defcommand run-or-raise-google-emacs () () (run-or-raise "google-emacs" '(:class "GoogleEmacs")))
+(defcommand run-or-raise-google-emacs () () (run-or-raise "emacs" '(:class "Emacs")))
+(defcommand run-or-raise-manatee () () (run-or-raise "term manatee" '(:class "UXTerm" :instance "manatee")))
+
+(defcommand exec-screens-and-fix () ()
+  (progn
+    (run-commands "exec screens" "refresh-heads")
+    (mapcar
+     #'(lambda (h) (enable-mode-line (current-screen) h t))
+     (screen-heads (current-screen)))))
 
 (define-key *top-map* (kbd "s-n") "pull-hidden-next")
 (define-key *root-map* (kbd "s-n") "pull-hidden-next")
@@ -23,9 +36,21 @@
 (define-key *top-map* (kbd "s-,") "gprev")
 
 (define-key *top-map* (kbd "s-l") "exec notion-lock")
+
+(define-key *top-map* (kbd "s-L") "exec-screens-and-fix")
+
 (define-key *top-map* (kbd "s-c") "exec org-capture")
+
+(define-key *top-map* (kbd "s-f") "float-this")
 (define-key *top-map* (kbd "s-u") "unfloat-this")
-(define-key *top-map* (kbd "s-h") "exec /usr/bin/emacsclient.google-emacs -e '(cm/emacs-expander-frame)'")
+
+(define-key *top-map* (kbd "s-h") "exec emacsclient -e '(cm/emacs-expander-frame)'")
+
+;; ion2/ion3/notion copy pasta
+(define-key *top-map* (kbd "s-F2") "exec term")
+(define-key *root-map* (kbd "c") "exec term")
+
+(define-key *top-map* (kbd "s-F3") "exec")
 
 (define-key *top-map* (kbd "s-Up") "move-focus up")
 (define-key *top-map* (kbd "s-Down") "move-focus down")
@@ -34,16 +59,6 @@
 
 (define-key *top-map* (kbd "s-RET") "fullscreen")
 
-;; run or raise Firefox with prefix + f
-;; (defcommand firefox () ()
-;;   "Start Firefox or switch to it, if it is already running."
-;;   (run-or-raise "firefox" '(:class "Firefox")))
-;; (define-key *root-map* (kbd "f") "firefox")
-
-(defcommand run-or-raise-firefox () () (run-or-raise "firefox" '(:class "Firefox")))
-(defcommand run-or-raise-chrome-debug () () (run-or-raise "chrome-debug" '(:class "Google-chrome")))
-(defcommand run-or-raise-google-emacs () () (run-or-raise "google-emacs" '(:class "GoogleEmacs")))
-(defcommand run-or-raise-manatee () () (run-or-raise "term manatee" '(:class "UXTerm" :instance "manatee")))
 
 ;; launch that shit
 (defvar *launch-shit-map*
@@ -77,3 +92,4 @@
 
 (setf *normal-border-width* 0)
 (setf *mouse-focus-policy* :sloppy)
+(setf message-window-gravity :center)

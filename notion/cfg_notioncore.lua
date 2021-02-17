@@ -268,10 +268,9 @@ defbindings("WFrame.toplevel", {
     kpress(META.."N", "WFrame.switch_next(_)"),
     kpress(META.."P", "WFrame.switch_prev(_)"),
 
+    kpress(META.."K", "WFrame.set_numbers(_, 'during_grab')"),
+    
     submap(META.."K", {
-        -- Display tab numbers when modifiers are released
-        submap_wait("ioncore.tabnum.show(_)"),
-
         bdoc("Switch to n:th object within the frame."),
         kpress("1", "WFrame.switch_nth(_, 0)"),
         kpress("2", "WFrame.switch_nth(_, 1)"),

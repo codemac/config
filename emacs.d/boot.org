@@ -1751,7 +1751,7 @@ Navigate visually through the entire kill ring.
     (interactive)
     (let ((result (completing-read
 		   "Yank: "
-		   (delete-duplicates kill-ring :test #'equal))))
+		   (cl-delete-duplicates kill-ring :test #'equal))))
       (when (and result (region-active-p))
 	;; the currently highlighted section is to be replaced by the yank
 	(delete-region (region-beginning) (region-end)))
@@ -2871,6 +2871,9 @@ me over.
 Let's get our scheme on!
 #+begin_src emacs-lisp
   (require 'geiser-install nil t)
+
+  (setq geiser-active-implementations '(guile))
+  (setq geiser-default-implementation 'guile)
 #+end_src
 *** Muse
     :PROPERTIES:
@@ -3187,7 +3190,7 @@ able to set =org-agenda-custom-commands=
   (defun cm/org-load-agenda ()
     (interactive)
     (with-current-buffer
-	(if (equalp major-mode 'org-mode)
+	(if (cl-equalp major-mode 'org-mode)
 	    (current-buffer)
 	  (get-buffer-create "*scratch*"))
       (cm/org-set-agenda)
@@ -3239,7 +3242,7 @@ to Sacha Chua.
     "Create a new note or task at the current project's level."
     (interactive)
     (org-agenda-switch-to)
-    (if (not (equalp (nth 2 (org-heading-components)) "PROJECT"))
+    (if (not (cl-equalp (nth 2 (org-heading-components)) "PROJECT"))
 	(error (format "%s %s" (org-heading-components)
 		       ": Not a project tagged element! Cannot add dependent action"))
       (org-capture nil "b")))
@@ -4253,7 +4256,7 @@ the files.
   (defun cm/org-rifle-notes ()
     "search through all notes"
     (interactive)
-    (helm-org-rifle-files '("~/org/_notes/notes.org")))
+    (helm-org-rifle-files '("~/org/notes.org")))
 
   (defun cm/org-rifle-agenda ()
     "search through agenda files"
@@ -4325,7 +4328,7 @@ the files.
 	   "* %U %?\n%a\n\n%i\n\n" :empty-lines 1)
 	  ("a" "Address Book" entry (file "~/org/_notes/contacts.org")
 	   "* %(org-contacts-template-name)\n:PROPERTIES:\n:EMAIL: %(org-contacts-template-email)\n:END:" :empty-lines 1)
-	  ("n" "Timed Notes" entry (file "~/org/_notes/notes.org")
+	  ("n" "Timed Notes" entry (file "~/org/notes.org")
 	   "* %T %?\n\n  %i\n  %a\n\n" :prepend nil :empty-lines 1)
 	  ("d" "Logged distraction entry" entry (file+headline "~/org/gtd.org" "Inbox")
 	   ,@cm/humble-todo-template
@@ -4341,7 +4344,7 @@ the files.
 	  ("wj" "Work journal entry" plain (file+olp+datetree "~/org/_notes/work.org" "Notes")
 	   "\n- %U %?\n\n" :tree-type week :empty-lines 1)
 	  ("ws" "Snippet Log" entry (file+headline "~/org/work.org" "Snippets")
-	   "* S: %?\n  %T\n\n" :prepend nil :empty-lines 1)
+	   "* S: %?\n  %T\n\n#+begin_src shell :results raw :shebang \"#!/usr/bin/env rc \"\nsnippets\n#+end_src\n\n" :prepend nil :empty-lines 1)
 	  ("r" "Review Captures")
 	  ("ry" "Review Entry For The Year" entry (id "256745aa-ece4-4649-a616-52b0194850d0")
 	   "* Review for %<%Y>\n:PROPERTIES:\n:CREATED:  %U\n:END:\n\n** Review previous year\n\n- What was completed?\n- What was not completed?\n- What was the best spent time?\n- What was the worst spent time?\n- What is the current financial, physical, emotional, mental, spiritual state?\n\n** Project future year\n\n- What to spend more time on in new year?\n- What to spend less time on in new year?\n- What projects should be started in the next year?\n- What project should be completed in the next year?\n\n" :empty-lines 1)
@@ -4574,148 +4577,155 @@ resolution never really worked well. Switching to using DAV syncing
 with orgzly.
 
 #+begin_src emacs-lisp
-  (setq cm/org-webdav-dir "~/org/.mobileorg-staging")
+    (setq cm/org-webdav-dir "~/org/.mobileorg-staging")
 
-  (defun cm/get-inbox-pos ()
-    (save-excursion
-      (with-current-buffer (find-buffer-visiting "~/org/gtd.org")
-	(goto-char (point-min))
-	(re-search-forward "^\\* Inbox[        ]*$")
-	(move-beginning-of-line nil)
-	(point))))
+    (defun cm/get-inbox-pos ()
+      (save-excursion
+	(with-current-buffer (find-buffer-visiting "~/org/gtd.org")
+	  (goto-char (point-min))
+	  (re-search-forward "^\\* Inbox[        ]*$")
+	  (move-beginning-of-line nil)
+	  (point))))
 
-  (defvar cm/org-sync-files-to-skip
-    (list "calendars.org")
-    "List of files to not sync with webdav.")
+    (defvar cm/org-sync-files-to-skip
+      (list "calendars.org")
+      "List of files to not sync with webdav.")
 
-  (defun cm/org-sync-finish-pull ()
-    (interactive)
-    (save-excursion
-      (with-temp-buffer
-	(shell-command "cd $HOME/org/.mobileorg-staging && cp from-mobile.org ../from-mobile.org" t))
-      (if (not (get-file-buffer "~/org/from-mobile.org"))
-	  (find-file "~/org/from-mobile.org"))
-      (with-current-buffer (get-file-buffer "~/org/from-mobile.org")
-	(revert-buffer t t t)
-	(if (equalp (point-max) (point-min))
-	    (message "Nothing to move in from-mobile.org.")
-	  (goto-char (point-max))
-	  (push-mark (point-min) t t)
-	  (org-refile nil nil `("gtd.org/Inbox"
-				,(buffer-file-name (get-file-buffer "~/org/gtd.org"))
-				""
-				,(cm/get-inbox-pos)))
-	  (org-save-all-org-buffers))
+    (defun cm/org-sync-finish-pull ()
+      (interactive)
+      (save-excursion
 	(with-temp-buffer
-	  (shell-command "cd $HOME/org/.mobileorg-staging && rm *.org.new"))
-	(bury-buffer))))
+	  (shell-command "cd $HOME/org/.mobileorg-staging && cp from-mobile.org ../from-mobile.org" t))
+	(if (not (get-file-buffer "~/org/from-mobile.org"))
+	    (find-file "~/org/from-mobile.org"))
+	(with-current-buffer (get-file-buffer "~/org/from-mobile.org")
+	  (revert-buffer t t t)
+	  (if (cl-equalp (point-max) (point-min))
+	      (message "Nothing to move in from-mobile.org.")
+	    (goto-char (point-max))
+	    (push-mark (point-min) t t)
+	    (org-refile nil nil `("gtd.org/Inbox"
+				  ,(buffer-file-name (get-file-buffer "~/org/gtd.org"))
+				  ""
+				  ,(cm/get-inbox-pos)))
+	    (org-save-all-org-buffers))
+	  (with-temp-buffer
+	    (shell-command "cd $HOME/org/.mobileorg-staging && rm *.org.new"))
+	  (bury-buffer))))
 
-  (defun cm/org-webdav-push ()
-    (interactive)
-    (save-excursion
-      (org-save-all-org-buffers)
-      (with-temp-buffer
-	(shell-command "cd $HOME/org/.mobileorg-staging && cp $HOME/org/*.org ." t)
+    (defun cm/org-webdav-push ()
+      (interactive)
+      (save-excursion
+	(org-save-all-org-buffers)
+	(with-temp-buffer
+	  (shell-command "cd $HOME/org/.mobileorg-staging && cp $HOME/org/*.org ." t)
+	  (mapcar
+	   (lambda (x) (delete-file
+			(concat (getenv "HOME") "/org/.mobileorg-staging/" x)))
+	   cm/org-sync-files-to-skip)
+	  (shell-command "org-webdav-push" t))))
+
+    (defun cm/org-webdav-pull ()
+      (interactive)
+      (save-excursion
+	(org-save-all-org-buffers)
+	(with-temp-buffer
+	  (when (= (length (directory-files "~/org/.mobileorg-staging" nil ".*\\.org.new")) 0)
+	    (shell-command "org-webdav-pull" t)))
+	;; loop over every file diff, merging with ediff
 	(mapcar
-	 (lambda (x) (delete-file
-		      (concat (getenv "HOME") "/org/.mobileorg-staging/" x)))
-	 cm/org-sync-files-to-skip)
-	(shell-command "org-webdav-push" t))))
+	 (lambda (newf)
+	   (let ((rc-diff-cmd
+		  (concat
+		   "emacs -q --debug-init --no-site-file "
+		   " --eval '(progn (require ''ediff)"
+		   " (menu-bar-mode -1)"
+		   " (tool-bar-mode -1)"
+		   " (scroll-bar-mode -1)"
+		   " (load-theme ''wombat)"
+		   " (keyboard-translate ?\\C-x ?\\C-t)"
+		   " (keyboard-translate ?\\C-t ?\\C-x)"
+		   " (setq ediff-window-setup-function ''ediff-setup-windows-plain)"
+		   " (add-hook ''ediff-quit-hook ''save-buffers-kill-emacs)"
+		   " (add-hook ''ediff-prepare-buffer-hook #''outline-show-all)"
+		   " (add-hook ''smerge-mode-hook #''outline-show-all)"
+		   " (add-hook ''diff-mode-hook #''outline-show-all)"
+		   " (ediff-files \"~/org/.mobileorg-staging/"
+		   newf "\" \"~/org/" (string-remove-suffix ".new" newf) "\"))'"))
+		 (bash-diff-cmd
+		  (concat
+		   "emacs -q --debug-init --no-site-file "
+		   " --eval \"(progn (require 'ediff)"
+		   " (menu-bar-mode -1)"
+		   " (tool-bar-mode -1)"
+		   " (scroll-bar-mode -1)"
+		   " (load-theme 'wombat)"
+		   " (keyboard-translate ?\\C-x ?\\C-t)"
+		   " (keyboard-translate ?\\C-t ?\\C-x)"
+		   " (setq ediff-window-setup-function 'ediff-setup-windows-plain)"
+		   " (add-hook 'ediff-quit-hook 'save-buffers-kill-emacs)"
+		   " (add-hook 'ediff-prepare-buffer-hook #'outline-show-all)"
+		   " (add-hook 'smerge-mode-hook #'outline-show-all)"
+		   " (add-hook 'diff-mode-hook #'outline-show-all)"
+		   " (ediff-files \\\"~/org/.mobileorg-staging/"
+		   newf "\\\" \\\"~/org/" (string-remove-suffix ".new" newf) "\\\"))\"")))
+	     (message "rc-cmd: %s" rc-diff-cmd)
+	     (message "bash-cmd: %s" bash-diff-cmd)
+	     (shell-command bash-diff-cmd)))
+	 (directory-files "~/org/.mobileorg-staging" nil ".*\\.org.new"))
+	(cm/org-sync-finish-pull)))
 
-  (defun cm/org-webdav-pull ()
-    (interactive)
-    (save-excursion
+    (defun cm/org-sync-full ()
+      (interactive)
       (org-save-all-org-buffers)
-      (with-temp-buffer
-	(when (= (length (directory-files "~/org/.mobileorg-staging" nil ".*\\.org.new")) 0)
-	  (shell-command "org-webdav-pull" t)))
-      ;; loop over every file diff, merging with ediff
-      (mapcar
-       (lambda (newf)
-	 (let ((rc-diff-cmd
-		(concat
-		 "emacs -q --debug-init --no-site-file "
-		 " --eval '(progn (require ''ediff)"
-		 " (menu-bar-mode -1)"
-		 " (tool-bar-mode -1)"
-		 " (scroll-bar-mode -1)"
-		 " (load-theme ''wombat)"
-		 " (keyboard-translate ?\\C-x ?\\C-t)"
-		 " (keyboard-translate ?\\C-t ?\\C-x)"
-		 " (setq ediff-window-setup-function ''ediff-setup-windows-plain)"
-		 " (add-hook ''ediff-quit-hook ''save-buffers-kill-emacs)"
-		 " (add-hook ''ediff-prepare-buffer-hook #''outline-show-all)"
-		 " (add-hook ''smerge-mode-hook #''outline-show-all)"
-		 " (add-hook ''diff-mode-hook #''outline-show-all)"
-		 " (ediff-files \"~/org/.mobileorg-staging/"
-		 newf "\" \"~/org/" (string-remove-suffix ".new" newf) "\"))'"))
-	       (bash-diff-cmd
-		(concat
-		 "emacs -q --debug-init --no-site-file "
-		 " --eval \"(progn (require 'ediff)"
-		 " (menu-bar-mode -1)"
-		 " (tool-bar-mode -1)"
-		 " (scroll-bar-mode -1)"
-		 " (load-theme 'wombat)"
-		 " (keyboard-translate ?\\C-x ?\\C-t)"
-		 " (keyboard-translate ?\\C-t ?\\C-x)"
-		 " (setq ediff-window-setup-function 'ediff-setup-windows-plain)"
-		 " (add-hook 'ediff-quit-hook 'save-buffers-kill-emacs)"
-		 " (add-hook 'ediff-prepare-buffer-hook #'outline-show-all)"
-		 " (add-hook 'smerge-mode-hook #'outline-show-all)"
-		 " (add-hook 'diff-mode-hook #'outline-show-all)"
-		 " (ediff-files \\\"~/org/.mobileorg-staging/"
-		 newf "\\\" \\\"~/org/" (string-remove-suffix ".new" newf) "\\\"))\"")))
-	   (message "rc-cmd: %s" rc-diff-cmd)
-	   (message "bash-cmd: %s" bash-diff-cmd)
-	   (shell-command bash-diff-cmd)))
-       (directory-files "~/org/.mobileorg-staging" nil ".*\\.org.new"))
-      (cm/org-sync-finish-pull)))
-
-  (defun cm/org-sync ()
-    (interactive)
-    (org-save-all-org-buffers)
-    (cm/org-webdav-pull)
-    (cm/org-webdav-push)
-    (org-save-all-org-buffers)
-    (message "cm/org-sync complete!"))
-
-  (global-set-key (kbd "<f9>") #'cm/org-sync)
-
-  (defmacro cm/with-network (&rest body)
-    `(if (equal 70 (dbus-get-property
-		    :system "org.freedesktop.NetworkManager" "/org/freedesktop/NetworkManager"
-		    "org.freedesktop.NetworkManager" "State"))
-	 (progn
-	   ,@body)))
-
-  (defvar cm/org-sync-icon-path
-    "/usr/share/icons/gnome/32x32/actions/reload.png"
-    "Icon to use for popup notification.")
-
-  (defun cm/org-sync-alert ()
-    (message "manually sync! aborting auto sync now")
-    (notifications-notify
-     :title "org-sync conflict"
-     :body "Press <f9> to manually sync your org files"
-     :app-icon cm/org-sync-icon-path))
-
-  (defun cm/org-sync-timer ()
-    (interactive)
-    (save-excursion
+      (cm/org-webdav-pull)
+      (cm/org-webdav-push)
       (org-save-all-org-buffers)
-      (if (> (length (directory-files "~/org/.mobileorg-staging" nil ".*\\.org.new")) 0)
-	  (cm/org-sync-alert)
-	(with-temp-buffer
-	  (shell-command "org-webdav-pull" t))
+      (message "cm/org-sync-full complete"))
+
+    ;; currently only pushes to mobile to ensure no conflicts
+    (defun cm/org-sync ()
+      (interactive)
+      (org-save-all-org-buffers)
+      (cm/org-webdav-push)
+      (message "cm/org-sync complete"))
+
+    (global-set-key (kbd "<f9>") #'cm/org-sync)
+
+    (defmacro cm/with-network (&rest body)
+      `(if (equal 70 (dbus-get-property
+		      :system "org.freedesktop.NetworkManager" "/org/freedesktop/NetworkManager"
+		      "org.freedesktop.NetworkManager" "State"))
+	   (progn
+	     ,@body)))
+
+    (defvar cm/org-sync-icon-path
+      "/usr/share/icons/gnome/32x32/actions/reload.png"
+      "Icon to use for popup notification.")
+
+    (defun cm/org-sync-alert ()
+      (message "manually sync! aborting auto sync now")
+      (notifications-notify
+       :title "org-sync conflict"
+       :body "Press <f9> to manually sync your org files"
+       :app-icon cm/org-sync-icon-path))
+
+    (defun cm/org-sync-timer ()
+      (interactive)
+      (save-excursion
+	(org-save-all-org-buffers)
 	(if (> (length (directory-files "~/org/.mobileorg-staging" nil ".*\\.org.new")) 0)
 	    (cm/org-sync-alert)
-	  (cm/org-sync-finish-pull)
-	  (cm/org-webdav-push)
-	  (org-save-all-org-buffers)
-	  (message "cm/org-sync complete!")))))
+	  (with-temp-buffer
+	    (shell-command "org-webdav-pull" t))
+	  (if (> (length (directory-files "~/org/.mobileorg-staging" nil ".*\\.org.new")) 0)
+	      (cm/org-sync-alert)
+	    (cm/org-sync-finish-pull)
+	    (cm/org-webdav-push)
+	    (org-save-all-org-buffers)
+	    (message "cm/org-sync complete!")))))
 
-  ;(run-with-idle-timer 15 t #'cm/org-sync-timer)
+    ;(run-with-idle-timer 15 t #'cm/org-sync-timer)
 
 #+end_src
 
@@ -5106,7 +5116,7 @@ I get to avoid most of the complications. It goes, in order:
         smtpmail-queue-dir   "~/mail/queue")
 
   (setq user-full-name "Jeff Mickey")
-  (if (equalp (system-name) "jmickey-glaptop")
+  (if (cl-equalp (system-name) "jmickey-glaptop")
       (setq user-mail-address "jmickey@google.com")
     (setq user-mail-address "j@codemac.net"))
 #+end_src
@@ -5791,7 +5801,7 @@ accomplish that across x11 apps though.
   (defun cm/emacs-expander-frame-cleanup ()
     "Close the emacs-expander frame."
     (dolist (elem (frame-list))
-      (if (equalp "emacs-expander" (frame-parameter elem 'name))
+      (if (cl-equalp "emacs-expander" (frame-parameter elem 'name))
 	  (save-window-excursion
 	    (delete-frame elem)))))
 #+end_src
@@ -5991,8 +6001,14 @@ Now for the main formatting function.
 	   (base-candidate
 	    (cond
 	     ((> candidate (* y2k 1000000000000)) 1000000000000)
+	     ((> candidate (* y2k 100000000000)) 100000000000)
+	     ((> candidate (* y2k 10000000000)) 10000000000)
 	     ((> candidate (* y2k 1000000000)) 1000000000)
+	     ((> candidate (* y2k 100000000)) 100000000)
+	     ((> candidate (* y2k 10000000)) 10000000)
 	     ((> candidate (* y2k 1000000)) 1000000)
+	     ((> candidate (* y2k 100000)) 100000)
+	     ((> candidate (* y2k 10000)) 10000)
 	     ((> candidate (* y2k 1000)) 1000)
 	     (t 1))))
       (message "%s => %s" input (format-time-string cm/time-format (cm/number-base-to-time candidate base-candidate)))))
