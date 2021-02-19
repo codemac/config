@@ -1,0 +1,2 @@
+;;; Generated package description from /home/jmickey/.emacs.d/elpa/mixed-pitch-20210203.2211/mixed-pitch.el  -*- no-byte-compile: t -*-
+(define-package "mixed-pitch" "20210203.2211" "Use a variable pitch, keeping fixed pitch where it's sensible" '((emacs "24.3")) :commit "d5f64b967d831ea776f07aa2c80cc5fa88a3e869" :authors '(("J. Alexander Branham" . "branham@utexas.edu")) :maintainer '("J. Alexander Branham" . "branham@utexas.edu") :url "https://gitlab.com/jabranham/mixed-pitch")
