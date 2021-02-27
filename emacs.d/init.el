@@ -51,7 +51,8 @@
 ;; means that any libraries that are loaded based on settings from
 ;; above are misconfigured. This is rather unacceptable.
 (setq work-emacs-file (expand-file-name "~/.emacs-work.el"))
-(load-file work-emacs-file)
+(when (file-exists-p work-emacs-file)
+  (load-file work-emacs-file))
 
 (message "My .emacs loaded in %ds"
          (cl-destructuring-bind (hi lo ms ps) (current-time)
