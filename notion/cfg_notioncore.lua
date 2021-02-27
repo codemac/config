@@ -109,7 +109,7 @@ defbindings("WScreen", {
 
     kpress(META.."C", "mod_query.exec_on_merr(_, 'org-capture')"),
     kpress(META.."H", "mod_query.exec_on_merr(_, 'emacs-expander')"),
-
+    kpress(META.."slash", "notioncore.show_live_docs(_)"),
 })
 
 
@@ -123,8 +123,8 @@ defbindings("WClientWin", {
          "programs' resizing problems."),
        kpress_wait(META.."L", "WClientWin.nudge(_)"),
 
---       bdoc("Kill client owning the client window."),
---       kpress("C", "WClientWin.kill(_)"),
+       bdoc("Kill client owning the client window."),
+       kpress("C", "WClientWin.kill(_)"),
 
        bdoc("Send next key press to the client window. "..
             "Some programs may not allow this by default."),
