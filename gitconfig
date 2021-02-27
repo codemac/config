@@ -17,3 +17,5 @@
 	cookiefile = /home/jmickey/.gitcookies
 [diff]
 	renameLimit = 20000
+[pull]
+	rebase = false

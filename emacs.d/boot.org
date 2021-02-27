@@ -3484,7 +3484,19 @@ This add some commands for managing and clocking my time in a hydra.
   (setq org-clock-idle-time 10)
 
   (setq org-agenda-files '("~/org/"))
+
+  (require 'cl)
+
+  ;; we also strip calendars.org from here
+  (defun cm/org-buffer-files ()
+    (remove-if #'(lambda (x) (or
+			      (string-suffix-p "calendars.org" x)
+			      (string-suffix-p "_old" x)))
+	       (mapcar #'buffer-file-name (org-buffer-list 'files))))
+
   (setq org-refile-targets '((nil
+			      :maxlevel . 5)
+			     (cm/org-buffer-files
 			      :maxlevel . 5)
 			     (("~/org/gtd.org"
 			       "~/org/work.org")
@@ -5535,9 +5547,9 @@ A wholly owned subsidiary of Cisco.
     "Ask how long the tea should draw and start a timer.
   Cancel prevoius timer, started by this function"
     (interactive "sHow long (mins or h:mm:ss)? \nsMessage: ")
-    (with-temp-buffer
-      (rename-buffer msg)
+    (with-current-buffer (get-buffer-create (concat " " msg))
       (org-mode)
+      (insert (format "* %s\n" msg))
       (org-timer-set-timer timeval)))
 
   (defun cm/gtd-timer ()
