@@ -3030,7 +3030,6 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
        ((org-agenda-overriding-header "Inbox")))
       ("n" "Next agenda"
        ((todo "NEXT")
-	(todo "STARTED")
 	(todo "TODO"))
        ((org-agenda-skip-function '(org-agenda-skip-entry-if 'scheduled))
 	(org-agenda-sorting-strategy
@@ -3469,7 +3468,7 @@ This add some commands for managing and clocking my time in a hydra.
      :END:
 #+begin_src emacs-lisp  
   (setq org-stuck-projects
-	    '("TODO=\"PROJECT\"" ("TODO" "NEXT" "STARTED" "WAITING") () ""))
+	    '("TODO=\"PROJECT\"" ("TODO" "NEXT" "WAITING") () ""))
 
   (add-to-list 'auto-mode-alist '("\\.org'$" . org-mode))
   (global-set-key (kbd "C-c l") 'org-store-link)
@@ -3538,7 +3537,6 @@ This add some commands for managing and clocking my time in a hydra.
 			("\\.mhtml\\'" . "google-chrome %s")
 			("\\.pdf\\'" . default)))
   (setq org-hide-leading-stars t)
-  (setq org-log-done t)
   (setq org-outline-path-complete-in-steps nil)
   (setq org-pretty-entities-include-sub-superscripts nil)
   (setq org-refile-use-outline-path 'file)
@@ -3644,10 +3642,10 @@ it the normal way.
 			(:endgroup)
 			("CHECKLIST" . ?x)))
 
-  (setq org-log-done '(note))
+  (setq org-log-done 'time)
   (setq org-log-into-drawer t) ; record state changes into LOGBOOK
   (setq org-todo-keywords
-	'((sequence "TODO(t@)" "NEXT(n!)" "STARTED(s)" "WAITING(w@)" "PROJECT(p)" "|" "DONE(d@)" "NVM(v@)")))
+	'((sequence "TODO(t@)" "NEXT(n!)" "WAITING(w@)" "PROJECT(p)" "|" "DONE(d@)" "NVM(v@)")))
   (setq org-tags-exclude-from-inheritance '("CHECKLIST"))
 #+end_src
 **** org export
