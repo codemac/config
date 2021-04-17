@@ -2,6 +2,7 @@ h=$HOME
 eval 'PATH='`{cat $HOME/.bashrc | grep PATH | cut -d'=' -f2 | head -n 1}
 GUIX_LOCPATH=$HOME/.guix-profile/lib/locale
 history=$h/.rc_history
+SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
 SUDO_ASKPASS=`{which ssh-askpass}
 fn read {
  x=() {
