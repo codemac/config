@@ -647,6 +647,23 @@ emacs is not my forte.
 
   (global-set-key (kbd "C-<delete>") 'cm/delete-surrounding-whitespace)
 #+end_src
+** Org File Location
+#+begin_src emacs-lisp
+  (defvar cm/org-directory "~/org")
+  ;; Use dropbox when available. Yes making this conditional is awkward,
+  ;; but it helps me avoid the IT security dragon if I'm on a work
+  ;; computer.
+  (when (file-exists-p "~/Dropbox/org/gtd.org")
+    (setq cm/org-directory "~/Dropbox/org"))
+  (defun cm/org-dir (&rest args)
+    (if (< (length args) 1)
+	cm/org-directory
+      (concat cm/org-directory
+	      (if (string-prefix-p "/" (car args))
+		  ""
+		"/")
+	      (car args))))
+#+end_src
 * ELPA
   :PROPERTIES:
   :ID:       75916850-2b29-435f-8f66-2d17704fe83d
@@ -2552,7 +2569,7 @@ A set of timers
   (use-package elfeed-org
     :config
     (elfeed-org)
-    (setq rmh-elfeed-org-files (list "~/org/_notes/rss.org")))
+    (setq rmh-elfeed-org-files (list (cm/org-dir "_notes/rss.org")))
 
   (defun cm/elfeed-update ()
     (interactive)
@@ -3486,7 +3503,7 @@ This add some commands for managing and clocking my time in a hydra.
   (setq org-clock-x11idle-program-name "xprintidle")
   (setq org-clock-idle-time 10)
 
-  (setq org-agenda-files '("~/org/"))
+  (setq org-agenda-files (list (cm/org-dir)))
 
   (require 'cl)
 
@@ -3497,12 +3514,12 @@ This add some commands for managing and clocking my time in a hydra.
 			      (string-suffix-p "_old" x)))
 	       (mapcar #'buffer-file-name (org-buffer-list 'files))))
 
-  (setq org-refile-targets '((nil
+  (setq org-refile-targets `((nil
 			      :maxlevel . 5)
 			     (cm/org-buffer-files
 			      :maxlevel . 5)
-			     (("~/org/gtd.org"
-			       "~/org/work.org")
+			     (((cm/org-dir "gtd.org")
+			       (cm/org-dir "work.org"))
 			      :maxlevel . 5)))
 
   ;; my dimmed face isn't that dim
@@ -3529,7 +3546,7 @@ This add some commands for managing and clocking my time in a hydra.
   (setq org-agenda-use-tag-inheritance nil)
   (setq org-agenda-window-setup 'current-window)
   (setq org-attach-archive-delete 'query)
-  (setq org-attach-id-dir "~/org/_attachments/")
+  (setq org-attach-id-dir (cm/org-dir "_attachments/"))
   (setq org-attach-method 'mv)
   (setq org-enforce-todo-dependencies t)
   (setq org-export-with-sub-superscripts nil)
@@ -3582,7 +3599,7 @@ This add some commands for managing and clocking my time in a hydra.
 This is part of org-contrib, thus is not a "package" for use-package to use.
 #+begin_src emacs-lisp
   (require 'org-contacts (concat (getenv "HOME") "/.emacs.d/site-lisp/org-contrib/lisp/org-contacts.el"))
-  (setq org-contacts-files '("~/org/_notes/contacts.org"))
+  (setq org-contacts-files (list (cm/org-dir "_notes/contacts.org")))
 #+end_src
 **** Archiving
 
@@ -3852,8 +3869,8 @@ How I deploy my personal website.
   ;; - codemac.net -- My personal website
   ;; - org-doc -- export all org documents
   (setq org-publish-project-alist
-	'(("codemac-org"
-	   :base-directory "~/org/_www/codemac.net"
+	`(("codemac-org"
+	   :base-directory ,(cm/org-dir "_www/codemac.net")
 	   :publishing-directory "~/tmp/codemac.net"
 	   :recursive t
 	   :base-extension "org"
@@ -3877,14 +3894,14 @@ How I deploy my personal website.
 	   :with-smart-quotes t
 	   :auto-sitemap t)
 	  ("codemac-static"
-	   :base-directory "~/org/_www/codemac.net"
+	   :base-directory ,(cm/org-dir "_www/codemac.net")
 	   :publishing-directory "~/tmp/codemac.net"
 	   :base-extension "css\\|pdf\\|png\\|jpg\\|gif\\|js\\|txt\\|mp3\\|ogg\\|swf\\|svg\\|woff\\|eot\\|ttf\\|html"
 	   :publishing-function org-publish-attachment
 	   :recursive t)
 	  ("codemac" :components ("codemac-org" "codemac-static"))
 	  ("org-doc-org"
-	   :base-directory "~/org/"
+	   :base-directory ,(cm/org-dir)
 	   :publishing-directory "~/tmp/published-org"
 	   :recursive t
 	   :section-numbers nil
@@ -3902,7 +3919,7 @@ How I deploy my personal website.
 	   :author-info nil
 	   :creator-info nil)
 	  ("org-doc-static"
-	   :base-directory "~/org/"
+	   :base-directory ,(cm/org-dir)
 	   :publishing-directory "~/tmp/published-org"
 	   :base-extension "css\\|pdf\\|png\\|jpg\\|gif"
 	   :publishing-function org-publish-attachment
@@ -3951,7 +3968,7 @@ How I deploy my personal website.
 #+end_src
 **** Daily Journal file
 #+begin_src emacs-lisp
-  (setq cm/org-today-filefmt "~/org/_notes/%Y-%m-%d.org")
+  (setq cm/org-today-filefmt (cm/org-dir "_notes/%Y-%m-%d.org"))
 
   (setq cm/org-today-headerfmt "#+title: %A, %Y-%m-%d\n#+date: <%Y-%m-%d>\n\n")
 
@@ -4260,8 +4277,8 @@ the files.
   (defun cm/org-notes-search (arg)
     (interactive "P")
     (let ((org-agenda-files (if arg
-				(append org-agenda-files '("~/org/_notes/"))
-			      '("~/org/_notes/")))
+				(append org-agenda-files (list (cm/org-dir "_notes/")))
+			      (list (cm/org-dir "_notes/"))))
 	  (org-agenda-sticky nil))
       (org-search-view)))
 #+end_src
@@ -4271,7 +4288,7 @@ the files.
   (defun cm/org-rifle-notes ()
     "search through all notes"
     (interactive)
-    (helm-org-rifle-files '("~/org/notes.org")))
+    (helm-org-rifle-files (list (cm/org-dir "notes.org"))))
 
   (defun cm/org-rifle-agenda ()
     "search through agenda files"
@@ -4281,7 +4298,7 @@ the files.
   (defun cm/org-rifle-global()
     "search through all org files"
     (interactive)
-    (helm-org-rifle-directories '("~/org") t))
+    (helm-org-rifle-directories (list (cm/org-dir)) t))
 #+end_src
 ***** Deft support functions
 
@@ -4328,50 +4345,50 @@ the files.
       (_ (error "Connot find target ID \"%s\"" id))))
 
   (setq cm/humble-todo-template (list "* TODO %?\n:PROPERTIES:\n:CREATED:  %U\n:END:\n%i\n\n%(cm/org-capture-appendix)" :prepend nil :empty-lines 1))
-  (setq org-directory "~/org")
-  (setq org-default-notes-file (concat org-directory "/gtd.org"))
-  (setq org-board-capture-file (concat org-directory "/_notes/www.org"))
+  (setq org-directory (cm/org-dir))
+  (setq org-default-notes-file (cm/org-dir "gtd.org"))
+  (setq org-board-capture-file (cm/org-dir "_notes/www.org"))
   (define-key global-map "\C-cr" 'org-capture)
   (setq org-capture-templates
-	`(("t" "Todo" entry (file+headline "~/org/gtd.org" "Inbox")
+	`(("t" "Todo" entry (file+headline ,(cm/org-dir "gtd.org") "Inbox")
 	   ,@cm/humble-todo-template)
 	  ("p" "Project" entry (id "a262e411-ff66-43fc-9124-341694564dda")
 	   "* PROJECT %?\n:PROPERTIES:\n:CATEGORY:\n:CREATED:  %U\n:END:\n\n** Archive :ARCHIVE:\n\n" :empty-lines 1)
-	  ("j" "Journal" entry (file "~/org/_editorial/journal.org")
+	  ("j" "Journal" entry (file ,(cm/org-dir "_editorial/journal.org"))
 	   "* %T %?\n\n  %i\n  %a\n\n" :prepend nil :empty-lines 1)
 	  ("c" "Add note to currently clocked task" entry (clock)
 	   "* %U %?\n%a\n\n%i\n\n" :empty-lines 1)
-	  ("a" "Address Book" entry (file "~/org/_notes/contacts.org")
+	  ("a" "Address Book" entry (file ,(cm/org-dir "_notes/contacts.org"))
 	   "* %(org-contacts-template-name)\n:PROPERTIES:\n:EMAIL: %(org-contacts-template-email)\n:END:" :empty-lines 1)
-	  ("n" "Timed Notes" entry (file "~/org/notes.org")
+	  ("n" "Timed Notes" entry (file ,(cm/org-dir "notes.org"))
 	   "* %T %?\n\n  %i\n  %a\n\n" :prepend nil :empty-lines 1)
-	  ("d" "Logged distraction entry" entry (file+headline "~/org/gtd.org" "Inbox")
+	  ("d" "Logged distraction entry" entry (file+headline ,(cm/org-dir "gtd.org") "Inbox")
 	   ,@cm/humble-todo-template
 	   :clock-in t
 	   :clock-resume t)
 	  ("w" "Work captures")
-	  ("wt" "Work Action" entry (file+headline "~/org/work.org" "Actions")
+	  ("wt" "Work Action" entry (file+headline ,(cm/org-dir "work.org") "Actions")
 	   ,@cm/humble-todo-template)
-	  ("wn" "Work Note" entry (file "~/org/work.org")
+	  ("wn" "Work Note" entry (file ,(cm/org-dir "work.org"))
 	   "* %U %?\n\n  %i\n  %a\n\n" :prepend nil :empty-lines 1)
 	  ("wp" "Work Project" entry (id "76f3a69b-b76a-425c-bc0f-8795cae8e290")
 	   "* PROJECT %?\n:PROPERTIES:\n:CATEGORY:\n:CREATED:  %U\n:END:\n\n** Archive :ARCHIVE:\n\n" :empty-lines 1)
-	  ("wj" "Work journal entry" plain (file+olp+datetree "~/org/_notes/work.org" "Notes")
+	  ("wj" "Work journal entry" plain (file+olp+datetree ,(cm/org-dir "_notes/work.org") "Notes")
 	   "\n- %U %?\n\n" :tree-type week :empty-lines 1)
-	  ("ws" "Snippet Log" entry (file+headline "~/org/work.org" "Snippets")
+	  ("ws" "Snippet Log" entry (file+headline ,(cm/org-dir "work.org") "Snippets")
 	   "* S: %?\n  %T\n\n#+begin_src shell :results raw :shebang \"#!/usr/bin/env rc \"\nsnippets\n#+end_src\n\n" :prepend nil :empty-lines 1)
 	  ("r" "Review Captures")
 	  ("ry" "Review Entry For The Year" entry (id "256745aa-ece4-4649-a616-52b0194850d0")
 	   "* Review for %<%Y>\n:PROPERTIES:\n:CREATED:  %U\n:END:\n\n** Review previous year\n\n- What was completed?\n- What was not completed?\n- What was the best spent time?\n- What was the worst spent time?\n- What is the current financial, physical, emotional, mental, spiritual state?\n\n** Project future year\n\n- What to spend more time on in new year?\n- What to spend less time on in new year?\n- What projects should be started in the next year?\n- What project should be completed in the next year?\n\n" :empty-lines 1)
 	  ("b" "Agenda Project" entry (function cm/org-child-location)
 	   ,@cm/humble-todo-template)
-	  ("f" "Fitness" table-line (file+headline "~/org/_notes/fitness.org" "Fitness")
+	  ("f" "Fitness" table-line (file+headline ,(cm/org-dir "_notes/fitness.org") "Fitness")
 	   ,(concat (format-time-string "| %Y.%m.%d-%H:%M |") " %^{Weight} | | %^{RHR} |") :table-line-pos "II-1" :empty-lines 1)
-	  ("xw" "org-capture reference" entry (file "~/org/_notes/www.org")
+	  ("xw" "org-capture reference" entry (file ,(cm/org-dir "_notes/www.org"))
 	   "* %U %?%:description\n:PROPERTIES:\n:URL: %:link\n:END:\n\n%:body\n\n" :empty-lines 1)
-	  ("xc" "org-capture inbox clock" entry (file+headline "~/org/gtd.org" "Inbox")
+	  ("xc" "org-capture inbox clock" entry (file+headline ,(cm/org-dir "gtd.org") "Inbox")
 	   "* TODO %(cm/org-clock-switch-to-name)\n:PROPERTIES:\n:CREATED:  %U\n:END:\n\n" :empty-lines 1 :immediate-finish t)
-	  ("xi" "org-capture inbox" entry (file+headline "~/org/gtd.org" "Inbox")
+	  ("xi" "org-capture inbox" entry (file+headline ,(cm/org-dir "gtd.org") "Inbox")
 	   "* TODO %?%:annotation\n:PROPERTIES:\n:CREATED:  %U\n:END:\n\n%:link\n\n%i\n\n" :empty-lines 1)))
 
   (defun cm/org-board-dl-hook ()
@@ -4384,10 +4401,10 @@ the files.
 
   (defun gtd ()
     (interactive)
-    (find-file "~/org/gtd.org"))
+    (find-file (cm/org-dir "gtd.org")))
 
   ;; Set up my diary file
-  (setq diary-file "~/org/diary") ;; deal with the fact that it's in the org folder
+  (setq diary-file (cm/org-dir "diary")) ;; deal with the fact that it's in the org folder
 
   (defun cm/region-html-to-org (start end)
     (interactive "r")
@@ -4484,7 +4501,7 @@ view on things.
 #+end_src
 **** Better Org Goto
 #+begin_src emacs-lisp
-  (defvar cm/org-goto-dirs '("~/org/*.org")
+  (defvar cm/org-goto-dirs (list (cm/org-dir "*.org")))
     "Org directories to search with goto")
 
   (setq counsel-org-goto-all-outline-path-prefix 'file-name)
@@ -4570,12 +4587,12 @@ some reasonable way.
       (setq org-ref-completion-library 'org-ref-ivy-cite)
       :config
       (require 'ivy-bibtex)
-      (setq org-ref-bibliography-notes "~/org/_zettel/reference_notes.org"
+      (setq org-ref-bibliography-notes (cm/org-dir "_zettel/reference_notes.org")
 	    org-ref-bibtex-hydra-key-binding "\C-cj"
-	    org-ref-default-bibliography '("~/org/_zettel/references.bib")
-	    org-ref-pdf-directory "~/org/_zettel/_pdf/"
-	    bibtex-completion-notes-path "~/org/_zettel/"
-	    reftex-default-bibliography '("~/org/_zettel/references.bib"))
+	    org-ref-default-bibliography (list (cm/org-dir "_zettel/references.bib"))
+	    org-ref-pdf-directory (cm/org-dir "_zettel/_pdf/")
+	    bibtex-completion-notes-path (cm/org-dir "_zettel/")
+	    reftex-default-bibliography (list (cm/org-dir "_zettel/references.bib")))
        (require 'org-ref-bibtex)
       (require 'doi-utils)
       (require 'org-ref-arxiv)
@@ -4592,155 +4609,155 @@ resolution never really worked well. Switching to using DAV syncing
 with orgzly.
 
 #+begin_src emacs-lisp
-    (setq cm/org-webdav-dir "~/org/.mobileorg-staging")
+  (setq cm/org-webdav-dir (cm/org-dir ".mobileorg-staging"))
 
-    (defun cm/get-inbox-pos ()
-      (save-excursion
-	(with-current-buffer (find-buffer-visiting "~/org/gtd.org")
-	  (goto-char (point-min))
-	  (re-search-forward "^\\* Inbox[        ]*$")
-	  (move-beginning-of-line nil)
-	  (point))))
+  (defun cm/get-inbox-pos ()
+    (save-excursion
+      (with-current-buffer (find-buffer-visiting (cm/org-dir "gtd.org"))
+	(goto-char (point-min))
+	(re-search-forward "^\\* Inbox[        ]*$")
+	(move-beginning-of-line nil)
+	(point))))
 
-    (defvar cm/org-sync-files-to-skip
-      (list "calendars.org")
-      "List of files to not sync with webdav.")
+  (defvar cm/org-sync-files-to-skip
+    (list "calendars.org")
+    "List of files to not sync with webdav.")
 
-    (defun cm/org-sync-finish-pull ()
-      (interactive)
-      (save-excursion
+  (defun cm/org-sync-finish-pull ()
+    (interactive)
+    (save-excursion
+      (with-temp-buffer
+	(shell-command "cd $HOME/org/.mobileorg-staging && cp from-mobile.org ../from-mobile.org" t))
+      (if (not (get-file-buffer (cm/org-dir "from-mobile.org")))
+	  (find-file (cm/org-dir "from-mobile.org")))
+      (with-current-buffer (get-file-buffer (cm/org-dir "from-mobile.org"))
+	(revert-buffer t t t)
+	(if (cl-equalp (point-max) (point-min))
+	    (message "Nothing to move in from-mobile.org.")
+	  (goto-char (point-max))
+	  (push-mark (point-min) t t)
+	  (org-refile nil nil `("gtd.org/Inbox"
+				,(buffer-file-name (get-file-buffer (cm/org-dir "gtd.org")))
+				""
+				,(cm/get-inbox-pos)))
+	  (org-save-all-org-buffers))
 	(with-temp-buffer
-	  (shell-command "cd $HOME/org/.mobileorg-staging && cp from-mobile.org ../from-mobile.org" t))
-	(if (not (get-file-buffer "~/org/from-mobile.org"))
-	    (find-file "~/org/from-mobile.org"))
-	(with-current-buffer (get-file-buffer "~/org/from-mobile.org")
-	  (revert-buffer t t t)
-	  (if (cl-equalp (point-max) (point-min))
-	      (message "Nothing to move in from-mobile.org.")
-	    (goto-char (point-max))
-	    (push-mark (point-min) t t)
-	    (org-refile nil nil `("gtd.org/Inbox"
-				  ,(buffer-file-name (get-file-buffer "~/org/gtd.org"))
-				  ""
-				  ,(cm/get-inbox-pos)))
-	    (org-save-all-org-buffers))
-	  (with-temp-buffer
-	    (shell-command "cd $HOME/org/.mobileorg-staging && rm *.org.new"))
-	  (bury-buffer))))
+	  (shell-command "cd $HOME/org/.mobileorg-staging && rm *.org.new"))
+	(bury-buffer))))
 
-    (defun cm/org-webdav-push ()
-      (interactive)
-      (save-excursion
-	(org-save-all-org-buffers)
-	(with-temp-buffer
-	  (shell-command "cd $HOME/org/.mobileorg-staging && cp $HOME/org/*.org ." t)
-	  (mapcar
-	   (lambda (x) (delete-file
-			(concat (getenv "HOME") "/org/.mobileorg-staging/" x)))
-	   cm/org-sync-files-to-skip)
-	  (shell-command "org-webdav-push" t))))
-
-    (defun cm/org-webdav-pull ()
-      (interactive)
-      (save-excursion
-	(org-save-all-org-buffers)
-	(with-temp-buffer
-	  (when (= (length (directory-files "~/org/.mobileorg-staging" nil ".*\\.org.new")) 0)
-	    (shell-command "org-webdav-pull" t)))
-	;; loop over every file diff, merging with ediff
+  (defun cm/org-webdav-push ()
+    (interactive)
+    (save-excursion
+      (org-save-all-org-buffers)
+      (with-temp-buffer
+	(shell-command "cd $HOME/org/.mobileorg-staging && cp $HOME/org/*.org ." t)
 	(mapcar
-	 (lambda (newf)
-	   (let ((rc-diff-cmd
-		  (concat
-		   "emacs -q --debug-init --no-site-file "
-		   " --eval '(progn (require ''ediff)"
-		   " (menu-bar-mode -1)"
-		   " (tool-bar-mode -1)"
-		   " (scroll-bar-mode -1)"
-		   " (load-theme ''wombat)"
-		   " (keyboard-translate ?\\C-x ?\\C-t)"
-		   " (keyboard-translate ?\\C-t ?\\C-x)"
-		   " (setq ediff-window-setup-function ''ediff-setup-windows-plain)"
-		   " (add-hook ''ediff-quit-hook ''save-buffers-kill-emacs)"
-		   " (add-hook ''ediff-prepare-buffer-hook #''outline-show-all)"
-		   " (add-hook ''smerge-mode-hook #''outline-show-all)"
-		   " (add-hook ''diff-mode-hook #''outline-show-all)"
-		   " (ediff-files \"~/org/.mobileorg-staging/"
-		   newf "\" \"~/org/" (string-remove-suffix ".new" newf) "\"))'"))
-		 (bash-diff-cmd
-		  (concat
-		   "emacs -q --debug-init --no-site-file "
-		   " --eval \"(progn (require 'ediff)"
-		   " (menu-bar-mode -1)"
-		   " (tool-bar-mode -1)"
-		   " (scroll-bar-mode -1)"
-		   " (load-theme 'wombat)"
-		   " (keyboard-translate ?\\C-x ?\\C-t)"
-		   " (keyboard-translate ?\\C-t ?\\C-x)"
-		   " (setq ediff-window-setup-function 'ediff-setup-windows-plain)"
-		   " (add-hook 'ediff-quit-hook 'save-buffers-kill-emacs)"
-		   " (add-hook 'ediff-prepare-buffer-hook #'outline-show-all)"
-		   " (add-hook 'smerge-mode-hook #'outline-show-all)"
-		   " (add-hook 'diff-mode-hook #'outline-show-all)"
-		   " (ediff-files \\\"~/org/.mobileorg-staging/"
-		   newf "\\\" \\\"~/org/" (string-remove-suffix ".new" newf) "\\\"))\"")))
-	     (message "rc-cmd: %s" rc-diff-cmd)
-	     (message "bash-cmd: %s" bash-diff-cmd)
-	     (shell-command bash-diff-cmd)))
-	 (directory-files "~/org/.mobileorg-staging" nil ".*\\.org.new"))
-	(cm/org-sync-finish-pull)))
+	 (lambda (x) (delete-file
+		      (concat (getenv "HOME") "/org/.mobileorg-staging/" x)))
+	 cm/org-sync-files-to-skip)
+	(shell-command "org-webdav-push" t))))
 
-    (defun cm/org-sync-full ()
-      (interactive)
+  ;; (defun cm/org-webdav-pull ()
+  ;;   (interactive)
+  ;;   (save-excursion
+  ;;     (org-save-all-org-buffers)
+  ;;     (with-temp-buffer
+  ;;       (when (= (length (directory-files (cm/org-dir ".mobileorg-staging") nil ".*\\.org.new")) 0)
+  ;; 	(shell-command "org-webdav-pull" t)))
+  ;;     ;; loop over every file diff, merging with ediff
+  ;;     (mapcar
+  ;;      (lambda (newf)
+  ;;        (let ((rc-diff-cmd
+  ;; 	      (concat
+  ;; 	       "emacs -q --debug-init --no-site-file "
+  ;; 	       " --eval '(progn (require ''ediff)"
+  ;; 	       " (menu-bar-mode -1)"
+  ;; 	       " (tool-bar-mode -1)"
+  ;; 	       " (scroll-bar-mode -1)"
+  ;; 	       " (load-theme ''wombat)"
+  ;; 	       " (keyboard-translate ?\\C-x ?\\C-t)"
+  ;; 	       " (keyboard-translate ?\\C-t ?\\C-x)"
+  ;; 	       " (setq ediff-window-setup-function ''ediff-setup-windows-plain)"
+  ;; 	       " (add-hook ''ediff-quit-hook ''save-buffers-kill-emacs)"
+  ;; 	       " (add-hook ''ediff-prepare-buffer-hook #''outline-show-all)"
+  ;; 	       " (add-hook ''smerge-mode-hook #''outline-show-all)"
+  ;; 	       " (add-hook ''diff-mode-hook #''outline-show-all)"
+  ;; 	       " (ediff-files (cm/org-dir \".mobileorg-staging\")"
+  ;; 	       newf "\" \"~/org/" (string-remove-suffix ".new" newf) "\"))'"))
+  ;; 	     (bash-diff-cmd
+  ;; 	      (concat
+  ;; 	       "emacs -q --debug-init --no-site-file "
+  ;; 	       " --eval \"(progn (require 'ediff)"
+  ;; 	       " (menu-bar-mode -1)"
+  ;; 	       " (tool-bar-mode -1)"
+  ;; 	       " (scroll-bar-mode -1)"
+  ;; 	       " (load-theme 'wombat)"
+  ;; 	       " (keyboard-translate ?\\C-x ?\\C-t)"
+  ;; 	       " (keyboard-translate ?\\C-t ?\\C-x)"
+  ;; 	       " (setq ediff-window-setup-function 'ediff-setup-windows-plain)"
+  ;; 	       " (add-hook 'ediff-quit-hook 'save-buffers-kill-emacs)"
+  ;; 	       " (add-hook 'ediff-prepare-buffer-hook #'outline-show-all)"
+  ;; 	       " (add-hook 'smerge-mode-hook #'outline-show-all)"
+  ;; 	       " (add-hook 'diff-mode-hook #'outline-show-all)"
+  ;; 	       " (ediff-files \\\"~/org/.mobileorg-staging/"
+  ;; 	       newf "\\\" \\\"~/org/" (string-remove-suffix ".new" newf) "\\\"))\"")))
+  ;; 	 (message "rc-cmd: %s" rc-diff-cmd)
+  ;; 	 (message "bash-cmd: %s" bash-diff-cmd)
+  ;; 	 (shell-command bash-diff-cmd)))
+  ;;      (directory-files "~/org/.mobileorg-staging" nil ".*\\.org.new"))
+  ;;     (cm/org-sync-finish-pull)))
+
+  ;; (defun cm/org-sync-full ()
+  ;;   (interactive)
+  ;;   (org-save-all-org-buffers)
+  ;;   (cm/org-webdav-pull)
+  ;;   (cm/org-webdav-push)
+  ;;   (org-save-all-org-buffers)
+  ;;   (message "cm/org-sync-full complete"))
+
+  ;; currently only pushes to mobile to ensure no conflicts
+  (defun cm/org-sync ()
+    (interactive)
+    (org-save-all-org-buffers)
+    (cm/org-webdav-push)
+    (message "cm/org-sync complete"))
+
+  (global-set-key (kbd "<f9>") #'cm/org-sync)
+
+  (defmacro cm/with-network (&rest body)
+    `(if (equal 70 (dbus-get-property
+		    :system "org.freedesktop.NetworkManager" "/org/freedesktop/NetworkManager"
+		    "org.freedesktop.NetworkManager" "State"))
+	 (progn
+	   ,@body)))
+
+  (defvar cm/org-sync-icon-path
+    "/usr/share/icons/gnome/32x32/actions/reload.png"
+    "Icon to use for popup notification.")
+
+  (defun cm/org-sync-alert ()
+    (message "manually sync! aborting auto sync now")
+    (notifications-notify
+     :title "org-sync conflict"
+     :body "Press <f9> to manually sync your org files"
+     :app-icon cm/org-sync-icon-path))
+
+  (defun cm/org-sync-timer ()
+    (interactive)
+    (save-excursion
       (org-save-all-org-buffers)
-      (cm/org-webdav-pull)
-      (cm/org-webdav-push)
-      (org-save-all-org-buffers)
-      (message "cm/org-sync-full complete"))
-
-    ;; currently only pushes to mobile to ensure no conflicts
-    (defun cm/org-sync ()
-      (interactive)
-      (org-save-all-org-buffers)
-      (cm/org-webdav-push)
-      (message "cm/org-sync complete"))
-
-    (global-set-key (kbd "<f9>") #'cm/org-sync)
-
-    (defmacro cm/with-network (&rest body)
-      `(if (equal 70 (dbus-get-property
-		      :system "org.freedesktop.NetworkManager" "/org/freedesktop/NetworkManager"
-		      "org.freedesktop.NetworkManager" "State"))
-	   (progn
-	     ,@body)))
-
-    (defvar cm/org-sync-icon-path
-      "/usr/share/icons/gnome/32x32/actions/reload.png"
-      "Icon to use for popup notification.")
-
-    (defun cm/org-sync-alert ()
-      (message "manually sync! aborting auto sync now")
-      (notifications-notify
-       :title "org-sync conflict"
-       :body "Press <f9> to manually sync your org files"
-       :app-icon cm/org-sync-icon-path))
-
-    (defun cm/org-sync-timer ()
-      (interactive)
-      (save-excursion
-	(org-save-all-org-buffers)
-	(if (> (length (directory-files "~/org/.mobileorg-staging" nil ".*\\.org.new")) 0)
+      (if (> (length (directory-files (cm/org-dir ".mobileorg-staging") nil ".*\\.org.new")) 0)
+	  (cm/org-sync-alert)
+	(with-temp-buffer
+	  (shell-command "org-webdav-pull" t))
+	(if (> (length (directory-files (cm/org-dir ".mobileorg-staging") nil ".*\\.org.new")) 0)
 	    (cm/org-sync-alert)
-	  (with-temp-buffer
-	    (shell-command "org-webdav-pull" t))
-	  (if (> (length (directory-files "~/org/.mobileorg-staging" nil ".*\\.org.new")) 0)
-	      (cm/org-sync-alert)
-	    (cm/org-sync-finish-pull)
-	    (cm/org-webdav-push)
-	    (org-save-all-org-buffers)
-	    (message "cm/org-sync complete!")))))
+	  (cm/org-sync-finish-pull)
+	  (cm/org-webdav-push)
+	  (org-save-all-org-buffers)
+	  (message "cm/org-sync complete!")))))
 
-    ;(run-with-idle-timer 15 t #'cm/org-sync-timer)
+  ;(run-with-idle-timer 15 t #'cm/org-sync-timer)
 
 #+end_src
 
@@ -6410,7 +6427,7 @@ has a huge opportunity to succeed. It is similar to notmuch.
 ;	  mu4e-refile-folder          (cm/make-dynamic-folder "all")
 ;	  mu4e-get-mail-command       "mbsync -a" ;; mbsync -a is running by cron
 ;	  mu4e-sent-messages-behavior 'sent
-;	  mu4e-org-contacts-file      "~/org/_notes/contacts.org"
+;	  mu4e-org-contacts-file      (cm/org-dir "_notes/contacts.org")
 ;	  mu4e-use-fancy-chars        nil
 ;	  mu4e-view-show-images       t
 ;	  mu4e-view-show-addresses    t
