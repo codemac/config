@@ -5,6 +5,7 @@ dir=$1
 # something similar to jessfraz, always a good idea.
 cmd=`{sed -n '/docker run/,/^#$/p' $dir/Dockerfile | head -n -1 | sed 's/#//' | tr '\n' ' '}
 
-echo running $cmd
-eval $cmd
+shift
+echo running $cmd $*
+eval $cmd $*
 

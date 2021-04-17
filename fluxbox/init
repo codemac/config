@@ -38,7 +38,7 @@ session.screen0.workspaces:	4
 session.screen0.defaultDeco:	NORMAL
 session.screen0.showwindowposition:	false
 session.screen0.tooltipDelay:	500
-session.screen0.windowMenu:	/home/jmickey/.fluxbox/windowmenu
+session.screen0.windowMenu:	~/.fluxbox/windowmenu
 session.screen0.windowPlacement:	RowMinOverlapPlacement
 session.screen0.focusSameHead:	false
 session.screen0.maxDisableMove:	false
@@ -65,13 +65,13 @@ session.cacheMax:	200
 session.configVersion:	13
 session.keyFile:	~/.fluxbox/keys
 session.cacheLife:	5
-session.appsFile:	/home/jmickey/.fluxbox/apps
+session.appsFile:	~/.fluxbox/apps
 session.menuFile:	~/.fluxbox/menu
 session.menuSearch:	itemstart
-session.styleOverlay:	/home/jmickey/.fluxbox/overlay
+session.styleOverlay:	~/.fluxbox/overlay
 session.ignoreBorder:	false
-session.slitlistFile:	/home/jmickey/.fluxbox/slitlist
+session.slitlistFile:	~/.fluxbox/slitlist
 session.autoRaiseDelay:	250
-session.styleFile:	/gnu/store/fx37ycp92ks8n285ln16g07msc2fd079-fluxbox-1.3.7/share/fluxbox/styles/carp
+session.styleFile:	~/.fluxbox/styles/myDEFCON_4
 session.forcePseudoTransparency:	false
 session.tabPadding:	0

@@ -10,11 +10,11 @@
 	name = Jeff Mickey
 	signingkey = 110DF02CCBED60BB
 [core]
-	hooksPath = /home/jmickey/config/githooks
+	hooksPath = ~/config/githooks
 [push]
 	default = current
 [http]
-	cookiefile = /home/jmickey/.gitcookies
+	cookiefile = ~/.gitcookies
 [diff]
 	renameLimit = 20000
 [pull]

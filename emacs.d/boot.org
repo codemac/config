@@ -182,7 +182,9 @@ screen DPI's.
 	   (variable (concat "EtBembo-" (number-to-string (* size 1.3)) suffix)))
       (set-face-attribute 'default nil :font fixed)
       (set-face-attribute 'fixed-pitch nil :font fixed)
-      (set-face-attribute 'variable-pitch nil :font variable)))
+      (if (find-font (font-spec :name "EtBembo-12"))
+          (set-face-attribute 'variable-pitch nil :font variable)
+        (set-face-attribute 'variable-pitch nil :font fixed))))
 
 
   (cond
@@ -644,6 +646,23 @@ emacs is not my forte.
 	(delete-region start num))))
 
   (global-set-key (kbd "C-<delete>") 'cm/delete-surrounding-whitespace)
+#+end_src
+** Org File Location
+#+begin_src emacs-lisp
+  (defvar cm/org-directory "~/org")
+  ;; Use dropbox when available. Yes making this conditional is awkward,
+  ;; but it helps me avoid the IT security dragon if I'm on a work
+  ;; computer.
+  (when (file-exists-p "~/Dropbox/org/gtd.org")
+    (setq cm/org-directory "~/Dropbox/org"))
+  (defun cm/org-dir (&rest args)
+    (if (< (length args) 1)
+	cm/org-directory
+      (concat cm/org-directory
+	      (if (string-prefix-p "/" (car args))
+		  ""
+		"/")
+	      (car args))))
 #+end_src
 * ELPA
   :PROPERTIES:
@@ -1195,12 +1214,12 @@ really interpret anything.
     :ID:       1f6334ef-51f3-417d-acc6-c578c2a9223b
     :END:
 #+begin_src emacs-lisp
-  (set-default 'explicit-shell-file-name (concat (getenv "HOME") "/bin/rc"))
+  (set-default 'explicit-shell-file-name (concat (getenv "HOME") "/.guix-profile/bin/rc"))
   (defvar explicit-rc-args '("-l")
     "List of explicit arguments to rc.")
 
   (when (string-equal (system-name) "jmickey-glaptop0")
-    (set-default 'explicit-shell-file-name (concat (getenv "HOME") "/bin/rc"))
+    (set-default 'explicit-shell-file-name (concat (getenv "HOME") "/.guix-profile/bin/rc"))
     (setq explicit-rc-args nil))
 #+end_src
 *** Track the directory of the shell process
@@ -1450,10 +1469,10 @@ Well integrated into Gnus, eventually just had to start using it!
 Borrowed this pretty heavily from somewhere, will document once I know
 what all these features really mean.
 #+begin_src emacs-lisp
-  (require 'bbdb)
+  ;;(require 'bbdb)
   ;; uber failure
-  (require 'message)
-  (bbdb-initialize 'mail 'message)
+  ;;(require 'message)
+  ;;(bbdb-initialize 'mail 'message)
   
   (setq 
    bbdb-offer-save 1                        ;; 1 means save-without-asking
@@ -2550,7 +2569,7 @@ A set of timers
   (use-package elfeed-org
     :config
     (elfeed-org)
-    (setq rmh-elfeed-org-files (list "~/org/_notes/rss.org")))
+    (setq rmh-elfeed-org-files (list (cm/org-dir "_notes/rss.org")))
 
   (defun cm/elfeed-update ()
     (interactive)
@@ -2696,7 +2715,8 @@ me over.
 
 #+begin_src emacs-lisp
   (use-package exwm
-    :demand t
+    :disabled
+    ;;    :demand t
     :config
     (require 'exwm-config)
     (require 'exwm-randr)
@@ -2738,7 +2758,7 @@ me over.
     (defun cm/exwm-lock ()
       (interactive)
       (cm/async-shell-no-output "notion-lock"))
-    
+  
     (defun cm/launch-term ()
       (interactive)
       (cm/async-shell-no-output "term"))
@@ -3482,7 +3502,7 @@ This add some commands for managing and clocking my time in a hydra.
   (setq org-clock-x11idle-program-name "xprintidle")
   (setq org-clock-idle-time 10)
 
-  (setq org-agenda-files '("~/org/"))
+  (setq org-agenda-files (list (cm/org-dir)))
 
   (require 'cl)
 
@@ -3493,12 +3513,12 @@ This add some commands for managing and clocking my time in a hydra.
 			      (string-suffix-p "_old" x)))
 	       (mapcar #'buffer-file-name (org-buffer-list 'files))))
 
-  (setq org-refile-targets '((nil
+  (setq org-refile-targets `((nil
 			      :maxlevel . 5)
 			     (cm/org-buffer-files
 			      :maxlevel . 5)
-			     (("~/org/gtd.org"
-			       "~/org/work.org")
+			     (((cm/org-dir "gtd.org")
+			       (cm/org-dir "work.org"))
 			      :maxlevel . 5)))
 
   ;; my dimmed face isn't that dim
@@ -3525,7 +3545,7 @@ This add some commands for managing and clocking my time in a hydra.
   (setq org-agenda-use-tag-inheritance nil)
   (setq org-agenda-window-setup 'current-window)
   (setq org-attach-archive-delete 'query)
-  (setq org-attach-id-dir "~/org/_attachments/")
+  (setq org-attach-id-dir (cm/org-dir "_attachments/"))
   (setq org-attach-method 'mv)
   (setq org-enforce-todo-dependencies t)
   (setq org-export-with-sub-superscripts nil)
@@ -3577,7 +3597,7 @@ This add some commands for managing and clocking my time in a hydra.
 This is part of org-contrib, thus is not a "package" for use-package to use.
 #+begin_src emacs-lisp
   (require 'org-contacts (concat (getenv "HOME") "/.emacs.d/site-lisp/org-contrib/lisp/org-contacts.el"))
-  (setq org-contacts-files '("~/org/_notes/contacts.org"))
+  (setq org-contacts-files (list (cm/org-dir "_notes/contacts.org")))
 #+end_src
 **** Archiving
 
@@ -3847,8 +3867,8 @@ How I deploy my personal website.
   ;; - codemac.net -- My personal website
   ;; - org-doc -- export all org documents
   (setq org-publish-project-alist
-	'(("codemac-org"
-	   :base-directory "~/org/_www/codemac.net"
+	`(("codemac-org"
+	   :base-directory ,(cm/org-dir "_www/codemac.net")
 	   :publishing-directory "~/tmp/codemac.net"
 	   :recursive t
 	   :base-extension "org"
@@ -3872,14 +3892,14 @@ How I deploy my personal website.
 	   :with-smart-quotes t
 	   :auto-sitemap t)
 	  ("codemac-static"
-	   :base-directory "~/org/_www/codemac.net"
+	   :base-directory ,(cm/org-dir "_www/codemac.net")
 	   :publishing-directory "~/tmp/codemac.net"
 	   :base-extension "css\\|pdf\\|png\\|jpg\\|gif\\|js\\|txt\\|mp3\\|ogg\\|swf\\|svg\\|woff\\|eot\\|ttf\\|html"
 	   :publishing-function org-publish-attachment
 	   :recursive t)
 	  ("codemac" :components ("codemac-org" "codemac-static"))
 	  ("org-doc-org"
-	   :base-directory "~/org/"
+	   :base-directory ,(cm/org-dir)
 	   :publishing-directory "~/tmp/published-org"
 	   :recursive t
 	   :section-numbers nil
@@ -3897,7 +3917,7 @@ How I deploy my personal website.
 	   :author-info nil
 	   :creator-info nil)
 	  ("org-doc-static"
-	   :base-directory "~/org/"
+	   :base-directory ,(cm/org-dir)
 	   :publishing-directory "~/tmp/published-org"
 	   :base-extension "css\\|pdf\\|png\\|jpg\\|gif"
 	   :publishing-function org-publish-attachment
@@ -3946,7 +3966,7 @@ How I deploy my personal website.
 #+end_src
 **** Daily Journal file
 #+begin_src emacs-lisp
-  (setq cm/org-today-filefmt "~/org/_notes/%Y-%m-%d.org")
+  (setq cm/org-today-filefmt (cm/org-dir "_notes/%Y-%m-%d.org"))
 
   (setq cm/org-today-headerfmt "#+title: %A, %Y-%m-%d\n#+date: <%Y-%m-%d>\n\n")
 
@@ -4255,8 +4275,8 @@ the files.
   (defun cm/org-notes-search (arg)
     (interactive "P")
     (let ((org-agenda-files (if arg
-				(append org-agenda-files '("~/org/_notes/"))
-			      '("~/org/_notes/")))
+				(append org-agenda-files (list (cm/org-dir "_notes/")))
+			      (list (cm/org-dir "_notes/"))))
 	  (org-agenda-sticky nil))
       (org-search-view)))
 #+end_src
@@ -4266,7 +4286,7 @@ the files.
   (defun cm/org-rifle-notes ()
     "search through all notes"
     (interactive)
-    (helm-org-rifle-files '("~/org/notes.org")))
+    (helm-org-rifle-files (list (cm/org-dir "notes.org"))))
 
   (defun cm/org-rifle-agenda ()
     "search through agenda files"
@@ -4276,7 +4296,7 @@ the files.
   (defun cm/org-rifle-global()
     "search through all org files"
     (interactive)
-    (helm-org-rifle-directories '("~/org") t))
+    (helm-org-rifle-directories (list (cm/org-dir)) t))
 #+end_src
 ***** Deft support functions
 
@@ -4323,50 +4343,50 @@ the files.
       (_ (error "Connot find target ID \"%s\"" id))))
 
   (setq cm/humble-todo-template (list "* TODO %?\n:PROPERTIES:\n:CREATED:  %U\n:END:\n%i\n\n%(cm/org-capture-appendix)" :prepend nil :empty-lines 1))
-  (setq org-directory "~/org")
-  (setq org-default-notes-file (concat org-directory "/gtd.org"))
-  (setq org-board-capture-file (concat org-directory "/_notes/www.org"))
+  (setq org-directory (cm/org-dir))
+  (setq org-default-notes-file (cm/org-dir "gtd.org"))
+  (setq org-board-capture-file (cm/org-dir "_notes/www.org"))
   (define-key global-map "\C-cr" 'org-capture)
   (setq org-capture-templates
-	`(("t" "Todo" entry (file+headline "~/org/gtd.org" "Inbox")
+	`(("t" "Todo" entry (file+headline ,(cm/org-dir "gtd.org") "Inbox")
 	   ,@cm/humble-todo-template)
 	  ("p" "Project" entry (id "a262e411-ff66-43fc-9124-341694564dda")
 	   "* PROJECT %?\n:PROPERTIES:\n:CATEGORY:\n:CREATED:  %U\n:END:\n\n** Archive :ARCHIVE:\n\n" :empty-lines 1)
-	  ("j" "Journal" entry (file "~/org/_editorial/journal.org")
+	  ("j" "Journal" entry (file ,(cm/org-dir "_editorial/journal.org"))
 	   "* %T %?\n\n  %i\n  %a\n\n" :prepend nil :empty-lines 1)
 	  ("c" "Add note to currently clocked task" entry (clock)
 	   "* %U %?\n%a\n\n%i\n\n" :empty-lines 1)
-	  ("a" "Address Book" entry (file "~/org/_notes/contacts.org")
+	  ("a" "Address Book" entry (file ,(cm/org-dir "_notes/contacts.org"))
 	   "* %(org-contacts-template-name)\n:PROPERTIES:\n:EMAIL: %(org-contacts-template-email)\n:END:" :empty-lines 1)
-	  ("n" "Timed Notes" entry (file "~/org/notes.org")
+	  ("n" "Timed Notes" entry (file ,(cm/org-dir "notes.org"))
 	   "* %T %?\n\n  %i\n  %a\n\n" :prepend nil :empty-lines 1)
-	  ("d" "Logged distraction entry" entry (file+headline "~/org/gtd.org" "Inbox")
+	  ("d" "Logged distraction entry" entry (file+headline ,(cm/org-dir "gtd.org") "Inbox")
 	   ,@cm/humble-todo-template
 	   :clock-in t
 	   :clock-resume t)
 	  ("w" "Work captures")
-	  ("wt" "Work Action" entry (file+headline "~/org/work.org" "Actions")
+	  ("wt" "Work Action" entry (file+headline ,(cm/org-dir "work.org") "Actions")
 	   ,@cm/humble-todo-template)
-	  ("wn" "Work Note" entry (file "~/org/work.org")
+	  ("wn" "Work Note" entry (file ,(cm/org-dir "work.org"))
 	   "* %U %?\n\n  %i\n  %a\n\n" :prepend nil :empty-lines 1)
 	  ("wp" "Work Project" entry (id "76f3a69b-b76a-425c-bc0f-8795cae8e290")
 	   "* PROJECT %?\n:PROPERTIES:\n:CATEGORY:\n:CREATED:  %U\n:END:\n\n** Archive :ARCHIVE:\n\n" :empty-lines 1)
-	  ("wj" "Work journal entry" plain (file+olp+datetree "~/org/_notes/work.org" "Notes")
+	  ("wj" "Work journal entry" plain (file+olp+datetree ,(cm/org-dir "_notes/work.org") "Notes")
 	   "\n- %U %?\n\n" :tree-type week :empty-lines 1)
-	  ("ws" "Snippet Log" entry (file+headline "~/org/work.org" "Snippets")
+	  ("ws" "Snippet Log" entry (file+headline ,(cm/org-dir "work.org") "Snippets")
 	   "* S: %?\n  %T\n\n#+begin_src shell :results raw :shebang \"#!/usr/bin/env rc \"\nsnippets\n#+end_src\n\n" :prepend nil :empty-lines 1)
 	  ("r" "Review Captures")
 	  ("ry" "Review Entry For The Year" entry (id "256745aa-ece4-4649-a616-52b0194850d0")
 	   "* Review for %<%Y>\n:PROPERTIES:\n:CREATED:  %U\n:END:\n\n** Review previous year\n\n- What was completed?\n- What was not completed?\n- What was the best spent time?\n- What was the worst spent time?\n- What is the current financial, physical, emotional, mental, spiritual state?\n\n** Project future year\n\n- What to spend more time on in new year?\n- What to spend less time on in new year?\n- What projects should be started in the next year?\n- What project should be completed in the next year?\n\n" :empty-lines 1)
 	  ("b" "Agenda Project" entry (function cm/org-child-location)
 	   ,@cm/humble-todo-template)
-	  ("f" "Fitness" table-line (file+headline "~/org/_notes/fitness.org" "Fitness")
+	  ("f" "Fitness" table-line (file+headline ,(cm/org-dir "_notes/fitness.org") "Fitness")
 	   ,(concat (format-time-string "| %Y.%m.%d-%H:%M |") " %^{Weight} | | %^{RHR} |") :table-line-pos "II-1" :empty-lines 1)
-	  ("xw" "org-capture reference" entry (file "~/org/_notes/www.org")
+	  ("xw" "org-capture reference" entry (file ,(cm/org-dir "_notes/www.org"))
 	   "* %U %?%:description\n:PROPERTIES:\n:URL: %:link\n:END:\n\n%:body\n\n" :empty-lines 1)
-	  ("xc" "org-capture inbox clock" entry (file+headline "~/org/gtd.org" "Inbox")
+	  ("xc" "org-capture inbox clock" entry (file+headline ,(cm/org-dir "gtd.org") "Inbox")
 	   "* TODO %(cm/org-clock-switch-to-name)\n:PROPERTIES:\n:CREATED:  %U\n:END:\n\n" :empty-lines 1 :immediate-finish t)
-	  ("xi" "org-capture inbox" entry (file+headline "~/org/gtd.org" "Inbox")
+	  ("xi" "org-capture inbox" entry (file+headline ,(cm/org-dir "gtd.org") "Inbox")
 	   "* TODO %?%:annotation\n:PROPERTIES:\n:CREATED:  %U\n:END:\n\n%:link\n\n%i\n\n" :empty-lines 1)))
 
   (defun cm/org-board-dl-hook ()
@@ -4379,10 +4399,10 @@ the files.
 
   (defun gtd ()
     (interactive)
-    (find-file "~/org/gtd.org"))
+    (find-file (cm/org-dir "gtd.org")))
 
   ;; Set up my diary file
-  (setq diary-file "~/org/diary") ;; deal with the fact that it's in the org folder
+  (setq diary-file (cm/org-dir "diary")) ;; deal with the fact that it's in the org folder
 
   (defun cm/region-html-to-org (start end)
     (interactive "r")
@@ -4479,7 +4499,7 @@ view on things.
 #+end_src
 **** Better Org Goto
 #+begin_src emacs-lisp
-  (defvar cm/org-goto-dirs '("~/org/*.org")
+  (defvar cm/org-goto-dirs (list (cm/org-dir "*.org")))
     "Org directories to search with goto")
 
   (setq counsel-org-goto-all-outline-path-prefix 'file-name)
@@ -4565,12 +4585,12 @@ some reasonable way.
       (setq org-ref-completion-library 'org-ref-ivy-cite)
       :config
       (require 'ivy-bibtex)
-      (setq org-ref-bibliography-notes "~/org/_zettel/reference_notes.org"
+      (setq org-ref-bibliography-notes (cm/org-dir "_zettel/reference_notes.org")
 	    org-ref-bibtex-hydra-key-binding "\C-cj"
-	    org-ref-default-bibliography '("~/org/_zettel/references.bib")
-	    org-ref-pdf-directory "~/org/_zettel/_pdf/"
-	    bibtex-completion-notes-path "~/org/_zettel/"
-	    reftex-default-bibliography '("~/org/_zettel/references.bib"))
+	    org-ref-default-bibliography (list (cm/org-dir "_zettel/references.bib"))
+	    org-ref-pdf-directory (cm/org-dir "_zettel/_pdf/")
+	    bibtex-completion-notes-path (cm/org-dir "_zettel/")
+	    reftex-default-bibliography (list (cm/org-dir "_zettel/references.bib")))
        (require 'org-ref-bibtex)
       (require 'doi-utils)
       (require 'org-ref-arxiv)
@@ -4587,155 +4607,155 @@ resolution never really worked well. Switching to using DAV syncing
 with orgzly.
 
 #+begin_src emacs-lisp
-    (setq cm/org-webdav-dir "~/org/.mobileorg-staging")
+  (setq cm/org-webdav-dir (cm/org-dir ".mobileorg-staging"))
 
-    (defun cm/get-inbox-pos ()
-      (save-excursion
-	(with-current-buffer (find-buffer-visiting "~/org/gtd.org")
-	  (goto-char (point-min))
-	  (re-search-forward "^\\* Inbox[        ]*$")
-	  (move-beginning-of-line nil)
-	  (point))))
+  (defun cm/get-inbox-pos ()
+    (save-excursion
+      (with-current-buffer (find-buffer-visiting (cm/org-dir "gtd.org"))
+	(goto-char (point-min))
+	(re-search-forward "^\\* Inbox[        ]*$")
+	(move-beginning-of-line nil)
+	(point))))
 
-    (defvar cm/org-sync-files-to-skip
-      (list "calendars.org")
-      "List of files to not sync with webdav.")
+  (defvar cm/org-sync-files-to-skip
+    (list "calendars.org")
+    "List of files to not sync with webdav.")
 
-    (defun cm/org-sync-finish-pull ()
-      (interactive)
-      (save-excursion
+  (defun cm/org-sync-finish-pull ()
+    (interactive)
+    (save-excursion
+      (with-temp-buffer
+	(shell-command "cd $HOME/org/.mobileorg-staging && cp from-mobile.org ../from-mobile.org" t))
+      (if (not (get-file-buffer (cm/org-dir "from-mobile.org")))
+	  (find-file (cm/org-dir "from-mobile.org")))
+      (with-current-buffer (get-file-buffer (cm/org-dir "from-mobile.org"))
+	(revert-buffer t t t)
+	(if (cl-equalp (point-max) (point-min))
+	    (message "Nothing to move in from-mobile.org.")
+	  (goto-char (point-max))
+	  (push-mark (point-min) t t)
+	  (org-refile nil nil `("gtd.org/Inbox"
+				,(buffer-file-name (get-file-buffer (cm/org-dir "gtd.org")))
+				""
+				,(cm/get-inbox-pos)))
+	  (org-save-all-org-buffers))
 	(with-temp-buffer
-	  (shell-command "cd $HOME/org/.mobileorg-staging && cp from-mobile.org ../from-mobile.org" t))
-	(if (not (get-file-buffer "~/org/from-mobile.org"))
-	    (find-file "~/org/from-mobile.org"))
-	(with-current-buffer (get-file-buffer "~/org/from-mobile.org")
-	  (revert-buffer t t t)
-	  (if (cl-equalp (point-max) (point-min))
-	      (message "Nothing to move in from-mobile.org.")
-	    (goto-char (point-max))
-	    (push-mark (point-min) t t)
-	    (org-refile nil nil `("gtd.org/Inbox"
-				  ,(buffer-file-name (get-file-buffer "~/org/gtd.org"))
-				  ""
-				  ,(cm/get-inbox-pos)))
-	    (org-save-all-org-buffers))
-	  (with-temp-buffer
-	    (shell-command "cd $HOME/org/.mobileorg-staging && rm *.org.new"))
-	  (bury-buffer))))
+	  (shell-command "cd $HOME/org/.mobileorg-staging && rm *.org.new"))
+	(bury-buffer))))
 
-    (defun cm/org-webdav-push ()
-      (interactive)
-      (save-excursion
-	(org-save-all-org-buffers)
-	(with-temp-buffer
-	  (shell-command "cd $HOME/org/.mobileorg-staging && cp $HOME/org/*.org ." t)
-	  (mapcar
-	   (lambda (x) (delete-file
-			(concat (getenv "HOME") "/org/.mobileorg-staging/" x)))
-	   cm/org-sync-files-to-skip)
-	  (shell-command "org-webdav-push" t))))
-
-    (defun cm/org-webdav-pull ()
-      (interactive)
-      (save-excursion
-	(org-save-all-org-buffers)
-	(with-temp-buffer
-	  (when (= (length (directory-files "~/org/.mobileorg-staging" nil ".*\\.org.new")) 0)
-	    (shell-command "org-webdav-pull" t)))
-	;; loop over every file diff, merging with ediff
+  (defun cm/org-webdav-push ()
+    (interactive)
+    (save-excursion
+      (org-save-all-org-buffers)
+      (with-temp-buffer
+	(shell-command "cd $HOME/org/.mobileorg-staging && cp $HOME/org/*.org ." t)
 	(mapcar
-	 (lambda (newf)
-	   (let ((rc-diff-cmd
-		  (concat
-		   "emacs -q --debug-init --no-site-file "
-		   " --eval '(progn (require ''ediff)"
-		   " (menu-bar-mode -1)"
-		   " (tool-bar-mode -1)"
-		   " (scroll-bar-mode -1)"
-		   " (load-theme ''wombat)"
-		   " (keyboard-translate ?\\C-x ?\\C-t)"
-		   " (keyboard-translate ?\\C-t ?\\C-x)"
-		   " (setq ediff-window-setup-function ''ediff-setup-windows-plain)"
-		   " (add-hook ''ediff-quit-hook ''save-buffers-kill-emacs)"
-		   " (add-hook ''ediff-prepare-buffer-hook #''outline-show-all)"
-		   " (add-hook ''smerge-mode-hook #''outline-show-all)"
-		   " (add-hook ''diff-mode-hook #''outline-show-all)"
-		   " (ediff-files \"~/org/.mobileorg-staging/"
-		   newf "\" \"~/org/" (string-remove-suffix ".new" newf) "\"))'"))
-		 (bash-diff-cmd
-		  (concat
-		   "emacs -q --debug-init --no-site-file "
-		   " --eval \"(progn (require 'ediff)"
-		   " (menu-bar-mode -1)"
-		   " (tool-bar-mode -1)"
-		   " (scroll-bar-mode -1)"
-		   " (load-theme 'wombat)"
-		   " (keyboard-translate ?\\C-x ?\\C-t)"
-		   " (keyboard-translate ?\\C-t ?\\C-x)"
-		   " (setq ediff-window-setup-function 'ediff-setup-windows-plain)"
-		   " (add-hook 'ediff-quit-hook 'save-buffers-kill-emacs)"
-		   " (add-hook 'ediff-prepare-buffer-hook #'outline-show-all)"
-		   " (add-hook 'smerge-mode-hook #'outline-show-all)"
-		   " (add-hook 'diff-mode-hook #'outline-show-all)"
-		   " (ediff-files \\\"~/org/.mobileorg-staging/"
-		   newf "\\\" \\\"~/org/" (string-remove-suffix ".new" newf) "\\\"))\"")))
-	     (message "rc-cmd: %s" rc-diff-cmd)
-	     (message "bash-cmd: %s" bash-diff-cmd)
-	     (shell-command bash-diff-cmd)))
-	 (directory-files "~/org/.mobileorg-staging" nil ".*\\.org.new"))
-	(cm/org-sync-finish-pull)))
+	 (lambda (x) (delete-file
+		      (concat (getenv "HOME") "/org/.mobileorg-staging/" x)))
+	 cm/org-sync-files-to-skip)
+	(shell-command "org-webdav-push" t))))
 
-    (defun cm/org-sync-full ()
-      (interactive)
+  ;; (defun cm/org-webdav-pull ()
+  ;;   (interactive)
+  ;;   (save-excursion
+  ;;     (org-save-all-org-buffers)
+  ;;     (with-temp-buffer
+  ;;       (when (= (length (directory-files (cm/org-dir ".mobileorg-staging") nil ".*\\.org.new")) 0)
+  ;; 	(shell-command "org-webdav-pull" t)))
+  ;;     ;; loop over every file diff, merging with ediff
+  ;;     (mapcar
+  ;;      (lambda (newf)
+  ;;        (let ((rc-diff-cmd
+  ;; 	      (concat
+  ;; 	       "emacs -q --debug-init --no-site-file "
+  ;; 	       " --eval '(progn (require ''ediff)"
+  ;; 	       " (menu-bar-mode -1)"
+  ;; 	       " (tool-bar-mode -1)"
+  ;; 	       " (scroll-bar-mode -1)"
+  ;; 	       " (load-theme ''wombat)"
+  ;; 	       " (keyboard-translate ?\\C-x ?\\C-t)"
+  ;; 	       " (keyboard-translate ?\\C-t ?\\C-x)"
+  ;; 	       " (setq ediff-window-setup-function ''ediff-setup-windows-plain)"
+  ;; 	       " (add-hook ''ediff-quit-hook ''save-buffers-kill-emacs)"
+  ;; 	       " (add-hook ''ediff-prepare-buffer-hook #''outline-show-all)"
+  ;; 	       " (add-hook ''smerge-mode-hook #''outline-show-all)"
+  ;; 	       " (add-hook ''diff-mode-hook #''outline-show-all)"
+  ;; 	       " (ediff-files (cm/org-dir \".mobileorg-staging\")"
+  ;; 	       newf "\" \"~/org/" (string-remove-suffix ".new" newf) "\"))'"))
+  ;; 	     (bash-diff-cmd
+  ;; 	      (concat
+  ;; 	       "emacs -q --debug-init --no-site-file "
+  ;; 	       " --eval \"(progn (require 'ediff)"
+  ;; 	       " (menu-bar-mode -1)"
+  ;; 	       " (tool-bar-mode -1)"
+  ;; 	       " (scroll-bar-mode -1)"
+  ;; 	       " (load-theme 'wombat)"
+  ;; 	       " (keyboard-translate ?\\C-x ?\\C-t)"
+  ;; 	       " (keyboard-translate ?\\C-t ?\\C-x)"
+  ;; 	       " (setq ediff-window-setup-function 'ediff-setup-windows-plain)"
+  ;; 	       " (add-hook 'ediff-quit-hook 'save-buffers-kill-emacs)"
+  ;; 	       " (add-hook 'ediff-prepare-buffer-hook #'outline-show-all)"
+  ;; 	       " (add-hook 'smerge-mode-hook #'outline-show-all)"
+  ;; 	       " (add-hook 'diff-mode-hook #'outline-show-all)"
+  ;; 	       " (ediff-files \\\"~/org/.mobileorg-staging/"
+  ;; 	       newf "\\\" \\\"~/org/" (string-remove-suffix ".new" newf) "\\\"))\"")))
+  ;; 	 (message "rc-cmd: %s" rc-diff-cmd)
+  ;; 	 (message "bash-cmd: %s" bash-diff-cmd)
+  ;; 	 (shell-command bash-diff-cmd)))
+  ;;      (directory-files "~/org/.mobileorg-staging" nil ".*\\.org.new"))
+  ;;     (cm/org-sync-finish-pull)))
+
+  ;; (defun cm/org-sync-full ()
+  ;;   (interactive)
+  ;;   (org-save-all-org-buffers)
+  ;;   (cm/org-webdav-pull)
+  ;;   (cm/org-webdav-push)
+  ;;   (org-save-all-org-buffers)
+  ;;   (message "cm/org-sync-full complete"))
+
+  ;; currently only pushes to mobile to ensure no conflicts
+  (defun cm/org-sync ()
+    (interactive)
+    (org-save-all-org-buffers)
+    (cm/org-webdav-push)
+    (message "cm/org-sync complete"))
+
+  (global-set-key (kbd "<f9>") #'cm/org-sync)
+
+  (defmacro cm/with-network (&rest body)
+    `(if (equal 70 (dbus-get-property
+		    :system "org.freedesktop.NetworkManager" "/org/freedesktop/NetworkManager"
+		    "org.freedesktop.NetworkManager" "State"))
+	 (progn
+	   ,@body)))
+
+  (defvar cm/org-sync-icon-path
+    "/usr/share/icons/gnome/32x32/actions/reload.png"
+    "Icon to use for popup notification.")
+
+  (defun cm/org-sync-alert ()
+    (message "manually sync! aborting auto sync now")
+    (notifications-notify
+     :title "org-sync conflict"
+     :body "Press <f9> to manually sync your org files"
+     :app-icon cm/org-sync-icon-path))
+
+  (defun cm/org-sync-timer ()
+    (interactive)
+    (save-excursion
       (org-save-all-org-buffers)
-      (cm/org-webdav-pull)
-      (cm/org-webdav-push)
-      (org-save-all-org-buffers)
-      (message "cm/org-sync-full complete"))
-
-    ;; currently only pushes to mobile to ensure no conflicts
-    (defun cm/org-sync ()
-      (interactive)
-      (org-save-all-org-buffers)
-      (cm/org-webdav-push)
-      (message "cm/org-sync complete"))
-
-    (global-set-key (kbd "<f9>") #'cm/org-sync)
-
-    (defmacro cm/with-network (&rest body)
-      `(if (equal 70 (dbus-get-property
-		      :system "org.freedesktop.NetworkManager" "/org/freedesktop/NetworkManager"
-		      "org.freedesktop.NetworkManager" "State"))
-	   (progn
-	     ,@body)))
-
-    (defvar cm/org-sync-icon-path
-      "/usr/share/icons/gnome/32x32/actions/reload.png"
-      "Icon to use for popup notification.")
-
-    (defun cm/org-sync-alert ()
-      (message "manually sync! aborting auto sync now")
-      (notifications-notify
-       :title "org-sync conflict"
-       :body "Press <f9> to manually sync your org files"
-       :app-icon cm/org-sync-icon-path))
-
-    (defun cm/org-sync-timer ()
-      (interactive)
-      (save-excursion
-	(org-save-all-org-buffers)
-	(if (> (length (directory-files "~/org/.mobileorg-staging" nil ".*\\.org.new")) 0)
+      (if (> (length (directory-files (cm/org-dir ".mobileorg-staging") nil ".*\\.org.new")) 0)
+	  (cm/org-sync-alert)
+	(with-temp-buffer
+	  (shell-command "org-webdav-pull" t))
+	(if (> (length (directory-files (cm/org-dir ".mobileorg-staging") nil ".*\\.org.new")) 0)
 	    (cm/org-sync-alert)
-	  (with-temp-buffer
-	    (shell-command "org-webdav-pull" t))
-	  (if (> (length (directory-files "~/org/.mobileorg-staging" nil ".*\\.org.new")) 0)
-	      (cm/org-sync-alert)
-	    (cm/org-sync-finish-pull)
-	    (cm/org-webdav-push)
-	    (org-save-all-org-buffers)
-	    (message "cm/org-sync complete!")))))
+	  (cm/org-sync-finish-pull)
+	  (cm/org-webdav-push)
+	  (org-save-all-org-buffers)
+	  (message "cm/org-sync complete!")))))
 
-    ;(run-with-idle-timer 15 t #'cm/org-sync-timer)
+  ;(run-with-idle-timer 15 t #'cm/org-sync-timer)
 
 #+end_src
 
@@ -5039,34 +5059,36 @@ I'm not a fan that this isn't a simple =use-package= thing, but the
 notmuch emacs implementation generally has to match the notmuch
 binary - and it's easier to just use whatever my distro packages.
 #+begin_src emacs-lisp
-  (unless (require 'notmuch nil t)
-    (message "Notmuch could not be loaded, should disable sending mail"))
+  (if (require 'notmuch nil t)
+      (message "Notmuch found, enabling notmuch & mail support")
+    (message "Notmuch not found :("))
 
-  (setq cm/mail-script "mail-sync")
+  (when (require 'notmuch nil t)
+    (setq cm/mail-script "mail-sync")
 
-  (defun cm/notmuch-poll ()
-    (interactive)
-    (unless (equal (call-process cm/mail-script nil nil) 0)
-      (error "Notmuch: poll script `%s' failed!" notmuch-poll-script)))
+    (defun cm/notmuch-poll ()
+      (interactive)
+      (unless (equal (call-process cm/mail-script nil nil) 0)
+	(error "Notmuch: poll script `%s' failed!" notmuch-poll-script)))
 
-  (defun cm/notmuch-refresh-buffer-after-poll (proc state)
-    (let ((buffer (process-buffer proc)))
-      (with-current-buffer buffer
-	(with-current-buffer notmuch-buffer-to-refresh
+    (defun cm/notmuch-refresh-buffer-after-poll (proc state)
+      (let ((buffer (process-buffer proc)))
+	(with-current-buffer buffer
+	  (with-current-buffer notmuch-buffer-to-refresh
 	  (when notmuch-buffer-refresh-function
 	    (call-interactively notmuch-buffer-refresh-function))))))
 
-  (defun cm/notmuch-poll-and-refresh-this-buffer ()
-    (interactive)
-    (let ((old-buff (current-buffer)))
-      (with-current-buffer (get-buffer-create "*notmuch-mail-sync*")
-	(set (make-local-variable 'notmuch-buffer-to-refresh) old-buff)
-	(let ((process (start-process-shell-command "async proc mail-sync" (current-buffer) "mail-sync")))
-	  (set-process-sentinel process #'cm/notmuch-refresh-buffer-after-poll)))))
+    (defun cm/notmuch-poll-and-refresh-this-buffer ()
+      (interactive)
+      (let ((old-buff (current-buffer)))
+	(with-current-buffer (get-buffer-create "*notmuch-mail-sync*")
+	  (set (make-local-variable 'notmuch-buffer-to-refresh) old-buff)
+	  (let ((process (start-process-shell-command "async proc mail-sync" (current-buffer) "mail-sync")))
+	    (set-process-sentinel process #'cm/notmuch-refresh-buffer-after-poll)))))
 
-  (advice-add 'notmuch-poll :override #'cm/notmuch-poll)
+    (advice-add 'notmuch-poll :override #'cm/notmuch-poll)
 
-  (advice-add 'notmuch-poll-and-refresh-this-buffer :override #'cm/notmuch-poll-and-refresh-this-buffer)
+    (advice-add 'notmuch-poll-and-refresh-this-buffer :override #'cm/notmuch-poll-and-refresh-this-buffer))
 #+end_src
 **** Sending mail
      :PROPERTIES:
@@ -5092,156 +5114,159 @@ I get to avoid most of the complications. It goes, in order:
    set this usually to the hostname of the email provider.)
   
 #+begin_src emacs-lisp
-  (setq smtpmail-multi-accounts '((google . ("jmickey@google.com"
-                                           "smtp.gmail.com"
-                                           465
-                                           nil
-                                           ssl
-                                           nil
-                                           nil
-                                           "google.com"))
-                                  (codemac . ("codemac@fastmail.com"
-                                              "mail.messagingengine.com"
-                                              465
-                                              nil
-                                              ssl
-                                              nil
-                                              nil
-                                              "codemac.net"))))
-
-  (setq smtpmail-multi-default-account 'codemac)
-  (setq smtpmail-multi-associations '(("jmickey@google.com" google)
-                                      ("j@codemac.net\\|jeff@archlinux.org\\|j@mickey.email\\|jeff@mickey.email\\|jm@vt.edu\\|jmickey@vt.edu" codemac)))
-
-  (setq send-mail-function 'smtpmail-multi-send-it)
-  (setq message-send-mail-function 'smtpmail-multi-send-it)
-
+  (when (require 'notmuch nil t)
+    (setq smtpmail-multi-accounts '((google . ("jmickey@google.com"
+					       "smtp.gmail.com"
+					       465
+					       nil
+					       ssl
+					       nil
+					       nil
+					       "google.com"))
+				    (codemac . ("codemac@fastmail.com"
+						"mail.messagingengine.com"
+						465
+						nil
+						ssl
+						nil
+						nil
+						"codemac.net"))))
+  
+    (setq smtpmail-multi-default-account 'codemac)
+    (setq smtpmail-multi-associations '(("jmickey@google.com" google)
+					("j@codemac.net\\|jeff@archlinux.org\\|j@mickey.email\\|jeff@mickey.email\\|jm@vt.edu\\|jmickey@vt.edu" codemac)))
+  
+    (setq send-mail-function 'smtpmail-multi-send-it)
+    (setq message-send-mail-function 'smtpmail-multi-send-it))
 #+end_src
 ***** queueing
       :PROPERTIES:
       :ID:       f884dff3-0e19-41e1-969b-8911fcc05f68
       :END:
 #+begin_src emacs-lisp
-  (setq smtpmail-queue-mail  t  ;; start in non-queuing mode
-        smtpmail-queue-dir   "~/mail/queue")
+  (when (require 'notmuch nil t)
+    (setq smtpmail-queue-mail  t  ;; start in non-queuing mode
+	  smtpmail-queue-dir   "~/mail/queue")
 
-  (setq user-full-name "Jeff Mickey")
-  (if (cl-equalp (system-name) "jmickey-glaptop")
-      (setq user-mail-address "jmickey@google.com")
-    (setq user-mail-address "j@codemac.net"))
+    (setq user-full-name "Jeff Mickey")
+    (if (cl-equalp (system-name) "jmickey-glaptop")
+	(setq user-mail-address "jmickey@google.com")
+      (setq user-mail-address "j@codemac.net")))
 #+end_src
 **** Drafts Handling
 Ridiculous hacks to get sensible synced drafts. Sometimes I end up
 with way too many drafts saved due to mbsync being fast, but that's a
 good problem to me :)
 #+begin_src emacs-lisp
-  ;; how to get these things to not suck
-  (setq message-draft-headers '(From References Subject Date (optional . In-Reply-To) Message-ID (optional . User-Agent)))
-  (setq message-generate-headers-first t) ;; would love to do this without Date
-  (setq message-auto-save-directory "~/mail/cm/Drafts/cur")
+  (when (require 'notmuch nil t)
+    ;; how to get these things to not suck
+    (setq message-draft-headers '(From References Subject Date (optional . In-Reply-To) Message-ID (optional . User-Agent)))
+    (setq message-generate-headers-first t) ;; would love to do this without Date
+    (setq message-auto-save-directory "~/mail/cm/Drafts/cur")
 
-  (defun cm/draft-insert-mail-header-separator ()
-    "Insert `mail-header-separator' in the first empty line of the message.
+    (defun cm/draft-insert-mail-header-separator ()
+      "Insert `mail-header-separator' in the first empty line of the message.
   `message-mode' needs this line to know where the headers end and
   the body starts. Note, in `mu4e-compose-mode', we use
   `before-save-hook' and `after-save-hook' to ensure that this
   separator is never written to the message file. Also see
   `mu4e-remove-mail-header-separator'."
-    ;; we set this here explicitly, since (as it has happened) a wrong
-    ;; value for this (such as "") breaks address completion and other things
-    (set (make-local-variable 'mail-header-separator)
-      (purecopy "--text follows this line--"))
-    (put 'mail-header-separator 'permanent-local t)
-    (save-excursion
-      ;; make sure there's not one already
-      (cm/draft-remove-mail-header-separator)
-      (let ((sepa (propertize mail-header-separator
-		    'intangible t
-		    ;; don't make this read-only, message-mode
-		    ;; seems to require it being writable in some cases
-		    ;;'read-only "Can't touch this"
-		    'rear-nonsticky t
-		    'font-lock-face 'message-separator)))
-	(widen)
-	;; search for the first empty line
-	(goto-char (point-min))
-	(if (search-forward-regexp "^$" nil t)
-	    (replace-match sepa)
+      ;; we set this here explicitly, since (as it has happened) a wrong
+      ;; value for this (such as "") breaks address completion and other things
+      (set (make-local-variable 'mail-header-separator)
+	   (purecopy "--text follows this line--"))
+      (put 'mail-header-separator 'permanent-local t)
+      (save-excursion
+	;; make sure there's not one already
+	(cm/draft-remove-mail-header-separator)
+	(let ((sepa (propertize mail-header-separator
+				'intangible t
+				;; don't make this read-only, message-mode
+				;; seems to require it being writable in some cases
+				;;'read-only "Can't touch this"
+				'rear-nonsticky t
+				'font-lock-face 'message-separator)))
+	  (widen)
+	  ;; search for the first empty line
+	  (goto-char (point-min))
+	  (if (search-forward-regexp "^$" nil t)
+	      (replace-match sepa)
 	    (progn ;; no empty line? then prepend one
 	      (goto-char (point-max))
 	      (insert "\n" sepa))))))
 
-  (defun cm/draft-remove-mail-header-separator ()
-    "Remove `mail-header-separator; we do this before saving a
+    (defun cm/draft-remove-mail-header-separator ()
+      "Remove `mail-header-separator; we do this before saving a
   file (and restore it afterwards), to ensure that the separator
   never hits the disk. Also see `mu4e-draft-insert-mail-header-separator."
-    (interactive)
-    (save-excursion
-      (widen)
-      (goto-char (point-min))
-      ;; remove the --text follows this line-- separator
-      (when (search-forward-regexp (concat "^" mail-header-separator) nil t)
-	(let ((inhibit-read-only t))
-	  (replace-match "")))))
+      (interactive)
+      (save-excursion
+	(widen)
+	(goto-char (point-min))
+	;; remove the --text follows this line-- separator
+	(when (search-forward-regexp (concat "^" mail-header-separator) nil t)
+	  (let ((inhibit-read-only t))
+	    (replace-match "")))))
 
-  (defun cm/notmuch-message-setup ()
-    "Configures a bunch of hooks for notmuch message windows"
-    (message-add-action `(message "debug: done exit actions") 'exit)
-    (message-add-action `(message "debug: done postpone actions") 'postpone)
-    (message-add-action `(message "debug: done kill actions") 'kill)
-    (message-add-action 'notmuch-message-postpone-keep 'postpone)
-    (message-add-action 'notmuch-message-postpone-cleanup 'exit))
+    (defun cm/notmuch-message-setup ()
+      "Configures a bunch of hooks for notmuch message windows"
+      (message-add-action `(message "debug: done exit actions") 'exit)
+      (message-add-action `(message "debug: done postpone actions") 'postpone)
+      (message-add-action `(message "debug: done kill actions") 'kill)
+      (message-add-action 'notmuch-message-postpone-keep 'postpone)
+      (message-add-action 'notmuch-message-postpone-cleanup 'exit))
 
-  (add-hook 'message-mode-hook 'cm/notmuch-message-setup)
-  (add-hook 'message-mode-hook
-	    (lambda ()
-	      (add-hook 'after-save-hook 'cm/draft-insert-mail-header-separator nil 'make-it-local)
-	      (add-hook 'before-save-hook 'cm/draft-remove-mail-header-separator nil 'make-it-local)))
+    (add-hook 'message-mode-hook 'cm/notmuch-message-setup)
+    (add-hook 'message-mode-hook
+	      (lambda ()
+		(add-hook 'after-save-hook 'cm/draft-insert-mail-header-separator nil 'make-it-local)
+		(add-hook 'before-save-hook 'cm/draft-remove-mail-header-separator nil 'make-it-local)))
 
-  (defun notmuch-message-postpone-cleanup ()
-    "Remove autosave and postponed messages for that buffer"
-    (message "debug: postpone cleanup hook")
-    (message "deleting draft file: %s" notmuch-draft-filename)
-    (if (file-exists-p notmuch-draft-filename)
-	(progn
-	  (kill-buffer)
-	  (delete-file notmuch-draft-filename)
-	  (if (file-exists-p notmuch-draft-filename)
-	      (message "failed to delete file %s" notmuch-draft-filename)
-	    (message "debug: file deleted"))
-	  )
-      (message "draft file %s doesn't exist" notmuch-draft-filename)))
+    (defun notmuch-message-postpone-cleanup ()
+      "Remove autosave and postponed messages for that buffer"
+      (message "debug: postpone cleanup hook")
+      (message "deleting draft file: %s" notmuch-draft-filename)
+      (if (file-exists-p notmuch-draft-filename)
+	  (progn
+	    (kill-buffer)
+	    (delete-file notmuch-draft-filename)
+	    (if (file-exists-p notmuch-draft-filename)
+		(message "failed to delete file %s" notmuch-draft-filename)
+	      (message "debug: file deleted"))
+	    )
+	(message "draft file %s doesn't exist" notmuch-draft-filename)))
 
-  (defun notmuch-message-postpone-keep ()
-    "Moves the previous buffer into the postponed folder and then kill it"
-    (save-excursion
-      (set-buffer (last-buffer))
-      (cm/draft-remove-mail-header-separator)
-      (notmuch-maildir-fcc-write-buffer-to-maildir "~/mail/cm/drafts" t)
-      (kill-buffer)))
+    (defun notmuch-message-postpone-keep ()
+      "Moves the previous buffer into the postponed folder and then kill it"
+      (save-excursion
+	(set-buffer (last-buffer))
+	(cm/draft-remove-mail-header-separator)
+	(notmuch-maildir-fcc-write-buffer-to-maildir "~/mail/cm/drafts" t)
+	(kill-buffer)))
 
-  ;; (defun notmuch-show-resume-message ()
-  ;;   "Resume a postponed message."
-  ;;   (interactive)
-  ;;   (setq tmpfilename (notmuch-show-get-filename))
-  ;;   (notmuch-show-view-raw-message)
-  ;;   (setq buffer-file-name tmpfilename)
-  ;;   (message "debug: set buffer file name to %s" buffer-file-name)
-  ;;   (setq notmuch-draft-filename buffer-file-name)
-  ;;   (make-local-variable 'notmuch-draft-filename)
-  ;;   (message "debug: set draft file name to %s" notmuch-draft-filename)
-  ;;   (message-mode)
-  ;;   (cm/draft-insert-mail-header-separator))
+    ;; (defun notmuch-show-resume-message ()
+    ;;   "Resume a postponed message."
+    ;;   (interactive)
+    ;;   (setq tmpfilename (notmuch-show-get-filename))
+    ;;   (notmuch-show-view-raw-message)
+    ;;   (setq buffer-file-name tmpfilename)
+    ;;   (message "debug: set buffer file name to %s" buffer-file-name)
+    ;;   (setq notmuch-draft-filename buffer-file-name)
+    ;;   (make-local-variable 'notmuch-draft-filename)
+    ;;   (message "debug: set draft file name to %s" notmuch-draft-filename)
+    ;;   (message-mode)
+    ;;   (cm/draft-insert-mail-header-separator))
 
-  ;; ;; set these to something damn high I hate elided messages
-  ;; (setq notmuch-wash-citation-lines-prefix 1024)
-  ;; (setq notmuch-wash-citation-lines-suffix 1024)
-  ;; (setq notmuch-wash-signature-lines-max 0)
-  ;; (setq notmuch-wash-wrap-lines-length (if (< fill-column 100) 100 fill-column))
+    ;; ;; set these to something damn high I hate elided messages
+    ;; (setq notmuch-wash-citation-lines-prefix 1024)
+    ;; (setq notmuch-wash-citation-lines-suffix 1024)
+    ;; (setq notmuch-wash-signature-lines-max 0)
+    ;; (setq notmuch-wash-wrap-lines-length (if (< fill-column 100) 100 fill-column))
 
-  ;; (setq notmuch-maildir-use-notmuch-insert nil)
-  ;; (require 'notmuch-show)
-  ;; (define-key notmuch-show-mode-map "e" 'notmuch-show-resume-message)
+    ;; (setq notmuch-maildir-use-notmuch-insert nil)
+    ;; (require 'notmuch-show)
+    ;; (define-key notmuch-show-mode-map "e" 'notmuch-show-resume-message)
+  )
 #+end_src
 **** Keybindings
      :PROPERTIES:
@@ -5250,67 +5275,73 @@ good problem to me :)
 For some reason the ~=~ sign is used for refresh in notmuch. This is
 horrifying.
 #+begin_src emacs-lisp
-  (setq notmuch-archive-tags '("-inbox" "-unread" "+archive"))
+  (when (require 'notmuch nil t)
+    (setq notmuch-archive-tags '("-inbox" "-unread" "+archive"))
 
-  (defun cm/notmuch-archive-unread-all ()
-    (interactive)
-    (notmuch-search-tag-all notmuch-archive-tags))
+    (defun cm/notmuch-archive-unread-all ()
+      (interactive)
+      (notmuch-search-tag-all notmuch-archive-tags))
 
-  (defvar cm/private-notmuch-saved-searches '()
-    "Saved searches not to be published publicly")
+    (defvar cm/private-notmuch-saved-searches '()
+      "Saved searches not to be published publicly")
 
-  (setq notmuch-saved-searches
-	'((:name "inbox"         :query "tag:inbox"                 :key "i"  :sort-order oldest-first)
-	  (:name "flagged"       :query "tag:flagged"               :key "f"  :sort-order newest-first)
-	  (:name "unread"        :query "tag:unread"                :key "u"  :sort-order newest-first)
-	  (:name "work-inbox"    :query "tag:work AND tag:inbox"    :key "wi" :sort-order oldest-first)
-	  (:name "work-bulk"     :query "tag:work AND tag:unread"
-		 :key "wb" :sort-order newest-first)
-	  (:name "inbox-codemac" :query "tag:codemac AND tag:inbox" :key "c" :sort-order newest-first)
-	  (:name "drafts"        :query "tag:draft"                 :key "d" :sort-order newest-first)
-	  (:name "today"         :query "date:today..!"             :key "t" :sort-order oldest-first)
-	  (:name "sent"          :query "tag:sent"                  :key "n")))
+    (setq notmuch-saved-searches
+	  '((:name "inbox"         :query "tag:inbox"                 :key "i"  :sort-order oldest-first)
+	    (:name "flagged"       :query "tag:flagged"               :key "f"  :sort-order newest-first)
+	    (:name "unread"        :query "tag:unread"                :key "u"  :sort-order newest-first)
+	    (:name "work-inbox"    :query "tag:work AND tag:inbox"    :key "wi" :sort-order oldest-first)
+	    (:name "work-bulk"     :query "tag:work AND tag:unread"
+		   :key "wb" :sort-order newest-first)
+	    (:name "inbox-codemac" :query "tag:codemac AND tag:inbox" :key "c" :sort-order newest-first)
+	    (:name "drafts"        :query "tag:draft"                 :key "d" :sort-order newest-first)
+	    (:name "today"         :query "date:today..!"             :key "t" :sort-order oldest-first)
+	    (:name "sent"          :query "tag:sent"                  :key "n")))
 
-  (cm/defun-local-wrap cm/notmuch-jump-search notmuch-jump-search)
+    (cm/defun-local-wrap cm/notmuch-jump-search notmuch-jump-search)
 
-  ;; we now use this for imenu
-  ;; (global-set-key (kbd "C-c i") #'cm/notmuch-jump-search)
+    ;; we now use this for imenu
+    ;; (global-set-key (kbd "C-c i") #'cm/notmuch-jump-search)
 
-  ;; keep the "goto address" logic consistent with org mode
-  (define-key notmuch-show-mode-map (kbd "C-c C-o") 'goto-address-at-point)
-  (setq notmuch-tagging-keys
-	`((,(kbd "a") notmuch-archive-tags "Archive")
-	  (,(kbd "u") notmuch-show-mark-read-tags "Mark read")
-	  (,(kbd "f")
-	   ("+flagged")
-	   "Flag")
-	  (,(kbd "m")
-	   ("+muted")
-	   "Mute")
-	  (,(kbd "s")
-	   ("+spam" "-inbox")
-	   "Mark as spam")
-	  (,(kbd "d")
-	   ("+deleted" "-inbox")
-	   "Delete")))
+    ;; keep the "goto address" logic consistent with org mode
+    (define-key notmuch-show-mode-map (kbd "C-c C-o") 'goto-address-at-point)
+    (setq notmuch-tagging-keys
+	  `((,(kbd "a") notmuch-archive-tags "Archive")
+	    (,(kbd "u") notmuch-show-mark-read-tags "Mark read")
+	    (,(kbd "f")
+	     ("+flagged")
+	     "Flag")
+	    (,(kbd "m")
+	     ("+muted")
+	     "Mute")
+	    (,(kbd "s")
+	     ("+spam" "-inbox")
+	     "Mark as spam")
+	    (,(kbd "d")
+	     ("+deleted" "-inbox")
+	     "Delete")))
 
-  (cm/defun-local cm/read-mail-command-notmuch ()
-    (notmuch-search "tag:inbox" t))
+    (cm/defun-local cm/read-mail-command-notmuch ()
+		    (notmuch-search "tag:inbox" t))
 
-  (setq read-mail-command #'cm/read-mail-command-notmuch)
+    (setq read-mail-command #'cm/read-mail-command-notmuch)
+  )
 #+end_src
 What is this sillyness? =g= should always refresh a buffer, shit man.
 #+begin_src emacs-lisp
- (eval-after-load 'notmuch
-   '(define-key notmuch-common-keymap "g" 'notmuch-refresh-this-buffer))
- (eval-after-load 'notmuch
-   '(define-key notmuch-common-keymap "A" 'cm/notmuch-archive-unread-all))
+  (when (require 'notmuch nil t)
+    (eval-after-load 'notmuch
+      '(define-key notmuch-common-keymap "g" 'notmuch-refresh-this-buffer))
+    (eval-after-load 'notmuch
+      '(define-key notmuch-common-keymap "A" 'cm/notmuch-archive-unread-all))
+  )
 #+end_src
 
 Notmuch fcc dir handling
 #+begin_src emacs-lisp
-  (setq notmuch-fcc-dirs '((".*@google.com" . "work/sent")
-			   (".*@codemac.net" . "cm/sent")))
+  (when (require 'notmuch nil t)
+    (setq notmuch-fcc-dirs '((".*@google.com" . "work/sent")
+			     (".*@codemac.net" . "cm/sent")))
+  )
 #+end_src
 **** Message view
      :PROPERTIES:
@@ -5337,20 +5368,21 @@ defaults.
                                     ("flagged" . (:foreground "khaki"))))
 #+end_src
 #+begin_src emacs-lisp
-  (require 'messages-are-flowing)
-  (defun cm/message-mode-hook ()
-    (local-set-key (kbd "C-c M-o") 'org-mime-htmlize)
-    ;; orgstruct mode conflicts with hard-newlines. format=flowed is
-    ;; *more* important than org-mime-htmlize.
-    ;; (orgstruct-mode 1)
-    (turn-off-auto-fill)
-    (setq truncate-lines nil
-	  word-wrap t
-	  use-hard-newlines t)
-    (visual-line-mode t)
-    (messages-are-flowing-use-and-mark-hard-newlines))
-
-  (add-hook 'message-mode-hook 'cm/message-mode-hook)
+  (when (require 'notmuch nil t)
+    (require 'messages-are-flowing)
+    (defun cm/message-mode-hook ()
+      (local-set-key (kbd "C-c M-o") 'org-mime-htmlize)
+      ;; orgstruct mode conflicts with hard-newlines. format=flowed is
+      ;; *more* important than org-mime-htmlize.
+      ;; (orgstruct-mode 1)
+      (turn-off-auto-fill)
+      (setq truncate-lines nil
+	    word-wrap t
+	    use-hard-newlines t)
+      (visual-line-mode t)
+      (messages-are-flowing-use-and-mark-hard-newlines))
+  
+    (add-hook 'message-mode-hook 'cm/message-mode-hook))
 #+end_src
 Indentations get really silly in corporate mail. I wish there was an
 easier way to visually see "this is a reply" without indenting into
@@ -6393,7 +6425,7 @@ has a huge opportunity to succeed. It is similar to notmuch.
 ;	  mu4e-refile-folder          (cm/make-dynamic-folder "all")
 ;	  mu4e-get-mail-command       "mbsync -a" ;; mbsync -a is running by cron
 ;	  mu4e-sent-messages-behavior 'sent
-;	  mu4e-org-contacts-file      "~/org/_notes/contacts.org"
+;	  mu4e-org-contacts-file      (cm/org-dir "_notes/contacts.org")
 ;	  mu4e-use-fancy-chars        nil
 ;	  mu4e-view-show-images       t
 ;	  mu4e-view-show-addresses    t
