@@ -59,6 +59,20 @@
 
 (define-key *top-map* (kbd "s-RET") "fullscreen")
 
+;; backlight
+(define-key *top-map* (kbd "XF86MonBrightnessUp") "exec backlight set +1%")
+(define-key *top-map* (kbd "XF86MonBrightnessDown") "exec backlight set -1%")
+
+(define-key *top-map* (kbd "s-XF86MonBrightnessUp") "exec backlight set +5%")
+(define-key *top-map* (kbd "s-XF86MonBrightnessDown") "exec backlight set -5%")
+
+;; volume
+(define-key *top-map* (kbd "XF86AudioMute") "exec volume mute")
+(define-key *top-map* (kbd "XF86AudioLowerVolume") "exec volume down")
+(define-key *top-map* (kbd "XF86AudioRaiseVolume") "exec volume up")
+(define-key *top-map* (kbd "s-XF86AudioLowerVolume") "exec volume down-small")
+(define-key *top-map* (kbd "s-XF86AudioRaiseVolume") "exec volume up-small")
+(define-key *top-map* (kbd "XF86AudioMicMute") "exec volume mic-mute")
 
 ;; launch that shit
 (defvar *launch-shit-map*
