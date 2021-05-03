@@ -1,7 +1,7 @@
 #
 # You have to first run this and commit the login stuff
 #
-# docker run --rm -it -u `{id -u}^':'^`{id -g} -e HOME -e DISPLAY -e XAUTHORITY -v $XAUTHORITY:$XAUTHORITY -w $HOME '--net=host' --hostname `{hostname} -v $HOME/Dropbox:$HOME/Dropbox -v $HOME/.dropbox-dist:$HOME/.dropbox-dist -v $HOME/.dropbox:$HOME/.dropbox jmickey-dropbox $HOME/.dropbox-dist/dropboxd
+# docker run --rm -it -u `{id -u}^':'^`{id -g} -e HOME -e DISPLAY -e XAUTHORITY -v $XAUTHORITY:$XAUTHORITY -w $HOME '--net=host' --hostname `{hostname} -v $HOME/Dropbox:$HOME/Dropbox -v $HOME/.dropbox-dist:$HOME/.dropbox-dist -v $HOME/.dropbox:$HOME/.dropbox jmickey-dropbox
 #
 
 FROM debian:jessie
