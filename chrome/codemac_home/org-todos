@@ -1,6 +1,6 @@
 #!/usr/bin/env rc
 
-agenda_files=($HOME/org/*.org)
+agenda_files=($HOME/Dropbox/org/*.org)
 homefile=$HOME/config/chrome/codemac_home/home.html
 
 cat <<HERE > $homefile.tmp

@@ -3517,8 +3517,8 @@ This add some commands for managing and clocking my time in a hydra.
 			      :maxlevel . 5)
 			     (cm/org-buffer-files
 			      :maxlevel . 5)
-			     (((cm/org-dir "gtd.org")
-			       (cm/org-dir "work.org"))
+			     ((,(cm/org-dir "gtd.org")
+			       ,(cm/org-dir "work.org"))
 			      :maxlevel . 5)))
 
   ;; my dimmed face isn't that dim
