@@ -104,6 +104,27 @@
 
 (define-key *top-map* (kbd "s-SPC") "scratch-group-toggle")
 
-(setf *normal-border-width* 0)
-(setf *mouse-focus-policy* :sloppy)
+(setf *normal-border-width* 1)
+(setf *maxsize-border-width* 1)
+(setf *transient-border-width* 1)
+(setf *window-border-style* :tight)
+
+;; Ugh the worst part of stumpwm. This somehow solves many tiny
+;; nuanced bugs around dropdown menus in webpages. I have yet to
+;; create a great repro of what is happening though, so it's hard to
+;; track down.
+(setf *mouse-focus-policy* :click)
+
 (setf message-window-gravity :center)
+
+(set-focus-color "yellow")
+(set-unfocus-color "grey")
+(set-float-focus-color "yellow")
+(set-float-unfocus-color "grey")
+
+
+;; see if appt is due to urgent?
+(defun echo-urgent-window (target)
+  (message-no-timeout "~ a has an message for you." (window-title target)))
+
+(add-hook *urgent-window-hook* 'echo-urgent-window)
