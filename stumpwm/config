@@ -26,6 +26,13 @@
      #'(lambda (h) (enable-mode-line (current-screen) h t))
      (screen-heads (current-screen)))))
 
+; This doesn't work because you need to wait for display devices to settle for a hot moment :(
+;
+;(defun cm/new-head-hook (new-head current-screen)
+;  (run-commands "exec-screens-and-fix"))
+;
+;(add-hook *new-head-hook* #'cm/new-head-hook)
+
 (define-key *top-map* (kbd "s-n") "pull-hidden-next")
 (define-key *root-map* (kbd "s-n") "pull-hidden-next")
 
@@ -51,6 +58,7 @@
 (define-key *root-map* (kbd "c") "exec term")
 
 (define-key *top-map* (kbd "s-F3") "exec")
+(define-key *root-map* (kbd ".") "exec")
 
 (define-key *top-map* (kbd "s-Up") "move-focus up")
 (define-key *top-map* (kbd "s-Down") "move-focus down")

@@ -3968,7 +3968,7 @@ How I deploy my personal website.
 #+begin_src emacs-lisp
   (setq cm/org-today-filefmt (cm/org-dir "_notes/%Y-%m-%d.org"))
 
-  (setq cm/org-today-headerfmt "#+title: %A, %Y-%m-%d\n#+date: <%Y-%m-%d>\n\n")
+  (setq cm/org-today-headerfmt "#+title: Daily Notes: %Y-%m-%d: %A\n#+filetags: :daily:\n#+date: <%Y-%m-%d>\n\n")
 
   (defun cm/org-today-header ()
     (interactive)
@@ -3986,7 +3986,7 @@ How I deploy my personal website.
 	(find-file todayfile)
 	(goto-char (point-min))
 	(insert (cm/org-today-header)))))
-  
+
   (global-set-key (kbd "C-c j") 'cm/org-today-open)
 #+end_src
 **** Checklist Creation
@@ -4217,6 +4217,19 @@ Now we define the switch statement for wm_class & wm_name matching:
 #+end_src
 
 
+**** Org Roam
+
+Hopefully this replaces my hacked up notes.org, _notes directory, shitty zettl, etc.
+
+#+begin_src emacs-lisp
+  (use-package org-roam
+    :hook (after-init . org-roam-mode)
+    :custom (org-roam-directory (cm/org-dir "_notes"))
+    :init
+    (setq org-roam-tag-sources '(prop vanilla)))
+  
+#+end_src
+
 **** Search through my _notes directory
 I like to record notes about various things in a long lived way via
 plain text. However, I haven't actually used them that much because I
@@ -4231,40 +4244,41 @@ Let's first layout what we want the keymap to be like:
 #+begin_src emacs-lisp
   (defhydra hydra-cm-org-notes (global-map "C-c n" :exit t)
     "Use your notes wisely, Luke"
-    ("n" cm/org-rifle-notes "search through all notes")
+    ("n" deft "search through all notes" :column "searching")
     ("a" cm/org-rifle-agenda "search agenda org files in ~/org")
-    ("g" cm/org-rifle-all-org "search global org files in ~/org")
     ("r" cm/org-notes-capture "new note")
+    ("l" org-roam "show org-roam links" :column "roaming")
+    ("g" org-roam-graph "show roam graph")
+    ("f" org-roam-find-file "find note")
+    ("i" org-roam-insert "insert roam refererce")
+    ("I" org-roam-insert-immediate "insert roam reference immediately")
     ("q" nil "quit"))
 
   (global-set-key (kbd "C-c n") 'hydra-cm-org-notes/body)
 #+end_src
 
-Using deft held back me from a lot of syncing, backing up etc by
-having huge directories of notes that I wanted to see in a big file
-either way. With helm-org-rifle this becomes unnecessary.
 #+begin_src emacs-lisp
-  ;; (use-package deft
-  ;;   :config
-  ;;   (setq deft-default-extension "org")
-  ;;   (setq deft-directory "~/org/_notes/")
-  ;;   (setq deft-archive-directory "~/org/_attic/")
-  ;;   (setq deft-file-naming-rules '((noslash . "-")
-  ;; 				 (nospace . "_")
-  ;; 				 (case-fn . downcase)))
-  ;;   (setq deft-use-filter-string-for-filename t)
-  ;;   (setq deft-strip-title-regexp
-  ;; 	(concat "\\(?:"
-  ;; 		"^%+" ; line beg with %
-  ;; 		"\\|^#\\+TITLE: *" ; org-mode title
-  ;; 		"\\|^#\\+title: *" ; org-mode lowercase title
-  ;; 		"\\|^[#* ]+" ; line beg with #, * and/or space
-  ;; 		"\\|-\\*-[[:alpha:]]+-\\*-" ; -*- .. -*- lines
-  ;; 		"\\|^Title:[\t ]*" ; MultiMarkdown metadata
-  ;; 		"\\|#+" ; line with just # chars
-  ;; 		"$\\)"))
-  ;;   (setq deft-strip-summary-regexp
-  ;; 	"\\([\n\t]\\|^#\\+[[:alpha:]_]+:.*$\\)"))
+  (use-package deft
+    :config
+    (setq deft-default-extension "org")
+    (setq deft-directory (cm/org-dir "_notes/"))
+    (setq deft-archive-directory (cm/org-dir "_attic/"))
+    (setq deft-file-naming-rules '((noslash . "-")
+				   (nospace . "_")
+				   (case-fn . downcase)))
+    (setq deft-use-filter-string-for-filename t)
+    (setq deft-strip-title-regexp
+	  (concat "\\(?:"
+		  "^%+" ; line beg with %
+		  "\\|^#\\+TITLE: *" ; org-mode title
+		  "\\|^#\\+title: *" ; org-mode lowercase title
+		  "\\|^[#* ]+" ; line beg with #, * and/or space
+		  "\\|-\\*-[[:alpha:]]+-\\*-" ; -*- .. -*- lines
+		  "\\|^Title:[\t ]*" ; MultiMarkdown metadata
+		  "\\|#+" ; line with just # chars
+		  "$\\)"))
+    (setq deft-strip-summary-regexp
+	  "\\([\n\t]\\|^#\\+[[:alpha:]_]+:.*$\\)"))
 #+end_src
 
 THIS WAS WAY OVER THE TOP. We can just use =org-search-view= if we
