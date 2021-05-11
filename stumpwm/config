@@ -60,11 +60,11 @@
 (define-key *top-map* (kbd "s-RET") "fullscreen")
 
 ;; backlight
-(define-key *top-map* (kbd "XF86MonBrightnessUp") "exec backlight set +1%")
-(define-key *top-map* (kbd "XF86MonBrightnessDown") "exec backlight set -1%")
+(define-key *top-map* (kbd "XF86MonBrightnessUp") "exec backlight set +5%")
+(define-key *top-map* (kbd "XF86MonBrightnessDown") "exec backlight set -5%")
 
-(define-key *top-map* (kbd "s-XF86MonBrightnessUp") "exec backlight set +5%")
-(define-key *top-map* (kbd "s-XF86MonBrightnessDown") "exec backlight set -5%")
+(define-key *top-map* (kbd "s-XF86MonBrightnessUp") "exec backlight set +1%")
+(define-key *top-map* (kbd "s-XF86MonBrightnessDown") "exec backlight set -1%")
 
 ;; volume
 (define-key *top-map* (kbd "XF86AudioMute") "exec volume mute")
@@ -125,6 +125,6 @@
 
 ;; see if appt is due to urgent?
 (defun echo-urgent-window (target)
-  (message-no-timeout "~ a has an message for you." (window-title target)))
+  (message "urgent: ~a" (window-title target)))
 
 (add-hook *urgent-window-hook* 'echo-urgent-window)
