@@ -3065,7 +3065,7 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
       ,(cm/org-ctx-agenda "w" '("INTERNET" "COMPUTER" "WORK" "PHONE")  "Work Agenda")
       ,(cm/org-ctx-agenda "b" '("INTERNET" "COMPUTER" "PHONE")  "Bus Agenda")
       ,(cm/org-ctx-agenda "t" '("COMPUTER" "PHONE")  "Train Agenda")
-      ,(cm/org-ctx-agenda "p" '("COMPUTER" "PHONE")  "Plane Agenda")
+      ,(cm/org-ctx-agenda "p" '("PHONE")  "Phone Agenda")
       ,(cm/org-ctx-agenda "m" '("INTERNET" "ERRAND" "PHONE")  "Mobile Agenda")
       ("ca" "People Agenda"
        ((tags-todo "AGENDA-TODO=\"PROJECT\"-TODO=\"WAITING\"|TODO=\"WAITING\""))
@@ -3559,6 +3559,23 @@ This add some commands for managing and clocking my time in a hydra.
   (setq org-hide-leading-stars t)
   (setq org-outline-path-complete-in-steps nil)
   (setq org-pretty-entities-include-sub-superscripts nil)
+#+end_src
+
+Using the "ABCDE" method of prioritization.
+
+- A :: very important, something you must do. There are serious negative consequences if not done.
+- B :: important, something you should do. There are only minor negative consequences if not done.
+- C :: nice to do. There are no negative consequences if not done.
+- D :: delegate. You should not do this, but someone else can.
+- E :: eliminate, whenever possible.
+
+#+begin_src emacs-lisp
+  (setq org-priority-highest ?A)
+  (setq org-priority-lowest ?E)
+  (setq org-priority-default ?C)
+#+end_src
+
+#+begin_src emacs-lisp
   (setq org-refile-use-outline-path 'file)
   (setq org-return-follows-link nil)
   (setq org-reverse-note-order nil)
@@ -4226,8 +4243,12 @@ Hopefully this replaces my hacked up notes.org, _notes directory, shitty zettl, 
     :hook (after-init . org-roam-mode)
     :custom (org-roam-directory (cm/org-dir "_notes"))
     :init
-    (setq org-roam-tag-sources '(prop vanilla)))
-  
+    (setq org-roam-tag-sources '(prop vanilla))
+    (setq org-roam-capture-templates
+	  '(("d" "default" plain #'org-roam-capture--get-point "%?" :file-name "%<%Y%m%d%H%M>_${slug}" :head "#+title: ${title}
+  ,#+date: <%<%Y-%m-%d %a %H:%M>>
+  " :unnarrowed t))))
+
 #+end_src
 
 **** Search through my _notes directory
@@ -4593,23 +4614,35 @@ biggest problem I'm going to have is actually maintaing the PDF's in
 some reasonable way.
 
 ***** Org-ref setup
+
+Not really using this yet, need to set this up right.
+
 #+begin_src emacs-lisp
-    (use-package org-ref
-      :init
-      (setq org-ref-completion-library 'org-ref-ivy-cite)
-      :config
-      (require 'ivy-bibtex)
-      (setq org-ref-bibliography-notes (cm/org-dir "_zettel/reference_notes.org")
-	    org-ref-bibtex-hydra-key-binding "\C-cj"
-	    org-ref-default-bibliography (list (cm/org-dir "_zettel/references.bib"))
-	    org-ref-pdf-directory (cm/org-dir "_zettel/_pdf/")
-	    bibtex-completion-notes-path (cm/org-dir "_zettel/")
-	    reftex-default-bibliography (list (cm/org-dir "_zettel/references.bib")))
-       (require 'org-ref-bibtex)
-      (require 'doi-utils)
-      (require 'org-ref-arxiv)
-      (doi-utils-def-bibtex-type report ("report")
-				 author title publisher year month doi url))
+    ;; (use-package org-ref
+    ;; :init
+    ;; (setq org-ref-completion-library 'org-ref-ivy-cite)
+    ;; :config
+    ;; (require 'ivy-bibtex)
+    ;; (setq
+    ;;  reftex-default-bibliography (list (cm/org-dir "_biblio/references.bib"))
+    ;;  org-ref-pdf-directory (cm/org-dir "_biblio/pdf")
+    ;;  org-ref-default-bibliography (list (cm/org-dir "_biblio/references.bib"))   
+    ;;  org-ref-bibliography-notes (cm/org-dir "_biblio/reference_notes.org")
+    ;;  bibtex-completion-bibliography (car org-ref-default-bibliography)
+    ;;  bibtex-completion-library-path org-ref-pdf-directory
+    ;;  bibtex-completion-notes-path 
+
+
+    ;; 	org-ref-bibtex-hydra-key-binding "\C-cj"
+
+    ;; 	org-ref-pdf-directory (cm/org-dir "_zettel/_pdf/")
+    ;; 	bibtex-completion-notes-path (cm/org-dir "_zettel/")
+    ;; 	reftex-default-bibliography (list (cm/org-dir "_zettel/references.bib")))
+    ;;  (require 'org-ref-bibtex)
+    ;; (require 'doi-utils)
+    ;; (require 'org-ref-arxiv)
+    ;; (doi-utils-def-bibtex-type report ("report")
+    ;; 			     author title publisher year month doi url))
 #+end_src
 
 ***** Zettel deft setup
