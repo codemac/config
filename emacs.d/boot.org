@@ -1217,7 +1217,7 @@ really interpret anything.
     :ID:       1f6334ef-51f3-417d-acc6-c578c2a9223b
     :END:
 #+begin_src emacs-lisp
-  (set-default 'explicit-shell-file-name (concat (getenv "HOME") "/.guix-profile/bin/rc"))
+  (set-default 'explicit-shell-file-name (concat (getenv "HOME") "/bin/rc"))
   (defvar explicit-rc-args '("-l")
     "List of explicit arguments to rc.")
 
