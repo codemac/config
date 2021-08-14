@@ -183,13 +183,15 @@ screen DPI's.
       (set-face-attribute 'default nil :font fixed)
       (set-face-attribute 'fixed-pitch nil :font fixed)
       (if (find-font (font-spec :name "EtBembo-12"))
-          (set-face-attribute 'variable-pitch nil :font variable)
-        (set-face-attribute 'variable-pitch nil :font fixed))))
+	  (set-face-attribute 'variable-pitch nil :font variable)
+	(set-face-attribute 'variable-pitch nil :font fixed))))
 
 
   (cond
     ((equal (system-name) "penolpe")
      (cm/produce-font 9))
+    ((equal (system-name) "jmickey-mbp")
+     (cm/produce-font 13))
     (t
      (cm/produce-font 11)))
 
@@ -1126,19 +1128,20 @@ I need to tie this into projectile, but for now have a way to create a
 	  (switch-to-buffer eb)
 	(shell bn))))
 
-  (use-package vterm
-    :config
-    (defun cm/vterm-mode-hook ()
-      (setq-local global-hl-line-mode nil))    
-    (add-hook 'vterm-mode-hook #'cm/vterm-mode-hook)
-    (defun cm/shell-new-vterm (name)
-      "Create a vterm buffer named NAME."
-      (interactive "sShell Name: ")
-      (let* ((bn (concat "*shell:" name "*"))
-	     (eb (get-buffer bn)))
-	(if (and eb (get-buffer-process eb))
-	    (switch-to-buffer eb)
-	  (vterm bn)))))
+  ;; (when (eq system-type 'gnu/linux)
+  ;;   (use-package vterm
+  ;;     :config
+  ;;     (defun cm/vterm-mode-hook ()
+  ;;       (setq-local global-hl-line-mode nil))    
+  ;;     (add-hook 'vterm-mode-hook #'cm/vterm-mode-hook)
+  ;;     (defun cm/shell-new-vterm (name)
+  ;;       "Create a vterm buffer named NAME."
+  ;;       (interactive "sShell Name: ")
+  ;;       (let* ((bn (concat "*shell:" name "*"))
+  ;; 	     (eb (get-buffer bn)))
+  ;; 	(if (and eb (get-buffer-process eb))
+  ;; 	    (switch-to-buffer eb)
+  ;; 	  (vterm bn))))))
 
   (defun cm/shell-new (name)
     "Create a shell buffer named NAME."
@@ -1221,6 +1224,9 @@ really interpret anything.
   (when (string-equal (system-name) "jmickey-glaptop0")
     (set-default 'explicit-shell-file-name (concat (getenv "HOME") "/.guix-profile/bin/rc"))
     (setq explicit-rc-args nil))
+
+  (when (string-equal (system-name) "jmickey-mbp")
+    (set-default 'explicit-shell-file-name (concat (getenv "HOME") "/bin/rc")))
 #+end_src
 *** Track the directory of the shell process
     :PROPERTIES:
@@ -2545,10 +2551,11 @@ default to serving =~/public_html=, so I turn that off here.
 *** PDF Tools
 This adds much better support for pdfs in emacs.
 #+begin_src emacs-lisp
-  (use-package pdf-tools
+  (when (eq system-type 'gnu/linux)
+    (use-package pdf-tools
     :pin manual
     :config
-    (pdf-tools-install))
+    (pdf-tools-install)))
 #+end_src
 ** Programs
    :PROPERTIES:
@@ -2566,21 +2573,21 @@ A set of timers
 *** Elfeed
 [[https://github.com/skeeto/elfeed][elfeed]] is a great RSS reader in the style of notmuch. Super useful.
 #+begin_src emacs-lisp
-  (use-package elfeed-org
-    :config
-    (elfeed-org)
-    (setq rmh-elfeed-org-files (list (cm/org-dir "_notes/rss.org")))
+  ;; (use-package elfeed-org
+  ;;   :config
+  ;;   (elfeed-org)
+  ;;   (setq rmh-elfeed-org-files (list (cm/org-dir "_notes/rss.org")))
 
-  (defun cm/elfeed-update ()
-    (interactive)
-    (elfeed-update)
-    (elfeed-search-update--force))
+  ;; (defun cm/elfeed-update ()
+  ;;   (interactive)
+  ;;   (elfeed-update)
+  ;;   (elfeed-search-update--force))
 
-  (use-package elfeed
-    :commands elfeed
-    :bind (("C-c e" . elfeed)
-	   :map elfeed-search-mode-map
-	   ("G" . cm/elfeed-update)))
+  ;; (use-package elfeed
+  ;;   :commands elfeed
+  ;;   :bind (("C-c e" . elfeed)
+  ;; 	 :map elfeed-search-mode-map
+  ;; 	 ("G" . cm/elfeed-update)))
 #+end_src
 *** EMMS - Emacs MultiMedia System
     :PROPERTIES:
@@ -4513,7 +4520,7 @@ view on things.
 #+end_src
 **** Better Org Goto
 #+begin_src emacs-lisp
-  (defvar cm/org-goto-dirs (list (cm/org-dir "*.org")))
+  (defvar cm/org-goto-dirs (list (cm/org-dir "*.org"))
     "Org directories to search with goto")
 
   (setq counsel-org-goto-all-outline-path-prefix 'file-name)
