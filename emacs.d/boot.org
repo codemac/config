@@ -2551,11 +2551,11 @@ default to serving =~/public_html=, so I turn that off here.
 *** PDF Tools
 This adds much better support for pdfs in emacs.
 #+begin_src emacs-lisp
-  (when (eq system-type 'gnu/linux)
-    (use-package pdf-tools
-    :pin manual
-    :config
-    (pdf-tools-install)))
+  ;; (when (eq system-type 'gnu/linux)
+  ;;   (use-package pdf-tools
+  ;;   :pin manual
+  ;;   :config
+  ;;   (pdf-tools-install)))
 #+end_src
 ** Programs
    :PROPERTIES:
@@ -4601,22 +4601,22 @@ some reasonable way.
 
 ***** Org-ref setup
 #+begin_src emacs-lisp
-    (use-package org-ref
-      :init
-      (setq org-ref-completion-library 'org-ref-ivy-cite)
-      :config
-      (require 'ivy-bibtex)
-      (setq org-ref-bibliography-notes (cm/org-dir "_zettel/reference_notes.org")
-	    org-ref-bibtex-hydra-key-binding "\C-cj"
-	    org-ref-default-bibliography (list (cm/org-dir "_zettel/references.bib"))
-	    org-ref-pdf-directory (cm/org-dir "_zettel/_pdf/")
-	    bibtex-completion-notes-path (cm/org-dir "_zettel/")
-	    reftex-default-bibliography (list (cm/org-dir "_zettel/references.bib")))
-       (require 'org-ref-bibtex)
-      (require 'doi-utils)
-      (require 'org-ref-arxiv)
-      (doi-utils-def-bibtex-type report ("report")
-				 author title publisher year month doi url))
+  ;; (use-package org-ref
+  ;;   :init
+  ;;   (setq org-ref-completion-library 'org-ref-ivy-cite)
+  ;;   :config
+  ;;   (require 'ivy-bibtex)
+  ;;   (setq org-ref-bibliography-notes (cm/org-dir "_zettel/reference_notes.org")
+  ;; 	org-ref-bibtex-hydra-key-binding "\C-cj"
+  ;; 	org-ref-default-bibliography (list (cm/org-dir "_zettel/references.bib"))
+  ;; 	org-ref-pdf-directory (cm/org-dir "_zettel/_pdf/")
+  ;; 	bibtex-completion-notes-path (cm/org-dir "_zettel/")
+  ;; 	reftex-default-bibliography (list (cm/org-dir "_zettel/references.bib")))
+  ;;    (require 'org-ref-bibtex)
+  ;;   (require 'doi-utils)
+  ;;   (require 'org-ref-arxiv)
+  ;;   (doi-utils-def-bibtex-type report ("report")
+  ;; 			     author title publisher year month doi url))
 #+end_src
 
 ***** Zettel deft setup
