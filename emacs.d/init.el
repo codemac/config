@@ -58,3 +58,4 @@
 (message "My .emacs loaded in %ds"
          (cl-destructuring-bind (hi lo ms ps) (current-time)
            (- (+ hi lo) (+ (cl-first *emacs-load-start*) (cl-second *emacs-load-start*)))))
+(put 'list-timers 'disabled nil)

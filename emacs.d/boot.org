@@ -183,13 +183,15 @@ screen DPI's.
       (set-face-attribute 'default nil :font fixed)
       (set-face-attribute 'fixed-pitch nil :font fixed)
       (if (find-font (font-spec :name "EtBembo-12"))
-          (set-face-attribute 'variable-pitch nil :font variable)
-        (set-face-attribute 'variable-pitch nil :font fixed))))
+	  (set-face-attribute 'variable-pitch nil :font variable)
+	(set-face-attribute 'variable-pitch nil :font fixed))))
 
 
   (cond
     ((equal (system-name) "penolpe")
      (cm/produce-font 9))
+    ((equal (system-name) "jmickey-mbp")
+     (cm/produce-font 13))
     (t
      (cm/produce-font 11)))
 
@@ -298,6 +300,7 @@ Mac. Mostly these days, I'm on +a Mac :/+ linux!! :)
     (let* ((home-dir (getenv "HOME"))
 	   (mac-paths `("/Applications/Emacs.app/Contents/MacOS/bin"
 			,(concat home-dir "/bin")
+			,(concat home-dir "/homebrew/bin")
 			,(concat home-dir "/.cabal/bin")
 			"/opt/local/bin"
 			"/usr/local/texlive/2010/bin/x86_64-darwin"
@@ -1126,19 +1129,20 @@ I need to tie this into projectile, but for now have a way to create a
 	  (switch-to-buffer eb)
 	(shell bn))))
 
-  (use-package vterm
-    :config
-    (defun cm/vterm-mode-hook ()
-      (setq-local global-hl-line-mode nil))    
-    (add-hook 'vterm-mode-hook #'cm/vterm-mode-hook)
-    (defun cm/shell-new-vterm (name)
-      "Create a vterm buffer named NAME."
-      (interactive "sShell Name: ")
-      (let* ((bn (concat "*shell:" name "*"))
-	     (eb (get-buffer bn)))
-	(if (and eb (get-buffer-process eb))
-	    (switch-to-buffer eb)
-	  (vterm bn)))))
+  ;; (when (eq system-type 'gnu/linux)
+  ;;   (use-package vterm
+  ;;     :config
+  ;;     (defun cm/vterm-mode-hook ()
+  ;;       (setq-local global-hl-line-mode nil))    
+  ;;     (add-hook 'vterm-mode-hook #'cm/vterm-mode-hook)
+  ;;     (defun cm/shell-new-vterm (name)
+  ;;       "Create a vterm buffer named NAME."
+  ;;       (interactive "sShell Name: ")
+  ;;       (let* ((bn (concat "*shell:" name "*"))
+  ;; 	     (eb (get-buffer bn)))
+  ;; 	(if (and eb (get-buffer-process eb))
+  ;; 	    (switch-to-buffer eb)
+  ;; 	  (vterm bn))))))
 
   (defun cm/shell-new (name)
     "Create a shell buffer named NAME."
@@ -1214,13 +1218,20 @@ really interpret anything.
     :ID:       1f6334ef-51f3-417d-acc6-c578c2a9223b
     :END:
 #+begin_src emacs-lisp
-  (set-default 'explicit-shell-file-name (concat (getenv "HOME") "/.guix-profile/bin/rc"))
+  (set-default 'explicit-shell-file-name (concat (getenv "HOME") "/bin/rc"))
   (defvar explicit-rc-args '("-l")
     "List of explicit arguments to rc.")
 
   (when (string-equal (system-name) "jmickey-glaptop0")
     (set-default 'explicit-shell-file-name (concat (getenv "HOME") "/.guix-profile/bin/rc"))
     (setq explicit-rc-args nil))
+
+  (defun cm/darwin-shell-settings ()
+    (setq comint-process-echoes t))
+
+  (when (string-equal (system-name) "jmickey-mbp")
+    (set-default 'explicit-shell-file-name (concat (getenv "HOME") "/bin/rc"))
+    (add-hook 'shell-mode-hook 'cm/darwin-shell-settings))
 #+end_src
 *** Track the directory of the shell process
     :PROPERTIES:
@@ -1461,6 +1472,10 @@ command run in shell mode, but we'll see.
   (add-hook 'eshell-preoutput-filter-functions 'ansi-color-apply)
 
 #+end_src
+** list-timers should be enabled
+#+begin_src emacs-lisp
+  (put 'list-timers 'disabled nil)
+#+end_src
 ** BBDB - Big Brother DataBase
    :PROPERTIES:
    :ID:       47557249-431f-4cca-a9a8-4c78f7d8741f
@@ -1539,6 +1554,55 @@ what all these features really mean.
         res)))
 
   (advice-add #'browse-url-can-use-xdg-open :around #'cm/advise-browse-url-can-use-xdg-open)
+#+end_src
+** browse-url with chrome and separate profiles
+#+begin_src emacs-lisp
+  (defvar cm/browse-url-work-profile "Default"
+    "The profile in chrome to open things for work")
+
+  (defvar cm/browse-url-personal-profile "Profile 1"
+    "The profile in chrome to open things for personal use")
+
+  (pcase (system-name)
+    ("jmickey-mbp"
+     (setq cm/browse-url-work-profile "Default")
+     (setq cm/browse-url-personal-profile "Profile 1"))  
+    ("nina"
+     (setq cm/browse-url-work-profile "Default")
+     (setq cm/browse-url-personal-profile "Default")))
+
+  ;; this doesn't work on mac os x :O
+  (defun cm/browse-url-chrome (url profile &optional new-window)
+    "Internal function for opening the right chrome."
+    (interactive "sURL: \nsProfile: ")
+    (cond
+     ((eq system-type 'gnu/linux)
+      (let ((browse-url-chrome-arguments
+	     (append browse-url-chrome-arguments
+		     (list (concat "--profile-directory\"" profile "\"")))))
+	(browse-url-chrome url new-window)))
+     ((eq system-type 'darwin)
+      (start-process (concat "open " url) nil
+		     "open" "-b" "com.google.Chrome"
+		     "--args" (concat "--profile-directory=\"" profile "\"")
+		     url))))
+
+
+  (defun cm/browse-url-work (url &optional new-window)
+    "Ask whether URL should be browsed in a private browsing window."
+    (interactive "sURL: ")
+    (cm/browse-url-chrome url cm/browse-url-work-profile new-window))
+
+  (defun cm/browse-url-personal (url &optional new-window)
+    "Ask whether URL should be browsed in a private browsing window."
+    (interactive "sURL: ")
+    (cm/browse-url-chrome url cm/browse-url-personal-profile new-window))
+
+  ;; override this in private .emacs-work.el file
+  (setq browse-url-browser-function
+	'(("^https?://instagram\\.com" . cm/browse-url-personal)
+	  ("." . cm/browse-url-personal)))
+
 #+end_src
 ** Uniquify
    :PROPERTIES:
@@ -2545,10 +2609,11 @@ default to serving =~/public_html=, so I turn that off here.
 *** PDF Tools
 This adds much better support for pdfs in emacs.
 #+begin_src emacs-lisp
-  (use-package pdf-tools
-    :pin manual
-    :config
-    (pdf-tools-install))
+  ;; (when (eq system-type 'gnu/linux)
+  ;;   (use-package pdf-tools
+  ;;   :pin manual
+  ;;   :config
+  ;;   (pdf-tools-install)))
 #+end_src
 ** Programs
    :PROPERTIES:
@@ -2566,21 +2631,21 @@ A set of timers
 *** Elfeed
 [[https://github.com/skeeto/elfeed][elfeed]] is a great RSS reader in the style of notmuch. Super useful.
 #+begin_src emacs-lisp
-  (use-package elfeed-org
-    :config
-    (elfeed-org)
-    (setq rmh-elfeed-org-files (list (cm/org-dir "_notes/rss.org")))
+  ;; (use-package elfeed-org
+  ;;   :config
+  ;;   (elfeed-org)
+  ;;   (setq rmh-elfeed-org-files (list (cm/org-dir "_notes/rss.org")))
 
-  (defun cm/elfeed-update ()
-    (interactive)
-    (elfeed-update)
-    (elfeed-search-update--force))
+  ;; (defun cm/elfeed-update ()
+  ;;   (interactive)
+  ;;   (elfeed-update)
+  ;;   (elfeed-search-update--force))
 
-  (use-package elfeed
-    :commands elfeed
-    :bind (("C-c e" . elfeed)
-	   :map elfeed-search-mode-map
-	   ("G" . cm/elfeed-update)))
+  ;; (use-package elfeed
+  ;;   :commands elfeed
+  ;;   :bind (("C-c e" . elfeed)
+  ;; 	 :map elfeed-search-mode-map
+  ;; 	 ("G" . cm/elfeed-update)))
 #+end_src
 *** EMMS - Emacs MultiMedia System
     :PROPERTIES:
@@ -4532,7 +4597,7 @@ view on things.
 #+end_src
 **** Better Org Goto
 #+begin_src emacs-lisp
-  (defvar cm/org-goto-dirs (list (cm/org-dir "*.org")))
+  (defvar cm/org-goto-dirs (list (cm/org-dir "*.org"))
     "Org directories to search with goto")
 
   (setq counsel-org-goto-all-outline-path-prefix 'file-name)
@@ -4616,31 +4681,22 @@ some reasonable way.
 Not really using this yet, need to set this up right.
 
 #+begin_src emacs-lisp
-    ;; (use-package org-ref
-    ;; :init
-    ;; (setq org-ref-completion-library 'org-ref-ivy-cite)
-    ;; :config
-    ;; (require 'ivy-bibtex)
-    ;; (setq
-    ;;  reftex-default-bibliography (list (cm/org-dir "_biblio/references.bib"))
-    ;;  org-ref-pdf-directory (cm/org-dir "_biblio/pdf")
-    ;;  org-ref-default-bibliography (list (cm/org-dir "_biblio/references.bib"))   
-    ;;  org-ref-bibliography-notes (cm/org-dir "_biblio/reference_notes.org")
-    ;;  bibtex-completion-bibliography (car org-ref-default-bibliography)
-    ;;  bibtex-completion-library-path org-ref-pdf-directory
-    ;;  bibtex-completion-notes-path 
-
-
-    ;; 	org-ref-bibtex-hydra-key-binding "\C-cj"
-
-    ;; 	org-ref-pdf-directory (cm/org-dir "_zettel/_pdf/")
-    ;; 	bibtex-completion-notes-path (cm/org-dir "_zettel/")
-    ;; 	reftex-default-bibliography (list (cm/org-dir "_zettel/references.bib")))
-    ;;  (require 'org-ref-bibtex)
-    ;; (require 'doi-utils)
-    ;; (require 'org-ref-arxiv)
-    ;; (doi-utils-def-bibtex-type report ("report")
-    ;; 			     author title publisher year month doi url))
+  ;; (use-package org-ref
+  ;;   :init
+  ;;   (setq org-ref-completion-library 'org-ref-ivy-cite)
+  ;;   :config
+  ;;   (require 'ivy-bibtex)
+  ;;   (setq org-ref-bibliography-notes (cm/org-dir "_zettel/reference_notes.org")
+  ;; 	org-ref-bibtex-hydra-key-binding "\C-cj"
+  ;; 	org-ref-default-bibliography (list (cm/org-dir "_zettel/references.bib"))
+  ;; 	org-ref-pdf-directory (cm/org-dir "_zettel/_pdf/")
+  ;; 	bibtex-completion-notes-path (cm/org-dir "_zettel/")
+  ;; 	reftex-default-bibliography (list (cm/org-dir "_zettel/references.bib")))
+  ;;    (require 'org-ref-bibtex)
+  ;;   (require 'doi-utils)
+  ;;   (require 'org-ref-arxiv)
+  ;;   (doi-utils-def-bibtex-type report ("report")
+  ;; 			     author title publisher year month doi url))
 #+end_src
 
 ***** Zettel deft setup
