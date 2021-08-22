@@ -4,6 +4,7 @@
 ;;      UPDATE: this was written in emacs. BOOTSTRAPTIME
 
 ;; time our .emacs loading
+
 (defvar *emacs-load-start* (current-time))
 
 (setq dotfiles-dir (file-name-directory (or load-file-name (buffer-file-name))))
