@@ -300,6 +300,7 @@ Mac. Mostly these days, I'm on +a Mac :/+ linux!! :)
     (let* ((home-dir (getenv "HOME"))
 	   (mac-paths `("/Applications/Emacs.app/Contents/MacOS/bin"
 			,(concat home-dir "/bin")
+			,(concat home-dir "/homebrew/bin")
 			,(concat home-dir "/.cabal/bin")
 			"/opt/local/bin"
 			"/usr/local/texlive/2010/bin/x86_64-darwin"
@@ -1225,8 +1226,12 @@ really interpret anything.
     (set-default 'explicit-shell-file-name (concat (getenv "HOME") "/.guix-profile/bin/rc"))
     (setq explicit-rc-args nil))
 
+  (defun cm/darwin-shell-settings ()
+    (setq comint-process-echoes t))
+
   (when (string-equal (system-name) "jmickey-mbp")
-    (set-default 'explicit-shell-file-name (concat (getenv "HOME") "/bin/rc")))
+    (set-default 'explicit-shell-file-name (concat (getenv "HOME") "/bin/rc"))
+    (add-hook 'shell-mode-hook 'cm/darwin-shell-settings))
 #+end_src
 *** Track the directory of the shell process
     :PROPERTIES:
@@ -1467,6 +1472,10 @@ command run in shell mode, but we'll see.
   (add-hook 'eshell-preoutput-filter-functions 'ansi-color-apply)
 
 #+end_src
+** list-timers should be enabled
+#+begin_src emacs-lisp
+  (put 'list-timers 'disabled nil)
+#+end_src
 ** BBDB - Big Brother DataBase
    :PROPERTIES:
    :ID:       47557249-431f-4cca-a9a8-4c78f7d8741f
@@ -1545,6 +1554,55 @@ what all these features really mean.
         res)))
 
   (advice-add #'browse-url-can-use-xdg-open :around #'cm/advise-browse-url-can-use-xdg-open)
+#+end_src
+** browse-url with chrome and separate profiles
+#+begin_src emacs-lisp
+  (defvar cm/browse-url-work-profile "Default"
+    "The profile in chrome to open things for work")
+
+  (defvar cm/browse-url-personal-profile "Profile 1"
+    "The profile in chrome to open things for personal use")
+
+  (pcase (system-name)
+    ("jmickey-mbp"
+     (setq cm/browse-url-work-profile "Default")
+     (setq cm/browse-url-personal-profile "Profile 1"))  
+    ("nina"
+     (setq cm/browse-url-work-profile "Default")
+     (setq cm/browse-url-personal-profile "Default")))
+
+  ;; this doesn't work on mac os x :O
+  (defun cm/browse-url-chrome (url profile &optional new-window)
+    "Internal function for opening the right chrome."
+    (interactive "sURL: \nsProfile: ")
+    (cond
+     ((eq system-type 'gnu/linux)
+      (let ((browse-url-chrome-arguments
+	     (append browse-url-chrome-arguments
+		     (list (concat "--profile-directory\"" profile "\"")))))
+	(browse-url-chrome url new-window)))
+     ((eq system-type 'darwin)
+      (start-process (concat "open " url) nil
+		     "open" "-b" "com.google.Chrome"
+		     "--args" (concat "--profile-directory=\"" profile "\"")
+		     url))))
+
+
+  (defun cm/browse-url-work (url &optional new-window)
+    "Ask whether URL should be browsed in a private browsing window."
+    (interactive "sURL: ")
+    (cm/browse-url-chrome url cm/browse-url-work-profile new-window))
+
+  (defun cm/browse-url-personal (url &optional new-window)
+    "Ask whether URL should be browsed in a private browsing window."
+    (interactive "sURL: ")
+    (cm/browse-url-chrome url cm/browse-url-personal-profile new-window))
+
+  ;; override this in private .emacs-work.el file
+  (setq browse-url-browser-function
+	'(("^https?://instagram\\.com" . cm/browse-url-personal)
+	  ("." . cm/browse-url-personal)))
+
 #+end_src
 ** Uniquify
    :PROPERTIES:
