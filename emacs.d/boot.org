@@ -2714,132 +2714,132 @@ me over.
 *** EXWM - Emacs as X window manager
 
 #+begin_src emacs-lisp
-  (use-package exwm
-    :disabled
-    ;;    :demand t
-    :config
-    (require 'exwm-config)
-    (require 'exwm-randr)
-
-    ;; not using this - single monitor lyfe.
-    ;; (setq exwm-randr-workspace-monitor-plist '(0 "eDP1" 1 "HDMI2"))
-    (exwm-randr-enable)
-
-    ;; I swap C-t and C-x, so this is a very useful thing to also have
-    ;; as a prefix
-    (add-to-list 'exwm-input-prefix-keys ?\C-t)
-
-    (add-hook 'exwm-update-class-hook
-	      (lambda ()
-		(unless (or (string-prefix-p "sun-awt-X11-" exwm-instance-name)
-			    (string= "gimp" exwm-instance-name))
-		  (exwm-workspace-rename-buffer exwm-class-name))))
-    (add-hook 'exwm-update-title-hook
-	      (lambda ()
-		(when (or (not exwm-instance-name)
-			  (string-prefix-p "sun-awt-X11-" exwm-instance-name)
-			  (string= "gimp" exwm-instance-name))
-		  (exwm-workspace-rename-buffer exwm-title))))
+  ;; (use-package exwm
+  ;;   :disabled
+  ;;   ;;    :demand t
+  ;;   :config
+  ;;   (require 'exwm-config)
+  ;;   (require 'exwm-randr)
   
-    (setq cm/exwm-workspace-starting-number 1)
+  ;;   ;; not using this - single monitor lyfe.
+  ;;   ;; (setq exwm-randr-workspace-monitor-plist '(0 "eDP1" 1 "HDMI2"))
+  ;;   (exwm-randr-enable)
   
-    (defun cm/exwm-workspace-next ()
-      (interactive)
-      (exwm-workspace-switch (mod (+ 1 exwm-workspace-current-index) (exwm-workspace--count))))
+  ;;   ;; I swap C-t and C-x, so this is a very useful thing to also have
+  ;;   ;; as a prefix
+  ;;   (add-to-list 'exwm-input-prefix-keys ?\C-t)
   
-    (defun cm/exwm-workspace-previous ()
-      (interactive)
-      (exwm-workspace-switch (mod (- exwm-workspace-current-index 1) (exwm-workspace--count))))
+  ;;   (add-hook 'exwm-update-class-hook
+  ;; 	    (lambda ()
+  ;; 	      (unless (or (string-prefix-p "sun-awt-X11-" exwm-instance-name)
+  ;; 			  (string= "gimp" exwm-instance-name))
+  ;; 		(exwm-workspace-rename-buffer exwm-class-name))))
+  ;;   (add-hook 'exwm-update-title-hook
+  ;; 	    (lambda ()
+  ;; 	      (when (or (not exwm-instance-name)
+  ;; 			(string-prefix-p "sun-awt-X11-" exwm-instance-name)
+  ;; 			(string= "gimp" exwm-instance-name))
+  ;; 		(exwm-workspace-rename-buffer exwm-title))))
   
-    (defun cm/async-shell-no-output (cmd)
-      (interactive)
-      (call-process-shell-command (concat cmd " &")))
+  ;;   (setq cm/exwm-workspace-starting-number 1)
   
-    (defun cm/exwm-lock ()
-      (interactive)
-      (cm/async-shell-no-output "notion-lock"))
+  ;;   (defun cm/exwm-workspace-next ()
+  ;;     (interactive)
+  ;;     (exwm-workspace-switch (mod (+ 1 exwm-workspace-current-index) (exwm-workspace--count))))
   
-    (defun cm/launch-term ()
-      (interactive)
-      (cm/async-shell-no-output "term"))
+  ;;   (defun cm/exwm-workspace-previous ()
+  ;;     (interactive)
+  ;;     (exwm-workspace-switch (mod (- exwm-workspace-current-index 1) (exwm-workspace--count))))
   
-    (defun cm/launch-org-capture ()
-      (interactive)
-      (cm/async-shell-no-output "org-capture"))
+  ;;   (defun cm/async-shell-no-output (cmd)
+  ;;     (interactive)
+  ;;     (call-process-shell-command (concat cmd " &")))
   
-    ;; Find all binaries in exec-path / (exec-path)
-    (defun cm/all-binaries ()
-      (let* ((path-dirs
-	      ;; Ignore `exec-directory', the last entry in `exec-path'.
-	      (append (cdr (reverse (if (fboundp 'exec-path) (exec-path) exec-path)))
-		      (if (and (memq system-type '(windows-nt ms-dos))
-			       (not (file-remote-p default-directory)))
-			  '("."))))
-	     (completions '()))
-      
-	;; Go thru each dir in the search path, finding completions.
-	(while path-dirs
-	  (setq dir (file-name-as-directory (comint-directory (or (car path-dirs) ".")))
-		comps-in-dir (and (file-accessible-directory-p dir)
-				  (directory-files dir nil nil 'nosort)))
-	  ;; Go thru each completion found, to see whether it should be used.
-	  (while comps-in-dir
-	    (setq file (car comps-in-dir)
-		  abs-file-name (concat dir file))
-	    (if (and (not (member file completions))
-		     (not (file-directory-p abs-file-name))
-		     (or (null shell-completion-execonly)
-			 (file-executable-p abs-file-name)))
-		(setq completions (cons file completions)))
-	    (setq comps-in-dir (cdr comps-in-dir)))
-	  (setq path-dirs (cdr path-dirs)))
-	completions))
+  ;;   (defun cm/exwm-lock ()
+  ;;     (interactive)
+  ;;     (cm/async-shell-no-output "notion-lock"))
   
-    (defun cm/launch-shell-cmd (cmd)
-      (interactive
-       (list
-	(completing-read "Command: " (cm/all-binaries))))
-      (cm/async-shell-no-output cmd))
+  ;;   (defun cm/launch-term ()
+  ;;     (interactive)
+  ;;     (cm/async-shell-no-output "term"))
   
-    (exwm-input-set-key (kbd "s-<f2>") #'cm/launch-term)
-    (exwm-input-set-key (kbd "s-<f3>") #'cm/launch-shell-cmd)
+  ;;   (defun cm/launch-org-capture ()
+  ;;     (interactive)
+  ;;     (cm/async-shell-no-output "org-capture"))
   
-    (exwm-input-set-key (kbd "s-<return>") #'exwm-layout-toggle-fullscreen)
-    (exwm-input-set-key (kbd "s-r") #'exwm-reset)
-    (exwm-input-set-key (kbd "s-c") #'cm/launch-org-capture)
-    (exwm-input-set-key (kbd "s-n") #'cm/exwm-workspace-next)
-    (exwm-input-set-key (kbd "s-p") #'cm/exwm-workspace-previous)
-    (exwm-input-set-key (kbd "s-l") #'cm/exwm-lock) 
+  ;;   ;; Find all binaries in exec-path / (exec-path)
+  ;;   (defun cm/all-binaries ()
+  ;;     (let* ((path-dirs
+  ;; 	    ;; Ignore `exec-directory', the last entry in `exec-path'.
+  ;; 	    (append (cdr (reverse (if (fboundp 'exec-path) (exec-path) exec-path)))
+  ;; 		    (if (and (memq system-type '(windows-nt ms-dos))
+  ;; 			     (not (file-remote-p default-directory)))
+  ;; 			'("."))))
+  ;; 	   (completions '()))
   
-    (setq async-shell-command-display-buffer nil)
-    (setq exwm-workspace-show-all-buffers t)
-    (setq exwm-layout-show-all-buffers t)
+  ;;       ;; Go thru each dir in the search path, finding completions.
+  ;;       (while path-dirs
+  ;; 	(setq dir (file-name-as-directory (comint-directory (or (car path-dirs) ".")))
+  ;; 	      comps-in-dir (and (file-accessible-directory-p dir)
+  ;; 				(directory-files dir nil nil 'nosort)))
+  ;; 	;; Go thru each completion found, to see whether it should be used.
+  ;; 	(while comps-in-dir
+  ;; 	  (setq file (car comps-in-dir)
+  ;; 		abs-file-name (concat dir file))
+  ;; 	  (if (and (not (member file completions))
+  ;; 		   (not (file-directory-p abs-file-name))
+  ;; 		   (or (null shell-completion-execonly)
+  ;; 		       (file-executable-p abs-file-name)))
+  ;; 	      (setq completions (cons file completions)))
+  ;; 	  (setq comps-in-dir (cdr comps-in-dir)))
+  ;; 	(setq path-dirs (cdr path-dirs)))
+  ;;       completions))
   
-    ;; set none for now
-    ;; (exwm-input-set-simulation-keys
-    ;;  '(([?\C-b] . left)
-    ;;    ([?\C-f] . right)
-    ;;    ([?\C-p] . up)
-    ;;    ([?\C-n] . down)
-    ;;    ([?\C-a] . home)
-    ;;    ([?\C-e] . end)
-    ;;    ([?\M-v] . prior)
-    ;;    ([?\C-v] . next)
-    ;;    ([?\C-d] . delete)
-    ;;    ([?\C-k] . (S-end delete))))
+  ;;   (defun cm/launch-shell-cmd (cmd)
+  ;;     (interactive
+  ;;      (list
+  ;;       (completing-read "Command: " (cm/all-binaries))))
+  ;;     (cm/async-shell-no-output cmd))
   
-    (dotimes (i cm/exwm-workspace-starting-number)
-      (exwm-input-set-key (kbd (format "s-%d" i))
-			  `(lambda ()
-			     (interactive)
-			     (exwm-workspace-switch-create ,i))))
+  ;;   (exwm-input-set-key (kbd "s-<f2>") #'cm/launch-term)
+  ;;   (exwm-input-set-key (kbd "s-<f3>") #'cm/launch-shell-cmd)
   
-    ;; enable systemtray
-    (require 'exwm-systemtray)
-    (exwm-systemtray-enable)
-
-    ;; exwm-enable should be called from -f, we do not call it in our init.
-    )
+  ;;   (exwm-input-set-key (kbd "s-<return>") #'exwm-layout-toggle-fullscreen)
+  ;;   (exwm-input-set-key (kbd "s-r") #'exwm-reset)
+  ;;   (exwm-input-set-key (kbd "s-c") #'cm/launch-org-capture)
+  ;;   (exwm-input-set-key (kbd "s-n") #'cm/exwm-workspace-next)
+  ;;   (exwm-input-set-key (kbd "s-p") #'cm/exwm-workspace-previous)
+  ;;   (exwm-input-set-key (kbd "s-l") #'cm/exwm-lock) 
+  
+  ;;   (setq async-shell-command-display-buffer nil)
+  ;;   (setq exwm-workspace-show-all-buffers t)
+  ;;   (setq exwm-layout-show-all-buffers t)
+  
+  ;;   ;; set none for now
+  ;;   ;; (exwm-input-set-simulation-keys
+  ;;   ;;  '(([?\C-b] . left)
+  ;;   ;;    ([?\C-f] . right)
+  ;;   ;;    ([?\C-p] . up)
+  ;;   ;;    ([?\C-n] . down)
+  ;;   ;;    ([?\C-a] . home)
+  ;;   ;;    ([?\C-e] . end)
+  ;;   ;;    ([?\M-v] . prior)
+  ;;   ;;    ([?\C-v] . next)
+  ;;   ;;    ([?\C-d] . delete)
+  ;;   ;;    ([?\C-k] . (S-end delete))))
+  
+  ;;   (dotimes (i cm/exwm-workspace-starting-number)
+  ;;     (exwm-input-set-key (kbd (format "s-%d" i))
+  ;; 			`(lambda ()
+  ;; 			   (interactive)
+  ;; 			   (exwm-workspace-switch-create ,i))))
+  
+  ;;   ;; enable systemtray
+  ;;   (require 'exwm-systemtray)
+  ;;   (exwm-systemtray-enable)
+  
+  ;;   ;; exwm-enable should be called from -f, we do not call it in our init.
+  ;;   )
 #+end_src
 
 *** Flymake
@@ -3503,8 +3503,6 @@ This add some commands for managing and clocking my time in a hydra.
   (setq org-clock-idle-time 10)
 
   (setq org-agenda-files (list (cm/org-dir)))
-
-  (require 'cl)
 
   ;; we also strip calendars.org from here
   (defun cm/org-buffer-files ()
@@ -4247,8 +4245,8 @@ Hopefully this replaces my hacked up notes.org, _notes directory, shitty zettl, 
     (setq org-roam-capture-templates
 	  '(("d" "default" plain #'org-roam-capture--get-point "%?" :file-name "%<%Y%m%d%H%M>_${slug}" :head "#+title: ${title}
   ,#+date: <%<%Y-%m-%d %a %H:%M>>
-  " :unnarrowed t))))
-
+  " :unnarrowed t)))
+    (setq org-roam-v2-ack t))
 #+end_src
 
 **** Search through my _notes directory
