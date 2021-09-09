@@ -4,6 +4,7 @@
 ;;      UPDATE: this was written in emacs. BOOTSTRAPTIME
 
 ;; time our .emacs loading
+
 (defvar *emacs-load-start* (current-time))
 
 (setq dotfiles-dir (file-name-directory (or load-file-name (buffer-file-name))))
@@ -57,4 +58,3 @@
 (message "My .emacs loaded in %ds"
          (cl-destructuring-bind (hi lo ms ps) (current-time)
            (- (+ hi lo) (+ (cl-first *emacs-load-start*) (cl-second *emacs-load-start*)))))
-(put 'list-timers 'disabled nil)

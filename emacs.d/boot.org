@@ -24,12 +24,21 @@ see how this goes!
 Unfortuantely, emacs can't read directly from org mode files just yet,
 so you have to check [[file:init.el][init.el]] for more information! DRY!
 ** Lexical lisp
+:PROPERTIES:
+:ID:       f7fd4f72-2cb1-4560-b407-0144cee8b443
+:END:
 This must be first, and it makes everything else a little bit easier.
 #+begin_src emacs-lisp
   ;;; -*- lexical-binding: t -*-
 #+end_src
 * Utility Functions
+:PROPERTIES:
+:ID:       a9f6af8a-f8fa-46a0-8d2d-8b93ff1497a6
+:END:
 ** async-shell-command-to-string
+:PROPERTIES:
+:ID:       83168006-e776-4f4a-a467-ac6772515e76
+:END:
 Useful for making generic functions that don't totally lock up
 emacs. Normally using shell-command or sentinal can be really
 annoying.
@@ -57,6 +66,9 @@ annoying.
       output-buffer))
 #+end_src
 ** Unwrap lines
+:PROPERTIES:
+:ID:       4a478e2b-861d-4fbd-a72e-aad31fdbec9d
+:END:
 #+begin_src emacs-lisp
   (defun cm/unwrap-lines ()
     (interactive)
@@ -153,6 +165,9 @@ And of course, transparency!
 #+end_src
 
 *** Emacs Title Bar
+:PROPERTIES:
+:ID:       0d4859aa-e015-4399-a8a5-4aae3471872c
+:END:
 
 RescueTime and other resources use the title bar to assess what an
 application is doing. I use that to include the mode of the file I'm
@@ -212,6 +227,9 @@ screen DPI's.
   :END:
 
 ** Prefer newer code
+:PROPERTIES:
+:ID:       352066ee-f4d6-4748-98c6-4057ff8622ab
+:END:
 Avoids the problem where bytecode is older and loaded by emacs.
 
 #+begin_src emacs-lisp
@@ -507,7 +525,13 @@ matter.
 #+end_src
 
 ** Windowing Management
+:PROPERTIES:
+:ID:       dc04bcc3-4632-48de-863b-25964a7de4dc
+:END:
 *** Toggle Layout
+:PROPERTIES:
+:ID:       eee4070d-06a2-4c78-9581-5951f10acff3
+:END:
 #+begin_src emacs-lisp
   (defun toggle-window-split ()
     (interactive)
@@ -535,6 +559,9 @@ matter.
             (if this-win-2nd (other-window 1))))))
 #+end_src
 *** Rotate currently viewed windows
+:PROPERTIES:
+:ID:       8cfa2f90-d8db-4b16-aee7-13fbe314aeb6
+:END:
 From: https://www.emacswiki.org/emacs/TransposeWindows on [2019-01-17 Thu]
 
  Yet another window-altering function by Robert Bost slightly based on
@@ -604,6 +631,9 @@ the brackets that rc parses.
       (grep-apply-setting 'grep-find-template "find . <X> -type f <F> -exec grep <C> -nH -e <R> '{}' '+'")))
 #+end_src
 ** Performance improvement of vertical window scroll
+:PROPERTIES:
+:ID:       c1415bc7-3497-42c4-bc97-8167271b040d
+:END:
 
 https://emacs.stackexchange.com/questions/28736/emacs-pointcursor-movement-lag/28746
 
@@ -615,6 +645,9 @@ however.
   (setq auto-window-vscroll nil)
 #+end_src
 ** defun-local
+:PROPERTIES:
+:ID:       8e9a2892-9e68-482b-a3a5-ecddce3c572c
+:END:
 This uses two macros, that make it easier for me to define commands
 (like =org-agenda=, =notmuch-search=, etc) that shouldn't regularly
 depend on TRAMP. If they do, make sure it's not because of the current
@@ -635,6 +668,9 @@ This may mess up org-agenda if I'm doing crazier agenda stuff later.
 
 #+end_src
 ** Delete surrounding whitespace
+:PROPERTIES:
+:ID:       89e301ee-280c-4334-b518-ea4629f22ac2
+:END:
 Super useful when killing and pasting lines, as selecting regions in
 emacs is not my forte.
 #+begin_src emacs-lisp
@@ -651,6 +687,9 @@ emacs is not my forte.
   (global-set-key (kbd "C-<delete>") 'cm/delete-surrounding-whitespace)
 #+end_src
 ** Org File Location
+:PROPERTIES:
+:ID:       fa39e5f7-7a63-4379-8d53-cbb2ad4decbd
+:END:
 #+begin_src emacs-lisp
   (defvar cm/org-directory "~/org")
   ;; Use dropbox when available. Yes making this conditional is awkward,
@@ -741,6 +780,9 @@ For now we just check that the name is valid.
   (put 'upcase-region 'disabled nil)
 #+end_src
 ** Backups
+:PROPERTIES:
+:ID:       ddff75a7-49ff-4a59-93a3-cf159b5036ed
+:END:
 
 This enables file backups to N versions of saves, as opposed to only
 backing up the very first save. I don't re-launch emacs that often so
@@ -795,6 +837,9 @@ this is necessary to get useful backups.
     (set-buffer (find-file (concat "/sudo::" file))))
 #+end_src
 ** Doc View
+:PROPERTIES:
+:ID:       b356fbe9-80e3-4807-98af-97c47591c95b
+:END:
 Increase the DPI to a factor of most screen DPI's.
 #+begin_src emacs-lisp
   (setq doc-view-resolution 288)
@@ -827,12 +872,18 @@ frame. I've found this very convenient.
 					(split-window-vertically arg))))
 #+end_src
 *** Single frame ediff
+:PROPERTIES:
+:ID:       9457fa41-5d00-4311-9148-c83b79d54856
+:END:
 Keep the diff in a single window, easier on tiling window managers to
 handle diff sessions.
 #+begin_src emacs-lisp
   (setq ediff-window-setup-function #'ediff-setup-windows-plain)
 #+end_src
 *** Combine both in clashing diff
+:PROPERTIES:
+:ID:       9bc29176-f743-4ff3-bb93-5fa52060021d
+:END:
 Stolen from https://stackoverflow.com/questions/9656311/conflict-resolution-with-emacs-ediff-how-can-i-take-the-changes-of-both-version/29757750#29757750
 
 #+begin_src emacs-lisp
@@ -1039,6 +1090,9 @@ we'll roll with this.
   ;;     (lambda () (interactive) (find-alternate-file "..")))))
 #+end_src
 *** Insert subdirectory while folding the parent directory
+:PROPERTIES:
+:ID:       9d3f981e-9b94-4cde-bfac-f9fca96b60a7
+:END:
 Useful when navigating down through a hierachy that you may care about
 later, but aren't sure.
 
@@ -1053,6 +1107,9 @@ later, but aren't sure.
   (define-key dired-mode-map "I" 'cm/insert-n-hide-dired)
 #+end_src
 *** Attach a file to org-mode
+:PROPERTIES:
+:ID:       70838fe2-3577-4ea7-9c40-c1c67e7ebee1
+:END:
 #+begin_src emacs-lisp
   (add-hook 'dired-mode-hook
 	    (lambda ()
@@ -1061,6 +1118,9 @@ later, but aren't sure.
 		#'org-attach-dired-to-subtree)))
 #+end_src
 ** Image Mode
+:PROPERTIES:
+:ID:       e51cfa08-015a-44e2-af4f-2e9cab6645bd
+:END:
 Set an image to fit the current window
 #+begin_src emacs-lisp
   (require 'image-mode)
@@ -1182,6 +1242,9 @@ I need to tie this into projectile, but for now have a way to create a
   (global-set-key (kbd "<f7>") 'cm/shell-main)
 #+end_src
 **** Remote Shells
+:PROPERTIES:
+:ID:       787a4137-6ad4-4e72-97fa-2c40416ce0c9
+:END:
 This is to manage remote shells. I hope for this to get a *lot* more
 sophisticated, as ideally you'd be able to restore scrollback as
 well. Ideally dtach would actually have support for replaying
@@ -1307,6 +1370,9 @@ really interpret anything.
 #+end_src
 
 *** Use a better async-shell-command 
+:PROPERTIES:
+:ID:       fb5fdaa3-3287-495c-b047-e7c8c5533271
+:END:
 The =*Async Shell Command*= buffer naming is bullshit. Here is
 something much better, it names each buffer =*shell:<cmd>*= so my
 above shell searching functions also find these buffers. Eventually
@@ -1473,6 +1539,9 @@ command run in shell mode, but we'll see.
 
 #+end_src
 ** list-timers should be enabled
+:PROPERTIES:
+:ID:       ab03a859-149d-45df-afd5-9d74374e3b1e
+:END:
 #+begin_src emacs-lisp
   (put 'list-timers 'disabled nil)
 #+end_src
@@ -1556,6 +1625,9 @@ what all these features really mean.
   (advice-add #'browse-url-can-use-xdg-open :around #'cm/advise-browse-url-can-use-xdg-open)
 #+end_src
 ** browse-url with chrome and separate profiles
+:PROPERTIES:
+:ID:       07a2e6ba-0330-4768-b9f4-61f707a9c630
+:END:
 #+begin_src emacs-lisp
   (defvar cm/browse-url-work-profile "Default"
     "The profile in chrome to open things for work")
@@ -1633,6 +1705,9 @@ So useful, I think everyone should have this turned on.
     (uniquify-all-lines-region (point-min) (point-max)))
 #+end_src
 ** Unhighlight all by default
+:PROPERTIES:
+:ID:       197644fe-61db-4f26-a97b-1aa5e5e4dc41
+:END:
 The keybinding =M-s h u= by default only unhighlights one entry, and
 then =C-u M-s h u= unhighlights everything. I'm going to swap these
 two keybindings with the following:
@@ -1657,6 +1732,9 @@ two keybindings with the following:
   (substitute-key-definition 'unhighlight-regexp 'cm/unhighlight-regexp-swap search-map)
 #+end_src
 ** Diff Before Save
+:PROPERTIES:
+:ID:       be447133-7999-437c-a6d9-fa9bbf5142c1
+:END:
 I find myself often forgetting what I've changed in a file and what I
 haven't. Obviously I use git, but I save files multiple times before
 committing, and can get a little lost. The challenges around
@@ -1675,6 +1753,9 @@ sanity in many cases.
   (global-set-key (kbd "C-c d") #'diff-buffer-with-file)
 #+end_src
 ** Buffer Outlines (via counsel + semantic/imenu)
+:PROPERTIES:
+:ID:       1480307b-7780-48e3-a8bd-d396cfe6b3d8
+:END:
 #+begin_src emacs-lisp
   (global-set-key (kbd "C-c i") #'counsel-semantic-or-imenu)
 #+end_src
@@ -1687,6 +1768,9 @@ sanity in many cases.
    :ID:       2fbe45d4-05c6-4eec-98c4-4569aaacf9f5
    :END:
 *** Ivy
+:PROPERTIES:
+:ID:       db3458cd-db2e-4743-b5e9-47fc4749ae84
+:END:
 The competitor to Helm. Supposedly simpler.. but I see it more like a
 Microsoft vs Linux situation. Luckily both are better than the Lisp vs
 C situation (they both chose lisp like adults).
@@ -1701,11 +1785,17 @@ C situation (they both chose lisp like adults).
     (setq ivy-count-format ""))
 #+end_src
 *** Hydra
+:PROPERTIES:
+:ID:       1eb9bcfd-c759-4b19-b39a-0038c3db2ba0
+:END:
 Useful for hydras.
 #+begin_src emacs-lisp
   (use-package hydra)
 #+end_src
 *** Undo Tree
+:PROPERTIES:
+:ID:       6f280c2e-1b7f-4f59-95a3-6b89bdf1899d
+:END:
 Undo tree is excellent! =C-x u= to browse. Now the larger question is
 how it works with browse-kill-ring? I like both modes I guess.
 #+begin_src emacs-lisp
@@ -1715,6 +1805,9 @@ how it works with browse-kill-ring? I like both modes I guess.
     (global-undo-tree-mode))
 #+end_src
 *** Speedbar
+:PROPERTIES:
+:ID:       89800dd6-6472-4bc7-8784-17a7178e6daf
+:END:
 I use sr-speedbar so it's part of the same emacs frame.
 #+begin_src emacs-lisp
   (use-package sr-speedbar
@@ -1857,6 +1950,9 @@ out semantically.
 #+end_src
 
 *** Clipetty
+:PROPERTIES:
+:ID:       52679c8e-bd09-46b9-ba35-4a48c5137911
+:END:
 Let's =emacs -nw= interact with the system clipboard across all kinds of things!
 
 #+begin_src emacs-lisp
@@ -1951,6 +2047,9 @@ Let's =emacs -nw= interact with the system clipboard across all kinds of things!
   ;  (advice-remove 'projectile-compile-project #'cm/projectile-compile-project))
 #+end_src
 *** Multiple Cursors
+:PROPERTIES:
+:ID:       9faeb01e-fc08-4df7-8a73-d7d45886fece
+:END:
 #+begin_src emacs-lisp
   (use-package multiple-cursors
     :bind (("C->" . mc/mark-next-like-this)
@@ -1959,6 +2058,9 @@ Let's =emacs -nw= interact with the system clipboard across all kinds of things!
 	   ("C-S-<mouse-1>" . mc/add-cursor-on-click)))
 #+end_src
 *** fill column indicator (fci)
+:PROPERTIES:
+:ID:       c073fcaa-93fc-452c-a2eb-ffaa33115d6f
+:END:
 This draws a vertical line at the fill column. Nice for languages
 without things like =gofmt=.
 
@@ -1968,6 +2070,9 @@ without things like =gofmt=.
 #+end_src
 
 *** Mixed Pitch
+:PROPERTIES:
+:ID:       7e1289bf-13e6-4b0a-9862-fd0a8df989b8
+:END:
 
 This makes things just a tad nicer to read in org-mode. Currently only
 enabled there.
@@ -2586,6 +2691,9 @@ Thank you Britt.
                (setq show-trailing-whitespace t)))
 #+end_src
 *** Racket
+:PROPERTIES:
+:ID:       95d466d7-8e49-4cb6-b1cf-d934f73fc21e
+:END:
 #+begin_src emacs-lisp
   (use-package racket-mode
     :mode "\\.rkt$")
@@ -2607,6 +2715,9 @@ default to serving =~/public_html=, so I turn that off here.
    (setq httpd-serve-files nil))
 #+end_src
 *** PDF Tools
+:PROPERTIES:
+:ID:       e8c52e29-ce3e-4703-a23f-59819fc41abc
+:END:
 This adds much better support for pdfs in emacs.
 #+begin_src emacs-lisp
   ;; (when (eq system-type 'gnu/linux)
@@ -2620,6 +2731,9 @@ This adds much better support for pdfs in emacs.
    :ID:       cb65de78-396a-4243-8bd8-4132d982e360
    :END:
 *** Chronos
+:PROPERTIES:
+:ID:       0e18b5f0-0e1b-4299-9364-9616e274280b
+:END:
 A set of timers
 #+begin_src emacs-lisp
   (use-package chronos
@@ -2629,6 +2743,9 @@ A set of timers
     (add-hook 'chronos-expiry-functions 'chronos-message-notify))
 #+end_src
 *** Elfeed
+:PROPERTIES:
+:ID:       0efb46e1-0eed-401a-b817-ca6804305790
+:END:
 [[https://github.com/skeeto/elfeed][elfeed]] is a great RSS reader in the style of notmuch. Super useful.
 #+begin_src emacs-lisp
   ;; (use-package elfeed-org
@@ -2777,134 +2894,137 @@ me over.
   ;(add-hook 'erc-join-hook 'bitlbee-netrc-identify)
 #+end_src
 *** EXWM - Emacs as X window manager
+:PROPERTIES:
+:ID:       df0f8ed9-65ea-483a-98f8-896e46b4fe66
+:END:
 
 #+begin_src emacs-lisp
-  (use-package exwm
-    :disabled
-    ;;    :demand t
-    :config
-    (require 'exwm-config)
-    (require 'exwm-randr)
-
-    ;; not using this - single monitor lyfe.
-    ;; (setq exwm-randr-workspace-monitor-plist '(0 "eDP1" 1 "HDMI2"))
-    (exwm-randr-enable)
-
-    ;; I swap C-t and C-x, so this is a very useful thing to also have
-    ;; as a prefix
-    (add-to-list 'exwm-input-prefix-keys ?\C-t)
-
-    (add-hook 'exwm-update-class-hook
-	      (lambda ()
-		(unless (or (string-prefix-p "sun-awt-X11-" exwm-instance-name)
-			    (string= "gimp" exwm-instance-name))
-		  (exwm-workspace-rename-buffer exwm-class-name))))
-    (add-hook 'exwm-update-title-hook
-	      (lambda ()
-		(when (or (not exwm-instance-name)
-			  (string-prefix-p "sun-awt-X11-" exwm-instance-name)
-			  (string= "gimp" exwm-instance-name))
-		  (exwm-workspace-rename-buffer exwm-title))))
+  ;; (use-package exwm
+  ;;   :disabled
+  ;;   ;;    :demand t
+  ;;   :config
+  ;;   (require 'exwm-config)
+  ;;   (require 'exwm-randr)
   
-    (setq cm/exwm-workspace-starting-number 1)
+  ;;   ;; not using this - single monitor lyfe.
+  ;;   ;; (setq exwm-randr-workspace-monitor-plist '(0 "eDP1" 1 "HDMI2"))
+  ;;   (exwm-randr-enable)
   
-    (defun cm/exwm-workspace-next ()
-      (interactive)
-      (exwm-workspace-switch (mod (+ 1 exwm-workspace-current-index) (exwm-workspace--count))))
+  ;;   ;; I swap C-t and C-x, so this is a very useful thing to also have
+  ;;   ;; as a prefix
+  ;;   (add-to-list 'exwm-input-prefix-keys ?\C-t)
   
-    (defun cm/exwm-workspace-previous ()
-      (interactive)
-      (exwm-workspace-switch (mod (- exwm-workspace-current-index 1) (exwm-workspace--count))))
+  ;;   (add-hook 'exwm-update-class-hook
+  ;; 	    (lambda ()
+  ;; 	      (unless (or (string-prefix-p "sun-awt-X11-" exwm-instance-name)
+  ;; 			  (string= "gimp" exwm-instance-name))
+  ;; 		(exwm-workspace-rename-buffer exwm-class-name))))
+  ;;   (add-hook 'exwm-update-title-hook
+  ;; 	    (lambda ()
+  ;; 	      (when (or (not exwm-instance-name)
+  ;; 			(string-prefix-p "sun-awt-X11-" exwm-instance-name)
+  ;; 			(string= "gimp" exwm-instance-name))
+  ;; 		(exwm-workspace-rename-buffer exwm-title))))
   
-    (defun cm/async-shell-no-output (cmd)
-      (interactive)
-      (call-process-shell-command (concat cmd " &")))
+  ;;   (setq cm/exwm-workspace-starting-number 1)
   
-    (defun cm/exwm-lock ()
-      (interactive)
-      (cm/async-shell-no-output "notion-lock"))
+  ;;   (defun cm/exwm-workspace-next ()
+  ;;     (interactive)
+  ;;     (exwm-workspace-switch (mod (+ 1 exwm-workspace-current-index) (exwm-workspace--count))))
   
-    (defun cm/launch-term ()
-      (interactive)
-      (cm/async-shell-no-output "term"))
+  ;;   (defun cm/exwm-workspace-previous ()
+  ;;     (interactive)
+  ;;     (exwm-workspace-switch (mod (- exwm-workspace-current-index 1) (exwm-workspace--count))))
   
-    (defun cm/launch-org-capture ()
-      (interactive)
-      (cm/async-shell-no-output "org-capture"))
+  ;;   (defun cm/async-shell-no-output (cmd)
+  ;;     (interactive)
+  ;;     (call-process-shell-command (concat cmd " &")))
   
-    ;; Find all binaries in exec-path / (exec-path)
-    (defun cm/all-binaries ()
-      (let* ((path-dirs
-	      ;; Ignore `exec-directory', the last entry in `exec-path'.
-	      (append (cdr (reverse (if (fboundp 'exec-path) (exec-path) exec-path)))
-		      (if (and (memq system-type '(windows-nt ms-dos))
-			       (not (file-remote-p default-directory)))
-			  '("."))))
-	     (completions '()))
-      
-	;; Go thru each dir in the search path, finding completions.
-	(while path-dirs
-	  (setq dir (file-name-as-directory (comint-directory (or (car path-dirs) ".")))
-		comps-in-dir (and (file-accessible-directory-p dir)
-				  (directory-files dir nil nil 'nosort)))
-	  ;; Go thru each completion found, to see whether it should be used.
-	  (while comps-in-dir
-	    (setq file (car comps-in-dir)
-		  abs-file-name (concat dir file))
-	    (if (and (not (member file completions))
-		     (not (file-directory-p abs-file-name))
-		     (or (null shell-completion-execonly)
-			 (file-executable-p abs-file-name)))
-		(setq completions (cons file completions)))
-	    (setq comps-in-dir (cdr comps-in-dir)))
-	  (setq path-dirs (cdr path-dirs)))
-	completions))
+  ;;   (defun cm/exwm-lock ()
+  ;;     (interactive)
+  ;;     (cm/async-shell-no-output "notion-lock"))
   
-    (defun cm/launch-shell-cmd (cmd)
-      (interactive
-       (list
-	(completing-read "Command: " (cm/all-binaries))))
-      (cm/async-shell-no-output cmd))
+  ;;   (defun cm/launch-term ()
+  ;;     (interactive)
+  ;;     (cm/async-shell-no-output "term"))
   
-    (exwm-input-set-key (kbd "s-<f2>") #'cm/launch-term)
-    (exwm-input-set-key (kbd "s-<f3>") #'cm/launch-shell-cmd)
+  ;;   (defun cm/launch-org-capture ()
+  ;;     (interactive)
+  ;;     (cm/async-shell-no-output "org-capture"))
   
-    (exwm-input-set-key (kbd "s-<return>") #'exwm-layout-toggle-fullscreen)
-    (exwm-input-set-key (kbd "s-r") #'exwm-reset)
-    (exwm-input-set-key (kbd "s-c") #'cm/launch-org-capture)
-    (exwm-input-set-key (kbd "s-n") #'cm/exwm-workspace-next)
-    (exwm-input-set-key (kbd "s-p") #'cm/exwm-workspace-previous)
-    (exwm-input-set-key (kbd "s-l") #'cm/exwm-lock) 
+  ;;   ;; Find all binaries in exec-path / (exec-path)
+  ;;   (defun cm/all-binaries ()
+  ;;     (let* ((path-dirs
+  ;; 	    ;; Ignore `exec-directory', the last entry in `exec-path'.
+  ;; 	    (append (cdr (reverse (if (fboundp 'exec-path) (exec-path) exec-path)))
+  ;; 		    (if (and (memq system-type '(windows-nt ms-dos))
+  ;; 			     (not (file-remote-p default-directory)))
+  ;; 			'("."))))
+  ;; 	   (completions '()))
   
-    (setq async-shell-command-display-buffer nil)
-    (setq exwm-workspace-show-all-buffers t)
-    (setq exwm-layout-show-all-buffers t)
+  ;;       ;; Go thru each dir in the search path, finding completions.
+  ;;       (while path-dirs
+  ;; 	(setq dir (file-name-as-directory (comint-directory (or (car path-dirs) ".")))
+  ;; 	      comps-in-dir (and (file-accessible-directory-p dir)
+  ;; 				(directory-files dir nil nil 'nosort)))
+  ;; 	;; Go thru each completion found, to see whether it should be used.
+  ;; 	(while comps-in-dir
+  ;; 	  (setq file (car comps-in-dir)
+  ;; 		abs-file-name (concat dir file))
+  ;; 	  (if (and (not (member file completions))
+  ;; 		   (not (file-directory-p abs-file-name))
+  ;; 		   (or (null shell-completion-execonly)
+  ;; 		       (file-executable-p abs-file-name)))
+  ;; 	      (setq completions (cons file completions)))
+  ;; 	  (setq comps-in-dir (cdr comps-in-dir)))
+  ;; 	(setq path-dirs (cdr path-dirs)))
+  ;;       completions))
   
-    ;; set none for now
-    ;; (exwm-input-set-simulation-keys
-    ;;  '(([?\C-b] . left)
-    ;;    ([?\C-f] . right)
-    ;;    ([?\C-p] . up)
-    ;;    ([?\C-n] . down)
-    ;;    ([?\C-a] . home)
-    ;;    ([?\C-e] . end)
-    ;;    ([?\M-v] . prior)
-    ;;    ([?\C-v] . next)
-    ;;    ([?\C-d] . delete)
-    ;;    ([?\C-k] . (S-end delete))))
+  ;;   (defun cm/launch-shell-cmd (cmd)
+  ;;     (interactive
+  ;;      (list
+  ;;       (completing-read "Command: " (cm/all-binaries))))
+  ;;     (cm/async-shell-no-output cmd))
   
-    (dotimes (i cm/exwm-workspace-starting-number)
-      (exwm-input-set-key (kbd (format "s-%d" i))
-			  `(lambda ()
-			     (interactive)
-			     (exwm-workspace-switch-create ,i))))
+  ;;   (exwm-input-set-key (kbd "s-<f2>") #'cm/launch-term)
+  ;;   (exwm-input-set-key (kbd "s-<f3>") #'cm/launch-shell-cmd)
   
-    ;; enable systemtray
-    (require 'exwm-systemtray)
-    (exwm-systemtray-enable)
-
-    ;; exwm-enable should be called from -f, we do not call it in our init.
-    )
+  ;;   (exwm-input-set-key (kbd "s-<return>") #'exwm-layout-toggle-fullscreen)
+  ;;   (exwm-input-set-key (kbd "s-r") #'exwm-reset)
+  ;;   (exwm-input-set-key (kbd "s-c") #'cm/launch-org-capture)
+  ;;   (exwm-input-set-key (kbd "s-n") #'cm/exwm-workspace-next)
+  ;;   (exwm-input-set-key (kbd "s-p") #'cm/exwm-workspace-previous)
+  ;;   (exwm-input-set-key (kbd "s-l") #'cm/exwm-lock) 
+  
+  ;;   (setq async-shell-command-display-buffer nil)
+  ;;   (setq exwm-workspace-show-all-buffers t)
+  ;;   (setq exwm-layout-show-all-buffers t)
+  
+  ;;   ;; set none for now
+  ;;   ;; (exwm-input-set-simulation-keys
+  ;;   ;;  '(([?\C-b] . left)
+  ;;   ;;    ([?\C-f] . right)
+  ;;   ;;    ([?\C-p] . up)
+  ;;   ;;    ([?\C-n] . down)
+  ;;   ;;    ([?\C-a] . home)
+  ;;   ;;    ([?\C-e] . end)
+  ;;   ;;    ([?\M-v] . prior)
+  ;;   ;;    ([?\C-v] . next)
+  ;;   ;;    ([?\C-d] . delete)
+  ;;   ;;    ([?\C-k] . (S-end delete))))
+  
+  ;;   (dotimes (i cm/exwm-workspace-starting-number)
+  ;;     (exwm-input-set-key (kbd (format "s-%d" i))
+  ;; 			`(lambda ()
+  ;; 			   (interactive)
+  ;; 			   (exwm-workspace-switch-create ,i))))
+  
+  ;;   ;; enable systemtray
+  ;;   (require 'exwm-systemtray)
+  ;;   (exwm-systemtray-enable)
+  
+  ;;   ;; exwm-enable should be called from -f, we do not call it in our init.
+  ;;   )
 #+end_src
 
 *** Flymake
@@ -2983,6 +3103,9 @@ Good for person wikis, however I pretty much exclusively use =org-blog=/=org-exp
 Holy god. Let it begin.
 
 **** Install org mode correctly
+:PROPERTIES:
+:ID:       2bcb2ab2-ee9a-4588-bdea-116f3a9757c4
+:END:
 I install the stable version of org from ELPA and then I manually
 install org-contrib because the org packages are not layed out sanely.
 
@@ -3120,7 +3243,7 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
 	(org-agenda-sorting-strategy
 	 '((todo tag-up tsia-up)
 	   (search tsia-up)))))))
-
+  
   (defun cm/context-agendas ()
     `(("p" "Project Agenda"
        ((stuck "")
@@ -3130,7 +3253,7 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
       ,(cm/org-ctx-agenda "w" '("INTERNET" "COMPUTER" "WORK" "PHONE")  "Work Agenda")
       ,(cm/org-ctx-agenda "b" '("INTERNET" "COMPUTER" "PHONE")  "Bus Agenda")
       ,(cm/org-ctx-agenda "t" '("COMPUTER" "PHONE")  "Train Agenda")
-      ,(cm/org-ctx-agenda "p" '("COMPUTER" "PHONE")  "Plane Agenda")
+      ,(cm/org-ctx-agenda "p" '("PHONE")  "Phone Agenda")
       ,(cm/org-ctx-agenda "m" '("INTERNET" "ERRAND" "PHONE")  "Mobile Agenda")
       ("ca" "People Agenda"
        ((tags-todo "AGENDA-TODO=\"PROJECT\"-TODO=\"WAITING\"|TODO=\"WAITING\""))
@@ -3143,7 +3266,7 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
 	(todo "PROJECT"))
        ((org-agenda-skip-function '(org-agenda-skip-entry-if 'notscheduled))
        (org-agenda-sorting-strategy '(tsia-up))))))
-
+  
   (defun cm/gtd-agendas ()
     `(("gh" "Higher Horizons"
        ((tags "50K" ,(cm/review-header "Life Purpose & Principles"))
@@ -3153,7 +3276,7 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
 	(todo "PROJECT" ,(cm/review-header "Projects and Alignment")))
        ((org-agenda-entry-text-maxlines 10000)
 	(org-agenda-entry-text-mode 1)))))
-
+  
   (defun cm/review-agendas ()
     `(("rd" "Daily Review"
        ((agenda)
@@ -3184,7 +3307,7 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
 		      "- [[file:~][Loose home files]]\n"
 		      "- Inbox headings from org: \n")))
 	(tags-todo "noop" ,(cm/review-header "Empty Your Head!"))
-
+  
 	;; GET CURRENT
 	(tags-todo "noop" ,(cm/review-section "Get Current!"))
 	(tags-todo "-TODO=\"PROJECT\"-TODO=\"WAITING\""
@@ -3202,7 +3325,7 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
 		    (org-agenda-skip-function nil)
 		    (org-agenda-span 7)
 		    (org-agenda-start-day ,(concat "-" (number-to-string (cm/days-back-to-monday)) "d"))))
-
+  
 	(agenda "" (,@(cm/review-header "Review Next Week Calendar Data")
 		    (org-agenda-skip-function nil)
 		    (org-agenda-span 14)
@@ -3211,7 +3334,7 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
 	(stuck "" ,(cm/review-header "Review Stuck Projects: Someday/Maybe or Next Actions!"))
 	(todo "PROJECT" ,(cm/review-header "Review Projects and Larger Outcomes: Add missing next actions, make sure each is naturally planned"))
 	(tags "CHECKLIST" ,(cm/review-header "Review Relevant Checklists: Any missing? Any new ones that could be added?"))
-
+  
 	;; GET CREATIVE
 	(tags-todo "noop" ,(cm/review-section "Get Creative!"))
 	(tags "SOMEDAY" ,(cm/review-header "Review Someday/Maybe List"))
@@ -3223,7 +3346,7 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
        (;; GET CLEAR
 	(tags-todo "noop" ,(cm/review-section "Get Clear!"))
 	(tags-todo "noop" ,(cm/review-header "Empty Your Head!"))
-
+  
 	;; GET CURRENT
 	(tags-todo "noop" ,(cm/review-section "Get Current!"))
 	(tags "50K" ,(cm/review-header "Read and Review Life Purpose"))
@@ -3231,7 +3354,7 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
 	(tags "30K" ,(cm/review-header "Read and Review Goals and Objectives"))
 	(tags "20K" ,(cm/review-header "Read and Review Areas of Focus and Responsibility"))
 	(todo "PROJECT" ,(cm/review-header "Read and Review Projects and Alignment"))
-
+  
 	;; GET CREATIVE
 	(tags-todo "noop" ,(cm/review-section "Get Creative!"))
 	(tags-todo "noop" ,(cm/review-header "What Went Well This Quarter, and Why?"))
@@ -3240,13 +3363,13 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
 	(tags-todo "noop" ,(cm/review-header "Empty Your Head!")))
        ((org-agenda-entry-text-maxlines 1000)
 	(org-agenda-entry-text-mode 1)))))
-
+  
   (defun cm/checklist-agendas ()
     '(("x" "All Checklists"
        ((tags "CHECKLIST"))
        ((org-agenda-entry-text-maxlines 100)
 	(org-agenda-entry-text-mode 1)))))
-
+  
   (defun cm/org-set-agenda ()
     (interactive)
     (setq org-agenda-custom-commands
@@ -3276,7 +3399,7 @@ able to set =org-agenda-custom-commands=
     (with-current-buffer
 	(if (cl-equalp major-mode 'org-mode)
 	    (current-buffer)
-	  (get-buffer-create "*scratch*"))
+          (get-buffer-create (cm/org-dir "gtd.org")))
       (cm/org-set-agenda)
       (org-agenda)))
 #+end_src
@@ -3293,6 +3416,9 @@ print agendas
 	  (htmlize-output-type 'css)))
 #+end_src
 ***** Agenda todo/done capture commands
+:PROPERTIES:
+:ID:       857aa550-7986-4911-ad38-ef1d28ac67e0
+:END:
 This is really useful for Projects and others where I want to create
 sub-tasks / references quickly from the agenda view. Thanks yet again
 to Sacha Chua.
@@ -3405,6 +3531,9 @@ to Sacha Chua.
   (define-key org-agenda-mode-map "x" #'cm/org-agenda-actions-hydra/body)
 #+end_src
 ***** Agenda block "now" line highlighting
+:PROPERTIES:
+:ID:       5de95678-a4db-4188-8d89-da210bb232ce
+:END:
 The usual line showing the current time in org-mode is too hard to
 differentiate between it and the timegrid as of
 [2020-07-10 Fri 14:44]. I'm going to change the face to something
@@ -3470,6 +3599,9 @@ out how long tasks took that you start and stop.
     (org-agenda-finalize-entries allitems 'todo))
 #+end_src
 ***** Clocking hydra
+:PROPERTIES:
+:ID:       32c1b109-95ec-4a83-862c-2ba44704a445
+:END:
 This add some commands for managing and clocking my time in a hydra.
 #+begin_src emacs-lisp
   (require 'counsel)
@@ -3501,7 +3633,7 @@ This add some commands for managing and clocking my time in a hydra.
 	  (org-clock-in)))))
 
   (defun cm/org-clock-filter-done-archived-headings (headings)
-    (remove-if (lambda (x) (or (string-match-p "/DONE " (car x))
+    (cl-remove-if (lambda (x) (or (string-match-p "/DONE " (car x))
 			       (string-match-p "/Archive/" (car x))))
 	       headings))
 
@@ -3569,11 +3701,9 @@ This add some commands for managing and clocking my time in a hydra.
 
   (setq org-agenda-files (list (cm/org-dir)))
 
-  (require 'cl)
-
   ;; we also strip calendars.org from here
   (defun cm/org-buffer-files ()
-    (remove-if #'(lambda (x) (or
+    (cl-remove-if #'(lambda (x) (or
 			      (string-suffix-p "calendars.org" x)
 			      (string-suffix-p "_old" x)))
 	       (mapcar #'buffer-file-name (org-buffer-list 'files))))
@@ -3624,6 +3754,23 @@ This add some commands for managing and clocking my time in a hydra.
   (setq org-hide-leading-stars t)
   (setq org-outline-path-complete-in-steps nil)
   (setq org-pretty-entities-include-sub-superscripts nil)
+#+end_src
+
+Using the "ABCDE" method of prioritization.
+
+- A :: very important, something you must do. There are serious negative consequences if not done.
+- B :: important, something you should do. There are only minor negative consequences if not done.
+- C :: nice to do. There are no negative consequences if not done.
+- D :: delegate. You should not do this, but someone else can.
+- E :: eliminate, whenever possible.
+
+#+begin_src emacs-lisp
+  (setq org-priority-highest ?A)
+  (setq org-priority-lowest ?E)
+  (setq org-priority-default ?C)
+#+end_src
+
+#+begin_src emacs-lisp
   (setq org-refile-use-outline-path 'file)
   (setq org-return-follows-link nil)
   (setq org-reverse-note-order nil)
@@ -3659,12 +3806,18 @@ This add some commands for managing and clocking my time in a hydra.
 
 #+end_src
 **** Org Contacts
+:PROPERTIES:
+:ID:       573ec609-b59e-4453-9825-57abffc6ea9e
+:END:
 This is part of org-contrib, thus is not a "package" for use-package to use.
 #+begin_src emacs-lisp
   (require 'org-contacts (concat (getenv "HOME") "/.emacs.d/site-lisp/org-contrib/lisp/org-contacts.el"))
   (setq org-contacts-files (list (cm/org-dir "_notes/contacts.org")))
 #+end_src
 **** Archiving
+:PROPERTIES:
+:ID:       25218533-957e-4791-8870-e3b5637716e2
+:END:
 
 These little functions do something super interesting for my GTD
 workflow. When I go to archive a task, I generally want to move it
@@ -4030,6 +4183,9 @@ How I deploy my personal website.
               (replace-regexp "\\[\\[.*?\\(\\]\\[\\(.*?\\)\\)*\\]\\]" "\\2" nil start end)))))))
 #+end_src
 **** Daily Journal file
+:PROPERTIES:
+:ID:       07ca6496-cb41-4479-a3bf-ed18b902af9b
+:END:
 #+begin_src emacs-lisp
   (setq cm/org-today-filefmt (cm/org-dir "_notes/%Y-%m-%d.org"))
 
@@ -4055,6 +4211,9 @@ How I deploy my personal website.
   (global-set-key (kbd "C-c j") 'cm/org-today-open)
 #+end_src
 **** Checklist Creation
+:PROPERTIES:
+:ID:       800d3b1b-c043-466b-93f6-5ec5045c0f7b
+:END:
 This generates a set of TODOs based on a heading and a checklist. This
 allows me to create checklist templates per-project.
 #+begin_src emacs-lisp
@@ -4153,6 +4312,9 @@ allows me to create checklist templates per-project.
 #+end_src
 
 **** Org Capture in new frames
+:PROPERTIES:
+:ID:       45c958f5-e821-4d8b-bf5c-1661c22c5cc4
+:END:
 
 #+begin_src emacs-lisp
   (defvar cm/org-capture-frame-height 50
@@ -4209,6 +4371,9 @@ allows me to create checklist templates per-project.
 #+end_src
 
 **** Org Capture w/Window Information
+:PROPERTIES:
+:ID:       60235df2-0fbd-48d1-91ec-77e47e9b1f16
+:END:
 These functions are called by a script that is written here:
 #+begin_src sh
 #!/usr/bin/env rc
@@ -4218,6 +4383,9 @@ exec /usr/bin/emacsclient.google-emacs -e '(cm/org-capture-with-window-other-fra
 #+end_src
 
 ***** Org-capture wrappers
+:PROPERTIES:
+:ID:       5fab78b1-35ba-41fc-9704-c714da9e5c67
+:END:
 Basic =org-capture= wrappers that pass along the wm_class and wm_name.
 
 #+begin_src emacs-lisp
@@ -4244,6 +4412,9 @@ Basic =org-capture= wrappers that pass along the wm_class and wm_name.
 #+end_src
 
 ***** WM_CLASS and WM_NAME information gathering.
+:PROPERTIES:
+:ID:       ac86dee1-0384-462a-8b4a-014fb31a76c0
+:END:
 Now we define the switch statement for wm_class & wm_name matching:
 #+begin_src emacs-lisp
   (defun cm/org-capture-create-appendix (wm_class wm_name)
@@ -4283,19 +4454,30 @@ Now we define the switch statement for wm_class & wm_name matching:
 
 
 **** Org Roam
+:PROPERTIES:
+:ID:       ae53497d-e87f-4861-81b2-6b07c28972ed
+:END:
 
 Hopefully this replaces my hacked up notes.org, _notes directory, shitty zettl, etc.
 
 #+begin_src emacs-lisp
   (use-package org-roam
-    :hook (after-init . org-roam-mode)
     :custom (org-roam-directory (cm/org-dir "_notes"))
     :init
-    (setq org-roam-tag-sources '(prop vanilla)))
-  
+    (setq org-roam-tag-sources '(prop vanilla))
+    (setq org-roam-capture-templates
+	  '(("d" "default" plain #'org-roam-capture--get-point "%?" :file-name "%<%Y%m%d%H%M>_${slug}" :head "#+title: ${title}
+  ,#+date: <%<%Y-%m-%d %a %H:%M>>
+  " :unnarrowed t)))
+    (setq org-roam-v2-ack t)
+    :config
+    (org-roam-db-autosync-mode))
 #+end_src
 
 **** Search through my _notes directory
+:PROPERTIES:
+:ID:       87aec6ac-bed3-4225-8d5d-53fe6fc0cc70
+:END:
 I like to record notes about various things in a long lived way via
 plain text. However, I haven't actually used them that much because I
 forget what I've even recorded!
@@ -4312,11 +4494,10 @@ Let's first layout what we want the keymap to be like:
     ("n" deft "search through all notes" :column "searching")
     ("a" cm/org-rifle-agenda "search agenda org files in ~/org")
     ("r" cm/org-notes-capture "new note")
-    ("l" org-roam "show org-roam links" :column "roaming")
+    ("l" org-roam-buffer-toggle "show org-roam links" :column "roaming")
     ("g" org-roam-graph "show roam graph")
-    ("f" org-roam-find-file "find note")
-    ("i" org-roam-insert "insert roam refererce")
-    ("I" org-roam-insert-immediate "insert roam reference immediately")
+    ("f" org-roam-node-find "find note")
+    ("i" org-roam-node-insert "insert roam refererce")
     ("q" nil "quit"))
 
   (global-set-key (kbd "C-c n") 'hydra-cm-org-notes/body)
@@ -4332,19 +4513,26 @@ Let's first layout what we want the keymap to be like:
 				   (nospace . "_")
 				   (case-fn . downcase)))
     (setq deft-use-filter-string-for-filename t)
-    (setq deft-strip-title-regexp
-	  (concat "\\(?:"
-		  "^%+" ; line beg with %
-		  "\\|^#\\+TITLE: *" ; org-mode title
-		  "\\|^#\\+title: *" ; org-mode lowercase title
-		  "\\|^[#* ]+" ; line beg with #, * and/or space
-		  "\\|-\\*-[[:alpha:]]+-\\*-" ; -*- .. -*- lines
-		  "\\|^Title:[\t ]*" ; MultiMarkdown metadata
-		  "\\|#+" ; line with just # chars
-		  "$\\)"))
+  
+    (defun cm/deft-parse-title (file contents)
+    "Parse the given FILE and CONTENTS and determine the title.
+  If `deft-use-filename-as-title' is nil, the title is taken to
+  be the first non-empty line of the FILE.  Else the base name of the FILE is
+  used as title."
+      (let ((begin (string-match "^#\\+[tT][iI][tT][lL][eE]: .*$" contents)))
+	(if begin
+	    (string-trim (substring contents begin (match-end 0)) "#\\+[tT][iI][tT][lL][eE]: *" "[\n\t ]+")
+	  (deft-base-filename file))))
+  
+    (advice-add 'deft-parse-title :override #'cm/deft-parse-title)
+  
     (setq deft-strip-summary-regexp
-	  "\\([\n\t]\\|^#\\+[[:alpha:]_]+:.*$\\)"))
-#+end_src
+	  (concat "\\("
+		  "[\n\t]" ;; blank
+		  "\\|^#\\+[[:alpha:]_]+:.*$" ;; org-mode metadata
+		  "\\|^:PROPERTIES:\n\\(.+\n\\)+:END:\n"
+		  "\\)")))
+  #+end_src
 
 THIS WAS WAY OVER THE TOP. We can just use =org-search-view= if we
 want, though it requires more regex-y stuff and is slower across all
@@ -4361,6 +4549,9 @@ the files.
 #+end_src
 
 ***** helm-rifle support functions
+:PROPERTIES:
+:ID:       7951b6ea-3895-4a30-8d67-121280542ec7
+:END:
 #+begin_src emacs-lisp
   (defun cm/org-rifle-notes ()
     "search through all notes"
@@ -4378,6 +4569,9 @@ the files.
     (helm-org-rifle-directories (list (cm/org-dir)) t))
 #+end_src
 ***** Deft support functions
+:PROPERTIES:
+:ID:       c84d8973-d982-426f-816a-f99bdb49cdbb
+:END:
 
 #+begin_src emacs-lisp
   (defun cm/deft-new-file-named (slug)
@@ -4399,6 +4593,9 @@ the files.
 #+end_src
 
 ***** Capture support functions
+:PROPERTIES:
+:ID:       6285b887-2b35-410f-8e2a-8a0e6fc18aae
+:END:
 #+begin_src emacs-lisp
   (defun cm/org-notes-capture ()
     (interactive)
@@ -4496,6 +4693,9 @@ any of my plans to get org mode todos into easier to consume formats.
 #+end_src
 
 **** Merge handling
+:PROPERTIES:
+:ID:       4fff7702-13e4-4c37-a728-57237f0363e6
+:END:
 When I open a buffer in SMerge mode, org has everything all folded up,
 and it becomes very difficult to see where things went. For ediff,
 diff, and smerge modes we should really not have any folding at all.
@@ -4513,14 +4713,18 @@ This creates the appt buffer so we get notifications about
 appointments in the org mode calendar. It's not perfect, but it does
 help with my forgetfulness.
 
-Disabling these for now. I almost always use Google Calendar alerts.
+[2021-08-25] no longer use this, trust my calendar notifications, and
+trust that I sync things to my calendar from org mode.
 #+begin_src emacs-lisp
-  ;; (setq appt-display-interval 1
-  ;;       appt-message-warning-time 3)
-  ;; (appt-activate)
-  ;; (org-agenda-to-appt)
+;;  (setq appt-display-interval 1
+;;	appt-message-warning-time 3)
+;;  (appt-activate)
+;;  (org-agenda-to-appt)
 #+end_src
 **** Two pane outline mode
+:PROPERTIES:
+:ID:       51542ee9-0b25-4227-95db-23ca94ac85dc
+:END:
 Stolen this from here:
 
 https://emacs.stackexchange.com/questions/9530/how-can-i-get-an-org-mode-outline-in-a-2nd-buffer-as-a-dynamic-table-of-contents/14987#14987
@@ -4578,6 +4782,9 @@ view on things.
 	  (show-branches)))))
 #+end_src
 **** Better Org Goto
+:PROPERTIES:
+:ID:       fc37c242-76e7-44b1-8e46-07639903f1be
+:END:
 #+begin_src emacs-lisp
   (defvar cm/org-goto-dirs (list (cm/org-dir "*.org"))
     "Org directories to search with goto")
@@ -4592,6 +4799,9 @@ view on things.
 #+end_src
 
 **** Face settings for mixed-pitch-mode
+:PROPERTIES:
+:ID:       ed735a42-36c4-420a-94b0-89d06385f092
+:END:
 This makes the headings look as pretty as everything else, without
 worrying about how the face was inherited.
 
@@ -4626,12 +4836,18 @@ worrying about how the face was inherited.
 #+end_src
 
 **** Auto save to real buffer for org files
+:PROPERTIES:
+:ID:       1c3f9575-fd6f-4383-89c7-79f0da9a6419
+:END:
 
 #+begin_src emacs-lisp
   (add-hook 'auto-save-hook 'org-save-all-org-buffers)
 #+end_src
 
 **** My GTD-style agenda WAITING hook
+:PROPERTIES:
+:ID:       e468733c-46a0-470f-996d-9f3993849f56
+:END:
 
 This creates an inactive heading in the outline title that shows me when the
 task was switched to WAITING. This helps me track how long something has been
@@ -4653,12 +4869,21 @@ waiting. Probably should use something like org-expiry.
 #+end_src
 
 **** Zettelkasten & Org References (org-ref)
+:PROPERTIES:
+:ID:       188be46c-b60e-425b-a595-d49683a74cf7
+:END:
 
 Beginning my journey in keeping prodigous references & notes. The
 biggest problem I'm going to have is actually maintaing the PDF's in
 some reasonable way.
 
 ***** Org-ref setup
+:PROPERTIES:
+:ID:       c09b65ff-d875-47f1-a2fa-0e721fa94458
+:END:
+
+Not really using this yet, need to set this up right.
+
 #+begin_src emacs-lisp
   ;; (use-package org-ref
   ;;   :init
@@ -4679,9 +4904,15 @@ some reasonable way.
 #+end_src
 
 ***** Zettel deft setup
+:PROPERTIES:
+:ID:       8ee3de07-624f-41d4-8fa5-0cf40de7747f
+:END:
 Not sure what to do about this just yet, we'll see.
 
 ***** DAV syncing for orgzly
+:PROPERTIES:
+:ID:       9b064c81-bf4c-47ed-9501-295ccfd2f7b3
+:END:
 Syncthing ended up being very flaky for laptop usage, and conflict
 resolution never really worked well. Switching to using DAV syncing
 with orgzly.
@@ -4839,6 +5070,20 @@ with orgzly.
 
 #+end_src
 
+**** Org ID on every save
+:PROPERTIES:
+:ID:       e4d046a4-7bb9-4256-991e-ab28f1eb0130
+:END:
+#+begin_src emacs-lisp
+  (defun cm/org-add-ids-in-file ()
+    "Add ID properties to all headlines in the current file."
+    (interactive)
+    (org-map-entries 'org-id-get-create))
+  
+  (add-hook 'org-mode-hook
+	    (lambda ()
+	      (add-hook 'before-save-hook #'cm/org-add-ids-in-file nil 'local)))
+#+end_src
 
 *** RCIRC
     :PROPERTIES:
@@ -5234,6 +5479,9 @@ I get to avoid most of the complications. It goes, in order:
       (setq user-mail-address "j@codemac.net")))
 #+end_src
 **** Drafts Handling
+:PROPERTIES:
+:ID:       0cf3d2ed-a014-4ff9-9718-950346378780
+:END:
 Ridiculous hacks to get sensible synced drafts. Sometimes I end up
 with way too many drafts saved due to mbsync being fast, but that's a
 good problem to me :)
@@ -5476,6 +5724,9 @@ the future.
    :ID:       3897ecf3-7d82-47a2-b736-abf8204a83b4
    :END:
 *** Guix
+:PROPERTIES:
+:ID:       503451bf-02e4-4237-a52c-473d8305eec4
+:END:
 #+begin_src emacs-lisp
   ;; load up guix if guix is installed!
 
@@ -5637,6 +5888,9 @@ A wholly owned subsidiary of Cisco.
   (require 'tup-mode)
 #+end_src
 *** Find file hydra
+:PROPERTIES:
+:ID:       b4982d55-d30d-4c04-8b5c-4758b07d4d54
+:END:
 #+begin_src emacs-lisp
   (defhydra hydra-find-file (global-map "C-c f" :exit t)
     "Find a file"
@@ -5649,8 +5903,14 @@ A wholly owned subsidiary of Cisco.
 #+end_src
 
 * Tools
+:PROPERTIES:
+:ID:       4560dbdb-bda5-4e38-be2c-d5bf9dd44ae4
+:END:
 
 ** Tea Timer
+:PROPERTIES:
+:ID:       fe707b7b-0666-4f7d-882f-03b4c6a8e067
+:END:
 
 #+begin_src emacs-lisp
   (defun cm/timer (timeval msg)
@@ -5667,6 +5927,9 @@ A wholly owned subsidiary of Cisco.
     (cm/timer "2" "Two minute task is complete!"))
 #+end_src
 ** Time Saved Calculater
+:PROPERTIES:
+:ID:       c85a7fcf-22a6-4344-87cd-4618bcaeb7b3
+:END:
 The =cm/timesaved= function is a user interface for calculating how
 much time someone saves if they shave off some amount of time per
 occurrence of a task. Good example: morning routines, imagine if you
@@ -5740,6 +6003,9 @@ The idea for this comes from https://xkcd.com/1205/
 #+end_src
 
 ** Capture all open buffers
+:PROPERTIES:
+:ID:       932d21e3-99de-4449-9bee-f42bf6916695
+:END:
 The david allen special inbox magic
 #+begin_src emacs-lisp
   (defvar cm/obvious-buffers
@@ -5833,6 +6099,9 @@ The david allen special inbox magic
 
 
 ** Global Abbrev Support
+:PROPERTIES:
+:ID:       3e3efa9d-6512-4aa4-a8b9-be72dac07c6a
+:END:
 So something that cracks me up, is the concept of textexpander being
 so "powerful". It's not powerful - it's just global.
 
@@ -5929,6 +6198,9 @@ accomplish that across x11 apps though.
 #+end_src
 
 ** YasEmacsExpander
+:PROPERTIES:
+:ID:       92268700-9099-463b-bb64-1c11221e4b19
+:END:
 This is a new version I'm developing of what's above, that should
 hopefully replace it by using yasnippet + youinput.
 
@@ -6015,6 +6287,9 @@ hopefully replace it by using yasnippet + youinput.
     "Major mode for yas expansion input.")
 #+end_src
 ** PDF Splitting Workflow
+:PROPERTIES:
+:ID:       a6787d3b-f0f8-4ffc-b3fa-bf4559425187
+:END:
 PDF's are generally how I store digital information, and usually I
 just scan them all into one huge PDF, and then split them up back at
 my computer.
@@ -6067,6 +6342,9 @@ my computer.
 
 #+end_src
 ** NYT front page
+:PROPERTIES:
+:ID:       3848fe6f-d3d0-474a-8feb-d1ebd27f244b
+:END:
 #+begin_src emacs-lisp
   (defun cm/read-nyt ()
     (interactive)
@@ -6077,6 +6355,9 @@ my computer.
       (find-file tmpfile)))
 #+end_src
 ** Timestamp parsing
+:PROPERTIES:
+:ID:       ee9dba3a-4f27-4b38-9107-545669291718
+:END:
 
 This is a utility function to basically turn a big number into it's
 =(hi lo usec psec)= formatting. 
