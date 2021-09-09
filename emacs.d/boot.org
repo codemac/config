@@ -1129,20 +1129,20 @@ I need to tie this into projectile, but for now have a way to create a
 	  (switch-to-buffer eb)
 	(shell bn))))
 
-  ;; (when (eq system-type 'gnu/linux)
-  ;;   (use-package vterm
-  ;;     :config
-  ;;     (defun cm/vterm-mode-hook ()
-  ;;       (setq-local global-hl-line-mode nil))    
-  ;;     (add-hook 'vterm-mode-hook #'cm/vterm-mode-hook)
-  ;;     (defun cm/shell-new-vterm (name)
-  ;;       "Create a vterm buffer named NAME."
-  ;;       (interactive "sShell Name: ")
-  ;;       (let* ((bn (concat "*shell:" name "*"))
-  ;; 	     (eb (get-buffer bn)))
-  ;; 	(if (and eb (get-buffer-process eb))
-  ;; 	    (switch-to-buffer eb)
-  ;; 	  (vterm bn))))))
+  (when (eq system-type 'gnu/linux)
+    (use-package vterm
+      :config
+      (defun cm/vterm-mode-hook ()
+	(setq-local global-hl-line-mode nil))    
+      (add-hook 'vterm-mode-hook #'cm/vterm-mode-hook)
+      (defun cm/shell-new-vterm (name)
+	"Create a vterm buffer named NAME."
+	(interactive "sShell Name: ")
+	(let* ((bn (concat "*shell:" name "*"))
+	       (eb (get-buffer bn)))
+	  (if (and eb (get-buffer-process eb))
+	      (switch-to-buffer eb)
+	    (vterm bn))))))
 
   (defun cm/shell-new (name)
     "Create a shell buffer named NAME."
@@ -4513,11 +4513,12 @@ This creates the appt buffer so we get notifications about
 appointments in the org mode calendar. It's not perfect, but it does
 help with my forgetfulness.
 
+Disabling these for now. I almost always use Google Calendar alerts.
 #+begin_src emacs-lisp
-  (setq appt-display-interval 1
-	appt-message-warning-time 3)
-  (appt-activate)
-  (org-agenda-to-appt)
+  ;; (setq appt-display-interval 1
+  ;;       appt-message-warning-time 3)
+  ;; (appt-activate)
+  ;; (org-agenda-to-appt)
 #+end_src
 **** Two pane outline mode
 Stolen this from here:
