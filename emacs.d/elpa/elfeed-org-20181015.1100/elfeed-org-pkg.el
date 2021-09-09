@@ -1,2 +1,0 @@
-;;; -*- no-byte-compile: t -*-
-(define-package "elfeed-org" "20181015.1100" "Configure elfeed with one or more org-mode files" '((elfeed "1.1.1") (org "8.2.7") (dash "2.10.0") (s "1.9.0") (cl-lib "0.5")) :commit "607b8bf4923a995260a072559b77bee188614a06" :keywords '("news") :authors '(("Remy Honig" . "remyhonig@gmail.com")) :maintainer '("Remy Honig" . "remyhonig@gmail.com") :url "https://github.com/remyhonig/elfeed-org")
