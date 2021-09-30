@@ -3621,15 +3621,15 @@ out how long tasks took that you start and stop.
 This add some commands for managing and clocking my time in a hydra.
 #+begin_src emacs-lisp
   (require 'counsel)
-
+  
   (defun cm/org-clock-switch-to-name ()
     (when (string= "" cm/org-clock-switch-to-last-name)
       (error "Bad cm/org-clock-switch-to-last-name"))
     cm/org-clock-switch-to-last-name)
-
+  
   (defvar cm/org-clock-switch-to-last-name ""
     "The last thing we saw as the switch to name.")
-
+  
   ;; currently cant' take raw in
   (defun cm/org-clock-switch-to-action (selection)
     "Swich org clock to selection, either creating heading or selecting it."
@@ -3647,12 +3647,12 @@ This add some commands for managing and clocking my time in a hydra.
 	(save-excursion
 	  (org-goto-marker-or-bmk (cdr selection))
 	  (org-clock-in)))))
-
+  
   (defun cm/org-clock-filter-done-archived-headings (headings)
     (cl-remove-if (lambda (x) (or (string-match-p "/DONE " (car x))
 			       (string-match-p "/Archive/" (car x))))
 	       headings))
-
+  
   ;; similar to counsel's org-goto, but we filter out DONE headings, and anything under /Archive/
   (defun cm/org-clock-switch-to ()
     (interactive)
@@ -3671,28 +3671,6 @@ This add some commands for managing and clocking my time in a hydra.
 	(ivy-read "Clock switch to (or type new): " entries
 		  :history 'cm/org-clock-switch-to-history
 		  :action #'cm/org-clock-switch-to-action))))
-
-  (defhydra hydra-org-clock (global-map "C-c x" :exit t :columns 2)
-    "Navigate your clocking"
-    ("g" (call-interactively #'org-clock-goto)
-     "goto last clocked-in task")
-    ("G" (let ((current-prefix-arg '(4)))
-	   (call-interactively #'org-clock-goto))
-     "goto recent clocked-in tasks")
-    ("c" org-clock-in
-     "in: current task")
-    ("d" (let ((current-prefix-arg '(16)))
-	   (call-interactively #'org-clock-in)
-	   (org-save-all-org-buffers))
-     "in: current and set as default")
-    ("l" (let ((current-prefix-arg '(64)))
-	     (call-interactively #'org-clock-in)
-	     (org-save-all-org-buffers))
-     "in: current at last clock-out time")
-    ("o" org-clock-out "out: current task")
-    ("x" cm/org-clock-switch-to "switch: to any or new task")
-    ("q" nil "quit"))
-  (global-set-key (kbd "C-c x") 'hydra-org-clock/body)
 #+end_src
 
 **** Useful setq's
@@ -3702,28 +3680,28 @@ This add some commands for managing and clocking my time in a hydra.
 #+begin_src emacs-lisp  
   (setq org-stuck-projects
 	    '("TODO=\"PROJECT\"" ("TODO" "NEXT" "WAITING") () ""))
-
+  
   (add-to-list 'auto-mode-alist '("\\.org'$" . org-mode))
   (global-set-key (kbd "C-c l") 'org-store-link)
   (cm/defun-local-wrap cm/org-load-agenda-wrapped cm/org-load-agenda)
   (global-set-key (kbd "C-c a") 'cm/org-load-agenda-wrapped)
   (setq org-clock-persist 'history)
   (org-clock-persistence-insinuate)
-
+  
   ;; need to set this manually as I load org so early.
   (setq org-x11idle-exists-p t) 
   (setq org-clock-x11idle-program-name "xprintidle")
   (setq org-clock-idle-time 10)
-
+  
   (setq org-agenda-files (list (cm/org-dir)))
-
+  
   ;; we also strip calendars.org from here
   (defun cm/org-buffer-files ()
     (cl-remove-if #'(lambda (x) (or
 			      (string-suffix-p "calendars.org" x)
 			      (string-suffix-p "_old" x)))
 	       (mapcar #'buffer-file-name (org-buffer-list 'files))))
-
+  
   (setq org-refile-targets `((nil
 			      :maxlevel . 5)
 			     (cm/org-buffer-files
@@ -3731,14 +3709,14 @@ This add some commands for managing and clocking my time in a hydra.
 			     ((,(cm/org-dir "gtd.org")
 			       ,(cm/org-dir "work.org"))
 			      :maxlevel . 5)))
-
+  
   ;; my dimmed face isn't that dim
   (face-spec-set
    'org-agenda-dimmed-todo-face
    '((((background light)) (:foreground "dark orange"))
      (((background dark)) (:foreground "light goldenrod")))
    'face-defface-spec)
-
+  
   (setq org-src-fontify-natively t)
   (setq org-fontify-done-headline t)
   (setq calendar-mark-diary-entries-flag t)
@@ -3768,6 +3746,7 @@ This add some commands for managing and clocking my time in a hydra.
 			("\\.mhtml\\'" . "google-chrome %s")
 			("\\.pdf\\'" . default)))
   (setq org-hide-leading-stars t)
+  (setq org-indirect-buffer-display 'current-window)
   (setq org-outline-path-complete-in-steps nil)
   (setq org-pretty-entities-include-sub-superscripts nil)
 #+end_src
@@ -3995,18 +3974,18 @@ How I deploy my personal website.
 #+begin_src emacs-lisp
   ;; Inline images in HTML instead of producting links to the image
   (setq org-export-html-inline-images t)
-
+  
   ;; Do not generate internal css formatting for HTML exports
   (setq org-export-htmlize-output-type nil)
-
+  
   ;; Export with LaTeX fragments
   (setq org-export-with-LaTeX-fragments t)
-
+  
   (require 'ox-tufte)
-
+  
   ;; add advice around org-html-headline to not generate the <div> at
   ;; all, just the <section> wrapper.
-
+  
   (defun cm/org-html-headline (headline contents info)
     "Transcode a HEADLINE element from Org to HTML.
   CONTENTS holds the contents of the headline.  INFO is a plist
@@ -4046,7 +4025,7 @@ How I deploy my personal website.
 	  ;; Standard headline.  Export it as a section.
 	  (let ((extra-class (org-element-property :HTML_CONTAINER_CLASS headline))
 		(first-content (car (org-element-contents headline))))
-
+  
 	    (format "%s%s%s%s\n"
 		    (pcase level
 		      ('1 "")
@@ -4073,7 +4052,7 @@ How I deploy my personal website.
 		      ('1 "")
 		      ('2 "</section>")
 		      (_ ""))))))))
-
+  
   (defun cm/org-html-section (section contents info)
     "Transcode a SECTION element from Org to HTML.
   CONTENTS holds the contents of the section.  INFO is a plist
@@ -4091,14 +4070,14 @@ How I deploy my personal website.
 		      (org-export-get-headline-number parent info) "-"))))
 	  ;; Build return value.
 	  (format "%s\n" (or contents ""))))))
-
+  
   (advice-add #'org-html-headline :override #'cm/org-html-headline)
   (advice-add #'org-html-section :override #'cm/org-html-section)
-
-
-
+  
+  
   ;; List of projects
   ;; - codemac.net -- My personal website
+  ;; - jmickey.net -- An experiment in public living
   ;; - org-doc -- export all org documents
   (setq org-publish-project-alist
 	`(("codemac-org"
@@ -4111,7 +4090,7 @@ How I deploy my personal website.
 	   :html-head-extra "<link rel=\"stylesheet\" href=\"tufte.css\" type=\"text/css\" />"
 	   :html-head-include-default-style nil
 	   :html-head-include-scripts nil
-
+  
 	   ;; These are for tufte.css. It seems ox-tufte is very out of
 	   ;; date.
 	   :html-html5-fancy t
@@ -4132,6 +4111,37 @@ How I deploy my personal website.
 	   :publishing-function org-publish-attachment
 	   :recursive t)
 	  ("codemac" :components ("codemac-org" "codemac-static"))
+  
+	  ("jmickey-org"
+	   :base-directory ,(cm/org-dir "_www/jmickey.net")
+	   :publishing-directory "~/tmp/jmickey.net"
+	   :recursive t
+	   :base-extension "org"
+	   :publishing-function org-html-publish-to-tufte-html
+	   :exclude-tags ("noexport" "todo")
+	   :html-head-extra "<link rel=\"stylesheet\" href=\"style.css\" type=\"text/css\" />"
+	   :html-head-include-default-style nil
+	   :html-head-include-scripts nil
+  
+	   :html-html5-fancy t
+	   :html-container "section"
+	   :html-divs ((preamble "div" "preamble")
+		       (content "article" "content")
+		       (postamble "div" "postamble"))
+	   :html-doctype "xhtml5"
+	   :section-numbers nil
+	   :html-validation-link nil
+	   :with-toc nil
+	   :with-smart-quotes nil
+	   :auto-sitemap t)
+	  ("jmickey-static"
+	   :base-directory ,(cm/org-dir "_www/jmickey.net")
+	   :publishing-directory "~/tmp/jmickey.net"
+	   :base-extension "css\\|pdf\\|png\\|jpg\\|gif\\|js\\|txt\\|mp3\\|ogg\\|swf\\|svg\\|woff\\|eot\\|ttf\\|html"
+	   :publishing-function org-publish-attachment
+	   :recursive t)
+	  ("jmickey" :components ("jmickey-org" "jmickey-static"))
+  
 	  ("org-doc-org"
 	   :base-directory ,(cm/org-dir)
 	   :publishing-directory "~/tmp/published-org"
@@ -4158,22 +4168,31 @@ How I deploy my personal website.
 	   :recursive t
 	   :author nil)
 	  ("org-doc" :components ("org-doc-org" "org-doc-static"))))
-
+  
   (defun org-save-then-publish ()
     (interactive)
     (save-buffer)
     (org-save-all-org-buffers)
     (org-publish-current-project))
-
+  
+  (defun cm/org-publish-to-gsutil (domain)
+    (interactive "sDomain name: ")
+    (org-save-all-org-buffers)
+    (delete-directory (concat "~/tmp/" domain) 'recursive)
+    ;; the main project does not have .blah
+    (org-publish-project (car (split-string domain "\\.")) 'force)
+    (if (yes-or-no-p (concat "Upload to public bucket " domain "? "))
+	(async-shell-command
+	 (concat "cd " (getenv "HOME") "/tmp/" domain " && gsutil -m rsync -r d . gs://" domain))))
+  
   (defun cm/org-publish-codemac-net ()
     (interactive)
-    (org-save-all-org-buffers)
-    ;; delete everything in ~/tmp/codemac.net
-    (delete-directory "~/tmp/codemac.net" 'recursive)
-    (org-publish-project "codemac" 'force)
-    (if (yes-or-no-p "Upload to public bucket? ")
-	(async-shell-command "cd /home/jmickey/tmp/codemac.net && /home/jmickey/opt/google-cloud-sdk/bin/gsutil -m rsync -r -d . gs://codemac.net")))
-
+    (cm/org-publish-to-gsutil "codemac.net"))
+  
+  (defun cm/org-publish-jmickey-net ()
+    (interactive)
+    (cm/org-publish-to-gsutil "jmickey.net"))
+  
 #+end_src
 **** Misc Funcs
      :PROPERTIES:
@@ -4814,11 +4833,44 @@ view on things.
 :PROPERTIES:
 :ID:       fc37c242-76e7-44b1-8e46-07639903f1be
 :END:
+
+Launching an indirect buffer based on a heading name is super
+convenient for editing without cruft around you.
+#+begin_src emacs-lisp
+  (defun cm/counsel-org-goto-all-indirect ()
+    (interactive)
+    ;; takes us to the heading of our choosing
+    (counsel-org-goto-all)
+    (org-tree-to-indirect-buffer))
+  
+  (defun cm/counsel-org-goto-all ()
+    "Go to a different location in any org file."
+    (interactive)
+    (let (entries)
+      (dolist (b (buffer-list))
+	(with-current-buffer b
+	  (when (and (derived-mode-p 'org-mode)
+		     buffer-file-name)
+	    (setq entries
+		  (nconc entries
+			 (counsel-outline-candidates
+			  (cdr (assq 'org-mode counsel-outline-settings))
+			  (counsel-org-goto-all--outline-path-prefix)))))))
+      (ivy-read "Goto: " entries
+		:history 'counsel-org-goto-history
+		:action #'counsel-org-goto-action
+		:caller 'counsel-org-goto-all)))
+  
+  (advice-add #'counsel-org-goto-all :override #'cm/counsel-org-goto-all)
+#+end_src
+
+This basically ensures that our org-goto uses counsel, and displays
+things like org mode does.
 #+begin_src emacs-lisp
   (defvar cm/org-goto-dirs (list (cm/org-dir "*.org"))
     "Org directories to search with goto")
 
-  (setq counsel-org-goto-all-outline-path-prefix 'file-name)
+  (setq counsel-org-goto-all-outline-path-prefix 'file-name-nondirectory)
   (setq counsel-org-goto-display-style 'path)
   (setq counsel-org-goto-separator "/")
   (setq counsel-org-goto-face-style 'org)
@@ -5112,6 +5164,24 @@ with orgzly.
   (add-hook 'org-mode-hook
 	    (lambda ()
 	      (add-hook 'before-save-hook #'cm/org-add-ids-in-file nil 'local)))
+#+end_src
+
+**** Hydra for eXtra org stuff
+:PROPERTIES:
+:ID:       ab1d17bc-d267-4271-b66d-840179502d5b
+:END:
+
+#+begin_src emacs-lisp
+  (defhydra hydra-org-extras (global-map "C-c x" :exit t :columns 2)
+    "Navigate your clocking"
+    ("g" (call-interactively #'cm/counsel-org-goto-all-indirect)
+     "goto heading in indirect buffer" :column "navigation")
+    ("t" (call-interactively #'cm/open-tree-view) "open as tree view")
+    ("x" cm/org-clock-switch-to "clock switch: to any or new task" :column "clock")
+    ("q" nil "quit" :column "quit"))
+  
+  (global-set-key (kbd "C-c x") 'hydra-org-extras/body)
+  
 #+end_src
 
 *** RCIRC
