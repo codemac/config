@@ -247,6 +247,22 @@ Common lisp has things like =cl-loop=, which are life.
   (require 'cl-lib)
 #+end_src
 
+** TLS Security shenanigans
+:PROPERTIES:
+:ID:       324041E0-984C-4004-829A-97DFE4800DCE
+:END:
+
+Mac OS X is TERRIBLE.
+#+begin_src emacs-lisp
+  (require 'gnutls)
+  
+  (when (eq system-type 'darwin)
+    (add-to-list 'gnutls-trustfiles "/private/etc/ssl/cert.pem"))
+  (setq gnutls-verify-error t
+	network-security-level 'high)
+  
+#+end_src
+
 ** Yes I can scroll left
    :PROPERTIES:
    :ID:       4ac2d83a-08d8-437d-8937-e8775ae454b9
@@ -1355,10 +1371,10 @@ really interpret anything.
   ;; interpret and use ansi color codes in shell output windows is the
   ;; default. If you want to filter out there existence, then do the
   ;; following:
-  ;; (add-hook 'shell-mode-hook 'ansi-color-for-comint-mode-filter)
+  (add-hook 'shell-mode-hook 'ansi-color-for-comint-mode-filter)
   ;;
   ;; instead, I'm going to have it do nothing!
-  (add-hook 'shell-mode-hook 'ansi-color-for-comint-mode-off)
+  ;;(add-hook 'shell-mode-hook 'ansi-color-for-comint-mode-off)
 
   (defun set-scroll-conservatively ()
     "Add to shell-mode-hook to prevent jump-scrolling on newlines in shell buffers."
@@ -1651,7 +1667,7 @@ what all these features really mean.
      ((eq system-type 'gnu/linux)
       (let ((browse-url-chrome-arguments
 	     (append browse-url-chrome-arguments
-		     (list (concat "--profile-directory\"" profile "\"")))))
+		     (list (concat "--profile-directory\"" profile "\"") url))))))
 	(browse-url-chrome url new-window)))
      ((eq system-type 'darwin)
       (start-process (concat "open " url) nil
@@ -4452,6 +4468,19 @@ Now we define the switch statement for wm_class & wm_name matching:
       (concat "[[" url "][" title "]]")))
 #+end_src
 
+**** EmacSQL - multi platform support
+:PROPERTIES:
+:ID:       B7E48079-0B51-44F1-AC00-4D0D9BBC6923
+:END:
+
+#+begin_src emacs-lisp
+  (require 'emacsql-sqlite)
+  
+  (setq emacsql-sqlite-executable
+	(expand-file-name 
+	 (concat "sqlite/emacsql-sqlite." (symbol-name system-type))
+	 emacsql-sqlite-data-root))
+#+end_src
 
 **** Org Roam
 :PROPERTIES:
@@ -4466,9 +4495,9 @@ Hopefully this replaces my hacked up notes.org, _notes directory, shitty zettl, 
     :init
     (setq org-roam-tag-sources '(prop vanilla))
     (setq org-roam-capture-templates
-	  '(("d" "default" plain #'org-roam-capture--get-point "%?" :file-name "%<%Y%m%d%H%M>_${slug}" :head "#+title: ${title}
+	  '(("d" "default" plain "%?" :target (file+head "%<%Y%m%d%H%M>_${slug}.org" "#+title: ${title}
   ,#+date: <%<%Y-%m-%d %a %H:%M>>
-  " :unnarrowed t)))
+  ") :unnarrowed t)))
     (setq org-roam-v2-ack t)
     :config
     (org-roam-db-autosync-mode))
