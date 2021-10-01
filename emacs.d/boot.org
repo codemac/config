@@ -5176,7 +5176,7 @@ with orgzly.
     ("g" (call-interactively #'cm/counsel-org-goto-all-indirect)
      "goto heading in indirect buffer" :column "navigation")
     ("t" (call-interactively #'cm/open-tree-view) "open as tree view")
-    ("x" cm/org-clock-switch-to "clock switch: to any or new task" :column "clock")
+    ("s" cm/org-clock-switch-to "clock switch: to any or new task" :column "clock")
     ("q" nil "quit" :column "quit"))
   
   (global-set-key (kbd "C-c x") 'hydra-org-extras/body)
