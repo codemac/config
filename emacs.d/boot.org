@@ -1190,12 +1190,12 @@ I need to tie this into projectile, but for now have a way to create a
 "main" buffer and then name other ones with =shell-new=.
 #+begin_src emacs-lisp
   ;; give shell advice to load dir-locals
-
+  
   (defun cm/advise-shell (&rest _)
     (hack-dir-local-variables-non-file-buffer))
-
+  
   (advice-add #'shell :before #'cm/advise-shell)
-
+  
   (defun cm/shell-new-emacs-shell (name)
     "Create a shell buffer named NAME."
     (interactive "sShell Name: ")
@@ -1204,9 +1204,10 @@ I need to tie this into projectile, but for now have a way to create a
       (if (and eb (get-buffer-process eb))
 	  (switch-to-buffer eb)
 	(shell bn))))
-
+  
   (when (eq system-type 'gnu/linux)
     (use-package vterm
+      :disabled ;; never really use it
       :config
       (defun cm/vterm-mode-hook ()
 	(setq-local global-hl-line-mode nil))    
@@ -1219,7 +1220,7 @@ I need to tie this into projectile, but for now have a way to create a
 	  (if (and eb (get-buffer-process eb))
 	      (switch-to-buffer eb)
 	    (vterm bn))))))
-
+  
   (defun cm/shell-new (name)
     "Create a shell buffer named NAME."
     (interactive "sShell Name: ")
@@ -1227,7 +1228,7 @@ I need to tie this into projectile, but for now have a way to create a
     ;; vterm directly if I need it. Extremely useful to have around.
     ;; (cm/shell-new-vterm name)
     (cm/shell-new-emacs-shell name))
-
+  
   (defun cm/current-shells ()
     (require 'subr-x)
     (delq nil
@@ -1236,7 +1237,7 @@ I need to tie this into projectile, but for now have a way to create a
 	     (if (string-prefix-p "*shell:" (buffer-name x))
 		 `(,(string-remove-prefix "*shell:" (string-remove-suffix "*" (buffer-name x))) ,x)))
 	   (buffer-list))))
-
+  
   (defun cm/shell-find-or-new ()
     "Find or create a shell with the given name"
     (interactive)
@@ -1244,16 +1245,16 @@ I need to tie this into projectile, but for now have a way to create a
 			   "Shell Name: "
 			   (cm/current-shells))))
       (cm/shell-new selected-shell)))
-
+  
   (defun cm/shell-main ()
     (interactive)
     (cm/shell-new "main"))
-
+  
   (defun cm/shell-projectile ()
     (interactive)
     (projectile-with-default-dir (projectile-project-root)
       (cm/shell-new (projectile-project-name))))
-
+  
   (global-set-key (kbd "<f2>") 'cm/shell-find-or-new)
   (global-set-key (kbd "<f7>") 'cm/shell-main)
 #+end_src
