@@ -1221,6 +1221,17 @@ I need to tie this into projectile, but for now have a way to create a
 	      (switch-to-buffer eb)
 	    (vterm bn))))))
   
+  (defun cm/shell-new-emacs-term (name)
+    "Create a term buffer named NAME. This also changes the default
+  escape char to C-t (for dvorak) rather than C-c."
+    (interactive "sTerm Name: ")
+    (let* ((bn (concat "shell:" name))
+	   (eb (get-buffer (concat "*" bn "*"))))
+      (if (and eb (get-buffer-process eb))
+	  (switch-to-buffer eb)
+	(ansi-term explicit-shell-file-name bn)
+	(switch-to-buffer (get-buffer (concat "*" bn "*"))))))
+
   (defun cm/shell-new (name)
     "Create a shell buffer named NAME."
     (interactive "sShell Name: ")
