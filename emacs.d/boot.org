@@ -3294,17 +3294,7 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
 	(todo "PROJECT"))
        ((org-agenda-skip-function '(org-agenda-skip-entry-if 'notscheduled))
        (org-agenda-sorting-strategy '(tsia-up))))))
-  
-  (defun cm/gtd-agendas ()
-    `(("gh" "Higher Horizons"
-       ((tags "50K" ,(cm/review-header "Life Purpose & Principles"))
-	(tags "40K" ,(cm/review-header "Life Vision (5 years)"))
-	(tags "30K" ,(cm/review-header "Goals and Objectives (12-24)"))
-	(tags "20K" ,(cm/review-header "Areas of Focus and Responsibility"))
-	(todo "PROJECT" ,(cm/review-header "Projects and Alignment")))
-       ((org-agenda-entry-text-maxlines 10000)
-	(org-agenda-entry-text-mode 1)))))
-  
+    
   (defun cm/review-agendas ()
     `(("rd" "Daily Review"
        ((agenda)
@@ -3377,10 +3367,10 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
   
 	;; GET CURRENT
 	(tags-todo "noop" ,(cm/review-section "Get Current!"))
-	(tags "50K" ,(cm/review-header "Read and Review Life Purpose"))
-	(tags "40K" ,(cm/review-header "Read and Review Visions"))
-	(tags "30K" ,(cm/review-header "Read and Review Goals and Objectives"))
-	(tags "20K" ,(cm/review-header "Read and Review Areas of Focus and Responsibility"))
+	(tags-todo "noop" ,(cm/review-header "Read and Review Life Purpose"))
+	(tags-todo "noop" ,(cm/review-header "Read and Review Visions"))
+	(tags-todo "noop" ,(cm/review-header "Read and Review Goals and Objectives"))
+	(tags "AREA" ,(cm/review-header "Read and Review Areas of Focus and Responsibility"))
 	(todo "PROJECT" ,(cm/review-header "Read and Review Projects and Alignment"))
   
 	;; GET CREATIVE
@@ -3406,7 +3396,6 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
 	   (cm/context-agendas)
 	   (cm/review-agendas)
 	   (cm/checklist-agendas)
-	   (cm/gtd-agendas)
 	   '(("Z" "Receipt Agenda"
 	      ((org-receipt-agenda)))))))
 #+end_src
@@ -4616,7 +4605,7 @@ the files.
   (defun cm/org-rifle-notes ()
     "search through all notes"
     (interactive)
-    (helm-org-rifle-files (list (cm/org-dir "notes.org"))))
+    (helm-org-rifle-files (list (cm/org-dir "_notes/notes.org"))))
 
   (defun cm/org-rifle-agenda ()
     "search through agenda files"
@@ -4694,7 +4683,7 @@ the files.
 	   "* %U %?\n%a\n\n%i\n\n" :empty-lines 1)
 	  ("a" "Address Book" entry (file ,(cm/org-dir "_notes/contacts.org"))
 	   "* %(org-contacts-template-name)\n:PROPERTIES:\n:EMAIL: %(org-contacts-template-email)\n:END:" :empty-lines 1)
-	  ("n" "Timed Notes" entry (file ,(cm/org-dir "notes.org"))
+	  ("n" "Timed Notes" entry (file ,(cm/org-dir "_notes/notes.org"))
 	   "* %T %?\n\n  %i\n  %a\n\n" :prepend nil :empty-lines 1)
 	  ("d" "Logged distraction entry" entry (file+headline ,(cm/org-dir "gtd.org") "Inbox")
 	   ,@cm/humble-todo-template
@@ -4709,7 +4698,7 @@ the files.
 	   "* PROJECT %?\n:PROPERTIES:\n:CATEGORY:\n:CREATED:  %U\n:END:\n\n** Archive :ARCHIVE:\n\n" :empty-lines 1)
 	  ("wj" "Work journal entry" plain (file+olp+datetree ,(cm/org-dir "_notes/work.org") "Notes")
 	   "\n- %U %?\n\n" :tree-type week :empty-lines 1)
-	  ("ws" "Snippet Log" entry (file+headline ,(cm/org-dir "work.org") "Snippets")
+	  ("ws" "Snippet Log" entry (file+headline ,(cm/org-dir "work.org") "Notes")
 	   "* S: %?\n  %T\n\n#+begin_src shell :results raw :shebang \"#!/usr/bin/env rc \"\nsnippets\n#+end_src\n\n" :prepend nil :empty-lines 1)
 	  ("r" "Review Captures")
 	  ("ry" "Review Entry For The Year" entry (id "256745aa-ece4-4649-a616-52b0194850d0")
