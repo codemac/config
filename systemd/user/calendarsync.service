@@ -2,6 +2,7 @@
 Description=calendarsync runner
 
 [Service]
+EnvironmentFile=/home/codemac/config/systemd/environment.conf
 Type=oneshot
-ExecStart=/home/jmickey/bin/calendarsync
+ExecStart=/home/codemac/bin/calendarsync
 TimeoutSec=600s
