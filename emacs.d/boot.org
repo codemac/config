@@ -4525,6 +4525,7 @@ Hopefully this replaces my hacked up notes.org, _notes directory, shitty zettl, 
   ,#+date: <%<%Y-%m-%d %a %H:%M>>
   ") :unnarrowed t)))
      (setq org-roam-v2-ack t)
+     (setq org-roam-graph-viewer #'browse-url)
      :config
      (cl-defmethod org-roam-node-hierarchy ((node org-roam-node))
        (let ((level (org-roam-node-level node)))
