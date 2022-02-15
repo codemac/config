@@ -209,18 +209,26 @@ screen DPI's.
      (cm/produce-font 13))
     (t
      (cm/produce-font 11)))
-
-  ;; gotta figure out a better way for unicode
-  ;;
-  ;; This doesn't work currently because emacs doesn't support color bitmaps.
-  ;  (cond
-  ;   ((member "Noto Color Emoji" (font-family-list))
-  ;    (set-fontset-font t 'unicode "Noto Color Emoji" nil 'prepend))
-  ;   ((member "symbola" (font-family-list))
-  ;    (set-fontset-font t 'unicode "Symbola" nil 'prepend)))
-
-
 #+end_src
+
+Need to figure out a better way for emoji unicode, but here is
+something that chooses which emoji font by preference.
+
+For =cl-some= we may only need to require cl-lib if we assume
+cl-loaddefs has the autoload definitions.
+#+begin_src emacs-lisp
+  (require 'cl-lib)
+  (require 'cl-extra)
+  
+  (let* ((emoji-fonts '("Noto Color Emoji"
+			"Symbola"
+			"Apple Color Emoji"))
+	 (ffl (font-family-list))
+	 (match (cl-some #'(lambda (x) (member x ffl)) emoji-fonts)))
+    (when match
+      (set-fontset-font t 'unicode (car match) nil 'prepend)))
+#+end_src
+
 * Environment
   :PROPERTIES:
   :ID:       75fc0c8b-e66b-4f0f-ad21-72adef4fd23e
@@ -1671,8 +1679,8 @@ what all these features really mean.
 	(browse-url-chrome url new-window)))
      ((eq system-type 'darwin)
       (start-process (concat "open " url) nil
-		     "open" "-b" "com.google.Chrome"
-		     "--args" (concat "--profile-directory=\"" profile "\"")
+		     "open" "-na" "Google Chrome"
+		     "--args" (concat "--profile-directory=" profile)
 		     url))))
   
   (defun cm/browse-url-work (url &optional new-window)
@@ -3195,7 +3203,7 @@ to see my review adgendas, and easier on the eyes to follow.
 			       (todo tsia-up)
 			       (tags tsia-up)
 			       (search tsia-up)))))
-
+  
   (defun cm/review-section (title)
     `((org-agenda-overriding-header ,(concat "########## " title " ##################################################"))))
   (defun cm/review-header (title)
@@ -3206,7 +3214,7 @@ to see my review adgendas, and easier on the eyes to follow.
     ;;        (leftside (make-string (floor basewidth) ?+))
     ;;        (rightside (make-string (ceiling basewidth) ?+)))
     ;;   `((org-agenda-overriding-header ,(concat leftside " " title " " rightside)))))
-
+  
   (defun cm/org-ctx-agenda (key ctx title)
     (let ((ctxlist (if (listp ctx) ctx (list ctx))))
       `(,(concat "c" key) ,title
@@ -4118,7 +4126,7 @@ How I deploy my personal website.
 	   :base-extension "org"
 	   :publishing-function org-html-publish-to-tufte-html
 	   :exclude-tags ("noexport" "todo")
-	   :html-head-extra "<link rel=\"stylesheet\" href=\"style.css\" type=\"text/css\" />"
+  ;	 :html-head-extra "<link rel=\"stylesheet\" href=\"style.css\" type=\"text/css\" />"
 	   :html-head-include-default-style nil
 	   :html-head-include-scripts nil
   
@@ -4132,6 +4140,11 @@ How I deploy my personal website.
 	   :html-validation-link nil
 	   :with-toc nil
 	   :with-smart-quotes nil
+	   :with-author nil
+	   :with-date t
+	   :with-email nil
+	   :time-stamp-file nil
+	   :with-creator nil
 	   :auto-sitemap t)
 	  ("jmickey-static"
 	   :base-directory ,(cm/org-dir "_www/jmickey.net")
@@ -4518,6 +4531,14 @@ Hopefully this replaces my hacked up notes.org, _notes directory, shitty zettl, 
   ") :unnarrowed t)))
     (setq org-roam-v2-ack t)
     :config
+    ;; displays filetitle > org-level-path > node title
+    (cl-defmethod org-roam-node-hierarchy ((node org-roam-node))
+      (let ((level (org-roam-node-level node)))
+	(concat
+	 (when (> level 0) (concat (org-roam-node-file-title node) " > "))
+	 (when (> level 1) (concat (string-join (org-roam-node-olp node) " > ") " > "))
+	 (org-roam-node-title node))))
+    (setq org-roam-node-display-template "${hierarchy:*} ${tags:20}")
     (org-roam-db-autosync-mode))
 #+end_src
 
@@ -4692,7 +4713,7 @@ the files.
 	   ,@cm/humble-todo-template)
 	  ("wn" "Work Note" entry (file ,(cm/org-dir "work.org"))
 	   "* %U %?\n\n  %i\n  %a\n\n" :prepend nil :empty-lines 1)
-	  ("wp" "Work Project" entry (id "76f3a69b-b76a-425c-bc0f-8795cae8e290")
+	  ("wp" "Work Project" entry (file+olp ,(cm/org-dir "work.org") "Projects")
 	   "* PROJECT %?\n:PROPERTIES:\n:CATEGORY:\n:CREATED:  %U\n:END:\n\n** Archive :ARCHIVE:\n\n" :empty-lines 1)
 	  ("wj" "Work journal entry" plain (file+olp+datetree ,(cm/org-dir "_notes/work.org") "Notes")
 	   "\n- %U %?\n\n" :tree-type week :empty-lines 1)
@@ -5173,7 +5194,7 @@ with orgzly.
 #+begin_src emacs-lisp
   (defhydra hydra-org-extras (global-map "C-c x" :exit t :columns 2)
     "Navigate your clocking"
-    ("g" (call-interactively #'cm/counsel-org-goto-all-indirect)
+    ("x" (call-interactively #'cm/counsel-org-goto-all-indirect)
      "goto heading in indirect buffer" :column "navigation")
     ("t" (call-interactively #'cm/open-tree-view) "open as tree view")
     ("s" cm/org-clock-switch-to "clock switch: to any or new task" :column "clock")
