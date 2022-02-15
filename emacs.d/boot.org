@@ -4494,12 +4494,18 @@ Now we define the switch statement for wm_class & wm_name matching:
 :END:
 
 #+begin_src emacs-lisp
-  (require 'emacsql-sqlite)
-  
-  (setq emacsql-sqlite-executable
-	(expand-file-name 
-	 (concat "sqlite/emacsql-sqlite." (symbol-name system-type))
-	 emacsql-sqlite-data-root))
+  (use-package emacsql-sqlite
+    :config
+    (setq emacsql-sqlite-executable
+	  (expand-file-name 
+	   (concat "sqlite/emacsql-sqlite." (symbol-name system-type))
+	   emacsql-sqlite-data-root))
+    (setq org-roam-database-connector 'sqlite))
+
+  ;; (use-package sqlite3)
+  ;; (use-package emacsql-libsqlite3
+  ;;   :custom
+  ;;   (org-roam-database-connector 'libsqlite3))
 #+end_src
 
 **** Org Roam
@@ -4510,17 +4516,24 @@ Now we define the switch statement for wm_class & wm_name matching:
 Hopefully this replaces my hacked up notes.org, _notes directory, shitty zettl, etc.
 
 #+begin_src emacs-lisp
-  (use-package org-roam
-    :custom (org-roam-directory (cm/org-dir "_notes"))
-    :init
-    (setq org-roam-tag-sources '(prop vanilla))
-    (setq org-roam-capture-templates
-	  '(("d" "default" plain "%?" :target (file+head "%<%Y%m%d%H%M>_${slug}.org" "#+title: ${title}
+   (use-package org-roam
+     :custom (org-roam-directory (cm/org-dir "_notes"))
+     :init
+     (setq org-roam-tag-sources '(prop vanilla))
+     (setq org-roam-capture-templates
+	   '(("d" "default" plain "%?" :target (file+head "%<%Y%m%d%H%M>_${slug}.org" "#+title: ${title}
   ,#+date: <%<%Y-%m-%d %a %H:%M>>
   ") :unnarrowed t)))
-    (setq org-roam-v2-ack t)
-    :config
-    (org-roam-db-autosync-mode))
+     (setq org-roam-v2-ack t)
+     :config
+     (cl-defmethod org-roam-node-hierarchy ((node org-roam-node))
+       (let ((level (org-roam-node-level node)))
+	 (concat
+	  (when (> level 0) (concat (org-roam-node-file-title node) " > "))
+	  (when (> level 1) (concat (string-join (org-roam-node-olp node) " > ") " > "))
+	  (org-roam-node-title node))))
+     (setq org-roam-node-display-template "${hierarchy:*} ${tags:20}")
+     (org-roam-db-autosync-mode))
 #+end_src
 
 **** Search through my _notes directory
@@ -4648,7 +4661,7 @@ the files.
 #+begin_src emacs-lisp
   (defun cm/org-notes-capture ()
     (interactive)
-    (org-capture nil "n"))
+    (org-roam-capture))
 #+end_src
 
 **** Org Capture Templates
