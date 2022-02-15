@@ -12,23 +12,22 @@
 ;; Use package management!
 (require 'package)
 
-;; why the fuck aren't these https!
 (setq package-archives
-      '(("org"          . "https://orgmode.org/elpa/")
-	("melpa"        . "https://melpa.org/packages/")
-        ("gnu"          . "https://elpa.gnu.org/packages/")))
+      '(("melpa"        . "https://melpa.org/packages/")
+        ("gnu"          . "https://elpa.gnu.org/packages/")
+	("nongnu"       . "https://elpa.nongnu.org/nongnu/")))
 
 (when (boundp 'package-pinned-packages)
   (setq package-pinned-packages
-	`((org              . "org")
+	`((org              . "gnu")
 	  (org-ql           . "melpa")
 	  (org-sidebar      . "melpa")
 	  (org-super-agenda . "melpa"))))
 
 (setq package-archive-priorities
       '(("gnu"          . 100)
-	("org"          . 90)
-	("melpa"        . 80)))
+	("melpa"        . 90)
+	("nongnu"       . 80)))
 
 (package-initialize)
 

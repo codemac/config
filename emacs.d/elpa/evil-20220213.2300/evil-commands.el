@@ -2314,7 +2314,8 @@ The return value is the yanked text."
 (defun evil-end-and-return-macro ()
   "Like `kmacro-end-macro' but also return the macro.
 Remove \\<evil-insert-state-map>\\[evil-execute-in-normal-state] from the end."
-  (kmacro-end-macro nil)
+  ;; `end-kbd-macro' rather than `kmacro-end-macro' to allow clearing registers
+  (end-kbd-macro nil #'kmacro-loop-setup-function)
   (let ((end-keys-seq (append evil-execute-normal-keys nil))
         (last-kbd-macro-seq (append last-kbd-macro nil)))
     (unless last-kbd-macro-seq
@@ -3194,15 +3195,19 @@ If no FILE is specified, reload the current buffer from disk."
     (when (or (not (zerop (forward-line (or count 1))))
               (not (bolp)))
       (insert "\n"))
-    (if (/= (aref file 0) ?!)
-        (let ((result (insert-file-contents file)))
-          (save-excursion
-            (forward-char (cadr result))
-            (unless (bolp) (insert "\n"))))
-      (shell-command (substring file 1) t)
-      (save-excursion
-        (goto-char (mark))
-        (unless (bolp) (insert "\n"))))))
+    (cond
+     ((/= (aref file 0) ?!)
+      (when (member file '("#" "%"))
+        (setq file (evil-ex-replace-special-filenames file)))
+      (let ((result (insert-file-contents file)))
+        (save-excursion
+          (forward-char (cadr result))
+          (unless (bolp) (insert "\n")))))
+     (t
+      (shell-command (evil-ex-replace-special-filenames (substring file 1)) t)
+      (goto-char (mark))
+      (unless (bolp) (insert "\n"))
+      (forward-line -1)))))
 
 (evil-define-command evil-show-files ()
   "Shows the file-list.
