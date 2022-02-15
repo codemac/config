@@ -1,0 +1,2 @@
+;;; Generated package description from ivy-bibtex.el  -*- no-byte-compile: t -*-
+(define-package "ivy-bibtex" "20210927.1205" "A bibliography manager based on Ivy" '((bibtex-completion "1.0.0") (ivy "0.13.0") (cl-lib "0.5")) :commit "db73156576ee3e4ea9d7fb06a20e3cc2c8225eaf" :authors '(("Justin Burkett" . "justin@burkett.cc")) :maintainer '("Titus von der Malsburg" . "malsburg@posteo.de") :url "https://github.com/tmalsburg/helm-bibtex")

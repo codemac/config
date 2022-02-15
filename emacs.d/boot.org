@@ -1198,12 +1198,12 @@ I need to tie this into projectile, but for now have a way to create a
 "main" buffer and then name other ones with =shell-new=.
 #+begin_src emacs-lisp
   ;; give shell advice to load dir-locals
-
+  
   (defun cm/advise-shell (&rest _)
     (hack-dir-local-variables-non-file-buffer))
-
+  
   (advice-add #'shell :before #'cm/advise-shell)
-
+  
   (defun cm/shell-new-emacs-shell (name)
     "Create a shell buffer named NAME."
     (interactive "sShell Name: ")
@@ -1212,9 +1212,10 @@ I need to tie this into projectile, but for now have a way to create a
       (if (and eb (get-buffer-process eb))
 	  (switch-to-buffer eb)
 	(shell bn))))
-
+  
   (when (eq system-type 'gnu/linux)
     (use-package vterm
+      :disabled ;; never really use it
       :config
       (defun cm/vterm-mode-hook ()
 	(setq-local global-hl-line-mode nil))    
@@ -1227,6 +1228,17 @@ I need to tie this into projectile, but for now have a way to create a
 	  (if (and eb (get-buffer-process eb))
 	      (switch-to-buffer eb)
 	    (vterm bn))))))
+  
+  (defun cm/shell-new-emacs-term (name)
+    "Create a term buffer named NAME. This also changes the default
+  escape char to C-t (for dvorak) rather than C-c."
+    (interactive "sTerm Name: ")
+    (let* ((bn (concat "shell:" name))
+	   (eb (get-buffer (concat "*" bn "*"))))
+      (if (and eb (get-buffer-process eb))
+	  (switch-to-buffer eb)
+	(ansi-term explicit-shell-file-name bn)
+	(switch-to-buffer (get-buffer (concat "*" bn "*"))))))
 
   (defun cm/shell-new (name)
     "Create a shell buffer named NAME."
@@ -1235,7 +1247,7 @@ I need to tie this into projectile, but for now have a way to create a
     ;; vterm directly if I need it. Extremely useful to have around.
     ;; (cm/shell-new-vterm name)
     (cm/shell-new-emacs-shell name))
-
+  
   (defun cm/current-shells ()
     (require 'subr-x)
     (delq nil
@@ -1244,7 +1256,7 @@ I need to tie this into projectile, but for now have a way to create a
 	     (if (string-prefix-p "*shell:" (buffer-name x))
 		 `(,(string-remove-prefix "*shell:" (string-remove-suffix "*" (buffer-name x))) ,x)))
 	   (buffer-list))))
-
+  
   (defun cm/shell-find-or-new ()
     "Find or create a shell with the given name"
     (interactive)
@@ -1252,16 +1264,16 @@ I need to tie this into projectile, but for now have a way to create a
 			   "Shell Name: "
 			   (cm/current-shells))))
       (cm/shell-new selected-shell)))
-
+  
   (defun cm/shell-main ()
     (interactive)
     (cm/shell-new "main"))
-
+  
   (defun cm/shell-projectile ()
     (interactive)
     (projectile-with-default-dir (projectile-project-root)
       (cm/shell-new (projectile-project-name))))
-
+  
   (global-set-key (kbd "<f2>") 'cm/shell-find-or-new)
   (global-set-key (kbd "<f7>") 'cm/shell-main)
 #+end_src
@@ -3289,17 +3301,7 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
 	(todo "PROJECT"))
        ((org-agenda-skip-function '(org-agenda-skip-entry-if 'notscheduled))
        (org-agenda-sorting-strategy '(tsia-up))))))
-  
-  (defun cm/gtd-agendas ()
-    `(("gh" "Higher Horizons"
-       ((tags "50K" ,(cm/review-header "Life Purpose & Principles"))
-	(tags "40K" ,(cm/review-header "Life Vision (5 years)"))
-	(tags "30K" ,(cm/review-header "Goals and Objectives (12-24)"))
-	(tags "20K" ,(cm/review-header "Areas of Focus and Responsibility"))
-	(todo "PROJECT" ,(cm/review-header "Projects and Alignment")))
-       ((org-agenda-entry-text-maxlines 10000)
-	(org-agenda-entry-text-mode 1)))))
-  
+    
   (defun cm/review-agendas ()
     `(("rd" "Daily Review"
        ((agenda)
@@ -3372,10 +3374,10 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
   
 	;; GET CURRENT
 	(tags-todo "noop" ,(cm/review-section "Get Current!"))
-	(tags "50K" ,(cm/review-header "Read and Review Life Purpose"))
-	(tags "40K" ,(cm/review-header "Read and Review Visions"))
-	(tags "30K" ,(cm/review-header "Read and Review Goals and Objectives"))
-	(tags "20K" ,(cm/review-header "Read and Review Areas of Focus and Responsibility"))
+	(tags-todo "noop" ,(cm/review-header "Read and Review Life Purpose"))
+	(tags-todo "noop" ,(cm/review-header "Read and Review Visions"))
+	(tags-todo "noop" ,(cm/review-header "Read and Review Goals and Objectives"))
+	(tags "AREA" ,(cm/review-header "Read and Review Areas of Focus and Responsibility"))
 	(todo "PROJECT" ,(cm/review-header "Read and Review Projects and Alignment"))
   
 	;; GET CREATIVE
@@ -3401,7 +3403,6 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
 	   (cm/context-agendas)
 	   (cm/review-agendas)
 	   (cm/checklist-agendas)
-	   (cm/gtd-agendas)
 	   '(("Z" "Receipt Agenda"
 	      ((org-receipt-agenda)))))))
 #+end_src
@@ -4505,12 +4506,18 @@ Now we define the switch statement for wm_class & wm_name matching:
 :END:
 
 #+begin_src emacs-lisp
-  (require 'emacsql-sqlite)
-  
-  (setq emacsql-sqlite-executable
-	(expand-file-name 
-	 (concat "sqlite/emacsql-sqlite." (symbol-name system-type))
-	 emacsql-sqlite-data-root))
+  (use-package emacsql-sqlite
+    :config
+    (setq emacsql-sqlite-executable
+	  (expand-file-name 
+	   (concat "sqlite/emacsql-sqlite." (symbol-name system-type))
+	   emacsql-sqlite-data-root))
+    (setq org-roam-database-connector 'sqlite))
+
+  ;; (use-package sqlite3)
+  ;; (use-package emacsql-libsqlite3
+  ;;   :custom
+  ;;   (org-roam-database-connector 'libsqlite3))
 #+end_src
 
 **** Org Roam
@@ -4521,12 +4528,12 @@ Now we define the switch statement for wm_class & wm_name matching:
 Hopefully this replaces my hacked up notes.org, _notes directory, shitty zettl, etc.
 
 #+begin_src emacs-lisp
-  (use-package org-roam
-    :custom (org-roam-directory (cm/org-dir "_notes"))
-    :init
-    (setq org-roam-tag-sources '(prop vanilla))
-    (setq org-roam-capture-templates
-	  '(("d" "default" plain "%?" :target (file+head "%<%Y%m%d%H%M>_${slug}.org" "#+title: ${title}
+   (use-package org-roam
+     :custom (org-roam-directory (cm/org-dir "_notes"))
+     :init
+     (setq org-roam-tag-sources '(prop vanilla))
+     (setq org-roam-capture-templates
+	   '(("d" "default" plain "%?" :target (file+head "%<%Y%m%d%H%M>_${slug}.org" "#+title: ${title}
   ,#+date: <%<%Y-%m-%d %a %H:%M>>
   ") :unnarrowed t)))
     (setq org-roam-v2-ack t)
@@ -4624,7 +4631,7 @@ the files.
   (defun cm/org-rifle-notes ()
     "search through all notes"
     (interactive)
-    (helm-org-rifle-files (list (cm/org-dir "notes.org"))))
+    (helm-org-rifle-files (list (cm/org-dir "_notes/notes.org"))))
 
   (defun cm/org-rifle-agenda ()
     "search through agenda files"
@@ -4667,7 +4674,7 @@ the files.
 #+begin_src emacs-lisp
   (defun cm/org-notes-capture ()
     (interactive)
-    (org-capture nil "n"))
+    (org-roam-capture))
 #+end_src
 
 **** Org Capture Templates
@@ -4702,7 +4709,7 @@ the files.
 	   "* %U %?\n%a\n\n%i\n\n" :empty-lines 1)
 	  ("a" "Address Book" entry (file ,(cm/org-dir "_notes/contacts.org"))
 	   "* %(org-contacts-template-name)\n:PROPERTIES:\n:EMAIL: %(org-contacts-template-email)\n:END:" :empty-lines 1)
-	  ("n" "Timed Notes" entry (file ,(cm/org-dir "notes.org"))
+	  ("n" "Timed Notes" entry (file ,(cm/org-dir "_notes/notes.org"))
 	   "* %T %?\n\n  %i\n  %a\n\n" :prepend nil :empty-lines 1)
 	  ("d" "Logged distraction entry" entry (file+headline ,(cm/org-dir "gtd.org") "Inbox")
 	   ,@cm/humble-todo-template
@@ -4717,7 +4724,7 @@ the files.
 	   "* PROJECT %?\n:PROPERTIES:\n:CATEGORY:\n:CREATED:  %U\n:END:\n\n** Archive :ARCHIVE:\n\n" :empty-lines 1)
 	  ("wj" "Work journal entry" plain (file+olp+datetree ,(cm/org-dir "_notes/work.org") "Notes")
 	   "\n- %U %?\n\n" :tree-type week :empty-lines 1)
-	  ("ws" "Snippet Log" entry (file+headline ,(cm/org-dir "work.org") "Snippets")
+	  ("ws" "Snippet Log" entry (file+headline ,(cm/org-dir "work.org") "Notes")
 	   "* S: %?\n  %T\n\n#+begin_src shell :results raw :shebang \"#!/usr/bin/env rc \"\nsnippets\n#+end_src\n\n" :prepend nil :empty-lines 1)
 	  ("r" "Review Captures")
 	  ("ry" "Review Entry For The Year" entry (id "256745aa-ece4-4649-a616-52b0194850d0")
