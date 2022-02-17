@@ -3230,7 +3230,7 @@ to see my review adgendas, and easier on the eyes to follow.
   (defun cm/org-ctx-agenda (key ctx title)
     (let ((ctxlist (if (listp ctx) ctx (list ctx))))
       `(,(concat "c" key) ,title
-	((tags-todo ,(mapconcat #'(lambda (x) (concat x "-TODO=\"PROJECT\"-TODO=\"WAITING\"")) ctxlist "|")))
+	((tags-todo ,(mapconcat #'(lambda (x) (concat x "-PROJECT-TODO=\"WAITING\"")) ctxlist "|")))
 	(,@cm/org-sort-style
 	 (org-agenda-overriding-header ,title)))))
 #+end_src
@@ -3269,7 +3269,7 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
 	(todo "NEXT"))
        ((org-agenda-start-with-log-mode t)))
       ("i" "Inbox"
-       ((tags-todo "-{.*}-TODO=\"PROJECT\"-TODO=\"WAITING\""))
+       ((tags-todo "-{.*}"))
        ((org-agenda-overriding-header "Inbox")))
       ("n" "Next agenda"
        ((todo "NEXT")
@@ -3278,7 +3278,7 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
 	(org-agenda-sorting-strategy
 	 '((todo tag-up tsia-up)
 	   (search tsia-up)))))))
-  
+
   (defun cm/context-agendas ()
     `(("p" "Project Agenda"
        ((stuck "")
@@ -3291,17 +3291,17 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
       ,(cm/org-ctx-agenda "p" '("PHONE")  "Phone Agenda")
       ,(cm/org-ctx-agenda "m" '("INTERNET" "ERRAND" "PHONE")  "Mobile Agenda")
       ("ca" "People Agenda"
-       ((tags-todo "AGENDA-TODO=\"PROJECT\"-TODO=\"WAITING\"|TODO=\"WAITING\""))
+       ((tags-todo "AGENDA-PROJECT-TODO=\"WAITING\"|TODO=\"WAITING\""))
        ((org-agenda-skip-function '(org-agenda-skip-entry-if 'scheduled))
 	(org-agenda-sorting-strategy
 	 '((agenda habit-down time-up priority-down category-keep)
 	   (tags alpha-down)))))
       ("ct" "Tickler Agenda"
-       ((tags-todo "-TODO=\"PROJECT\"-TODO=\"WAITING\"")
-	(todo "PROJECT"))
+       ((tags-todo "-PROJECT-TODO=\"WAITING\"")
+	(tags-todo "PROJECT-TODO=\"WAITING\""))
        ((org-agenda-skip-function '(org-agenda-skip-entry-if 'notscheduled))
        (org-agenda-sorting-strategy '(tsia-up))))))
-    
+
   (defun cm/review-agendas ()
     `(("rd" "Daily Review"
        ((agenda)
@@ -3318,7 +3318,7 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
        (;; GET CLEAR
 	(tags-todo "noop" ,(cm/review-section "Get Clear!"))
 	(tags-todo "noop" ,(cm/review-header "Collect Loose Papers and Materials"))
-	(tags-todo "-{.*}-TODO=\"PROJECT\"-TODO=\"WAITING\""
+	(tags-todo "-{.*}-TODO=\"WAITING\""
 		   ,(cm/review-header
 		     (concat
 		      "Get IN to ZERO\n"
@@ -3332,14 +3332,14 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
 		      "- [[file:~][Loose home files]]\n"
 		      "- Inbox headings from org: \n")))
 	(tags-todo "noop" ,(cm/review-header "Empty Your Head!"))
-  
+
 	;; GET CURRENT
 	(tags-todo "noop" ,(cm/review-section "Get Current!"))
-	(tags-todo "-TODO=\"PROJECT\"-TODO=\"WAITING\""
+	(tags-todo "-PROJECT-TODO=\"WAITING\""
 		   (,@(cm/review-header "Review Actions Lists:\n- Mark things that are invalid/done from the past week\n- Ensure all next actions are physically described")
 		    (org-agenda-skip-function '(org-agenda-skip-entry-if 'scheduled))))
 	(todo "DONE|NVM")
-	(tags-todo "-TODO=\"PROJECT\"-TODO=\"WAITING\""
+	(tags-todo "-PROJECT-TODO=\"WAITING\""
 		   (,@(cm/review-header "Review Scheduled Actions Lists")
 		    (org-agenda-skip-function '(org-agenda-skip-entry-if 'notscheduled))))
 	(agenda "" (,@(cm/review-header "Review Previous Week Calendar Data")
@@ -3350,16 +3350,17 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
 		    (org-agenda-skip-function nil)
 		    (org-agenda-span 7)
 		    (org-agenda-start-day ,(concat "-" (number-to-string (cm/days-back-to-monday)) "d"))))
-  
+
 	(agenda "" (,@(cm/review-header "Review Next Week Calendar Data")
 		    (org-agenda-skip-function nil)
 		    (org-agenda-span 14)
 		    (org-agenda-start-day ,(concat "+" (number-to-string (- 7 (cm/days-back-to-monday))) "d"))))
-	(todo "WAITING" ,(cm/review-header "Review Waiting For List: Mark things as done, add things you're waiting for"))
+	(tags-todo "-PROJECT+TODO=\"WAITING\"" ,(cm/review-header "Review Waiting For List: Mark things as done, add things you're waiting for"))
 	(stuck "" ,(cm/review-header "Review Stuck Projects: Someday/Maybe or Next Actions!"))
-	(todo "PROJECT" ,(cm/review-header "Review Projects and Larger Outcomes: Add missing next actions, make sure each is naturally planned"))
+	(tags-todo "PROJECT-TODO=\"WAITING\"" ,(cm/review-header "Review Projects and Larger Outcomes: Add missing next actions, make sure each is naturally planned"))
+	(tags-todo "PROJECT+TODO=\"WAITING\"" ,(cm/review-header "Review Waiting For Projects and Larger Outcomes: Add missing next actions, make sure each is naturally planned"))
 	(tags "CHECKLIST" ,(cm/review-header "Review Relevant Checklists: Any missing? Any new ones that could be added?"))
-  
+
 	;; GET CREATIVE
 	(tags-todo "noop" ,(cm/review-section "Get Creative!"))
 	(tags "SOMEDAY" ,(cm/review-header "Review Someday/Maybe List"))
@@ -3371,15 +3372,15 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
        (;; GET CLEAR
 	(tags-todo "noop" ,(cm/review-section "Get Clear!"))
 	(tags-todo "noop" ,(cm/review-header "Empty Your Head!"))
-  
+
 	;; GET CURRENT
 	(tags-todo "noop" ,(cm/review-section "Get Current!"))
 	(tags-todo "noop" ,(cm/review-header "Read and Review Life Purpose"))
 	(tags-todo "noop" ,(cm/review-header "Read and Review Visions"))
 	(tags-todo "noop" ,(cm/review-header "Read and Review Goals and Objectives"))
 	(tags "AREA" ,(cm/review-header "Read and Review Areas of Focus and Responsibility"))
-	(todo "PROJECT" ,(cm/review-header "Read and Review Projects and Alignment"))
-  
+	(tags-todo "PROJECT" ,(cm/review-header "Read and Review Projects and Alignment"))
+
 	;; GET CREATIVE
 	(tags-todo "noop" ,(cm/review-section "Get Creative!"))
 	(tags-todo "noop" ,(cm/review-header "What Went Well This Quarter, and Why?"))
@@ -3388,13 +3389,13 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
 	(tags-todo "noop" ,(cm/review-header "Empty Your Head!")))
        ((org-agenda-entry-text-maxlines 1000)
 	(org-agenda-entry-text-mode 1)))))
-  
+
   (defun cm/checklist-agendas ()
     '(("x" "All Checklists"
        ((tags "CHECKLIST"))
        ((org-agenda-entry-text-maxlines 100)
 	(org-agenda-entry-text-mode 1)))))
-  
+
   (defun cm/org-set-agenda ()
     (interactive)
     (setq org-agenda-custom-commands
@@ -3533,8 +3534,8 @@ to Sacha Chua.
 	  (goto-char pos)
 	  (dotimes (i (- (org-current-level) 1))
 	    (ignore-errors (outline-up-heading 1 t))
-	    (if (string-equal "PROJECT"
-			      (nth 2 (org-heading-components)))
+	    (if (string-match "PROJECT"
+			      (nth 5 (org-heading-components)))
 		(setq pos (point))
 	      pos))))
       (with-current-buffer buffer
@@ -3687,7 +3688,7 @@ This add some commands for managing and clocking my time in a hydra.
      :END:
 #+begin_src emacs-lisp  
   (setq org-stuck-projects
-	    '("TODO=\"PROJECT\"" ("TODO" "NEXT" "WAITING") () ""))
+	    '("PROJECT" ("TODO" "NEXT" "WAITING") () ""))
   
   (add-to-list 'auto-mode-alist '("\\.org'$" . org-mode))
   (global-set-key (kbd "C-c l") 'org-store-link)
@@ -3856,8 +3857,8 @@ it the normal way.
 	    (ignore-errors (outline-up-heading 1 t))
 	    (setq toret
 		  (or toret
-		      (string-equal "PROJECT"
-				    (nth 2 (org-heading-components))))))))))
+		      (string-match-p "PROJECT"
+				    (nth 5 (org-heading-components))))))))))
 
   (defun cm/gtd-archiver ()
     (interactive)
@@ -3878,15 +3879,17 @@ it the normal way.
 			("ERRAND" . ?e)
 			("HOME"   . ?h)
 			("INTERNET"  . ?i)
-			("PHONE"     . ?p)
+			("PHONE"     . ?f)
 			("WORK"   . ?w)
+			("PROJECT" . ?p)
 			(:endgroup)
 			("CHECKLIST" . ?x)))
 
   (setq org-log-done 'time)
   (setq org-log-into-drawer t) ; record state changes into LOGBOOK
   (setq org-todo-keywords
-	'((sequence "TODO(t@)" "NEXT(n!)" "WAITING(w@)" "PROJECT(p)" "|" "DONE(d@)" "NVM(v@)")))
+	'((sequence "TODO(t@)" "NEXT(n!)" "WAIT(w!)" "|" "DONE(d@)" "NVM(v@)")))
+
   (setq org-tags-exclude-from-inheritance '("CHECKLIST"))
 #+end_src
 **** org export
@@ -4298,8 +4301,8 @@ allows me to create checklist templates per-project.
 
 	;; Add "PROJECT" todo state to parent heading
 	(goto-char (point-min))
-	(org-todo "PROJECT")
-	(org-set-tags-to nil)
+	(org-todo "TODO")
+	(org-set-tags ":PROJECT:")
 
 	;; loop over children, adding ID and CREATED timestamps
 	(goto-char (point-max))
@@ -4702,7 +4705,7 @@ the files.
 	`(("t" "Todo" entry (file+headline ,(cm/org-dir "gtd.org") "Inbox")
 	   ,@cm/humble-todo-template)
 	  ("p" "Project" entry (id "a262e411-ff66-43fc-9124-341694564dda")
-	   "* PROJECT %?\n:PROPERTIES:\n:CATEGORY:\n:CREATED:  %U\n:END:\n\n** Archive :ARCHIVE:\n\n" :empty-lines 1)
+	   "* TODO %?  :PROJECT:\n:PROPERTIES:\n:CATEGORY:\n:CREATED:  %U\n:END:\n\n** Archive :ARCHIVE:\n\n" :empty-lines 1)
 	  ("j" "Journal" entry (file ,(cm/org-dir "_editorial/journal.org"))
 	   "* %T %?\n\n  %i\n  %a\n\n" :prepend nil :empty-lines 1)
 	  ("c" "Add note to currently clocked task" entry (clock)
@@ -4721,7 +4724,7 @@ the files.
 	  ("wn" "Work Note" entry (file ,(cm/org-dir "work.org"))
 	   "* %U %?\n\n  %i\n  %a\n\n" :prepend nil :empty-lines 1)
 	  ("wp" "Work Project" entry (file+olp ,(cm/org-dir "work.org") "Projects")
-	   "* PROJECT %?\n:PROPERTIES:\n:CATEGORY:\n:CREATED:  %U\n:END:\n\n** Archive :ARCHIVE:\n\n" :empty-lines 1)
+	   "* TODO %?  :PROJECT:\n:PROPERTIES:\n:CATEGORY:\n:CREATED:  %U\n:END:\n\n** Archive :ARCHIVE:\n\n" :empty-lines 1)
 	  ("wj" "Work journal entry" plain (file+olp+datetree ,(cm/org-dir "_notes/work.org") "Notes")
 	   "\n- %U %?\n\n" :tree-type week :empty-lines 1)
 	  ("ws" "Snippet Log" entry (file+headline ,(cm/org-dir "work.org") "Notes")
