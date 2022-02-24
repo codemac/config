@@ -3699,9 +3699,10 @@ This add some commands for managing and clocking my time in a hydra.
 	`("+PROJECT/-WAIT-DONE" () ()
 	  ,(concat "\\(TODO\\|NEXT\\).*\\("
 		   (string-join
-		    (remove-if #'(lambda (x) (or (not (stringp x)) (string= "PROJECT" x)))
-			       (mapcar #'(lambda (x) (car x))
-				       org-tag-alist))
+		    (cl-remove-if
+		     #'(lambda (x) (or (not (stringp x)) (string= "PROJECT" x)))
+		     (mapcar #'(lambda (x) (car x))
+			     org-tag-alist))
 		    "\\|")
 		   "\\)")))
 
