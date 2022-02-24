@@ -3230,7 +3230,7 @@ to see my review adgendas, and easier on the eyes to follow.
   (defun cm/org-ctx-agenda (key ctx title)
     (let ((ctxlist (if (listp ctx) ctx (list ctx))))
       `(,(concat "c" key) ,title
-	((tags-todo ,(mapconcat #'(lambda (x) (concat x "-PROJECT-TODO=\"WAITING\"")) ctxlist "|")))
+	((tags-todo ,(mapconcat #'(lambda (x) (concat x "-PROJECT-TODO=\"WAIT\"")) ctxlist "|")))
 	(,@cm/org-sort-style
 	 (org-agenda-overriding-header ,title)))))
 #+end_src
@@ -3282,7 +3282,7 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
   (defun cm/context-agendas ()
     `(("p" "Project Agenda"
        ((stuck "")
-	(todo "PROJECT"))
+	(tags-todo "PROJECT"))
        ,cm/org-sort-style)
       ,(cm/org-ctx-agenda "h" '("INTERNET" "COMPUTER" "HOME" "ERRAND" "PHONE")  "Home Agenda")
       ,(cm/org-ctx-agenda "w" '("INTERNET" "COMPUTER" "WORK" "PHONE")  "Work Agenda")
@@ -3291,14 +3291,14 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
       ,(cm/org-ctx-agenda "p" '("PHONE")  "Phone Agenda")
       ,(cm/org-ctx-agenda "m" '("INTERNET" "ERRAND" "PHONE")  "Mobile Agenda")
       ("ca" "People Agenda"
-       ((tags-todo "AGENDA-PROJECT-TODO=\"WAITING\"|TODO=\"WAITING\""))
+       ((tags-todo "AGENDA-PROJECT-TODO=\"WAIT\"|-PROJECT+TODO=\"WAIT\""))
        ((org-agenda-skip-function '(org-agenda-skip-entry-if 'scheduled))
 	(org-agenda-sorting-strategy
 	 '((agenda habit-down time-up priority-down category-keep)
 	   (tags alpha-down)))))
       ("ct" "Tickler Agenda"
-       ((tags-todo "-PROJECT-TODO=\"WAITING\"")
-	(tags-todo "PROJECT-TODO=\"WAITING\""))
+       ((tags-todo "-PROJECT-TODO=\"WAIT\"")
+	(tags-todo "PROJECT-TODO=\"WAIT\""))
        ((org-agenda-skip-function '(org-agenda-skip-entry-if 'notscheduled))
        (org-agenda-sorting-strategy '(tsia-up))))))
 
@@ -3318,7 +3318,7 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
        (;; GET CLEAR
 	(tags-todo "noop" ,(cm/review-section "Get Clear!"))
 	(tags-todo "noop" ,(cm/review-header "Collect Loose Papers and Materials"))
-	(tags-todo "-{.*}-TODO=\"WAITING\""
+	(tags-todo "-{.*}-TODO=\"WAIT\""
 		   ,(cm/review-header
 		     (concat
 		      "Get IN to ZERO\n"
@@ -3335,11 +3335,11 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
 
 	;; GET CURRENT
 	(tags-todo "noop" ,(cm/review-section "Get Current!"))
-	(tags-todo "-PROJECT-TODO=\"WAITING\""
+	(tags-todo "-PROJECT-TODO=\"WAIT\""
 		   (,@(cm/review-header "Review Actions Lists:\n- Mark things that are invalid/done from the past week\n- Ensure all next actions are physically described")
 		    (org-agenda-skip-function '(org-agenda-skip-entry-if 'scheduled))))
 	(todo "DONE|NVM")
-	(tags-todo "-PROJECT-TODO=\"WAITING\""
+	(tags-todo "-PROJECT-TODO=\"WAIT\""
 		   (,@(cm/review-header "Review Scheduled Actions Lists")
 		    (org-agenda-skip-function '(org-agenda-skip-entry-if 'notscheduled))))
 	(agenda "" (,@(cm/review-header "Review Previous Week Calendar Data")
@@ -3355,10 +3355,10 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
 		    (org-agenda-skip-function nil)
 		    (org-agenda-span 14)
 		    (org-agenda-start-day ,(concat "+" (number-to-string (- 7 (cm/days-back-to-monday))) "d"))))
-	(tags-todo "-PROJECT+TODO=\"WAITING\"" ,(cm/review-header "Review Waiting For List: Mark things as done, add things you're waiting for"))
+	(tags-todo "-PROJECT+TODO=\"WAIT\"" ,(cm/review-header "Review Waiting For List: Mark things as done, add things you're waiting for"))
 	(stuck "" ,(cm/review-header "Review Stuck Projects: Someday/Maybe or Next Actions!"))
-	(tags-todo "PROJECT-TODO=\"WAITING\"" ,(cm/review-header "Review Projects and Larger Outcomes: Add missing next actions, make sure each is naturally planned"))
-	(tags-todo "PROJECT+TODO=\"WAITING\"" ,(cm/review-header "Review Waiting For Projects and Larger Outcomes: Add missing next actions, make sure each is naturally planned"))
+	(tags-todo "PROJECT-TODO=\"WAIT\"" ,(cm/review-header "Review Projects and Larger Outcomes: Add missing next actions, make sure each is naturally planned"))
+	(tags-todo "PROJECT+TODO=\"WAIT\"" ,(cm/review-header "Review Waiting For Projects and Larger Outcomes: Add missing next actions, make sure each is naturally planned"))
 	(tags "CHECKLIST" ,(cm/review-header "Review Relevant Checklists: Any missing? Any new ones that could be added?"))
 
 	;; GET CREATIVE
@@ -3583,7 +3583,7 @@ out how long tasks took that you start and stop.
 
   (defun org-clock-out-if-waiting ()
     "Clock in when the task is marked STARTED."
-    (when (and (string= org-state "WAITING")
+    (when (and (string= org-state "WAIT")
 	       (not (string= org-last-state org-state))
 	       (org-clocking-p))
       (org-clock-out)))
@@ -3686,31 +3686,46 @@ This add some commands for managing and clocking my time in a hydra.
      :PROPERTIES:
      :ID:       8bb80482-a3c3-4e9b-bc23-27fdfdf4d14c
      :END:
-#+begin_src emacs-lisp  
+#+begin_src emacs-lisp
+  ;; Select all project subtrees, and ensure there are TODO/NEXT
+  ;; headings somewhere beneath. The following code generates something
+  ;; like this:
+  ;;
+  ;; (setq org-stuck-projects
+  ;;   '("+PROJECT/-WAIT-DONE" () ()
+  ;;     "\\(TODO\\|NEXT\\).*\\(COMPUTER\\|INTERNET\\|AGENDA\\|HOME\\|WORK\\|ERRAND\\|PHONE\\)"))
+
   (setq org-stuck-projects
-	    '("PROJECT" ("TODO" "NEXT" "WAITING") () ""))
-  
+	`("+PROJECT/-WAIT-DONE" () ()
+	  ,(concat "\\(TODO\\|NEXT\\).*\\("
+		   (string-join
+		    (remove-if #'(lambda (x) (or (not (stringp x)) (string= "PROJECT" x)))
+			       (mapcar #'(lambda (x) (car x))
+				       org-tag-alist))
+		    "\\|")
+		   "\\)")))
+
   (add-to-list 'auto-mode-alist '("\\.org'$" . org-mode))
   (global-set-key (kbd "C-c l") 'org-store-link)
   (cm/defun-local-wrap cm/org-load-agenda-wrapped cm/org-load-agenda)
   (global-set-key (kbd "C-c a") 'cm/org-load-agenda-wrapped)
   (setq org-clock-persist 'history)
   (org-clock-persistence-insinuate)
-  
+
   ;; need to set this manually as I load org so early.
   (setq org-x11idle-exists-p t) 
   (setq org-clock-x11idle-program-name "xprintidle")
   (setq org-clock-idle-time 10)
-  
+
   (setq org-agenda-files (list (cm/org-dir)))
-  
+
   ;; we also strip calendars.org from here
   (defun cm/org-buffer-files ()
     (cl-remove-if #'(lambda (x) (or
 			      (string-suffix-p "calendars.org" x)
 			      (string-suffix-p "_old" x)))
 	       (mapcar #'buffer-file-name (org-buffer-list 'files))))
-  
+
   (setq org-refile-targets `((nil
 			      :maxlevel . 5)
 			     (cm/org-buffer-files
@@ -3718,14 +3733,14 @@ This add some commands for managing and clocking my time in a hydra.
 			     ((,(cm/org-dir "gtd.org")
 			       ,(cm/org-dir "work.org"))
 			      :maxlevel . 5)))
-  
+
   ;; my dimmed face isn't that dim
   (face-spec-set
    'org-agenda-dimmed-todo-face
    '((((background light)) (:foreground "dark orange"))
      (((background dark)) (:foreground "light goldenrod")))
    'face-defface-spec)
-  
+
   (setq org-src-fontify-natively t)
   (setq org-fontify-done-headline t)
   (setq calendar-mark-diary-entries-flag t)
@@ -3855,10 +3870,11 @@ it the normal way.
 	    ;; handle errors when levels are not uniform, we may go "up"
 	    ;; too many times.
 	    (ignore-errors (outline-up-heading 1 t))
-	    (setq toret
-		  (or toret
-		      (string-match-p "PROJECT"
-				    (nth 5 (org-heading-components))))))))))
+	    (let* ((tagraw (nth 5 (org-heading-components)))
+		   (tags (if tagraw tagraw "")))
+	      (setq toret
+		    (or toret
+			(string-match-p "PROJECT" tags)))))))))
 
   (defun cm/gtd-archiver ()
     (interactive)
@@ -4973,7 +4989,7 @@ waiting. Probably should use something like org-expiry.
       (org-get-heading 'notags 'notodo 'nopriority 'nocomment))))
 
   (defun cm/org-todo-state-change-inactive-ts-waiting-hook ()
-    (if (string= org-state "WAITING")
+    (if (string= org-state "WAIT")
 	(cm/org-add-inactive-ts)))
 
   (add-hook 'org-after-todo-state-change-hook 'cm/org-todo-state-change-inactive-ts-waiting-hook)
