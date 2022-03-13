@@ -1368,16 +1368,16 @@ really interpret anything.
   (require 'tramp)
 
   (setq comint-scroll-to-bottom-on-input t    ; always insert at the bottom
-        comint-scroll-to-bottom-on-output nil ; always add output at the bottom
-        comint-scroll-show-maximum-output t   ; scroll to show max possible output
-        comint-input-ignoredups t             ; no duplicates in command history
-        comint-completion-addsuffix t         ; insert space/slash after file completion
-        comint-buffer-maximum-size 40000      ; max length of the buffer in lines
-        comint-prompt-read-only t             ; if this is t, it breaks shell-command (we'll see about that)
-        comint-get-old-input (lambda () "")   ; what to run when i press enter on a
-                                              ; line above the current prompt
-        comint-input-ring-size 5000           ; max shell history size
-        protect-buffer-bury-p nil)
+	comint-scroll-to-bottom-on-output nil ; always add output at the bottom
+	comint-scroll-show-maximum-output t   ; scroll to show max possible output
+	comint-input-ignoredups t             ; no duplicates in command history
+	comint-completion-addsuffix t         ; insert space/slash after file completion
+	comint-buffer-maximum-size 40000      ; max length of the buffer in lines
+	comint-prompt-read-only t             ; if this is t, it breaks shell-command (we'll see about that)
+	comint-get-old-input (lambda () "")   ; what to run when i press enter on a
+					      ; line above the current prompt
+	comint-input-ring-size 5000           ; max shell history size
+	protect-buffer-bury-p nil)
 
   ;; make sure that comint in shell mode doesn't try to quote file
   ;; names! this is annoying as fuck!
@@ -3230,7 +3230,7 @@ to see my review adgendas, and easier on the eyes to follow.
   (defun cm/org-ctx-agenda (key ctx title)
     (let ((ctxlist (if (listp ctx) ctx (list ctx))))
       `(,(concat "c" key) ,title
-	((tags-todo ,(mapconcat #'(lambda (x) (concat x "-PROJECT-TODO=\"WAIT\"")) ctxlist "|")))
+	((tags-todo ,(mapconcat #'(lambda (x) (concat x "-PROJECT-TODO=\"WAIT\"-TODO=\"DEFER\"")) ctxlist "|")))
 	(,@cm/org-sort-style
 	 (org-agenda-overriding-header ,title)))))
 #+end_src
@@ -3291,21 +3291,23 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
       ,(cm/org-ctx-agenda "p" '("PHONE")  "Phone Agenda")
       ,(cm/org-ctx-agenda "m" '("INTERNET" "ERRAND" "PHONE")  "Mobile Agenda")
       ("ca" "People Agenda"
-       ((tags-todo "AGENDA-PROJECT-TODO=\"WAIT\"|-PROJECT+TODO=\"WAIT\""))
+       ((tags-todo "AGENDA-PROJECT-TODO=\"WAIT\"-TODO=\"DEFER\"|-PROJECT+TODO=\"WAIT\"-TODO=\"DEFER\""))
        ((org-agenda-skip-function '(org-agenda-skip-entry-if 'scheduled))
 	(org-agenda-sorting-strategy
 	 '((agenda habit-down time-up priority-down category-keep)
 	   (tags alpha-down)))))
       ("ct" "Tickler Agenda"
-       ((tags-todo "-PROJECT-TODO=\"WAIT\"")
-	(tags-todo "PROJECT-TODO=\"WAIT\""))
+       ((tags-todo "-PROJECT-TODO=\"WAIT\"-TODO=\"DEFER\"")
+	(tags-todo "PROJECT-TODO=\"WAIT\"-TODO=\"DEFER\""))
        ((org-agenda-skip-function '(org-agenda-skip-entry-if 'notscheduled))
        (org-agenda-sorting-strategy '(tsia-up))))))
 
   (defun cm/review-agendas ()
     `(("rd" "Daily Review"
        ((agenda)
-	(todo "DONE|NVM"))
+	(todo "DONE|NVM")
+	(todo "WAIT")
+	(todo "DEFER"))
        ((org-agenda-span 3)
 	(org-agenda-start-day "-1d")))
       ("rs" "Weekly Snippet Review"
@@ -3318,7 +3320,7 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
        (;; GET CLEAR
 	(tags-todo "noop" ,(cm/review-section "Get Clear!"))
 	(tags-todo "noop" ,(cm/review-header "Collect Loose Papers and Materials"))
-	(tags-todo "-{.*}-TODO=\"WAIT\""
+	(tags-todo "-{.*}-TODO=\"WAIT\"-TODO=\"DEFER\""
 		   ,(cm/review-header
 		     (concat
 		      "Get IN to ZERO\n"
@@ -3335,11 +3337,11 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
 
 	;; GET CURRENT
 	(tags-todo "noop" ,(cm/review-section "Get Current!"))
-	(tags-todo "-PROJECT-TODO=\"WAIT\""
+	(tags-todo "-PROJECT-TODO=\"WAIT\"-TODO=\"DEFER\""
 		   (,@(cm/review-header "Review Actions Lists:\n- Mark things that are invalid/done from the past week\n- Ensure all next actions are physically described")
 		    (org-agenda-skip-function '(org-agenda-skip-entry-if 'scheduled))))
 	(todo "DONE|NVM")
-	(tags-todo "-PROJECT-TODO=\"WAIT\""
+	(tags-todo "-PROJECT-TODO=\"WAIT\"-TODO=\"DEFER\""
 		   (,@(cm/review-header "Review Scheduled Actions Lists")
 		    (org-agenda-skip-function '(org-agenda-skip-entry-if 'notscheduled))))
 	(agenda "" (,@(cm/review-header "Review Previous Week Calendar Data")
@@ -3357,8 +3359,10 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
 		    (org-agenda-start-day ,(concat "+" (number-to-string (- 7 (cm/days-back-to-monday))) "d"))))
 	(tags-todo "-PROJECT+TODO=\"WAIT\"" ,(cm/review-header "Review Waiting For List: Mark things as done, add things you're waiting for"))
 	(stuck "" ,(cm/review-header "Review Stuck Projects: Someday/Maybe or Next Actions!"))
-	(tags-todo "PROJECT-TODO=\"WAIT\"" ,(cm/review-header "Review Projects and Larger Outcomes: Add missing next actions, make sure each is naturally planned"))
+	(tags-todo "PROJECT-TODO=\"WAIT\"-TODO=\"DEFER\"" ,(cm/review-header "Review Projects and Larger Outcomes: Add missing next actions, make sure each is naturally planned"))
 	(tags-todo "PROJECT+TODO=\"WAIT\"" ,(cm/review-header "Review Waiting For Projects and Larger Outcomes: Add missing next actions, make sure each is naturally planned"))
+	(tags-todo "-PROJECT+TODO=\"DEFER\"" ,(cm/review-header "Review Deferred Actions: Mark as TODO if we should do them in the next ~month, and mark as NVM if never"))
+	(tags-todo "PROJECT+TODO=\"DEFER\"" ,(cm/review-header "Review Deferred Projects: Mark as TODO if we should do them in the next ~month, and mark as NVM if never"))
 	(tags "CHECKLIST" ,(cm/review-header "Review Relevant Checklists: Any missing? Any new ones that could be added?"))
 
 	;; GET CREATIVE
@@ -3477,7 +3481,7 @@ to Sacha Chua.
     "Create a new note or task at the current project's level."
     (interactive)
     (org-agenda-switch-to)
-    (if (not (cl-equalp (nth 2 (org-heading-components)) "PROJECT"))
+    (if (not (cl-equalp (nth 5 (org-heading-components)) ":PROJECT:"))
 	(error (format "%s %s" (org-heading-components)
 		       ": Not a project tagged element! Cannot add dependent action"))
       (org-capture nil "b")))
@@ -3687,25 +3691,6 @@ This add some commands for managing and clocking my time in a hydra.
      :ID:       8bb80482-a3c3-4e9b-bc23-27fdfdf4d14c
      :END:
 #+begin_src emacs-lisp
-  ;; Select all project subtrees, and ensure there are TODO/NEXT
-  ;; headings somewhere beneath. The following code generates something
-  ;; like this:
-  ;;
-  ;; (setq org-stuck-projects
-  ;;   '("+PROJECT/-WAIT-DONE" () ()
-  ;;     "\\(TODO\\|NEXT\\).*\\(COMPUTER\\|INTERNET\\|AGENDA\\|HOME\\|WORK\\|ERRAND\\|PHONE\\)"))
-
-  (setq org-stuck-projects
-	`("+PROJECT/-WAIT-DONE" () ()
-	  ,(concat "\\(TODO\\|NEXT\\).*\\("
-		   (string-join
-		    (cl-remove-if
-		     #'(lambda (x) (or (not (stringp x)) (string= "PROJECT" x)))
-		     (mapcar #'(lambda (x) (car x))
-			     org-tag-alist))
-		    "\\|")
-		   "\\)")))
-
   (add-to-list 'auto-mode-alist '("\\.org'$" . org-mode))
   (global-set-key (kbd "C-c l") 'org-store-link)
   (cm/defun-local-wrap cm/org-load-agenda-wrapped cm/org-load-agenda)
@@ -3905,9 +3890,29 @@ it the normal way.
   (setq org-log-done 'time)
   (setq org-log-into-drawer t) ; record state changes into LOGBOOK
   (setq org-todo-keywords
-	'((sequence "TODO(t@)" "NEXT(n!)" "WAIT(w!)" "|" "DONE(d@)" "NVM(v@)")))
+	'((sequence "TODO(t@)" "NEXT(n!)" "WAIT(w!)" "DEFER(f!)" "|" "DONE(d@)" "NVM(v@)")))
 
   (setq org-tags-exclude-from-inheritance '("CHECKLIST"))
+
+  ;; Select all project subtrees, and ensure there are TODO/NEXT
+  ;; headings somewhere beneath. The following code generates something
+  ;; like this:
+  ;;
+  ;; (setq org-stuck-projects
+  ;;   '("+PROJECT/-WAIT-DONE" () ()
+  ;;     "\\(TODO\\|NEXT\\).*\\(COMPUTER\\|INTERNET\\|AGENDA\\|HOME\\|WORK\\|ERRAND\\|PHONE\\)"))
+
+  (setq org-stuck-projects
+	`("+PROJECT/-WAIT-DEFER-DONE" () ()
+	  ,(concat "\\(TODO\\|NEXT\\).*\\("
+		   (string-join
+		    (cl-remove-if
+		     #'(lambda (x) (or (not (stringp x)) (string= "PROJECT" x)))
+		     (mapcar #'(lambda (x) (car x))
+			     org-tag-alist))
+		    "\\|")
+		   "\\)")))
+
 #+end_src
 **** org export
      :PROPERTIES:
