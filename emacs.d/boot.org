@@ -3215,7 +3215,7 @@ to see my review adgendas, and easier on the eyes to follow.
 			       (todo tsia-up)
 			       (tags tsia-up)
 			       (search tsia-up)))))
-  
+
   (defun cm/review-section (title)
     `((org-agenda-overriding-header ,(concat "########## " title " ##################################################"))))
   (defun cm/review-header (title)
@@ -3226,7 +3226,7 @@ to see my review adgendas, and easier on the eyes to follow.
     ;;        (leftside (make-string (floor basewidth) ?+))
     ;;        (rightside (make-string (ceiling basewidth) ?+)))
     ;;   `((org-agenda-overriding-header ,(concat leftside " " title " " rightside)))))
-  
+
   (defun cm/org-ctx-agenda (key ctx title)
     (let ((ctxlist (if (listp ctx) ctx (list ctx))))
       `(,(concat "c" key) ,title
@@ -3443,6 +3443,14 @@ print agendas
 	'((ps-print-color-p 'black-white)
 	  (ps-landscape-mode t)
 	  (htmlize-output-type 'css)))
+#+end_src
+
+Set up the agenda column format default for now. This should probably
+be on each individual agenda.
+
+#+begin_src emacs-lisp
+  (setq org-columns-default-format-for-agenda
+	"%TODO %75ITEM(Heading) %17(Scheduled) %17DEADLINE(Deadline)")
 #+end_src
 ***** Agenda todo/done capture commands
 :PROPERTIES:
@@ -3899,11 +3907,11 @@ it the normal way.
   ;; like this:
   ;;
   ;; (setq org-stuck-projects
-  ;;   '("+PROJECT/-WAIT-DONE" () ()
+  ;;   '("+PROJECT/-WAIT-DEFER-DONE-NVM" () ()
   ;;     "\\(TODO\\|NEXT\\).*\\(COMPUTER\\|INTERNET\\|AGENDA\\|HOME\\|WORK\\|ERRAND\\|PHONE\\)"))
 
   (setq org-stuck-projects
-	`("+PROJECT/-WAIT-DEFER-DONE" () ()
+	`("+PROJECT/-WAIT-DEFER-DONE-NVM" () ()
 	  ,(concat "\\(TODO\\|NEXT\\).*\\("
 		   (string-join
 		    (cl-remove-if
@@ -4324,7 +4332,7 @@ allows me to create checklist templates per-project.
 	;; Add "PROJECT" todo state to parent heading
 	(goto-char (point-min))
 	(org-todo "TODO")
-	(org-set-tags ":PROJECT:")
+	(org-set-tags (list "PROJECT"))
 
 	;; loop over children, adding ID and CREATED timestamps
 	(goto-char (point-max))
@@ -4337,7 +4345,7 @@ allows me to create checklist templates per-project.
 	(goto-char (point-max))
 	(insert "\n")
 	(mark-whole-buffer)
-	(let* ((inboxloc (org-id-find "492952f0-e1cf-41e8-a66d-cf1808f91619"))
+	(let* ((inboxloc (org-id-find "3afcced3-0f56-4219-a763-61855fb7c3b0"))
 	       (refileloc (list "Inbox" (car inboxloc) nil (cdr inboxloc))))
 	  (org-refile nil nil refileloc nil)))))
 #+end_src
@@ -6077,6 +6085,16 @@ A wholly owned subsidiary of Cisco.
   (defun cm/gtd-timer ()
     (interactive)
     (cm/timer "2" "Two minute task is complete!"))
+
+  ;; pomo intervals:
+  ;;  25/5
+  ;;  30/0
+  ;;  53/7
+  (defun cm/timer-pomo (timeval)
+    (interactive
+     (list (completing-read "Pomo clock for (mins): "
+			    (list "25" "30" "53"))))
+    (cm/timer timeval "pomo clock"))
 #+end_src
 ** Time Saved Calculater
 :PROPERTIES:
