@@ -2076,7 +2076,7 @@ Let's =emacs -nw= interact with the system clipboard across all kinds of things!
 			     (projectile-project-buffer-p (current-buffer)
 							  project-root)))
 	(with-current-buffer
-	    (compilation-start compilation-cmd nil '(lambda (x) (concat "*compilation:" (projectile-project-name) "*")))
+	    (compilation-start compilation-cmd nil #'(lambda (x) (concat "*compilation:" (projectile-project-name) "*")))
 	  (setq-local projectile-project-name (projectile-project-name))))))
 
   ;  (advice-remove 'projectile-compile-project #'cm/projectile-compile-project))
@@ -2302,9 +2302,9 @@ I'm hacking on elisp I want the lowest barrier to entry.
   (use-package paredit
     :init
     (add-hook 'scheme-mode-hook
-	      '(lambda ()
+	      #'(lambda ()
 		 (paredit-mode 1)))
-    (add-hook 'lisp-mode-hook '(lambda () (paredit-mode 1))))
+    (add-hook 'lisp-mode-hook #'(lambda () (paredit-mode 1))))
 #+end_src
 *** Markdown
     :PROPERTIES:
@@ -2313,7 +2313,7 @@ I'm hacking on elisp I want the lowest barrier to entry.
 #+begin_src emacs-lisp
   (autoload 'markdown-mode "markdown-mode.el"
     "Major mode for editing Markdown files" t)
-  (add-hook 'markdown-mode-hook '(lambda ()
+  (add-hook 'markdown-mode-hook #'(lambda ()
                                    (flyspell-mode 1)
                                    (auto-fill-mode 1)))
   
@@ -2623,7 +2623,7 @@ More ruby days.
 No seriously, I wrote lots of Ruby.
 #+begin_src emacs-lisp
   (autoload 'haml-mode "haml-mode" "" t)
-  (add-hook 'haml-mode-hook '(lambda ()
+  (add-hook 'haml-mode-hook #'(lambda ()
                                (setq indent-tabs-mode nil)))
   
   (add-to-list 'auto-mode-alist '("\\.haml$" . haml-mode))
@@ -2677,7 +2677,7 @@ Thank you Britt.
     (define-key gtags-select-mode-map [mouse-3] 'gtags-pop-stack)
   
     ;; Highlight gtags item line.
-    (add-hook 'gtags-select-mode-hook '(lambda () (hl-line-mode 1)))
+    (add-hook 'gtags-select-mode-hook #'(lambda () (hl-line-mode 1)))
   
     ;; Update gtags data after save file.
     (defun gtags-update ()
@@ -2722,7 +2722,7 @@ Thank you Britt.
     :END:
 #+begin_src emacs-lisp
   (add-hook 'python-mode-hook
-            '(lambda ()
+            #'(lambda ()
                (setq show-trailing-whitespace t)))
 #+end_src
 *** Racket
@@ -3121,7 +3121,7 @@ Let's get our scheme on!
     :END:
 Good for person wikis, however I pretty much exclusively use =org-blog=/=org-export= now.
 #+begin_src emacs-lisp
-  (add-hook 'muse-mode-hook '(lambda ()
+  (add-hook 'muse-mode-hook #'(lambda ()
                                (footnote-mode 1)
                                (flyspell-mode 1)
                                (auto-fill-mode 1)))
@@ -3530,29 +3530,82 @@ to Sacha Chua.
       (org-capture)
       (org-set-property "REFERENCE_ID" entry-id)))
 
-  ;; save position of current entry
-  ;; first, see if this is currently a PROJECT, keep position.
-  ;; second, see if this is a sub elmnt of a PROJECT, save pos of project
-  ;; third, narrow to this subtree
-  (defun cm/org-agenda-indirect-narrow-project ()
+  (defun cm/org-heading-is-project ()
+    (string-match "PROJECT"
+		  (concat "" (nth 5 (org-heading-components)))))
+
+  (defun cm/org-heading-is-project-child ()
+    (defun cm/org-heading-is-project-child-iter ()
+      (if (and (not (= (org-current-level) 1))
+	       (not (eq (point-at-bol) (point-min)))
+	       (not (cm/org-heading-is-project)))
+	  (progn
+	    (ignore-errors (outline-up-heading 1 t))
+	    (cm/org-heading-is-project-child-iter))
+	(cm/org-heading-is-project)))
+    (save-excursion
+      (outline-show-all)
+      (cm/org-heading-is-project-child-iter)))
+
+  (defvar-local cm/org-indirect-narrow-dwim-scope nil
+    "What scope cm/org-indirect-narrow-dwim is narrowed to ")
+
+  (defun cm/org-indirect-narrow-dwim ()
     (interactive)
-    (let* ((marker (or (org-get-at-bol 'org-marker)
-		       (org-agenda-error)))
-	   (buffer (marker-buffer marker))
-	   (pos (marker-position marker)))
+    (message "cm/org-indirect-narrow-dwim: called with %s" cm/org-indirect-narrow-dwim-scope)
+    (message "major-mode: %s local-var-p %s dwim-scope %s" major-mode (local-variable-p cm/org-indirect-narrow-dwim-scope) cm/org-indirect-narrow-dwim-scope)
+    (cond
+     ((and (or (eq major-mode 'org-agenda-mode)
+	       (eq major-mode 'org-mode))
+	   (or (eq cm/org-indirect-narrow-dwim-scope 'project)
+	       (eq cm/org-indirect-narrow-dwim-scope 'heading)))
+      (message "cm/org-indirect-narrow-dwim: deciding to kill buffer")
+      (let ((org-base (buffer-base-buffer)))
+	(kill-buffer)
+	(switch-to-buffer org-base)))
+     ((eq major-mode 'org-agenda-mode)
+      (let* ((marker (or (org-get-at-bol 'org-marker)
+			 (org-agenda-error)))
+	     (buffer (marker-buffer marker))
+	     (pos (marker-position marker)))
+	(message "cm/org-indirect-narrow-dwim: calling internal for agenda")
+	(cm/org-indirect-narrow-dwim-internal buffer pos)))
+     ((eq major-mode 'org-mode)
+      ;; find nearest heading & point
+      (let ((pos (point-at-bol)))
+	(if (not (org-at-heading-p))
+	    (save-excursion
+	      (outline-show-all)
+	      (outline-previous-visible-heading 1)
+	      (setq pos (point-at-bol))))
+	(message "cm/org-indirect-narrow-dwim: calling internal for org")
+	(cm/org-indirect-narrow-dwim-internal (current-buffer) pos)))
+     (t
+      (error "Wrong mode for cm/org-indirect-narrow"))))
+
+  (defun cm/org-indirect-narrow-dwim-internal (buffer pos)
+    (message "cm/org-indirect-narrow-dwim-internal: %s" cm/org-indirect-narrow-dwim-scope)
+    (let ((scope 'heading))
       (save-excursion
 	(with-current-buffer buffer
 	  (outline-show-all)
 	  (goto-char pos)
-	  (dotimes (i (- (org-current-level) 1))
-	    (ignore-errors (outline-up-heading 1 t))
-	    (if (string-match "PROJECT"
-			      (nth 5 (org-heading-components)))
-		(setq pos (point))
-	      pos))))
+	  (setq done nil)
+	  (while (not done)
+	    (cond
+	     ((cm/org-heading-is-project)
+	      (setq pos (point))
+	      (setq done t)
+	      (setq scope 'project))
+	     ((= (org-current-level) 1)
+	      (setq done t)
+	      (setq scope 'heading))
+	     (t
+	      (ignore-errors (outline-up-heading 1 t)))))))
       (with-current-buffer buffer
 	(goto-char pos)
-	(org-tree-to-indirect-buffer))))
+	(org-tree-to-indirect-buffer)
+	(setq-local cm/org-indirect-narrow-dwim-scope scope))))
 
   (defhydra cm/org-agenda-actions-hydra (org-agenda-mode-map "x" :exit t)
     "Custom agenda actions"
@@ -3562,7 +3615,7 @@ to Sacha Chua.
     ("k" cm/org-agenda-new-project-todo "Capture under project's heading")
     ("r" cm/org-agenda-search-references "Search for references to current item" :column "References")
     ("x" cm/org-agenda-capture-references "Capture reference for current item")
-    ("o" cm/org-agenda-indirect-narrow-project "Open narrowed task, with relevant project"))
+    ("o" cm/org-indirect-narrow-dwim "Open narrowed task, with relevant project or section"))
 
 
   (define-key org-agenda-mode-map "x" #'cm/org-agenda-actions-hydra/body)
@@ -5235,14 +5288,15 @@ with orgzly.
 #+begin_src emacs-lisp
   (defhydra hydra-org-extras (global-map "C-c x" :exit t :columns 2)
     "Navigate your clocking"
-    ("x" (call-interactively #'cm/counsel-org-goto-all-indirect)
+    ("x" cm/org-indirect-narrow-dwim "indirect dwim" :column "navigation")
+    ("i" (call-interactively #'cm/counsel-org-goto-all-indirect)
      "goto heading in indirect buffer" :column "navigation")
     ("t" (call-interactively #'cm/open-tree-view) "open as tree view")
     ("s" cm/org-clock-switch-to "clock switch: to any or new task" :column "clock")
     ("q" nil "quit" :column "quit"))
-  
+
   (global-set-key (kbd "C-c x") 'hydra-org-extras/body)
-  
+
 #+end_src
 
 *** RCIRC
@@ -5945,7 +5999,7 @@ Some helper functions for publishing with ikiwiki
       (find-file
        (concat wiki-dir
                (number-to-string (apply 'max (mapcar 'string-to-number
-                                                     (mapcar '(lambda (a) (substring a 0 -5))
+                                                     (mapcar #'(lambda (a) (substring a 0 -5))
                                                              (directory-files wiki-dir nil "[0-9]*\\.mdwn" t )))))
                ".mdwn"))))
   
@@ -5956,7 +6010,7 @@ Some helper functions for publishing with ikiwiki
        (concat wiki-dir 
                (number-to-string (1+ (apply 'max
                                             (mapcar 'string-to-number 
-                                                    (mapcar '(lambda (a) (substring a 0 -5)) 
+                                                    (mapcar #'(lambda (a) (substring a 0 -5)) 
                                                             (directory-files wiki-dir nil "[0-9]*\\.mdwn" t))))))
                ".mdwn"))))
   
@@ -6913,7 +6967,7 @@ Yay gtags support for helm!
   ;;   
   ;;   ;; key bindings
   ;;   (add-hook 'helm-gtags-mode-hook
-  ;;             '(lambda ()
+  ;;             #'(lambda ()
   ;;                (local-set-key (kbd "C-c g t") 'helm-gtags-find-tag)
   ;;                (local-set-key (kbd "C-c g r") 'helm-gtags-find-rtag)
   ;;                (local-set-key (kbd "C-c g s") 'helm-gtags-find-symbol)
@@ -7051,27 +7105,27 @@ you are trying to edit anything.
   ;; 	(interactive) 
   ;; 	(switch-to-buffer "*-jabber-*")))
   ;;     (define-key mode-specific-map "jc"
-  ;;       '(lambda () 
+  ;;       #'(lambda () 
   ;; 	 (interactive) 
   ;; 	 (call-interactively 'jabber-connect)))
   ;;     (define-key mode-specific-map "jd"
-  ;;       '(lambda () 
+  ;;       #'(lambda () 
   ;; 	 (interactive) 
   ;; 	 (call-interactively 'jabber-disconnect)))
   ;;     (define-key mode-specific-map "jj"
-  ;;       '(lambda () 
+  ;;       #'(lambda () 
   ;; 	 (interactive) 
   ;; 	 (call-interactively 'jabber-chat-with)))
   ;;     (define-key mode-specific-map "ja"
-  ;;       '(lambda () 
+  ;;       #'(lambda () 
   ;; 	 (interactive) 
   ;; 	 (jabber-send-presence "away" "" 10)))
   ;;     (define-key mode-specific-map "jo"
-  ;;       '(lambda () 
+  ;;       #'(lambda () 
   ;; 	 (interactive) 
   ;; 	 (jabber-send-presence "" "" 10)))
   ;;     (define-key mode-specific-map "jx"
-  ;;       '(lambda () 
+  ;;       #'(lambda () 
   ;; 	 (interactive) 
   ;; 	 (jabber-send-presence "xa" "" 10)))))
 
