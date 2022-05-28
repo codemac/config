@@ -1,6 +1,6 @@
 h=$HOME
 eval 'PATH='`{cat $HOME/.bashrc | grep PATH | cut -d'=' -f2 | head -n 1}
-PATH=$h/bin:$h/.config/guix/current/bin:$h/.guix-profile/bin:$h/.guix-profile/sbin:$PATH
+pathprefixes=$h/bin:$h/.config/guix/current/bin:$h/.guix-profile/bin:$h/.guix-profile/sbin
 GUIX_LOCPATH=$HOME/.guix-profile/lib/locale
 history=$h/.rc_history
 SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
@@ -14,3 +14,9 @@ fn read {
    return $x(2)
  }
 }
+
+ANDROID_HOME=$h/opt/androidsdk
+optpaths=$h/opt/flutter/bin:$h/opt/androidsdk/cmdline-tools/latest/bin:$h/opt/androidsdk/emulator:$opt/androidsdk/platform-tools
+CHROME_EXECUTABLE=$h/bin/chrome
+
+PATH=$pathprefixes^':'^$optpaths^':'^$PATH
