@@ -1141,6 +1141,13 @@ later, but aren't sure.
 		(kbd "C-c C-x a")
 		#'org-attach-dired-to-subtree)))
 #+end_src
+*** Try to guess where I'm headed
+:PROPERTIES:
+:ID:       4D35ED5B-C2CD-4124-A3F6-8E2DCA76C272
+:END:
+#+begin_src emacs-lisp
+  (setq dired-dwim-target t)
+#+end_src
 ** Image Mode
 :PROPERTIES:
 :ID:       e51cfa08-015a-44e2-af4f-2e9cab6645bd
@@ -1837,7 +1844,12 @@ how it works with browse-kill-ring? I like both modes I guess.
   (use-package undo-tree
     :diminish undo-tree-mode
     :init
-    (global-undo-tree-mode))
+    (global-undo-tree-mode)
+    :config
+    ;; I expect undo history to last only for the duration of the emacs
+    ;; process. Unfortunately path names across machines etc also make
+    ;; this a headache. Wishing the world was under a single URI spec :(
+    (setq undo-tree-auto-save-history nil))
 #+end_src
 *** Speedbar
 :PROPERTIES:
@@ -3282,6 +3294,9 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
   (defun cm/context-agendas ()
     `(("p" "Project Agenda"
        ((stuck "")
+	(tags-todo "PROJECT-TODO=\"WAIT\"-TODO=\"DEFER\"")
+	(tags-todo "PROJECT+TODO=\"WAIT\"")
+	(tags-todo "PROJECT+TODO=\"DEFER\"")
 	(tags-todo "PROJECT"))
        ,cm/org-sort-style)
       ,(cm/org-ctx-agenda "h" '("INTERNET" "COMPUTER" "HOME" "ERRAND" "PHONE")  "Home Agenda")
@@ -3804,9 +3819,6 @@ This add some commands for managing and clocking my time in a hydra.
   (setq org-agenda-tags-column -90)
   (setq org-agenda-use-tag-inheritance nil)
   (setq org-agenda-window-setup 'current-window)
-  (setq org-attach-archive-delete 'query)
-  (setq org-attach-id-dir (cm/org-dir "_attachments/"))
-  (setq org-attach-method 'mv)
   (setq org-enforce-todo-dependencies t)
   (setq org-export-with-sub-superscripts nil)
   (setq org-startup-folded nil)
@@ -3821,6 +3833,10 @@ This add some commands for managing and clocking my time in a hydra.
   (setq org-outline-path-complete-in-steps nil)
   (setq org-pretty-entities-include-sub-superscripts nil)
 #+end_src
+
+
+
+
 
 Using the "ABCDE" method of prioritization.
 
@@ -3871,6 +3887,28 @@ Using the "ABCDE" method of prioritization.
   (setq org-id-link-to-org-use-id 'create-if-interactive-and-no-custom-id)
 
 #+end_src
+
+**** Attachments
+:PROPERTIES:
+:ID:       DBB7ED3F-49AF-47F4-B29C-0C10EFA72D8D
+:END:
+We store attachments in various synced locations that make it easier
+to manage org-mode. This is pretty wonky but follow through.
+
+#+begin_src emacs-lisp
+  (defun cm/org-attach-dir ()
+    (pcase (system-name)
+      ("jmickey-mbp" "/Volumes/GoogleDrive-101253201312117633331/My Drive/3 Resources/Org Attachments/")
+      (error "No attach directory set for this system!")))
+#+end_src
+#+begin_src emacs-lisp
+  (setq org-attach-archive-delete 'query)
+  (setq org-attach-dir-relative t)
+  (setq org-attach-id-dir (cm/org-attach-dir))
+  (setq org-attach-use-inheritance t)
+  (setq org-attach-method 'mv)
+#+end_src
+
 **** Org Contacts
 :PROPERTIES:
 :ID:       573ec609-b59e-4453-9825-57abffc6ea9e
