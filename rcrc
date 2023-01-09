@@ -1,5 +1,7 @@
 h=$HOME
-eval 'PATH='`{cat $HOME/.bashrc | grep PATH | cut -d'=' -f2 | head -n 1}
+if (!~ penguin `hostname ) {
+  eval 'PATH='`{cat $HOME/.bashrc | grep PATH | cut -d'=' -f2 | head -n 1}
+}
 pathprefixes=$h/bin:$h/.config/guix/current/bin:$h/.guix-profile/bin:$h/.guix-profile/sbin
 GUIX_LOCPATH=$HOME/.guix-profile/lib/locale
 history=$h/.rc_history

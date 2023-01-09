@@ -207,6 +207,13 @@ screen DPI's.
      (cm/produce-font 9))
     ((equal (system-name) "jmickey-mbp")
      (cm/produce-font 13))
+    ((equal (system-name) "penguin")
+     (cm/produce-font 11)
+     ;; Removed these two as they fucked up everything *other* than paredit :/
+     ;; This is the first time where I really want to get rid of chromeos
+     ; (define-key key-translation-map (kbd "<next>") (kbd "<M-down>"))
+     ; (define-key key-translation-map (kbd "<prior>") (kbd "<M-up>"))
+     )
     (t
      (cm/produce-font 11)))
 #+end_src
@@ -4673,26 +4680,35 @@ Now we define the switch statement for wm_class & wm_name matching:
 Hopefully this replaces my hacked up notes.org, _notes directory, shitty zettl, etc.
 
 #+begin_src emacs-lisp
-     (use-package org-roam
-       :custom (org-roam-directory (cm/org-dir "_notes"))
-       :init
-       (setq org-roam-tag-sources '(prop vanilla))
-       (setq org-roam-capture-templates
-	     '(("d" "default" plain "%?" :target (file+head "%<%Y%m%d%H%M>_${slug}.org" "#+title: ${title}
-    ,#+date: <%<%Y-%m-%d %a %H:%M>>
-    ") :unnarrowed t)))
-      (setq org-roam-v2-ack t)
-      (setq org-roam-graph-viewer #'browse-url)
-      :config
-      ;; displays filetitle > org-level-path > node title
-      (cl-defmethod org-roam-node-hierarchy ((node org-roam-node))
-	(let ((level (org-roam-node-level node)))
-	  (concat
-	   (when (> level 0) (concat (org-roam-node-file-title node) " > "))
-	   (when (> level 1) (concat (string-join (org-roam-node-olp node) " > ") " > "))
-	   (org-roam-node-title node))))
-      (setq org-roam-node-display-template "${hierarchy:*} ${tags:20}")
-      (org-roam-db-autosync-mode))
+   (use-package org-roam
+     :custom (org-roam-directory (cm/org-dir "_notes"))
+     :init
+     (setq org-roam-tag-sources '(prop vanilla))
+     (setq org-roam-capture-templates
+	   '(("d" "default" plain "%?" :target (file+head "%<%Y%m%d%H%M>_${slug}.org" "#+title: ${title}
+  ,#+date: <%<%Y-%m-%d %a %H:%M>>
+
+  [[id:10923aad-abe0-4878-9c00-c1d23977db81][Inbox]]
+  ") :unnarrowed t)
+	     ("ww" "work note" plain "%?" :target (file+head "%<%Y%m%d%H%M>_${slug}.org" "#+title: ${title}
+  ,#+date: <%<%Y-%m-%d %a %H:%M>>
+
+  [[id:3e4e8d23-94b2-48ed-a904-9ee11e78dd0f][Facebook/Meta]]
+  [[id:10923aad-abe0-4878-9c00-c1d23977db81][Inbox]]
+  ") :unnarrowed t)
+	   ))
+    (setq org-roam-v2-ack t)
+    (setq org-roam-graph-viewer #'browse-url)
+    :config
+    ;; displays filetitle > org-level-path > node title
+    (cl-defmethod org-roam-node-hierarchy ((node org-roam-node))
+      (let ((level (org-roam-node-level node)))
+	(concat
+	 (when (> level 0) (concat (org-roam-node-file-title node) " > "))
+	 (when (> level 1) (concat (string-join (org-roam-node-olp node) " > ") " > "))
+	 (org-roam-node-title node))))
+    (setq org-roam-node-display-template "${hierarchy:*} ${tags:20}")
+    (org-roam-db-autosync-enable))
 #+end_src
 
 **** Search through my _notes directory

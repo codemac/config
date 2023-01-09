@@ -1,2 +1,0 @@
-;;; Generated package description from /home/jmickey/.emacs.d/elpa/helm-org-rifle-20200512.1943/helm-org-rifle.el  -*- no-byte-compile: t -*-
-(define-package "helm-org-rifle" "20200512.1943" "Rifle through your Org files" '((emacs "24.4") (dash "2.12") (f "0.18.1") (helm "1.9.4") (s "1.10.0")) :commit "263f56d70112f5d0496684c89a2aa07959e0a95f" :keywords '("hypermedia" "outlines") :authors '(("Adam Porter" . "adam@alphapapa.net")) :maintainer '("Adam Porter" . "adam@alphapapa.net") :url "http://github.com/alphapapa/helm-org-rifle")
