@@ -3532,7 +3532,7 @@ to Sacha Chua.
     "Create a new note or task at the current project's level."
     (interactive)
     (org-agenda-switch-to)
-    (if (not (cl-equalp (nth 5 (org-heading-components)) ":PROJECT:"))
+    (if (not (string-match-p (regexp-quote ":PROJECT:") (nth 5 (org-heading-components))))
 	(error (format "%s %s" (org-heading-components)
 		       ": Not a project tagged element! Cannot add dependent action"))
       (org-capture nil "b")))
@@ -5126,10 +5126,15 @@ waiting. Probably should use something like org-expiry.
 #+begin_src emacs-lisp
   (defun cm/org-add-inactive-ts ()
     (interactive)
-    (org-edit-headline
-     (concat
-      (format-time-string "[%Y-%m-%d %H:%M] ")
-      (org-get-heading 'notags 'notodo 'nopriority 'nocomment))))
+    (let ((headline (org-get-heading 'notags 'notodo 'nopriority 'nocomment))
+	  (timestr (format-time-string "[%Y-%m-%d %a]")))
+      (if (string-match "\\(^[a-z]+:\\) ?\\(.*\\)$" headline)
+	  (org-edit-headline
+	   (concat (match-string 1 headline)
+		   " " timestr " "
+		   (match-string 2 headline)))
+	(org-edit-headline
+	 (concat timestr " " headline)))))
 
   (defun cm/org-todo-state-change-inactive-ts-waiting-hook ()
     (if (string= org-state "WAIT")
