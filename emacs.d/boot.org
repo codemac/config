@@ -776,7 +776,6 @@ that?
     "Which styles are currently configured for use")
 
   (defun cm/set-theme (theme)
-    (interactive "Theme to swap to: ")
     (run-hooks 'cm/theme-before-hook)
     (pcase theme
       ('dark
@@ -3248,12 +3247,19 @@ to see my review adgendas, and easier on the eyes to follow.
     ;;        (rightside (make-string (ceiling basewidth) ?+)))
     ;;   `((org-agenda-overriding-header ,(concat leftside " " title " " rightside)))))
 
-  (defun cm/org-ctx-agenda (key ctx title)
+  (defun cm/org-context-agenda (key ctx title)
     (let ((ctxlist (if (listp ctx) ctx (list ctx))))
       `(,(concat "c" key) ,title
-	((tags-todo ,(mapconcat #'(lambda (x) (concat x "-PROJECT-TODO=\"WAIT\"-TODO=\"DEFER\"")) ctxlist "|")))
-	(,@cm/org-sort-style
-	 (org-agenda-overriding-header ,title)))))
+	((tags-todo ,(mapconcat #'(lambda (x) (concat x "-PROJECT-TODO=\"WAIT\"-TODO=\"DEFER\"")) ctxlist "|")
+		    (,@cm/org-sort-style
+		     (org-agenda-overriding-header ,title)))
+	 (tags-todo ,(mapconcat #'(lambda (x) (concat x "-PROJECT")) ctxlist "|")
+		    ((org-agenda-sorting-strategy
+		      '((agenda habit-down time-up priority-down category-keep)
+			(todo tsia-up)
+			(tags tsia-up)
+			(search tsia-up)))
+		     (org-agenda-override-header ,(concat title " Unfiltered"))))))))
 #+end_src
 
 The org agenda. It's mostly for gtd usage, so I have the following views:
@@ -3308,12 +3314,12 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
 	(tags-todo "PROJECT+TODO=\"DEFER\"")
 	(tags-todo "PROJECT"))
        ,cm/org-sort-style)
-      ,(cm/org-ctx-agenda "h" '("INTERNET" "COMPUTER" "HOME" "ERRAND" "PHONE")  "Home Agenda")
-      ,(cm/org-ctx-agenda "w" '("INTERNET" "COMPUTER" "WORK" "PHONE")  "Work Agenda")
-      ,(cm/org-ctx-agenda "b" '("INTERNET" "COMPUTER" "PHONE")  "Bus Agenda")
-      ,(cm/org-ctx-agenda "t" '("COMPUTER" "PHONE")  "Train Agenda")
-      ,(cm/org-ctx-agenda "p" '("PHONE")  "Phone Agenda")
-      ,(cm/org-ctx-agenda "m" '("INTERNET" "ERRAND" "PHONE")  "Mobile Agenda")
+      ,(cm/org-context-agenda "h" '("INTERNET" "COMPUTER" "HOME" "ERRAND" "PHONE")  "Home Agenda")
+      ,(cm/org-context-agenda "w" '("INTERNET" "COMPUTER" "WORK" "PHONE")  "Work Agenda")
+      ,(cm/org-context-agenda "b" '("INTERNET" "COMPUTER" "PHONE")  "Bus Agenda")
+      ,(cm/org-context-agenda "t" '("COMPUTER" "PHONE")  "Train Agenda")
+      ,(cm/org-context-agenda "p" '("PHONE")  "Phone Agenda")
+      ,(cm/org-context-agenda "m" '("INTERNET" "ERRAND" "PHONE")  "Mobile Agenda")
       ("ca" "People Agenda"
        ((tags-todo "AGENDA-PROJECT-TODO=\"WAIT\"-TODO=\"DEFER\"|-PROJECT+TODO=\"WAIT\"-TODO=\"DEFER\""))
        ((org-agenda-skip-function '(org-agenda-skip-entry-if 'scheduled))
@@ -5670,6 +5676,23 @@ Who needs a command line anyways..
 #+begin_src emacs-lisp
   (autoload 'w3m-browse-url "w3m-load" "" t)
 #+end_src
+*** literate-calc
+:PROPERTIES:
+:ID:       B6ADC288-554A-41DD-AF7E-04B87F356D30
+:END:
+
+Let's me do things similar to soulver/calca and other tools.
+#+begin_src emacs-lisp
+  (use-package literate-calc-mode
+    :init
+    (global-set-key "\C-c*" 'cm/literate-calc-buffer))
+
+  (defun cm/literate-calc-buffer ()
+    (interactive)
+    (switch-to-buffer (get-buffer-create "*literate-calc*"))
+    (literate-calc-mode))
+#+end_src
+
 *** notmuch
     :PROPERTIES:
     :ID:       705f65b0-cd4f-4c2f-a7da-dc340505dbbc
