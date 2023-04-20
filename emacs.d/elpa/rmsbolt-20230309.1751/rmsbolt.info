@@ -1,0 +1,537 @@
+This is rmsbolt.info, produced by makeinfo version 6.7 from
+rmsbolt.texi.
+
+INFO-DIR-SECTION Emacs
+START-INFO-DIR-ENTRY
+* RMSbolt: (rmsbolt).   Viewing disassembly in Emacs with RMSbolt.
+END-INFO-DIR-ENTRY
+
+
+File: rmsbolt.info,  Node: Top,  Next: Installation,  Up: (dir)
+
+RMSbolt User Manual
+*******************
+
+:PREAMBLE: RMSbolt is a compiler output viewer in Emacs.
+
+   RMSbolt tries to make it easy to see what your compiler is doing.  It
+does this by showing you the assembly output of a given source code
+file.  It also highlights which source code a given assembly block
+corresponds to, and vice versa.  It supports more types of languages
+than any previous tool of its kind.
+
+* Menu:
+
+* Installation::
+* Running::
+* Configuring::
+* Languages::
+* Integrations::
+* Developing::
+
+— The Detailed Node Listing —
+
+Installation
+
+* Quelpa::
+
+Configuring
+
+* Option List::
+
+Languages
+
+* C/C++::
+* OCaml::
+* Rust::
+* Haskell::
+* Python::
+* Java::
+* PHP::
+* Pony::
+* D::
+* Swift::
+* Emacs Lisp::
+* Common Lisp::
+* Zig::
+* Go::
+* Nim::
+
+Integrations
+
+* C/C++: C/C++ (1).
+
+C/C++
+
+* QuickStart Guide::
+
+
+Developing
+
+* Adding a Language::
+
+
+
+File: rmsbolt.info,  Node: Installation,  Next: Running,  Prev: Top,  Up: Top
+
+1 Installation
+**************
+
+A melpa package (https://melpa.org/#/rmsbolt) is available for rmsbolt.
+
+   No dependencies are required, other than an Emacs newer than 25.1
+
+* Menu:
+
+* Quelpa::
+
+
+File: rmsbolt.info,  Node: Quelpa,  Up: Installation
+
+1.1 Quelpa
+==========
+
+This is a quelpa formula for RMSbolt
+
+     (quelpa '(rmsbolt
+               :files (:defaults "starters")
+               :fetcher gitlab
+               :repo "jgkamat/rmsbolt"))
+
+
+File: rmsbolt.info,  Node: Running,  Next: Configuring,  Prev: Installation,  Up: Top
+
+2 Running
+*********
+
+Once installed, use the ‘rmsbolt-starter’ command to generate starter
+files, or enable ‘rmsbolt-mode’ in a supported language.  Then run
+‘rmsbolt-compile’ or use the default ‘C-c C-c’ binding to pop open a
+disassembly buffer.  After the first run, the buffer should
+automatically update.
+
+
+File: rmsbolt.info,  Node: Configuring,  Next: Languages,  Prev: Running,  Up: Top
+
+3 Configuring
+*************
+
+RMSbolt is primarily configured with Emacs local variables.  This lets
+you change compiler and rmsbolt options simply by editing a local
+variable block.  The starter files have this block with some common
+settings:
+
+     // Local Variables:
+     // rmsbolt-command: "gcc -O0"
+     // rmsbolt-disassemble: nil
+     // End:
+
+   *Note*: the Local Variable block must be 3000 characters from the end
+of the file to work
+(https://www.gnu.org/software/emacs/manual/html_node/emacs/Specifying-File-Variables.html#Specifying-File-Variables).
+Any method of setting buffer-local variables will work though.
+
+* Menu:
+
+* Option List::
+
+
+File: rmsbolt.info,  Node: Option List,  Up: Configuring
+
+3.1 Option List
+===============
+
+   • Local Option: rmsbolt-command
+
+     Determines the prefix of the compilation command to use.  Use this
+     to switch between compilers or pass flags to your compiler.
+
+   • Local Option: rmsbolt-default-directory
+
+     Determines the default directory to compile from, which is useful
+     if you are building with a build-system.
+
+   • Local Option: rmsbolt-disassemble
+
+     Disassemble from a compiled binary with objdump, if supported.
+
+   • Local Option: rmsbolt-filter-directives
+
+     Whether to filter unused assembly directives out of final output.
+
+   • Local Option: rmsbolt-filter-labels
+
+     Whether to filter unused labels from final output
+
+   • Local Option: rmsbolt-filter-comment-only
+
+     Whether to filter lines that are comment-only.
+
+   • Local Option: rmsbolt-asm-format
+
+     Which output format to use.  Supported values vary between
+     languages.  In general, ‘"intel"’ and ‘"att"’ are supported.  ‘nil’
+     means to use the tool’s defaults.  Other values may work as well,
+     depending on your compiler.
+
+   • Local Option: rmsbolt-demangle
+
+     Demangle the output, if supported.
+
+   • Local Option: rmsbolt-ignore-binary-limit
+
+     Ignore the binary size limit for disassembly.  This will almost
+     certainly cause Emacs to hang during large processing.
+
+   • Local Option: rmsbolt-demangle
+
+     Enable or disable demangling, if the language supports it.
+
+
+File: rmsbolt.info,  Node: Languages,  Next: Integrations,  Prev: Configuring,  Up: Top
+
+4 Languages
+***********
+
+This section covers languages-specific quirks and features.
+
+* Menu:
+
+* C/C++::
+* OCaml::
+* Rust::
+* Haskell::
+* Python::
+* Java::
+* PHP::
+* Pony::
+* D::
+* Swift::
+* Emacs Lisp::
+* Common Lisp::
+* Zig::
+* Go::
+* Nim::
+
+
+File: rmsbolt.info,  Node: C/C++,  Next: OCaml,  Up: Languages
+
+4.1 C/C++
+=========
+
+C/C++ is the primary focus of support, and will get new features and
+support first.
+
+   Demangling is enabled if ‘c++filt’ is available on the path.
+
+
+File: rmsbolt.info,  Node: OCaml,  Next: Rust,  Prev: C/C++,  Up: Languages
+
+4.2 OCaml
+=========
+
+OCaml disassembly is supported through both ‘ocamlopt’ and through
+disassembly with objdump.
+
+
+File: rmsbolt.info,  Node: Rust,  Next: Haskell,  Prev: OCaml,  Up: Languages
+
+4.3 Rust
+========
+
+Demangling is done with ‘rustfilt’ if it is on the path.
+
+
+File: rmsbolt.info,  Node: Haskell,  Next: Python,  Prev: Rust,  Up: Languages
+
+4.4 Haskell
+===========
+
+Demangling is done with the compiler-explorer demangler, named to
+‘haskell-demangler’ and placed on the path.
+
+
+File: rmsbolt.info,  Node: Python,  Next: Java,  Prev: Haskell,  Up: Languages
+
+4.5 Python
+==========
+
+Support for viewing bytecode only.  Python doesn’t have many options
+(https://bugs.python.org/issue2506), so most tweakables will not work.
+Python 3.7 is required for recursion into functions, otherwise only top
+level code will be shown.  Python 2 is completely unsupported.
+
+
+File: rmsbolt.info,  Node: Java,  Next: PHP,  Prev: Python,  Up: Languages
+
+4.6 Java
+========
+
+Parses the output of ‘javap’ to get debug information and disassembly.
+
+
+File: rmsbolt.info,  Node: PHP,  Next: Pony,  Prev: Java,  Up: Languages
+
+4.7 PHP
+=======
+
+Requires the vld php extension (https://github.com/derickr/vld) to
+display PHP opcodes.  Without that, you will not get any output.
+
+   If you use hack (denoted by ‘<hh?’ at the top of your file), you will
+not get source->asm matching or filtering.
+
+
+File: rmsbolt.info,  Node: Pony,  Next: D,  Prev: PHP,  Up: Languages
+
+4.8 Pony
+========
+
+Filtering on pony is not as effective as pony asm includes references to
+machine-generated functions.  This means the output will be slower to
+generate, similar to disassembly in other languages.  The pony file
+being viewed will be copied into it’s own directory, making it much
+harder to view non-toy examples.
+
+
+File: rmsbolt.info,  Node: D,  Next: Swift,  Prev: Pony,  Up: Languages
+
+4.9 D
+=====
+
+Assembly is generated through the ‘ldc’ tool, and demangling is provided
+by ‘ddemangler’.
+
+   Please report bugs if matching does not work for you, as D’s file
+format for designating files is a little different.
+
+
+File: rmsbolt.info,  Node: Swift,  Next: Emacs Lisp,  Prev: D,  Up: Languages
+
+4.10 Swift
+==========
+
+Swift support is a little bit non-standard.  Since swift is used
+primarily on apple devices, the default value for ‘swiftc’ and
+‘swift-demangle’ is populated from the active toolchain in addition to
+the path.  Overriding the compile command will not currently search the
+toolchain for the compiler (only the path).
+
+   ‘swift-demangle’ is used for demangling support if available.
+
+
+File: rmsbolt.info,  Node: Emacs Lisp,  Next: Common Lisp,  Prev: Swift,  Up: Languages
+
+4.11 Emacs Lisp
+===============
+
+No support for source->asm matching, filtering, or automatic recompile.
+
+   Emacs 26 or the ‘cl-print’ package are required.
+
+
+File: rmsbolt.info,  Node: Common Lisp,  Next: Zig,  Prev: Emacs Lisp,  Up: Languages
+
+4.12 Common Lisp
+================
+
+No support for source->asm matching or filtering.  Only ‘sbcl’ and
+‘clisp’ supported at the moment, with ‘sbcl’ giving much better results.
+
+
+File: rmsbolt.info,  Node: Zig,  Next: Go,  Prev: Common Lisp,  Up: Languages
+
+4.13 Zig
+========
+
+Assembly is generated through the ‘zig’ compiler.  Due to large binary
+sizes, disassembly is discouraged.
+
+   Zig embeds a panic handler which inflates the size of binaries.  In
+order to reduce this to a manageable level, you can add the following
+snippet to your file:
+
+     pub fn panic(msg: []const u8, error_return_trace: ?*@import("builtin").StackTrace) noreturn {
+         while (true) {
+         }
+     }
+
+
+File: rmsbolt.info,  Node: Go,  Next: Nim,  Prev: Zig,  Up: Languages
+
+4.14 Go
+=======
+
+Uses Go’s objdump tool to produce viewing-only bytecode.  Go must be on
+the path.
+
+
+File: rmsbolt.info,  Node: Nim,  Prev: Go,  Up: Languages
+
+4.15 Nim
+========
+
+Builds into object files into a temporary ‘nim-cache’ directory
+generated by rmsbolt, which will then be copied and dissassembled.  C++
+backend is also possible to either with ‘nim cpp’ or ‘nim c
+--passC:-std=gnu++14’ and uses ‘c++filt’ demangler.
+
+   Use the ‘{.exportc.}’ pragma for at least the main procedure that
+will be dissassembled.
+
+
+File: rmsbolt.info,  Node: Integrations,  Next: Developing,  Prev: Languages,  Up: Top
+
+5 Integrations
+**************
+
+This section covers integrations that RMSbolt provides, which make it
+easier to use RMSbolt with complex projects with many dependencies.
+
+   Integrations are very new, and as such, may be highly buggy and
+require extra work to debug.
+
+   Most integrations only take effect when ‘rmsbolt-command’ and
+‘rmsbolt-default-directory’ are nil!  Setting either of these will
+disable any attempt at using the integration system.
+
+* Menu:
+
+* C/C++: C/C++ (1).
+
+
+File: rmsbolt.info,  Node: C/C++ (1),  Up: Integrations
+
+5.1 C/C++
+=========
+
+C/C++ will look for a ‘compile_commands.json’ file in any directory
+higher than the source file.  Once it finds one, it will parse the file
+trying to find a match for the current file, and if it finds one, it
+will compile using the flags present there.  Many files (like headers)
+are not present in ‘compile_commands.json’ and will not work (at this
+time).
+
+   Because the compilation commands in ‘compile_commands.json’ assume
+the files are compiled in order, please make sure to fully compile the
+project before beginning, otherwise, you could see compiler errors.
+
+   In order to transform the given file, some flags are removed.  This
+is the most brittle part of the current system, and could cause compile
+errors.
+
+   On projects with a lot of imports, the resulting assembly file might
+be large, which may cause Emacs to hang.
+
+* Menu:
+
+* QuickStart Guide::
+
+
+File: rmsbolt.info,  Node: QuickStart Guide,  Up: C/C++ (1)
+
+5.1.1 QuickStart Guide
+----------------------
+
+  1. Generate a ‘compile_commands.json’ file, and ensure it is in a
+     domineering directory.
+          cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1 .
+  2. Compile the project completely.  If you pass flags to your build
+     system, make sure they are passed when generating
+     ‘compile_commands.json’ as well.
+  3. Open the file in question, and enable ‘rmsbolt-mode’.
+  4. Run ‘rmsbolt-compile’.
+
+
+File: rmsbolt.info,  Node: Developing,  Prev: Integrations,  Up: Top
+
+6 Developing
+************
+
+These are some tips which will help people working on developing or
+customizing RMSbolt.
+
+* Menu:
+
+* Adding a Language::
+
+
+File: rmsbolt.info,  Node: Adding a Language,  Up: Developing
+
+6.1 Adding a Language
+=====================
+
+Adding support for a new language is fairly easy.  The closer it is to
+existing compilers, the easier it will be (to the point where a clone of
+a C compiler is just a couple copy-paste lines).  However, it is not
+excessively hard to add support for completely foreign compilers and
+bytecode/assembly formats.
+
+   As a minimum starting point, you must know how to compile a source
+file to assembly or bytecode on the command line, and know how the line
+numbers are available in the compiled form if they exist.
+
+  1. Add a new entry to the language definitions statement.
+     (../rmsbolt.el)
+        • To do this, you will need to (at a minimum) add a mode,
+          compile-command, a compile-cmd-function, and a starter file
+          name.
+        • The compile-cmd-function is a function that will turn local
+          variable settings into a valid command which will take in a
+          filename and output assembly or an executable.  See
+          ‘rmsbolt--c-compile-cmd’ for an example.
+        • When building compilation commands, please make sure to use
+          absolute paths, as the default-directory is not guaranteed to
+          be stable.
+        • If the assembly is not in a standard format, you will need to
+          define a ‘process-asm-custom-fn’ as well (see python/java for
+          examples).
+        • If you would like to add language tweaks in your own config
+          (ie: take full control over what rmsbolt does completely), you
+          can use ‘rmsbolt-language-descriptor’ to fully override the
+          defaults with a custom language definition.
+  2. Add a new entry into the starter file (../rmsbolt.el)
+        • For this, you will need to make a starter file.  See this
+          folder (./../starters/) for existing examples.
+        • Ideally, try to pick something which is interesting to play
+          with from an disassembly point of view.
+
+   You’re done!
+
+
+
+Tag Table:
+Node: Top206
+Node: Installation1139
+Node: Quelpa1415
+Node: Running1673
+Node: Configuring2088
+Node: Option List2827
+Node: Languages4357
+Node: C/C++4692
+Node: OCaml4933
+Node: Rust5131
+Node: Haskell5293
+Node: Python5515
+Node: Java5898
+Node: PHP6071
+Node: Pony6418
+Node: D6825
+Node: Swift7136
+Node: Emacs Lisp7634
+Node: Common Lisp7888
+Node: Zig8165
+Node: Go8682
+Node: Nim8857
+Node: Integrations9299
+Node: C/C++ (1)9880
+Node: QuickStart Guide10837
+Node: Developing11362
+Node: Adding a Language11583
+
+End Tag Table
+
+
+Local Variables:
+coding: utf-8
+End:

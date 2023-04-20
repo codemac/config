@@ -1,0 +1,2 @@
+;;; Generated package description from org-board.el  -*- no-byte-compile: t -*-
+(define-package "org-board" "20230408.1041" "bookmarking and web archival system for Org mode." 'nil :commit "500fe02bc114e5b535a2eb2ab73954d79428168f" :authors '(("Charles A. Roelli " . "charles@aurox.ch")) :maintainer '("Charles A. Roelli " . "charles@aurox.ch") :keywords '("org" "bookmarks" "archives") :url "https://github.com/scallywag/org-board")

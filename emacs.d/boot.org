@@ -726,8 +726,10 @@ emacs is not my forte.
   ;; Use dropbox when available. Yes making this conditional is awkward,
   ;; but it helps me avoid the IT security dragon if I'm on a work
   ;; computer.
-  (when (file-exists-p "~/Dropbox/org/gtd.org")
-    (setq cm/org-directory "~/Dropbox/org"))
+  (if (file-exists-p "~/Library/CloudStorage/Dropbox/org/gtd.org")
+      (setq cm/org-directory "~/Library/CloudStorage/Dropbox/org")
+    (when (file-exists-p "~/Dropbox/org/gtd.org")
+      (setq cm/org-directory "~/Dropbox/org")))
   (defun cm/org-dir (&rest args)
     (if (< (length args) 1)
 	cm/org-directory
@@ -774,7 +776,6 @@ that?
     "Which styles are currently configured for use")
 
   (defun cm/set-theme (theme)
-    (interactive "Theme to swap to: ")
     (run-hooks 'cm/theme-before-hook)
     (pcase theme
       ('dark
@@ -3246,12 +3247,19 @@ to see my review adgendas, and easier on the eyes to follow.
     ;;        (rightside (make-string (ceiling basewidth) ?+)))
     ;;   `((org-agenda-overriding-header ,(concat leftside " " title " " rightside)))))
 
-  (defun cm/org-ctx-agenda (key ctx title)
+  (defun cm/org-context-agenda (key ctx title)
     (let ((ctxlist (if (listp ctx) ctx (list ctx))))
       `(,(concat "c" key) ,title
-	((tags-todo ,(mapconcat #'(lambda (x) (concat x "-PROJECT-TODO=\"WAIT\"-TODO=\"DEFER\"")) ctxlist "|")))
-	(,@cm/org-sort-style
-	 (org-agenda-overriding-header ,title)))))
+	((tags-todo ,(mapconcat #'(lambda (x) (concat x "-PROJECT-TODO=\"WAIT\"-TODO=\"DEFER\"")) ctxlist "|")
+		    (,@cm/org-sort-style
+		     (org-agenda-overriding-header ,title)))
+	 (tags-todo ,(mapconcat #'(lambda (x) (concat x "-PROJECT")) ctxlist "|")
+		    ((org-agenda-sorting-strategy
+		      '((agenda habit-down time-up priority-down category-keep)
+			(todo tsia-up)
+			(tags tsia-up)
+			(search tsia-up)))
+		     (org-agenda-override-header ,(concat title " Unfiltered"))))))))
 #+end_src
 
 The org agenda. It's mostly for gtd usage, so I have the following views:
@@ -3306,12 +3314,12 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
 	(tags-todo "PROJECT+TODO=\"DEFER\"")
 	(tags-todo "PROJECT"))
        ,cm/org-sort-style)
-      ,(cm/org-ctx-agenda "h" '("INTERNET" "COMPUTER" "HOME" "ERRAND" "PHONE")  "Home Agenda")
-      ,(cm/org-ctx-agenda "w" '("INTERNET" "COMPUTER" "WORK" "PHONE")  "Work Agenda")
-      ,(cm/org-ctx-agenda "b" '("INTERNET" "COMPUTER" "PHONE")  "Bus Agenda")
-      ,(cm/org-ctx-agenda "t" '("COMPUTER" "PHONE")  "Train Agenda")
-      ,(cm/org-ctx-agenda "p" '("PHONE")  "Phone Agenda")
-      ,(cm/org-ctx-agenda "m" '("INTERNET" "ERRAND" "PHONE")  "Mobile Agenda")
+      ,(cm/org-context-agenda "h" '("INTERNET" "COMPUTER" "HOME" "ERRAND" "PHONE")  "Home Agenda")
+      ,(cm/org-context-agenda "w" '("INTERNET" "COMPUTER" "WORK" "PHONE")  "Work Agenda")
+      ,(cm/org-context-agenda "b" '("INTERNET" "COMPUTER" "PHONE")  "Bus Agenda")
+      ,(cm/org-context-agenda "t" '("COMPUTER" "PHONE")  "Train Agenda")
+      ,(cm/org-context-agenda "p" '("PHONE")  "Phone Agenda")
+      ,(cm/org-context-agenda "m" '("INTERNET" "ERRAND" "PHONE")  "Mobile Agenda")
       ("ca" "People Agenda"
        ((tags-todo "AGENDA-PROJECT-TODO=\"WAIT\"-TODO=\"DEFER\"|-PROJECT+TODO=\"WAIT\"-TODO=\"DEFER\""))
        ((org-agenda-skip-function '(org-agenda-skip-entry-if 'scheduled))
@@ -3422,6 +3430,24 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
        ((org-agenda-entry-text-maxlines 100)
 	(org-agenda-entry-text-mode 1)))))
 
+  ;; add a5 size to ps-page-dimensions-database
+  (setq ps-page-dimensions-database (append ps-page-dimensions-database (list (list 'a5 (/ (* 14.8 72) 2.54) (/ (* 21.0 72) 2.54) "A5"))))
+  (defun cm/print-agendas ()
+    '(("ZP" "Printable Agenda"
+       ((agenda "Today" ((org-agenda-span 1)))
+	(todo "NEXT"))
+       ((ps-landscape-mode nil)
+	;; (ps-mode-paper-size '(421 595)) ; a5
+	(ps-paper-type 'letter)
+	(ps-number-of-columns 1)
+	;; (ps-right-header '("/pagenumberstring load" ps-time-stamp-yyyy-mm-dd))
+	(ps-print-header nil)
+	(ps-print-header-frame nil)
+	(org-agenda-start-with-log-mode t)
+	(org-agenda-with-colors-nil)
+	(org-agenda-remove-tags t))
+       ("~/tmp/supernote_agenda.pdf"))))
+
   (defun cm/org-set-agenda ()
     (interactive)
     (setq org-agenda-custom-commands
@@ -3430,7 +3456,8 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
 	   (cm/context-agendas)
 	   (cm/review-agendas)
 	   (cm/checklist-agendas)
-	   '(("Z" "Receipt Agenda"
+	   (cm/print-agendas)
+	   '(("ZR" "Receipt Agenda"
 	      ((org-receipt-agenda)))))))
 #+end_src
 Dynamism! So a big part of what makes these nice is that they compute
@@ -3511,7 +3538,7 @@ to Sacha Chua.
     "Create a new note or task at the current project's level."
     (interactive)
     (org-agenda-switch-to)
-    (if (not (cl-equalp (nth 5 (org-heading-components)) ":PROJECT:"))
+    (if (not (string-match-p (regexp-quote ":PROJECT:") (nth 5 (org-heading-components))))
 	(error (format "%s %s" (org-heading-components)
 		       ": Not a project tagged element! Cannot add dependent action"))
       (org-capture nil "b")))
@@ -3562,11 +3589,11 @@ to Sacha Chua.
 	       (not (eq (point-at-bol) (point-min)))
 	       (not (cm/org-heading-is-project)))
 	  (progn
-	    (ignore-errors (outline-up-heading 1 t))
+	    (org-up-heading-safe)
 	    (cm/org-heading-is-project-child-iter))
 	(cm/org-heading-is-project)))
     (save-excursion
-      (outline-show-all)
+      (org-show-all)
       (cm/org-heading-is-project-child-iter)))
 
   (defvar-local cm/org-indirect-narrow-dwim-scope nil
@@ -3597,8 +3624,8 @@ to Sacha Chua.
       (let ((pos (point-at-bol)))
 	(if (not (org-at-heading-p))
 	    (save-excursion
-	      (outline-show-all)
-	      (outline-previous-visible-heading 1)
+	      (org-show-all)
+	      (org-previous-visible-heading 1)
 	      (setq pos (point-at-bol))))
 	(message "cm/org-indirect-narrow-dwim: calling internal for org")
 	(cm/org-indirect-narrow-dwim-internal (current-buffer) pos)))
@@ -3610,7 +3637,7 @@ to Sacha Chua.
     (let ((scope 'heading))
       (save-excursion
 	(with-current-buffer buffer
-	  (outline-show-all)
+	  (org-show-all)
 	  (goto-char pos)
 	  (setq done nil)
 	  (while (not done)
@@ -3623,7 +3650,7 @@ to Sacha Chua.
 	      (setq done t)
 	      (setq scope 'heading))
 	     (t
-	      (ignore-errors (outline-up-heading 1 t)))))))
+	      (org-up-heading-safe))))))
       (with-current-buffer buffer
 	(goto-char pos)
 	(org-tree-to-indirect-buffer)
@@ -5106,10 +5133,15 @@ waiting. Probably should use something like org-expiry.
 #+begin_src emacs-lisp
   (defun cm/org-add-inactive-ts ()
     (interactive)
-    (org-edit-headline
-     (concat
-      (format-time-string "[%Y-%m-%d %H:%M] ")
-      (org-get-heading 'notags 'notodo 'nopriority 'nocomment))))
+    (let ((headline (org-get-heading 'notags 'notodo 'nopriority 'nocomment))
+	  (timestr (format-time-string "[%Y-%m-%d %a]")))
+      (if (string-match "\\(^[a-z]+:\\) ?\\(.*\\)$" headline)
+	  (org-edit-headline
+	   (concat (match-string 1 headline)
+		   " " timestr " "
+		   (match-string 2 headline)))
+	(org-edit-headline
+	 (concat timestr " " headline)))))
 
   (defun cm/org-todo-state-change-inactive-ts-waiting-hook ()
     (if (string= org-state "WAIT")
@@ -5645,6 +5677,23 @@ Who needs a command line anyways..
 #+begin_src emacs-lisp
   (autoload 'w3m-browse-url "w3m-load" "" t)
 #+end_src
+*** literate-calc
+:PROPERTIES:
+:ID:       B6ADC288-554A-41DD-AF7E-04B87F356D30
+:END:
+
+Let's me do things similar to soulver/calca and other tools.
+#+begin_src emacs-lisp
+  (use-package literate-calc-mode
+    :init
+    (global-set-key "\C-c*" 'cm/literate-calc-buffer))
+
+  (defun cm/literate-calc-buffer ()
+    (interactive)
+    (switch-to-buffer (get-buffer-create "*literate-calc*"))
+    (literate-calc-mode))
+#+end_src
+
 *** notmuch
     :PROPERTIES:
     :ID:       705f65b0-cd4f-4c2f-a7da-dc340505dbbc
@@ -6714,7 +6763,50 @@ Now for the main formatting function.
     ;;     Utc yyyyMMddhhmmss\'UTC\''
     ;; try any emacs string -> date libraries available
 #+end_src
+** Notification tooling
+:PROPERTIES:
+:ID:       5EE9D8C6-5C34-49A2-8B32-46A8F6F7BF56
+:END:
 
+Emacs implements d-bus notifications. I run emacs in many many other
+places.
+*** Mac OS X
+:PROPERTIES:
+:ID:       82EB4DC7-42C1-4F5C-8224-990F7550DFED
+:END:
+
+Mac OS X currently can show ~40 chars in the title line. Truncate and add to the body if it's too long.
+
+#+begin_src emacs-lisp
+  (defun cm/notifications-notify-mac (title msg)
+    (let ((notifier-path (executable-find "alerter"))
+	  (shortened-title (truncate-string-to-width title 38))
+	  (longer-body (if (> (length title) 38) (concat title "\n" msg) msg)))
+      (start-process
+       "emacs notification for mac"
+       "*notification output*" ; use `nil` to not capture output; this captures output in background
+       notifier-path
+       "-title" shortened-title
+       "-message" longer-body
+       "-sender" "org.gnu.Emacs"
+       "-activate" "org.gnu.Emacs")))
+
+#+end_src
+*** Interface
+:PROPERTIES:
+:ID:       8C646185-6346-463B-B0BF-9A716C8DB737
+:END:
+#+begin_src emacs-lisp
+  (defun cm/notifications-notify (title msg)
+    (pcase system-type
+      ('darwin
+       (cm/notifications-notify-mac title msg))
+      (_ (notifications-notify :title title :body msg))))
+
+  (defun cm/notifications-timer-delay (time msg)
+    (interactive "sNotify when (abs: 11:36, rel: 2 mins, # secs: 5): \nsMessage: ")
+    (run-at-time time nil 'cm/notifications-notify msg ""))
+#+end_src
 * Directory Specific Code
   :PROPERTIES:
   :ID:       2fbd3ec2-ed82-414f-9bf9-bfecad2a9db5

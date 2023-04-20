@@ -52,3 +52,4 @@
 /zsh/history
 /zsh/ironport
 ac-comphist.dat
+/emacs.d/elpa/**/emacsql-sqlite.darwin
