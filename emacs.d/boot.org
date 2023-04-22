@@ -3477,8 +3477,9 @@ able to set =org-agenda-custom-commands=
     (with-current-buffer
 	(if (cl-equalp major-mode 'org-mode)
 	    (current-buffer)
-          (get-buffer-create (cm/org-dir "gtd.org")))
+	  (get-buffer-create (cm/org-dir "gtd.org")))
       (cm/org-set-agenda)
+      (define-key org-agenda-mode-map "x" #'cm/org-agenda-actions-hydra/body)
       (org-agenda)))
 #+end_src
 Also, set it the first time on startup so org commands work as
@@ -3817,9 +3818,11 @@ This add some commands for managing and clocking my time in a hydra.
 
   ;; we also strip calendars.org from here
   (defun cm/org-buffer-files ()
-    (cl-remove-if #'(lambda (x) (or
-			      (string-suffix-p "calendars.org" x)
-			      (string-suffix-p "_old" x)))
+    (cl-remove-if #'(lambda (x)
+		      (or
+		       (string-suffix-p "calendars.org" x)
+		       (string-suffix-p "_old" x)
+		       (and x (not (buffer-base-buffer (get-buffer x))))))
 	       (mapcar #'buffer-file-name (org-buffer-list 'files))))
 
   (setq org-refile-targets `((nil
@@ -5383,6 +5386,88 @@ with orgzly.
 
   (global-set-key (kbd "C-c x") 'hydra-org-extras/body)
 
+#+end_src
+
+**** Org Inbox management
+:PROPERTIES:
+:ID:       FD587369-E69D-4607-BD4E-B8554D66F92F
+:END:
+
+#+begin_src emacs-lisp
+  (defun cm/org-find-headings-without-tags (&optional buffer-list)
+    "Find org-mode headings with an active TODO state and without tags in the given list of buffers.
+  When called interactively or with no argument, use `org-agenda-files' as the buffer list."
+    (interactive)
+    (let ((buffers (or buffer-list (org-agenda-files))))
+      (dolist (buf buffers)
+	(with-current-buffer (find-file-noselect buf))
+	(switch-to-buffer (current-buffer)) ; Raise the buffer
+	(goto-char (point-min))
+	(cm/org-find-next-heading-active-todo-without-tags)
+	(while (not (eobp))
+	  (let* ((original-buffer (current-buffer))
+		 (indirect-window (org-tree-to-indirect-buffer (point)))
+		 (indirect-buffer (window-buffer indirect-window))
+		 (map (copy-keymap org-mode-map)))
+	    (cm/org-narrow-header) ; Add header with keybindings
+	    (define-key map (kbd "C-c r") (lambda () (interactive) (cm/org-refile-and-narrow-next)))
+	    (define-key map (kbd "C-c k") (lambda () (interactive) (cm/org-kill-heading-and-narrow-next)))
+	    (define-key map (kbd "C-c n") (lambda () (interactive) (cm/org-narrow-next)))
+	    (define-key map (kbd "C-c '") (lambda () (interactive) (cm/org-quit-loop)))
+	    (use-local-map map)
+	    (recursive-edit)
+	    (kill-buffer indirect-buffer) ; Kill the indirect buffer
+	    (switch-to-buffer original-buffer)
+	    (cm/org-find-next-heading-active-todo-without-tags))))))
+
+  (defun cm/org-quit-loop ()
+    "Exit the recursive edit loop and clean up the current indirect buffer."
+    (interactive)
+    (let ((indirect-buffer (current-buffer)))
+      (bury-buffer)
+      (kill-buffer indirect-buffer)
+      (abort-recursive-edit)))
+
+  (defun cm/org-refile-and-narrow-next ()
+    "Refile the current heading and narrow to the next heading with an active TODO state and without tags."
+    (interactive)
+    (widen)
+    (let ((p (point))
+	  (base-buffer (buffer-base-buffer)))
+      (with-current-buffer base-buffer
+	(save-excursion
+	  (goto-char p)
+	  (call-interactively 'org-refile))))
+    (exit-recursive-edit))
+
+  (defun cm/org-kill-heading-and-narrow-next ()
+    "Kill the current heading and narrow to the next heading with an active TODO state and without tags."
+    (interactive)
+    (widen)
+    (org-cut-subtree)
+    (exit-recursive-edit))
+
+  (defun cm/org-narrow-next ()
+    "Go to next heading"
+    (interactive)
+    (exit-recursive-edit))
+
+  (defun cm/org-heading-active-todo-without-tags-p ()
+    "Check if the current heading has an active TODO state and no tags."
+    (and (org-get-todo-state)
+	 (member (org-get-todo-state) org-not-done-keywords)
+	 (not (org-get-tags))))
+
+  (defun cm/org-find-next-heading-active-todo-without-tags ()
+    "Move point to the next heading with an active TODO state and without tags."
+    (while (and (re-search-forward org-heading-regexp nil t)
+		(not (cm/org-heading-active-todo-without-tags-p)))))
+
+  (defun cm/org-narrow-header ()
+    "Set up a header line for the narrowed indirect buffer similar to org-babel edit buffers."
+    (setq header-line-format
+	  (concat "Keys: Refile [C-c r], Kill [C-c k], Next [C-c n], Abort [C-c '] "
+		  (make-string (max 0 (- (window-width) 43)) ?─))))
 #+end_src
 
 *** RCIRC
