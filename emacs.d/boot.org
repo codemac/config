@@ -5405,16 +5405,18 @@ with orgzly.
 	(switch-to-buffer (current-buffer)) ; Raise the buffer
 	(goto-char (point-min))
 	(cm/org-find-next-heading-active-todo-without-tags)
-	(while (not (eobp))
+	(while (not (or (eobp)
+			(equal (org-id-get) "3afcced3-0f56-4219-a763-61855fb7c3b0")))
 	  (let* ((original-buffer (current-buffer))
 		 (indirect-window (org-tree-to-indirect-buffer (point)))
 		 (indirect-buffer (window-buffer indirect-window))
 		 (map (copy-keymap org-mode-map)))
 	    (cm/org-narrow-header) ; Add header with keybindings
-	    (define-key map (kbd "C-c r") (lambda () (interactive) (cm/org-refile-and-narrow-next)))
-	    (define-key map (kbd "C-c k") (lambda () (interactive) (cm/org-kill-heading-and-narrow-next)))
-	    (define-key map (kbd "C-c n") (lambda () (interactive) (cm/org-narrow-next)))
-	    (define-key map (kbd "C-c '") (lambda () (interactive) (cm/org-quit-loop)))
+	    (define-key map (kbd "C-c r") #'cm/org-refile-and-narrow-next)
+	    (define-key map (kbd "C-c k") #'cm/org-kill-heading-and-narrow-next)
+	    (define-key map (kbd "C-c n") #'cm/org-capture-as-roam-note)
+	    (define-key map (kbd "C-c x") #'cm/org-narrow-next)
+	    (define-key map (kbd "C-c '") #'cm/org-quit-loop)
 	    (use-local-map map)
 	    (recursive-edit)
 	    (kill-buffer indirect-buffer) ; Kill the indirect buffer
@@ -5438,7 +5440,15 @@ with orgzly.
       (with-current-buffer base-buffer
 	(save-excursion
 	  (goto-char p)
-	  (call-interactively 'org-refile))))
+	  ;; set the org-refile-targets to be explicit, rather than
+	  ;; including any indirect buffers. Existing indirect buffers
+	  ;; really fuck up org-refile, due to rando bugs here or there
+	  ;; in their implementation. W eshould fix it for them at some
+	  ;; point.
+	  (let ((org-refile-targets `(((,(cm/org-dir "gtd.org")
+					,(cm/org-dir "work.org"))
+				       :maxlevel . 5))))
+	    (call-interactively 'org-refile)))))
     (exit-recursive-edit))
 
   (defun cm/org-kill-heading-and-narrow-next ()
@@ -5466,9 +5476,60 @@ with orgzly.
 
   (defun cm/org-narrow-header ()
     "Set up a header line for the narrowed indirect buffer similar to org-babel edit buffers."
-    (setq header-line-format
-	  (concat "Keys: Refile [C-c r], Kill [C-c k], Next [C-c n], Abort [C-c '] "
-		  (make-string (max 0 (- (window-width) 43)) ?─))))
+    (let ((header-line
+	   "Keys: Refile [C-c r], Kill [C-c k], Note [C-c n], Next [C-c x], Abort [C-c '] "))
+      (setq header-line-format
+	    (concat header-line
+		    (make-string (max 0 (- (window-width) (length header-line))) ?─)))))
+
+  (defvar cm/org-capture-as-roam-indirect-buffer nil
+    "indirect buffer for the insert heading to use")
+
+  (defun cm/org-capture-as-roam-note-insert-heading ()
+    "Insert the content of the heading at point into the Org-roam capture buffer."
+    (message "current buff 2: %s" cm/org-capture-as-roam-indirect-buffer)
+    (let ((heading-content
+	   (with-current-buffer cm/org-capture-as-roam-indirect-buffer
+	     (org-back-to-heading t)
+	     (message "current buf 3: %s" (current-buffer))
+	     (let* ((element (org-element-at-point))
+		    (content-begin (org-element-property :contents-begin element))
+		    (content-end (org-element-property :contents-end element)))
+	       (when (and content-begin content-end)
+		 (buffer-substring content-begin content-end))))))
+      ;; parse heading-content to strip the right properties, but
+      ;; maintain the date (maybe even replace the #+date line if it
+      ;; exists?)
+      (save-excursion
+	(goto-char (point-max))
+	(insert heading-content))))
+
+  (defun cm/org-capture-as-roam-note ()
+    "Capture the current narrowed heading as a new Org-roam note.
+
+  Call this function interactively while viewing an indirect buffer
+  that is narrowed to a specific heading. It will prompt for the title
+  of the new note, which will be used as the slug for the capture template."
+    (interactive)
+    (let* ((org-roam-capture--info `(("title" . ,(org-get-heading t t t t))
+				     ("date" . ,(format-time-string "<%Y-%m-%d %a %H:%M>"))))
+	   (org-roam-capture--context 'heading))
+      (setq cm/org-capture-as-roam-indirect-buffer (current-buffer))
+      (message "current buff 1: %s" cm/org-capture-as-roam-indirect-buffer)
+      (message "before hook")
+      (add-hook 'org-capture-before-finalize-hook #'cm/org-capture-as-roam-note-insert-heading)
+      (message "before capture")
+      (org-roam-capture nil "d"))
+    (message "before cut")
+    (org-capture-finalize)
+    (remove-hook 'org-capture-before-finalize-hook #'cm/org-capture-as-roam-note-insert-heading)
+    (setq cm/org-catpure-as-roam-indirect-buffer nil)
+    (message "before remove hook")
+    (org-cut-subtree)
+    (org-roam-db-sync)
+    (exit-recursive-edit))
+
+
 #+end_src
 
 *** RCIRC
