@@ -4759,7 +4759,8 @@ Let's first layout what we want the keymap to be like:
 				   (nospace . "_")
 				   (case-fn . downcase)))
     (setq deft-use-filter-string-for-filename t)
-  
+    (setq deft-file-limit 30)
+
     (defun cm/deft-parse-title (file contents)
     "Parse the given FILE and CONTENTS and determine the title.
   If `deft-use-filename-as-title' is nil, the title is taken to
@@ -4769,9 +4770,9 @@ Let's first layout what we want the keymap to be like:
 	(if begin
 	    (string-trim (substring contents begin (match-end 0)) "#\\+[tT][iI][tT][lL][eE]: *" "[\n\t ]+")
 	  (deft-base-filename file))))
-  
+
     (advice-add 'deft-parse-title :override #'cm/deft-parse-title)
-  
+
     (setq deft-strip-summary-regexp
 	  (concat "\\("
 		  "[\n\t]" ;; blank
@@ -4873,7 +4874,7 @@ the files.
 	`(("t" "Todo" entry (file+headline ,(cm/org-dir "gtd.org") "Inbox")
 	   ,@cm/humble-todo-template)
 	  ("p" "Project" entry (id "a262e411-ff66-43fc-9124-341694564dda")
-	   "* TODO %?  :PROJECT:\n:PROPERTIES:\n:CATEGORY:\n:CREATED:  %U\n:END:\n\n** Archive :ARCHIVE:\n\n" :empty-lines 1)
+	   "* TODO %?  :PROJECT:\n:PROPERTIES:\n:CREATED:  %U\n:END:\n\n** Archive :ARCHIVE:\n\n" :empty-lines 1)
 	  ("j" "Journal" entry (file ,(cm/org-dir "_editorial/journal.org"))
 	   "* %T %?\n\n  %i\n  %a\n\n" :prepend nil :empty-lines 1)
 	  ("c" "Add note to currently clocked task" entry (clock)
