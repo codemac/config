@@ -726,8 +726,8 @@ emacs is not my forte.
   ;; Use dropbox when available. Yes making this conditional is awkward,
   ;; but it helps me avoid the IT security dragon if I'm on a work
   ;; computer.
-  (if (file-exists-p "~/Library/CloudStorage/Dropbox/org/gtd.org")
-      (setq cm/org-directory "~/Library/CloudStorage/Dropbox/org")
+  (if (file-exists-p "~/Library/CloudStorage/GoogleDrive-codemac@gmail.com/My Drive/org")
+      (setq cm/org-directory "~/Library/CloudStorage/GoogleDrive-codemac@gmail.com/My Drive/org")
     (when (file-exists-p "~/Dropbox/org/gtd.org")
       (setq cm/org-directory "~/Dropbox/org")))
   (defun cm/org-dir (&rest args)
