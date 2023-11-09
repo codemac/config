@@ -1083,7 +1083,7 @@ Easy navigation around lots of splits. C-x o isn't that geographical.
 
   (use-package :ace-window
     :bind (("M-o" . ace-window))
-    :config
+    :init
     (setq aw-keys '(?a ?o ?e ?u ?i ?d ?h ?t ?n ?s)
 	  aw-scope 'global
 	  aw-minibuffer-flag t)
