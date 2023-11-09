@@ -1080,6 +1080,16 @@ Easy navigation around lots of splits. C-x o isn't that geographical.
   (global-set-key (kbd "s-<right>") 'windmove-right)
   (global-set-key (kbd "s-<up>") 'windmove-up)
   (global-set-key (kbd "s-<down>") 'windmove-down)
+
+  (use-package :ace-window
+    :bind (("M-o" . ace-window))
+    :config
+    (setq aw-keys '(?a ?o ?e ?u ?i ?d ?h ?t ?n ?s)
+	  aw-scope 'global
+	  aw-minibuffer-flag t)
+    (face-spec-set
+     'aw-leading-char-face
+     '((t (:foreground "yellow" :box (:line-width 2 :color "black" :style released-button))))))
 #+end_src
 ** Dired
    :PROPERTIES:
@@ -3132,8 +3142,19 @@ Let's get our scheme on!
 #+begin_src emacs-lisp
   (require 'geiser-install nil t)
 
+
+  ;; definitely need to fix this to support more schemes, and just leave guile as the default.
+
   (setq geiser-active-implementations '(guile))
   (setq geiser-default-implementation 'guile)
+
+  (cond
+   ((equal (system-name) "jmickey-mbp")
+    ;; guile is in homebrew
+    (setq geiser-guile-binary (concat (getenv "HOME") "/homebrew/bin/guile")))
+   (t
+    (setq geiser-guile-binary "/usr/bin/guile")))
+
 #+end_src
 *** Muse
     :PROPERTIES:
@@ -3250,16 +3271,23 @@ to see my review adgendas, and easier on the eyes to follow.
   (defun cm/org-context-agenda (key ctx title)
     (let ((ctxlist (if (listp ctx) ctx (list ctx))))
       `(,(concat "c" key) ,title
-	((tags-todo ,(mapconcat #'(lambda (x) (concat x "-PROJECT-TODO=\"WAIT\"-TODO=\"DEFER\"")) ctxlist "|")
+	(,@(mapcar (lambda (x) `(tags-todo ,(concat x "-PROJECT-TODO=\"WAIT\"-TODO=\"DEFER\"")
+					   (,@cm/org-sort-style
+					    (org-agenda-overriding-header ,(concat title ": " x))))) ctxlist)
+	 (tags-todo ,(mapconcat #'(lambda (x) (concat x "-PROJECT+TODO=\"WAIT\"")) ctxlist "|")
 		    (,@cm/org-sort-style
-		     (org-agenda-overriding-header ,title)))
+		     (org-agenda-override-header ,(concat title ": WAIT"))))
+	 (tags-todo ,(mapconcat #'(lambda (x) (concat x "-PROJECT+TODO=\"DEFER\"")) ctxlist "|")
+		    (,@cm/org-sort-style
+		     (org-agenda-override-header ,(concat title ": DEFER"))))
 	 (tags-todo ,(mapconcat #'(lambda (x) (concat x "-PROJECT")) ctxlist "|")
-		    ((org-agenda-sorting-strategy
+		    ((org-agenda-skip-function '(org-agenda-skip-entry-if 'notscheduled))
+		     (org-agenda-sorting-strategy
 		      '((agenda habit-down time-up priority-down category-keep)
 			(todo tsia-up)
 			(tags tsia-up)
 			(search tsia-up)))
-		     (org-agenda-override-header ,(concat title " Unfiltered"))))))))
+		     (org-agenda-override-header ,(concat title ": SCHEDULED"))))))))
 #+end_src
 
 The org agenda. It's mostly for gtd usage, so I have the following views:
@@ -3314,12 +3342,9 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
 	(tags-todo "PROJECT+TODO=\"DEFER\"")
 	(tags-todo "PROJECT"))
        ,cm/org-sort-style)
-      ,(cm/org-context-agenda "h" '("INTERNET" "COMPUTER" "HOME" "ERRAND" "PHONE")  "Home Agenda")
-      ,(cm/org-context-agenda "w" '("INTERNET" "COMPUTER" "WORK" "PHONE")  "Work Agenda")
-      ,(cm/org-context-agenda "b" '("INTERNET" "COMPUTER" "PHONE")  "Bus Agenda")
-      ,(cm/org-context-agenda "t" '("COMPUTER" "PHONE")  "Train Agenda")
-      ,(cm/org-context-agenda "p" '("PHONE")  "Phone Agenda")
-      ,(cm/org-context-agenda "m" '("INTERNET" "ERRAND" "PHONE")  "Mobile Agenda")
+      ,(cm/org-context-agenda "h" '("HOME" "COMPUTER")  "Home Agenda")
+      ,(cm/org-context-agenda "w" '("WORK" "COMPUTER")  "Work Agenda")
+      ,(cm/org-context-agenda "m" '("MOBILE")  "Mobile Agenda")
       ("ca" "People Agenda"
        ((tags-todo "AGENDA-PROJECT-TODO=\"WAIT\"-TODO=\"DEFER\"|-PROJECT+TODO=\"WAIT\"-TODO=\"DEFER\""))
        ((org-agenda-skip-function '(org-agenda-skip-entry-if 'scheduled))
@@ -4014,10 +4039,8 @@ it the normal way.
   (setq org-tag-alist '((:startgroup)
 			("AGENDA"    . ?a)
 			("COMPUTER" . ?c)
-			("ERRAND" . ?e)
 			("HOME"   . ?h)
-			("INTERNET"  . ?i)
-			("PHONE"     . ?f)
+			("MOBILE"     . ?m)
 			("WORK"   . ?w)
 			("PROJECT" . ?p)
 			(:endgroup)
@@ -6361,7 +6384,10 @@ A wholly owned subsidiary of Cisco.
     ("f" ffap "file at point")
     ("h" (let ((default-directory (file-name-as-directory (getenv "HOME"))))
 	   (call-interactively #'find-file))
-     "home files")
+     "home")
+    ("o" (let ((default-directory (file-name-as-directory (cm/org-dir))))
+	   (call-interactively #'find-file))
+     "org")
     ("q" nil "quit"))
   (global-set-key (kbd "C-c f") 'hydra-find-file/body)
 #+end_src
