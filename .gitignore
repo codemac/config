@@ -17,6 +17,8 @@
 /emacs.d/bookmarks
 /emacs.d/boot.el
 /emacs.d/boot.html
+/emacs.d/eln-cache
+/emacs.d/elpa/**/emacsql-sqlite.darwin
 /emacs.d/elpa/archives/
 /emacs.d/elpa/pdf-tools-*/epdfinfo
 /emacs.d/elpa/vterm*/build
@@ -52,4 +54,3 @@
 /zsh/history
 /zsh/ironport
 ac-comphist.dat
-/emacs.d/elpa/**/emacsql-sqlite.darwin
