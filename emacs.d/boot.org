@@ -822,17 +822,18 @@ this is necessary to get useful backups.
 
 #+begin_src emacs-lisp
   (setq vc-make-backup-files t
-	version-control t
-	kept-new-versions 10
-	kept-old-versions 0
-	delete-old-versions t
-	backup-by-copying t
-	backup-directory-alist `(("." . ,(concat (getenv "HOME")"/.emacs-backup"))))
-
+        version-control t
+        kept-new-versions 10
+        kept-old-versions 0
+        delete-old-versions t
+        backup-by-copying t
+        backup-directory-alist `(("." . ,(concat (getenv "HOME")"/.emacs-backup/"))))
+  
+  (setq auto-save-default nil)
   (defun cm/force-backup-of-buffer ()
     (let ((buffer-backed-up nil))
       (backup-buffer)))
-
+  
   (add-hook 'before-save-hook 'cm/force-backup-of-buffer)
 #+end_src
 
@@ -911,6 +912,16 @@ Keep the diff in a single window, easier on tiling window managers to
 handle diff sessions.
 #+begin_src emacs-lisp
   (setq ediff-window-setup-function #'ediff-setup-windows-plain)
+#+end_src
+*** Add `vc-ediff` to vc keybindings
+:PROPERTIES:
+:ID:       216fa96f-b771-48ff-b3ed-2cdaf039dc93
+:END:
+
+I like the view of vc-ediff over vc-diff most of the time.
+
+#+begin_src emacs-lisp
+  (define-key vc-prefix-map "e" #'vc-ediff)
 #+end_src
 *** Combine both in clashing diff
 :PROPERTIES:
