@@ -2282,48 +2282,49 @@ SIGNIFICANT amount of hacking, because there are arbitrary emacs
 commands I want to run with a normal dvorak keys, and only translate
 the evil ones.
 #+begin_src emacs-lisp
-  (use-package evil
-    :demand t
-    :config
+    (use-package evil
+      :demand t
+      :init
+      ;;  use evil-collection
+      (setq evil-want-keybinding nil)
+      :config
 
-    (defvar *cm/evil-key-translate-table*
-      '(("d" . "h")
-        ("h" . "j")
-        ("t" . "k")
-        ("n" . "l")
-        ("k" . "d")
-        ("l" . "n")
-        ("j" . "t")))
+      (defvar *cm/evil-key-translate-table*
+        '(("d" . "h")
+          ("h" . "j")
+          ("t" . "k")
+          ("n" . "l")
+          ("k" . "d")
+          ("l" . "n")
+          ("j" . "t")))
 
-    (defun cm/evil-normal-state-entry-hook ()
-      (mapcar
-       #'(lambda (x)
-    	 (key-translate (car x) (cdr x)))
-       ,*cm/evil-key-translate-table*))
+      (defun cm/evil-normal-state-entry-hook ()
+        (mapcar
+         #'(lambda (x)
+      	 (key-translate (car x) (cdr x)))
+         ,*cm/evil-key-translate-table*))
 
-    (defun cm/evil-normal-state-exit-hook ()
-      (mapcar
-       #'(lambda (x)
-    	 (aset keyboard-translate-table
-    	       (aref (key-parse (car x) 0) nil)))
-       ,*cm/evil-key-translate-table*))
+      (defun cm/evil-normal-state-exit-hook ()
+        (mapcar
+         #'(lambda (x)
+      	 (aset keyboard-translate-table
+      	       (aref (key-parse (car x) 0) nil)))
+         ,*cm/evil-key-translate-table*))
 
-    ;;(add-hook 'evil-normal-state-entry-hook #'cm/evil-normal-state-entry-hook)
-    ;;(add-hook 'evil-normal-state-exit-hook #'cm/evil-normal-state-exit-hook)
+      ;;(add-hook 'evil-normal-state-entry-hook #'cm/evil-normal-state-entry-hook)
+      ;;(add-hook 'evil-normal-state-exit-hook #'cm/evil-normal-state-exit-hook)
 
-;    (evil-set-initial-state 'compilation-mode 'emacs)
-;    (evil-set-initial-state 'grep-mode 'emacs)
-    (evil-set-initial-state 'shell-mode 'emacs)
-;    (evil-set-initial-state 'org-mode 'emacs)
-    (setq evil-undo-system 'undo-tree))
+  ;    (evil-set-initial-state 'compilation-mode 'emacs)
+  ;    (evil-set-initial-state 'grep-mode 'emacs)
+      (evil-set-initial-state 'shell-mode 'emacs)
+  ;    (evil-set-initial-state 'org-mode 'emacs)
+      (setq evil-undo-system 'undo-tree))
 
-  (evil-mode)
-
-  (use-package evil-collection
-    :after evil
-    :ensure t
-    :config
-    (evil-collection-init))
+    (use-package evil-collection
+      :after evil
+      :ensure t
+      :config
+      (evil-collection-init))
 #+end_src
 **** Evil Ace Jump
      :PROPERTIES:
