@@ -1,0 +1,86 @@
+This file lists all people who contributed more than a few lines to
+emms.  This is necessary to keep track of people who have copyright
+claims on sources, so please don't be too humble and add yourself.
+
+
+Alex Kost     	         <alezost@gmail.com>
+Akito Mikami		 <me@a64.work>
+Bram van der Kroef       <bram@fortfrances.com>
+Bruno Félix R. Ribeiro	 <oitofelix@gnu.org>
+Daimrod      		 <daimrod@gmail.com>
+Damien Elmes		 <emacs@repose.cx>
+Daniel Brockman		 <daniel@brockman.se>
+Daniel Dehennin          <daniel.dehennin@baby-gnu.org>
+Daniel Semyonov          <daniel@dsemy.com>
+David Engster		 <deng@randomsample.de>
+Feng Shu                 <tumashu@163.com>
+Grant Shangreaux	 <grant@churls.world>
+Ian Eure		 <ian@retrospec.tv>
+Jean-Philippe Theberge	 <jphiltheberge@videotron.ca>
+Jorgen Schaefer		 <forcer@forcix.cx>
+Jose Antonio Ortega Ruiz <jao@gnu.org>
+Lawrence Mitchell	 <wence@gmx.li>
+Lucas Bonnet		 <lucas@rincevent.net>
+Mario Domgörgen		 <kanaldrache@gmx.de>
+Mario Lang		 <mlang@delYsid.org>
+Martin Schoenmakers	 <aiviru@diamond-age.net>
+Matthew Kennedy		 <mkennedy@gentoo.org>
+Michael Olson		 <mwolson@gnu.org>
+Morgan Smith             <Morgan.J.Smith@outlook.com>
+Nick Alcock 		 <nix@esperi.org.uk>
+Omar Polo                <op@omarpolo.com>
+Petteri Hintsanen        <petterih@iki.fi>
+Pierre Neidhardt	 <mail@ambrevar.xyz>
+stardiviner 		 <numbchild@gmail.com>
+Tassilo Horn		 <tassilo@member.fsf.org>
+Thierry Volpiatto
+Trent Buck		 <trentbuck@gmail.com>
+Ulrik Jensen		 <terryp@daimi.au.dk>
+Warren Wilkinson         <warrenwilkinson@gmail.com>
+William Xu		 <william.xwl@gmail.com>
+Ye Wenbin		 <wenbinye@gmail.com>
+Yoni (Johnathan) Rabkin  <yrk@gnu.org>
+mathias.dahl 		 <mathias.dahl>
+Rasmus Pank Roulund      <emacs@pank.eu>
+Sean McAfee              <eefacm@gmail.com>
+ZHANG Weiyi 		 <dochang@gmail.com>
+Mike Kazantsev           <mk.fraggod@gmail.com>
+Fran Burstall            <fran.burstall@gmail.com>
+
+
+The following is a list of people who contributed trivial patches,
+which is to say, simple patches and those with total of 12 lines or
+fewer. We started recording trivial patches this way in June of 2017,
+so trivial patches before that date would not appear below.
+
+Alexis 			 <flexibeast@gmail.com>
+Alfred M. Szmidt      	 <ams@gnu.org>
+Brian Leung              <leungbk@posteo.net>
+Christian Faulhammer 	 <fauli@gentoo.org>
+Daniel Cerqueira         <dan.git@lispclub.com>
+David Michael
+Dieter Deyke		 <deyke@yahoo.com>
+Dirk-Jan C. Binnema 	 <djcb.bulk@gmail.com>
+ericalinag  		 <ericalinagebhart@gmail.com>
+Ian D 			 <dunni@gnu.org>
+Ian Dunn
+Jesse Weinstein		 <jessw@netwood.net>
+Katherine Whitlock
+Kierin Bell
+Leo Okawa Ericson
+Luca Capello 		 <luca@pca.it>
+Mandar Mitra
+Maxim Cournoyer
+Pavel Korytov
+Ryan Van Wagoner
+Sascha Wilde 		 <wilde@sha-bang.de>
+Scarlett McAllister
+Tom Rauchenwald 	 <its.sec@gmx.net>
+fledermaus at #emacs
+indio on #emacs
+tumashu
+
+
+;; Local variables:
+;; coding: utf-8
+;; End:

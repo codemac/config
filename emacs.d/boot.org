@@ -92,6 +92,27 @@ annoying.
 	      (message "Deleted file %s." filename)
 	      (kill-buffer))))))
 #+end_src
+** url-unhexing
+:PROPERTIES:
+:ID:       E078B79B-2981-4C8D-B25A-3D2A6DDACA04
+:END:
+
+#+begin_src emacs-lisp
+  (require 'url-util)
+
+  (defun func-on-region (start end func)
+    (save-excursion
+      (let ((text (delete-and-extract-region start end)))
+	(insert (funcall func text)))))
+
+  (defun cm/url-unhex-region (start end)
+    (interactive "r")
+    (func-on-region start end #'url-unhex-string))
+
+  (defun cm/url-hexify-region (start end)
+    (interactive "r")
+    (func-on-region start end #'url-hexify-string))
+#+end_src
 * User Interface
   :PROPERTIES:
   :ID:       174da1e1-650e-41f1-a5de-48a0e77b8538
@@ -223,6 +244,8 @@ screen DPI's.
     ((equal (system-name) "penolpe")
      (cm/produce-font 9))
     ((equal (system-name) "jmickey-mbp")
+     (cm/produce-font 13))
+    ((equal (system-name) "jmickey-mac")
      (cm/produce-font 13))
     ((equal (system-name) "penguin")
      (cm/produce-font 11)
@@ -368,6 +391,8 @@ Mac. Mostly these days, I'm on +a Mac :/+ linux!! :)
 			,(concat home-dir "/bin")
 			,(concat home-dir "/homebrew/bin")
 			,(concat home-dir "/.cabal/bin")
+			"/opt/homebrew/bin"
+			"/opt/homebrew/sbin"
 			"/opt/local/bin"
 			"/usr/local/texlive/2010/bin/x86_64-darwin"
 			"/usr/local/bin"
@@ -734,23 +759,37 @@ emacs is not my forte.
 
   (global-set-key (kbd "C-<delete>") 'cm/delete-surrounding-whitespace)
 #+end_src
+** Make sure find-alternate-file goes back roughly to the line I was on!
+:PROPERTIES:
+:ID:       FA08CD66-EFA5-44F3-BE8D-724640864DBB
+:END:
+
+#+begin_src emacs-lisp
+  (defun cm/find-alternate-file ()
+    "A wrapper in the normal `find-alternate-file` that returns you
+   to the line number you were on."
+    (interactive)
+    (let ((old-point (point)))
+      (call-interactively #'find-alternate-file)
+      (goto-char old-point)))
+
+  (global-set-key (kbd "C-x C-v") 'cm/find-alternate-file)
+#+end_src
 ** Org File Location
 :PROPERTIES:
 :ID:       fa39e5f7-7a63-4379-8d53-cbb2ad4decbd
 :END:
 #+begin_src emacs-lisp
   (defvar cm/org-directory "~/org")
-  ;; Use dropbox when available. Yes making this conditional is awkward,
+  ;; dead to me as of 2024-01-24, still seeing syncing errors :(
+  ;; 
+  ;;  Use dropbox when available. Yes making this conditional is awkward,
   ;; but it helps me avoid the IT security dragon if I'm on a work
   ;; computer.
   (setq cm/org-directory
   (cond
-   ((file-exists-p "~/Library/CloudStorage/Dropbox/org/gtd.org")
-      "~/Library/CloudStorage/Dropbox/org")
    ((file-exists-p "/mnt/chromeos/GoogleDrive/MyDrive/org/gtd.org")
     "/mnt/chromeos/GoogleDrive/MyDrive/org")
-   ((file-exists-p "~/Dropbox/org/gtd.org")
-    "~/Dropbox/org")
    (t "~/org")))
   (defun cm/org-dir (&rest filenames)
     "Current 'cm/org-directory' as string, or prefixed to filenames.
@@ -846,17 +885,18 @@ this is necessary to get useful backups.
 
 #+begin_src emacs-lisp
   (setq vc-make-backup-files t
-	version-control t
-	kept-new-versions 10
-	kept-old-versions 0
-	delete-old-versions t
-	backup-by-copying t
-	backup-directory-alist `(("." . ,(concat (getenv "HOME")"/.emacs-backup"))))
-
+        version-control t
+        kept-new-versions 10
+        kept-old-versions 0
+        delete-old-versions t
+        backup-by-copying t
+        backup-directory-alist `(("." . ,(concat (getenv "HOME")"/.emacs-backup/"))))
+  
+  (setq auto-save-default nil)
   (defun cm/force-backup-of-buffer ()
     (let ((buffer-backed-up nil))
       (backup-buffer)))
-
+  
   (add-hook 'before-save-hook 'cm/force-backup-of-buffer)
 #+end_src
 
@@ -935,6 +975,16 @@ Keep the diff in a single window, easier on tiling window managers to
 handle diff sessions.
 #+begin_src emacs-lisp
   (setq ediff-window-setup-function #'ediff-setup-windows-plain)
+#+end_src
+*** Add `vc-ediff` to vc keybindings
+:PROPERTIES:
+:ID:       216fa96f-b771-48ff-b3ed-2cdaf039dc93
+:END:
+
+I like the view of vc-ediff over vc-diff most of the time.
+
+#+begin_src emacs-lisp
+  (define-key vc-prefix-map "e" #'vc-ediff)
 #+end_src
 *** Combine both in clashing diff
 :PROPERTIES:
@@ -1104,6 +1154,16 @@ Easy navigation around lots of splits. C-x o isn't that geographical.
   (global-set-key (kbd "s-<right>") 'windmove-right)
   (global-set-key (kbd "s-<up>") 'windmove-up)
   (global-set-key (kbd "s-<down>") 'windmove-down)
+
+  (use-package :ace-window
+    :bind (("M-o" . ace-window))
+    :init
+    (setq aw-keys '(?a ?o ?e ?u ?i ?d ?h ?t ?n ?s)
+	  aw-scope 'global
+	  aw-minibuffer-flag t)
+    (face-spec-set
+     'aw-leading-char-face
+     '((t (:foreground "yellow" :box (:line-width 2 :color "black" :style released-button))))))
 #+end_src
 ** Dired
    :PROPERTIES:
@@ -1367,7 +1427,7 @@ really interpret anything.
   (defun cm/darwin-shell-settings ()
     (setq comint-process-echoes t))
 
-  (when (string-equal (system-name) "jmickey-mbp")
+  (when (string-equal (system-name) "jmickey-mac")
     (set-default 'explicit-shell-file-name (concat (getenv "HOME") "/bin/rc"))
     (add-hook 'shell-mode-hook 'cm/darwin-shell-settings))
 #+end_src
@@ -1711,7 +1771,7 @@ what all these features really mean.
     "The profile in chrome to open things for personal use")
 
   (pcase (system-name)
-    ("jmickey-mbp"
+    ("jmickey-mac"
      (setq cm/browse-url-work-profile "Default")
      (setq cm/browse-url-personal-profile "Profile 1"))  
     ("nina"
@@ -2224,11 +2284,78 @@ enabled there.
      :PROPERTIES:
      :ID:       0323ddc8-4107-4bef-868b-8636fbf95fcb
      :END:
-     I have become one of them :/
+    I have become one of them :/
+
+    But first, I need to replicate:
+
+#+begin_example
+"""""""""""" DVORAK FTW LOLZ! "
+noremap d h
+noremap h j
+noremap t k
+noremap n l
+noremap k d
+noremap l n
+noremap j t
+noremap ^Wd ^Wh
+noremap ^Wh ^Wj
+noremap ^Wt ^Wk
+noremap ^Wn ^Wl
+#+end_example
+
+For some reason, I can't figure out how to get this to load
+immediately and have to use =:defer t=.
+
+Also the key translation doesn't work at all. It's unfortunate, it's
+clearly the best part of my entire vimrc, that basically I can use the
+homerow stuff while also using dvorak. However it requires a
+SIGNIFICANT amount of hacking, because there are arbitrary emacs
+commands I want to run with a normal dvorak keys, and only translate
+the evil ones.
 #+begin_src emacs-lisp
-  ;(require 'evil)
-  ;
-  ;(evil-mode 1)
+    (use-package evil
+      :demand t
+      :init
+      ;;  use evil-collection
+      (setq evil-want-keybinding nil)
+      :config
+
+      (defvar *cm/evil-key-translate-table*
+        '(("d" . "h")
+          ("h" . "j")
+          ("t" . "k")
+          ("n" . "l")
+          ("k" . "d")
+          ("l" . "n")
+          ("j" . "t")))
+
+      (defun cm/evil-normal-state-entry-hook ()
+        (mapcar
+         #'(lambda (x)
+      	 (key-translate (car x) (cdr x)))
+         ,*cm/evil-key-translate-table*))
+
+      (defun cm/evil-normal-state-exit-hook ()
+        (mapcar
+         #'(lambda (x)
+      	 (aset keyboard-translate-table
+      	       (aref (key-parse (car x) 0) nil)))
+         ,*cm/evil-key-translate-table*))
+
+      ;;(add-hook 'evil-normal-state-entry-hook #'cm/evil-normal-state-entry-hook)
+      ;;(add-hook 'evil-normal-state-exit-hook #'cm/evil-normal-state-exit-hook)
+
+  ;    (evil-set-initial-state 'compilation-mode 'emacs)
+  ;    (evil-set-initial-state 'grep-mode 'emacs)
+      (evil-set-initial-state 'shell-mode 'emacs)
+  ;    (evil-set-initial-state 'org-mode 'emacs)
+      (setq evil-undo-system 'undo-tree))
+
+    (use-package evil-collection
+      :after evil
+      :ensure t
+      :config
+      (evil-collection-init))
 #+end_src
 **** Evil Ace Jump
      :PROPERTIES:
@@ -3158,8 +3285,19 @@ Let's get our scheme on!
 #+begin_src emacs-lisp
   (require 'geiser-install nil t)
 
+
+  ;; definitely need to fix this to support more schemes, and just leave guile as the default.
+
   (setq geiser-active-implementations '(guile))
   (setq geiser-default-implementation 'guile)
+
+  (cond
+   ((equal (system-name) "jmickey-mac")
+    ;; guile is in homebrew
+    (setq geiser-guile-binary "/opt/homebrew/bin/guile"))
+   (t
+    (setq geiser-guile-binary "/usr/bin/guile")))
+
 #+end_src
 *** Muse
     :PROPERTIES:
@@ -3276,16 +3414,23 @@ to see my review adgendas, and easier on the eyes to follow.
   (defun cm/org-context-agenda (key ctx title)
     (let ((ctxlist (if (listp ctx) ctx (list ctx))))
       `(,(concat "c" key) ,title
-	((tags-todo ,(mapconcat #'(lambda (x) (concat x "-PROJECT-TODO=\"WAIT\"-TODO=\"DEFER\"")) ctxlist "|")
+	(,@(mapcar (lambda (x) `(tags-todo ,(concat x "-PROJECT-TODO=\"WAIT\"-TODO=\"DEFER\"")
+					   (,@cm/org-sort-style
+					    (org-agenda-overriding-header ,(concat title ": " x))))) ctxlist)
+	 (tags-todo ,(mapconcat #'(lambda (x) (concat x "-PROJECT+TODO=\"WAIT\"")) ctxlist "|")
 		    (,@cm/org-sort-style
-		     (org-agenda-overriding-header ,title)))
+		     (org-agenda-override-header ,(concat title ": WAIT"))))
+	 (tags-todo ,(mapconcat #'(lambda (x) (concat x "-PROJECT+TODO=\"DEFER\"")) ctxlist "|")
+		    (,@cm/org-sort-style
+		     (org-agenda-override-header ,(concat title ": DEFER"))))
 	 (tags-todo ,(mapconcat #'(lambda (x) (concat x "-PROJECT")) ctxlist "|")
-		    ((org-agenda-sorting-strategy
+		    ((org-agenda-skip-function '(org-agenda-skip-entry-if 'notscheduled))
+		     (org-agenda-sorting-strategy
 		      '((agenda habit-down time-up priority-down category-keep)
 			(todo tsia-up)
 			(tags tsia-up)
 			(search tsia-up)))
-		     (org-agenda-override-header ,(concat title " Unfiltered"))))))))
+		     (org-agenda-override-header ,(concat title ": SCHEDULED"))))))))
 #+end_src
 
 The org agenda. It's mostly for gtd usage, so I have the following views:
@@ -3381,12 +3526,9 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
 	(tags-todo "PROJECT+TODO=\"DEFER\"")
 	(tags-todo "PROJECT"))
        ,cm/org-sort-style)
-      ,(cm/org-context-agenda "h" '("INTERNET" "COMPUTER" "HOME" "ERRAND" "PHONE")  "Home Agenda")
-      ,(cm/org-context-agenda "w" '("INTERNET" "COMPUTER" "WORK" "PHONE")  "Work Agenda")
-      ,(cm/org-context-agenda "b" '("INTERNET" "COMPUTER" "PHONE")  "Bus Agenda")
-      ,(cm/org-context-agenda "t" '("COMPUTER" "PHONE")  "Train Agenda")
-      ,(cm/org-context-agenda "p" '("PHONE")  "Phone Agenda")
-      ,(cm/org-context-agenda "m" '("INTERNET" "ERRAND" "PHONE")  "Mobile Agenda")
+      ,(cm/org-context-agenda "h" '("HOME" "COMPUTER")  "Home Agenda")
+      ,(cm/org-context-agenda "w" '("WORK" "COMPUTER")  "Work Agenda")
+      ,(cm/org-context-agenda "m" '("MOBILE")  "Mobile Agenda")
       ("ca" "People Agenda"
        ((tags-todo "AGENDA-PROJECT-TODO=\"WAIT\"-TODO=\"DEFER\"|-PROJECT+TODO=\"WAIT\"-TODO=\"DEFER\""))
        ((org-agenda-skip-function '(org-agenda-skip-entry-if 'scheduled))
@@ -3415,7 +3557,7 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
 	(org-agenda-archives-mode t)))
       ("rw" "Weekly Review Agenda"
        (;; GET CLEAR
-	(tags-todo "noop" ,(cm/review-section "Get Clear!"))
+  	(tags-todo "noop" ,(cm/review-section "Get Clear!"))
 	(tags-todo "noop" ,(cm/review-header "Collect Loose Papers and Materials"))
 	(tags-todo "-{.*}-TODO=\"WAIT\"-TODO=\"DEFER\""
 		   ,(cm/review-header
@@ -4002,7 +4144,7 @@ to manage org-mode. This is pretty wonky but follow through.
 #+begin_src emacs-lisp
   (defun cm/org-attach-dir ()
     (pcase (system-name)
-      ("jmickey-mbp" "/Volumes/GoogleDrive-101253201312117633331/My Drive/3 Resources/Org Attachments/")
+      ("jmickey-mac" "/Volumes/GoogleDrive-101253201312117633331/My Drive/3 Resources/Org Attachments/")
       (error "No attach directory set for this system!")))
 #+end_src
 #+begin_src emacs-lisp
@@ -4053,17 +4195,18 @@ it the normal way.
     (interactive)
     (save-excursion
       (with-current-buffer (current-buffer)
-	(outline-show-all)
-	(let ((toret nil))
-	  (dotimes (i (- (org-current-level) 1) toret)
+	(org-save-outline-visibility t
+	  (outline-show-all)
+	  (let ((toret nil))
+	    (dotimes (i (- (org-current-level) 1) toret)
 	    ;; handle errors when levels are not uniform, we may go "up"
-	    ;; too many times.
-	    (ignore-errors (outline-up-heading 1 t))
-	    (let* ((tagraw (nth 5 (org-heading-components)))
-		   (tags (if tagraw tagraw "")))
-	      (setq toret
-		    (or toret
-			(string-match-p "PROJECT" tags)))))))))
+	      ;; too many times.
+	      (ignore-errors (outline-up-heading 1 t))
+	      (let* ((tagraw (nth 5 (org-heading-components)))
+		     (tags (if tagraw tagraw "")))
+		(setq toret
+		      (or toret
+			  (string-match-p "PROJECT" tags))))))))))
 
   (defun cm/gtd-archiver ()
     (interactive)
@@ -4081,10 +4224,8 @@ it the normal way.
   (setq org-tag-alist '((:startgroup)
 			("AGENDA"    . ?a)
 			("COMPUTER" . ?c)
-			("ERRAND" . ?e)
 			("HOME"   . ?h)
-			("INTERNET"  . ?i)
-			("PHONE"     . ?f)
+			("MOBILE"     . ?m)
 			("WORK"   . ?w)
 			("PROJECT" . ?p)
 			(:endgroup)
@@ -4095,7 +4236,7 @@ it the normal way.
   (setq org-todo-keywords
 	'((sequence "TODO(t@)" "NEXT(n!)" "WAIT(w!)" "DEFER(f!)" "|" "DONE(d@)" "NVM(v@)")))
 
-  (setq org-tags-exclude-from-inheritance '("CHECKLIST"))
+  (setq org-tags-exclude-from-inheritance '("CHECKLIST" "INBOX"))
 
   ;; Select all project subtrees, and ensure there are TODO/NEXT
   ;; headings somewhere beneath. The following code generates something
@@ -4122,19 +4263,19 @@ it the normal way.
      :ID:       8eedeae4-7a30-4dfe-94ff-93827481d847
      :END:
 #+begin_src emacs-lisp
-  (require 'pandoc-mode)
-  ;; mediawiki + pandoc hack
-  (setq pandoc-binary "/Users/jmickey/bin/pandoc")
-  
-  (defun cm/org-export-as-pandoc ()
-    (interactive)
-    (org-export-as-html 3 nil "*Org HTML Export*" t nil)
-    (with-current-buffer "*Org HTML Export*"
-      (pandoc-mode 1)
-      (pandoc-set-write "mediawiki")
-      (pandoc-run-pandoc nil)
-      (pandoc-view-output)))
-  
+  (use-package pandoc-mode
+    :init
+    ;; mediawiki + pandoc hack
+    (setq pandoc-binary "/Users/jmickey/bin/pandoc")
+
+    (defun cm/org-export-as-pandoc ()
+      (interactive)
+      (org-export-as-html 3 nil "*Org HTML Export*" t nil)
+      (with-current-buffer "*Org HTML Export*"
+        (pandoc-mode 1)
+        (pandoc-set-write "mediawiki")
+        (pandoc-run-pandoc nil)
+        (pandoc-view-output))))
   ;(org-babel-load-file (expand-file-name
   ;                      "org-docco.org"
   ;                      (expand-file-name
@@ -4168,6 +4309,8 @@ it the normal way.
   (setq org-plantuml-jar-path plantuml-jar-path)
   (add-hook 'org-babel-after-execute-hook 'org-display-inline-images)
 
+  ;; for ob-ledger, and probably much more
+  (use-package org-contrib)
   (org-babel-do-load-languages 
    'org-babel-load-languages
    '((emacs-lisp . t)
@@ -4210,85 +4353,85 @@ How I deploy my personal website.
 #+begin_src emacs-lisp
   ;; Inline images in HTML instead of producting links to the image
   (setq org-export-html-inline-images t)
-  
+
   ;; Do not generate internal css formatting for HTML exports
   (setq org-export-htmlize-output-type nil)
-  
+
   ;; Export with LaTeX fragments
   (setq org-export-with-LaTeX-fragments t)
-  
-  (require 'ox-tufte)
-  
+
+  ;(use-package ox-tufte)
+
   ;; add advice around org-html-headline to not generate the <div> at
   ;; all, just the <section> wrapper.
-  
+
   (defun cm/org-html-headline (headline contents info)
     "Transcode a HEADLINE element from Org to HTML.
   CONTENTS holds the contents of the headline.  INFO is a plist
   holding contextual information."
     (unless (org-element-property :footnote-section-p headline)
       (let* ((numberedp (org-export-numbered-headline-p headline info))
-	     (numbers (org-export-get-headline-number headline info))
-	     (level (+ (org-export-get-relative-level headline info)
-		       (1- (plist-get info :html-toplevel-hlevel))))
-	     (todo (and (plist-get info :with-todo-keywords)
-			(let ((todo (org-element-property :todo-keyword headline)))
-			  (and todo (org-export-data todo info)))))
-	     (todo-type (and todo (org-element-property :todo-type headline)))
-	     (priority (and (plist-get info :with-priority)
-			    (org-element-property :priority headline)))
-	     (text (org-export-data (org-element-property :title headline) info))
-	     (tags (and (plist-get info :with-tags)
-			(org-export-get-tags headline info)))
-	     (full-text (funcall (plist-get info :html-format-headline-function)
-				 todo todo-type priority text tags info))
-	     (contents (or contents ""))
-	     (id (or (org-element-property :CUSTOM_ID headline)
-		     (org-export-get-reference headline info))))
-	(if (org-export-low-level-p headline info)
-	    ;; This is a deep sub-tree: export it as a list item.
-	    (let* ((html-type (if numberedp "ol" "ul")))
-	      (concat
-	       (and (org-export-first-sibling-p headline info)
-		    (apply #'format "<%s class=\"org-%s\">\n"
-			   (make-list 2 html-type)))
-	       (org-html-format-list-item
-		contents (if numberedp 'ordered 'unordered)
-		nil info nil
-		(concat (org-html--anchor id nil nil info) full-text)) "\n"
-	       (and (org-export-last-sibling-p headline info)
-		    (format "</%s>\n" html-type))))
-	  ;; Standard headline.  Export it as a section.
-	  (let ((extra-class (org-element-property :HTML_CONTAINER_CLASS headline))
-		(first-content (car (org-element-contents headline))))
-  
-	    (format "%s%s%s%s\n"
-		    (pcase level
-		      ('1 "")
-		      ('2 "<section>")
-		      (_ ""))
-		    (format "\n<h%d id=\"%s\">%s</h%d>\n"
-			    level
-			    id
-			    (concat
-			     (and numberedp
-				  (format
-				   "<span class=\"section-number-%d\">%s</span> "
-				   level
-				   (mapconcat #'number-to-string numbers ".")))
-			     full-text)
-			    level)
-		    ;; When there is no section, pretend there is an
-		    ;; empty one to get the correct <div
-		    ;; class="outline-...> which is needed by
-		    ;; `org-info.js'.
-		    (if (eq (org-element-type first-content) 'section) contents
-		      (concat (org-html-section first-content "" info) contents))
-		    (pcase level
-		      ('1 "")
-		      ('2 "</section>")
-		      (_ ""))))))))
-  
+  	     (numbers (org-export-get-headline-number headline info))
+  	     (level (+ (org-export-get-relative-level headline info)
+  		       (1- (plist-get info :html-toplevel-hlevel))))
+  	     (todo (and (plist-get info :with-todo-keywords)
+  			(let ((todo (org-element-property :todo-keyword headline)))
+  			  (and todo (org-export-data todo info)))))
+  	     (todo-type (and todo (org-element-property :todo-type headline)))
+  	     (priority (and (plist-get info :with-priority)
+  			    (org-element-property :priority headline)))
+  	     (text (org-export-data (org-element-property :title headline) info))
+  	     (tags (and (plist-get info :with-tags)
+  			(org-export-get-tags headline info)))
+  	     (full-text (funcall (plist-get info :html-format-headline-function)
+  				 todo todo-type priority text tags info))
+  	     (contents (or contents ""))
+  	     (id (or (org-element-property :CUSTOM_ID headline)
+  		     (org-export-get-reference headline info))))
+  	(if (org-export-low-level-p headline info)
+  	    ;; This is a deep sub-tree: export it as a list item.
+  	    (let* ((html-type (if numberedp "ol" "ul")))
+  	      (concat
+  	       (and (org-export-first-sibling-p headline info)
+  		    (apply #'format "<%s class=\"org-%s\">\n"
+  			   (make-list 2 html-type)))
+  	       (org-html-format-list-item
+  		contents (if numberedp 'ordered 'unordered)
+  		nil info nil
+  		(concat (org-html--anchor id nil nil info) full-text)) "\n"
+  	       (and (org-export-last-sibling-p headline info)
+  		    (format "</%s>\n" html-type))))
+  	  ;; Standard headline.  Export it as a section.
+  	  (let ((extra-class (org-element-property :HTML_CONTAINER_CLASS headline))
+  		(first-content (car (org-element-contents headline))))
+
+  	    (format "%s%s%s%s\n"
+  		    (pcase level
+  		      ('1 "")
+  		      ('2 "<section>")
+  		      (_ ""))
+  		    (format "\n<h%d id=\"%s\">%s</h%d>\n"
+  			    level
+  			    id
+  			    (concat
+  			     (and numberedp
+  				  (format
+  				   "<span class=\"section-number-%d\">%s</span> "
+  				   level
+  				   (mapconcat #'number-to-string numbers ".")))
+  			     full-text)
+  			    level)
+  		    ;; When there is no section, pretend there is an
+  		    ;; empty one to get the correct <div
+  		    ;; class="outline-...> which is needed by
+  		    ;; `org-info.js'.
+  		    (if (eq (org-element-type first-content) 'section) contents
+  		      (concat (org-html-section first-content "" info) contents))
+  		    (pcase level
+  		      ('1 "")
+  		      ('2 "</section>")
+  		      (_ ""))))))))
+
   (defun cm/org-html-section (section contents info)
     "Transcode a SECTION element from Org to HTML.
   CONTENTS holds the contents of the section.  INFO is a plist
@@ -4296,126 +4439,127 @@ How I deploy my personal website.
     (let ((parent (org-export-get-parent-headline section)))
       ;; Before first headline: no container, just return CONTENTS.
       (if (not parent) contents
-	;; Get div's class and id references.
-	(let* ((class-num (+ (org-export-get-relative-level parent info)
-			     (1- (plist-get info :html-toplevel-hlevel))))
-	       (section-number
-		(and (org-export-numbered-headline-p parent info)
-		     (mapconcat
-		      #'number-to-string
-		      (org-export-get-headline-number parent info) "-"))))
-	  ;; Build return value.
-	  (format "%s\n" (or contents ""))))))
-  
+  	;; Get div's class and id references.
+  	(let* ((class-num (+ (org-export-get-relative-level parent info)
+  			     (1- (plist-get info :html-toplevel-hlevel))))
+  	       (section-number
+  		(and (org-export-numbered-headline-p parent info)
+  		     (mapconcat
+  		      #'number-to-string
+  		      (org-export-get-headline-number parent info) "-"))))
+  	  ;; Build return value.
+  	  (format "%s\n" (or contents ""))))))
+
   (advice-add #'org-html-headline :override #'cm/org-html-headline)
   (advice-add #'org-html-section :override #'cm/org-html-section)
-  
-  
+
+  ;(use-package ox-tufte)
+  ;(require 'ox-tufte)
   ;; List of projects
   ;; - codemac.net -- My personal website
   ;; - jmickey.net -- An experiment in public living
   ;; - org-doc -- export all org documents
   (setq org-publish-project-alist
-	`(("codemac-org"
-	   :base-directory ,(cm/org-dir "_www/codemac.net")
-	   :publishing-directory "~/tmp/codemac.net"
-	   :recursive t
-	   :base-extension "org"
-	   :publishing-function org-html-publish-to-tufte-html
-	   :exclude-tags ("noexport" "todo")
-	   :html-head-extra "<link rel=\"stylesheet\" href=\"tufte.css\" type=\"text/css\" />"
-	   :html-head-include-default-style nil
-	   :html-head-include-scripts nil
-  
-	   ;; These are for tufte.css. It seems ox-tufte is very out of
-	   ;; date.
-	   :html-html5-fancy t
-	   :html-container "section"
-	   :html-divs ((preamble "div" "preamble")
-		       (content "article" "content")
-		       (postamble "div" "postamble"))
-	   :html-doctype "xhtml5"
-	   :section-numbers nil
-	   :html-validation-link nil
-	   :with-toc nil
-	   :with-smart-quotes t
-	   :auto-sitemap t)
-	  ("codemac-static"
-	   :base-directory ,(cm/org-dir "_www/codemac.net")
-	   :publishing-directory "~/tmp/codemac.net"
-	   :base-extension "css\\|pdf\\|png\\|jpg\\|gif\\|js\\|txt\\|mp3\\|ogg\\|swf\\|svg\\|woff\\|eot\\|ttf\\|html"
-	   :publishing-function org-publish-attachment
-	   :recursive t)
-	  ("codemac" :components ("codemac-org" "codemac-static"))
-  
-	  ("jmickey-org"
-	   :base-directory ,(cm/org-dir "_www/jmickey.net")
-	   :publishing-directory "~/tmp/jmickey.net"
-	   :recursive t
-	   :base-extension "org"
-	   :publishing-function org-html-publish-to-tufte-html
-	   :exclude-tags ("noexport" "todo")
+  	`(("codemac-org"
+  	   :base-directory ,(cm/org-dir "_www/codemac.net")
+  	   :publishing-directory "~/tmp/codemac.net"
+  	   :recursive t
+  	   :base-extension "org"
+  	   :publishing-function org-tufte-publish-to-html
+  	   :exclude-tags ("noexport" "todo")
+  	   :html-head-extra "<link rel=\"stylesheet\" href=\"tufte.css\" type=\"text/css\" />"
+  	   :html-head-include-default-style nil
+  	   :html-head-include-scripts nil
+
+  	   ;; These are for tufte.css. It seems ox-tufte is very out of
+  	   ;; date.
+  	   :html-html5-fancy t
+  	   :html-container "section"
+  	   :html-divs ((preamble "div" "preamble")
+  		       (content "article" "content")
+  		       (postamble "div" "postamble"))
+  	   :html-doctype "xhtml5"
+  	   :section-numbers nil
+  	   :html-validation-link nil
+  	   :with-toc nil
+  	   :with-smart-quotes t
+  	   :auto-sitemap t)
+  	  ("codemac-static"
+  	   :base-directory ,(cm/org-dir "_www/codemac.net")
+  	   :publishing-directory "~/tmp/codemac.net"
+  	   :base-extension "css\\|pdf\\|png\\|jpg\\|gif\\|js\\|txt\\|mp3\\|ogg\\|swf\\|svg\\|woff\\|eot\\|ttf\\|html"
+  	   :publishing-function org-publish-attachment
+  	   :recursive t)
+  	  ("codemac" :components ("codemac-org" "codemac-static"))
+
+  	  ("jmickey-org"
+  	   :base-directory ,(cm/org-dir "_www/jmickey.net")
+  	   :publishing-directory "~/tmp/jmickey.net"
+  	   :recursive t
+  	   :base-extension "org"
+  	   :publishing-function org-html-publish-to-html
+  	   :exclude-tags ("noexport" "todo")
   ;	 :html-head-extra "<link rel=\"stylesheet\" href=\"style.css\" type=\"text/css\" />"
-	   :html-head-include-default-style nil
-	   :html-head-include-scripts nil
-  
-	   :html-html5-fancy t
-	   :html-container "section"
-	   :html-divs ((preamble "div" "preamble")
-		       (content "article" "content")
-		       (postamble "div" "postamble"))
-	   :html-doctype "xhtml5"
-	   :section-numbers nil
-	   :html-validation-link nil
-	   :with-toc nil
-	   :with-smart-quotes nil
-	   :with-author nil
-	   :with-date t
-	   :with-email nil
-	   :time-stamp-file nil
-	   :with-creator nil
-	   :auto-sitemap t)
-	  ("jmickey-static"
-	   :base-directory ,(cm/org-dir "_www/jmickey.net")
-	   :publishing-directory "~/tmp/jmickey.net"
-	   :base-extension "css\\|pdf\\|png\\|jpg\\|gif\\|js\\|txt\\|mp3\\|ogg\\|swf\\|svg\\|woff\\|eot\\|ttf\\|html"
-	   :publishing-function org-publish-attachment
-	   :recursive t)
-	  ("jmickey" :components ("jmickey-org" "jmickey-static"))
-  
-	  ("org-doc-org"
-	   :base-directory ,(cm/org-dir)
-	   :publishing-directory "~/tmp/published-org"
-	   :recursive t
-	   :section-numbers nil
-	   :table-of-contents nil
-	   :base-extension "org"
-	   :publishing-function (org-html-publish-to-html org-org-publish-to-org)
-	   :plain-source t
-	   :htmlized-source t
-	   :style-include-default nil
-	   :style "<link rel=\"stylesheet\" href=\"/org.css\" type=\"text/css\" />"
-	   :auto-sitemap t
-	   :sitemap-filename "index.html"
-	   :sitemap-title "Test Publishing Area"
-	   :sitemap-style "tree"
-	   :author-info nil
-	   :creator-info nil)
-	  ("org-doc-static"
-	   :base-directory ,(cm/org-dir)
-	   :publishing-directory "~/tmp/published-org"
-	   :base-extension "css\\|pdf\\|png\\|jpg\\|gif"
-	   :publishing-function org-publish-attachment
-	   :recursive t
-	   :author nil)
-	  ("org-doc" :components ("org-doc-org" "org-doc-static"))))
-  
+  	   :html-head-include-default-style nil
+  	   :html-head-include-scripts nil
+
+  	   :html-html5-fancy t
+  	   :html-container "section"
+  	   :html-divs ((preamble "div" "preamble")
+  		       (content "article" "content")
+  		       (postamble "div" "postamble"))
+  	   :html-doctype "xhtml5"
+  	   :section-numbers nil
+  	   :html-validation-link nil
+  	   :with-toc nil
+  	   :with-smart-quotes nil
+  	   :with-author nil
+  	   :with-date t
+  	   :with-email nil
+  	   :time-stamp-file nil
+  	   :with-creator nil
+  	   :auto-sitemap t)
+  	  ("jmickey-static"
+  	   :base-directory ,(cm/org-dir "_www/jmickey.net")
+  	   :publishing-directory "~/tmp/jmickey.net"
+  	   :base-extension "css\\|pdf\\|png\\|jpg\\|gif\\|js\\|txt\\|mp3\\|ogg\\|swf\\|svg\\|woff\\|eot\\|ttf\\|html"
+  	   :publishing-function org-publish-attachment
+  	   :recursive t)
+  	  ("jmickey" :components ("jmickey-org" "jmickey-static"))
+
+  	  ("org-doc-org"
+  	   :base-directory ,(cm/org-dir)
+  	   :publishing-directory "~/tmp/published-org"
+  	   :recursive t
+  	   :section-numbers nil
+  	   :table-of-contents nil
+  	   :base-extension "org"
+  	   :publishing-function (org-html-publish-to-html org-org-publish-to-org)
+  	   :plain-source t
+  	   :htmlized-source t
+  	   :style-include-default nil
+  	   :style "<link rel=\"stylesheet\" href=\"/org.css\" type=\"text/css\" />"
+  	   :auto-sitemap t
+  	   :sitemap-filename "index.html"
+  	   :sitemap-title "Test Publishing Area"
+  	   :sitemap-style "tree"
+  	   :author-info nil
+  	   :creator-info nil)
+  	  ("org-doc-static"
+  	   :base-directory ,(cm/org-dir)
+  	   :publishing-directory "~/tmp/published-org"
+  	   :base-extension "css\\|pdf\\|png\\|jpg\\|gif"
+  	   :publishing-function org-publish-attachment
+  	   :recursive t
+  	   :author nil)
+  	  ("org-doc" :components ("org-doc-org" "org-doc-static"))))
+
   (defun org-save-then-publish ()
     (interactive)
     (save-buffer)
     (org-save-all-org-buffers)
     (org-publish-current-project))
-  
+
   (defun cm/org-publish-to-gsutil (domain)
     (interactive "sDomain name: ")
     (org-save-all-org-buffers)
@@ -4423,17 +4567,17 @@ How I deploy my personal website.
     ;; the main project does not have .blah
     (org-publish-project (car (split-string domain "\\.")) 'force)
     (if (yes-or-no-p (concat "Upload to public bucket " domain "? "))
-	(async-shell-command
-	 (concat "cd " (getenv "HOME") "/tmp/" domain " && gsutil -m rsync -r d . gs://" domain))))
-  
+  	(async-shell-command
+  	 (concat "cd " (getenv "HOME") "/tmp/" domain " && gsutil -m rsync -r d . gs://" domain))))
+
   (defun cm/org-publish-codemac-net ()
     (interactive)
     (cm/org-publish-to-gsutil "codemac.net"))
-  
+
   (defun cm/org-publish-jmickey-net ()
     (interactive)
     (cm/org-publish-to-gsutil "jmickey.net"))
-  
+
 #+end_src
 **** Misc Funcs
      :PROPERTIES:
@@ -4463,28 +4607,33 @@ How I deploy my personal website.
 :ID:       07ca6496-cb41-4479-a3bf-ed18b902af9b
 :END:
 #+begin_src emacs-lisp
-  (setq cm/org-today-filefmt (cm/org-dir "_notes/%Y-%m-%d.org"))
+  (setq cm/org-journal-fmts
+	'((today "%Y-%m-%d.org" "Daily Plan: %Y-%m-%d: %A" "")
+	  (weekly "%Y-%m-w%W.org" "Weekly Plan: %Y-%m-w%W" "* Monday\n\n* Tuesday\n\n* Wednesday\n\n* Thursday\n\n* Friday\n\n* Weekend\n\n")
+	  (monthly "%Y-%m.org" "Monthly Plan: %Y-%m" "")
+	  (quarterly "%Y-q%q.org" "Quarterly Plan: %Y-q%q" "")
+	  (yearly "%Y.org" "Yearly Plan: %Y" "")))
 
-  (setq cm/org-today-headerfmt "#+title: Daily Notes: %Y-%m-%d: %A\n#+filetags: :daily:\n#+date: <%Y-%m-%d>\n\n")
-
-  (defun cm/org-today-header ()
+  (defun cm/org-journal-header (type)
     (interactive)
-    (format-time-string cm/org-today-headerfmt))
+    (let ((template (assoc type cm/org-journal-fmts)))
+      (format-time-string (concat ":PROPERTIES:\n:ID: " (org-id-new) "\n:END:\n#+title: " (nth 2 template) "\n#+date: <%Y-%m-%d>\n\n" (nth 3 template)))))
 
-  (defun cm/org-today-file ()
+  (defun cm/org-journal-file (type)
     (interactive)
-    (file-truename (expand-file-name (format-time-string cm/org-today-filefmt))))
+    (file-truename (expand-file-name (format-time-string (cm/org-dir (concat "_notes/" (nth 1 (assoc type cm/org-journal-fmts))))))))
 
-  (defun cm/org-today-open ()
-    (interactive)
-    (let ((todayfile (cm/org-today-file)))
-      (if (file-exists-p todayfile)
-	  (find-file todayfile)
-	(find-file todayfile)
+  (defun cm/org-journal-open (type)
+    (let ((jfile (cm/org-journal-file type)))
+      (if (file-exists-p jfile)
+	  (find-file jfile)
+	(find-file jfile)
 	(goto-char (point-min))
-	(insert (cm/org-today-header)))))
+	(insert (cm/org-journal-header type)))))
 
-  (global-set-key (kbd "C-c j") 'cm/org-today-open)
+  ;; need to configure the dailies to work
+
+  (global-set-key (kbd "C-c j") (lambda () (interactive) (cm/org-journal-open 'today)))
 #+end_src
 **** Checklist Creation
 :PROPERTIES:
@@ -4775,6 +4924,7 @@ Hopefully this replaces my hacked up notes.org, _notes directory, shitty zettl, 
 	   ))
     (setq org-roam-v2-ack t)
     (setq org-roam-graph-viewer #'browse-url)
+    (setq org-roam-db-gc-threshold most-positive-fixnum)
     :config
     ;; displays filetitle > org-level-path > node title
     (cl-defmethod org-roam-node-hierarchy ((node org-roam-node))
@@ -4804,13 +4954,20 @@ Let's first layout what we want the keymap to be like:
 #+begin_src emacs-lisp
   (defhydra hydra-cm-org-notes (global-map "C-c n" :exit t)
     "Use your notes wisely, Luke"
-    ("n" deft "search through all notes" :column "searching")
+    ("n" deft "deftly search through all notes" :column "searching")
+    ("s" cm/org-notes-search "search through all notes")
     ("a" cm/org-rifle-agenda "search agenda org files in ~/org")
     ("r" cm/org-notes-capture "new note")
     ("l" org-roam-buffer-toggle "show org-roam links" :column "roaming")
     ("g" org-roam-graph "show roam graph")
     ("f" org-roam-node-find "find note")
     ("i" org-roam-node-insert "insert roam refererce")
+    ("jd" (cm/org-journal-open 'today) "open today's file" :column "planning")
+    ("jj" (cm/org-journal-open 'today) "open today's file")
+    ("jw" (cm/org-journal-open 'weekly) "open this week's file")
+    ("jm" (cm/org-journal-open 'monthly) "open this month's file")
+    ("jq" (cm/org-journal-open 'quarterly) "open this quarter's file")
+    ("jy" (cm/org-journal-open 'yearly) "open this year's file")
     ("q" nil "quit"))
 
   (global-set-key (kbd "C-c n") 'hydra-cm-org-notes/body)
@@ -4853,13 +5010,17 @@ want, though it requires more regex-y stuff and is slower across all
 the files.
 
 #+begin_src emacs-lisp
-  (defun cm/org-notes-search (arg)
-    (interactive "P")
-    (let ((org-agenda-files (if arg
-				(append org-agenda-files (list (cm/org-dir "_notes/")))
-			      (list (cm/org-dir "_notes/"))))
-	  (org-agenda-sticky nil))
-      (org-search-view)))
+  ;; (defun cm/org-notes-search (arg)
+  ;;   (interactive "P")
+  ;;   (let ((org-agenda-files (if arg
+  ;; 			      (append org-agenda-files (list (cm/org-dir "_notes/")))
+  ;; 			    (list (cm/org-dir "_notes/"))))
+  ;; 	(org-agenda-sticky nil))
+  ;;     (org-search-view)))
+
+  (defun cm/org-notes-search ()
+    (interactive)
+    (counsel-git-grep nil (cm/org-dir "_notes/")))
 #+end_src
 
 ***** helm-rifle support functions
@@ -4936,7 +5097,7 @@ the files.
   (setq org-directory (cm/org-dir))
   (setq org-default-notes-file (cm/org-dir "gtd.org"))
   (setq org-board-capture-file (cm/org-dir "_notes/www.org"))
-  (define-key global-map "\C-cr" 'org-capture)
+  (define-key global-map (kbd "C-c r") 'org-capture)
   (setq org-capture-templates
 	`(("t" "Todo" entry (file+headline ,(cm/org-dir "gtd.org") "Inbox")
 	   ,@cm/humble-todo-template)
@@ -4964,7 +5125,7 @@ the files.
 	  ("wj" "Work journal entry" plain (file+olp+datetree ,(cm/org-dir "_notes/work.org") "Notes")
 	   "\n- %U %?\n\n" :tree-type week :empty-lines 1)
 	  ("ws" "Snippet Log" entry (file+headline ,(cm/org-dir "work.org") "Notes")
-	   "* S: %?\n  %T\n\n#+begin_src shell :results raw :shebang \"#!/usr/bin/env rc \"\nsnippets\n#+end_src\n\n" :prepend nil :empty-lines 1)
+	   "* S: %?\n  %T\n\n#+begin_src markdown\n\n  # jmickey snippets, 2024- -- 2024-\n  ## conversations\n\n\n  ## programs\n\n\n  ## production\n\n\n  ## distractions\n\n\n#+end_src\n\n" :prepend nil :empty-lines 1)
 	  ("r" "Review Captures")
 	  ("ry" "Review Entry For The Year" entry (id "256745aa-ece4-4649-a616-52b0194850d0")
 	   "* Review for %<%Y>\n:PROPERTIES:\n:CREATED:  %U\n:END:\n\n** Review previous year\n\n- What was completed?\n- What was not completed?\n- What was the best spent time?\n- What was the worst spent time?\n- What is the current financial, physical, emotional, mental, spiritual state?\n\n** Project future year\n\n- What to spend more time on in new year?\n- What to spend less time on in new year?\n- What projects should be started in the next year?\n- What project should be completed in the next year?\n\n" :empty-lines 1)
@@ -5673,6 +5834,16 @@ I use org to track my objectives / key results across both work & personal stuff
 	(let ((avg (/ scores-sum scores-count)))
 	  (message "scores avg: %s" avg)
 	  (org-entry-put nil "okr_score" (format "%.1f" avg))))))
+#+end_src
+**** org-sidebar-tree
+:PROPERTIES:
+:ID:       37CFFEAD-E921-4640-B4ED-751F4A5C7D73
+:END:
+
+#+begin_src emacs-lisp
+  (use-package org-sidebar
+    :init
+    (setq org-sidebar-side 'left))
 #+end_src
 
 *** RCIRC

@@ -7,6 +7,8 @@
 
 (defvar *emacs-load-start* (current-time))
 
+(setq cm/old-gc-cons-threshold gc-cons-threshold)
+(setq gc-cons-threshold (* 1000 1000 1000))
 (setq dotfiles-dir (file-name-directory (or load-file-name (buffer-file-name))))
 
 ;; Use package management!
@@ -53,6 +55,9 @@
 (setq work-emacs-file (expand-file-name "~/.emacs-work.el"))
 (when (file-exists-p work-emacs-file)
   (load-file work-emacs-file))
+
+;; set back!
+(setq gc-cons-threshold cm/old-gc-cons-threshold)
 
 (message "My .emacs loaded in %ds"
          (cl-destructuring-bind (hi lo ms ps) (current-time)
