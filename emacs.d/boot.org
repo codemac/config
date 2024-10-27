@@ -75,6 +75,23 @@ annoying.
     (let ((fill-column 999999999999))
       (fill-paragraph nil t)))
 #+end_src
+** delete the file of the buffer
+:PROPERTIES:
+:ID:       33cd03b5-244a-43e3-9170-92b85a2f860a
+:END:
+#+begin_src emacs-lisp
+  (defun delete-file-and-buffer ()
+    "Kill the current buffer and delete the underlying file."
+    (interactive)
+    (let ((filename (buffer-file-name)))
+      (if (not filename)
+	  (message "Not a file visiting buffer!")
+	(if (y-or-n-p (concat "Do you really want to delete file " filename "?"))
+	    (progn
+	      (delete-file filename)
+	      (message "Deleted file %s." filename)
+	      (kill-buffer))))))
+#+end_src
 * User Interface
   :PROPERTIES:
   :ID:       174da1e1-650e-41f1-a5de-48a0e77b8538
@@ -726,18 +743,28 @@ emacs is not my forte.
   ;; Use dropbox when available. Yes making this conditional is awkward,
   ;; but it helps me avoid the IT security dragon if I'm on a work
   ;; computer.
-  (if (file-exists-p "~/Library/CloudStorage/Dropbox/org/gtd.org")
-      (setq cm/org-directory "~/Library/CloudStorage/Dropbox/org")
-    (when (file-exists-p "~/Dropbox/org/gtd.org")
-      (setq cm/org-directory "~/Dropbox/org")))
-  (defun cm/org-dir (&rest args)
-    (if (< (length args) 1)
+  (setq cm/org-directory
+  (cond
+   ((file-exists-p "~/Library/CloudStorage/Dropbox/org/gtd.org")
+      "~/Library/CloudStorage/Dropbox/org")
+   ((file-exists-p "/mnt/chromeos/GoogleDrive/MyDrive/org/gtd.org")
+    "/mnt/chromeos/GoogleDrive/MyDrive/org")
+   ((file-exists-p "~/Dropbox/org/gtd.org")
+    "~/Dropbox/org")
+   (t "~/org")))
+  (defun cm/org-dir (&rest filenames)
+    "Current 'cm/org-directory' as string, or prefixed to filenames.
+
+  Returns the current 'cm/org-directory' as a string.  If arguments are given for
+  invoking the function, FILENAMES are prepended with 'cm/org-directory' along
+  with the correct slashes."
+    (if (< (length filenames) 1)
 	cm/org-directory
       (concat cm/org-directory
-	      (if (string-prefix-p "/" (car args))
+	      (if (string-prefix-p "/" (car filenames))
 		  ""
 		"/")
-	      (car args))))
+	      (car filenames))))
 #+end_src
 * ELPA
   :PROPERTIES:
@@ -753,10 +780,7 @@ I organize my packages use with the amazing https://github.com/jwiegley/use-pack
   :PROPERTIES:
   :ID:       884f8d9a-73d2-422d-9344-4b752eb1e352
   :END:
-Yup, zenburn.
-
-If zenburn isn't available, we should use wombat. So how do we detect
-that?
++Yup, zenburn.+ Nope, wombat.
 
 #+begin_src emacs-lisp
   (defadvice load-theme (before theme-dont-propagate activate)
@@ -1682,10 +1706,10 @@ what all these features really mean.
 #+begin_src emacs-lisp
   (defvar cm/browse-url-work-profile "Default"
     "The profile in chrome to open things for work")
-  
+
   (defvar cm/browse-url-personal-profile "Profile 1"
     "The profile in chrome to open things for personal use")
-  
+
   (pcase (system-name)
     ("jmickey-mbp"
      (setq cm/browse-url-work-profile "Default")
@@ -1693,38 +1717,40 @@ what all these features really mean.
     ("nina"
      (setq cm/browse-url-work-profile "Default")
      (setq cm/browse-url-personal-profile "Default")))
-  
+
   ;; this doesn't work on mac os x :O
   (defun cm/browse-url-chrome (url profile &optional new-window)
     "Internal function for opening the right chrome."
     (interactive "sURL: \nsProfile: ")
     (cond
-     ((eq system-type 'gnu/linux)
+     ((and (eq system-type 'gnu/linux) (not (equal (system-name) "penguin")))
       (let ((browse-url-chrome-arguments
 	     (append browse-url-chrome-arguments
 		     (list (concat "--profile-directory\"" profile "\"") url))))
 	(browse-url-chrome url new-window)))
+     ((equal (system-name) "penguin")
+      (start-process (concat "xdg-open " url) nil "xdg-open" url))
      ((eq system-type 'darwin)
       (start-process (concat "open " url) nil
 		     "open" "-na" "Google Chrome"
 		     "--args" (concat "--profile-directory=" profile)
 		     url))))
-  
+
   (defun cm/browse-url-work (url &optional new-window)
     "Ask whether URL should be browsed in a private browsing window."
     (interactive "sURL: ")
     (cm/browse-url-chrome url cm/browse-url-work-profile new-window))
-  
+
   (defun cm/browse-url-personal (url &optional new-window)
     "Ask whether URL should be browsed in a private browsing window."
     (interactive "sURL: ")
     (cm/browse-url-chrome url cm/browse-url-personal-profile new-window))
-  
+
   ;; override this in private .emacs-work.el file
-  (setq browse-url-browser-function
+  (setq browse-url-handlers
 	'(("^https?://instagram\\.com" . cm/browse-url-personal)
 	  ("." . cm/browse-url-personal)))
-  
+
 #+end_src
 ** Uniquify
    :PROPERTIES:
@@ -3295,9 +3321,7 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
        ((agenda "Today" ((org-agenda-span 1)))
 	(todo "NEXT"))
        ((org-agenda-start-with-log-mode t)))
-      ("i" "Inbox"
-       ((tags-todo "-{.*}"))
-       ((org-agenda-overriding-header "Inbox")))
+      ,@(cm/inbox-agenda)
       ("n" "Next agenda"
        ((todo "NEXT")
 	(todo "TODO"))
@@ -3305,6 +3329,49 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
 	(org-agenda-sorting-strategy
 	 '((todo tag-up tsia-up)
 	   (search tsia-up)))))))
+
+  (require 'org-roam)
+
+  (defun cm/inbox-agenda-from-roam-string-node-link (backlink)
+    (let* ((node (org-roam-backlink-source-node backlink))
+	   (file (org-roam-node-file node))
+	   (file-title (org-roam-node-file-title node))
+	   (title (org-roam-node-title node))
+	   (combined-title (if (equalp file-title title) title (concat file-title "/" title))))
+      (concat "[[file:" file "][" combined-title "]]")))
+
+  (defun cm/inbox-agenda-from-roam-string ()
+    (let* ((inbox-uuid "10923aad-abe0-4878-9c00-c1d23977db81")
+	   (remaining-things (org-roam-backlinks-get (org-roam-node-from-id inbox-uuid)))
+	   (file-links (mapcar #'cm/inbox-agenda-from-roam-string-node-link remaining-things)))
+      (mapconcat #'identity (cons "Org-Roam Inbox" file-links) "\n  ")))
+
+  (defun cm/inbox-agenda ()
+    `(("i" "Inbox"
+       ((tags-todo "-{.*}" ((org-agenda-overriding-header "Org Inbox")))
+	(tags-todo "noop" ((org-agenda-overriding-header ,(cm/inbox-agenda-from-roam-string)))))
+       ((org-agenda-overriding-header "Inbox")))))
+
+
+  ;; 2023-11-06: My old contexts were:
+  ;; - INTERNET
+  ;; - COMPUTER
+  ;; - WORK
+  ;; - HOME
+  ;; - ERRAND
+  ;; - PHONE
+  ;; - AGENDA
+  ;; - PROJECT
+  ;;
+  ;; Now I've reduced it to:
+  ;; - COMPUTER
+  ;; - WORK
+  ;; - HOME
+  ;; - MOBILE
+  ;; - AGENDA
+  ;; - PROJECT
+  ;;
+  ;; I finally admit that I have too many! The new contexts
 
   (defun cm/context-agendas ()
     `(("p" "Project Agenda"
@@ -5370,6 +5437,15 @@ with orgzly.
 	      (add-hook 'before-save-hook #'cm/org-add-ids-in-file nil 'local)))
 #+end_src
 
+**** Org visual line wrapping
+:PROPERTIES:
+:ID:       51903c5e-fdf9-451c-97f0-aa57c89a916e
+:END:
+#+begin_src emacs-lisp
+  (setq visual-line-fringe-indicators '(nil nil))
+  (add-hook 'org-mode-hook #'visual-line-mode)
+#+end_src
+
 **** Hydra for eXtra org stuff
 :PROPERTIES:
 :ID:       ab1d17bc-d267-4271-b66d-840179502d5b
@@ -5530,6 +5606,73 @@ with orgzly.
     (exit-recursive-edit))
 
 
+#+end_src
+
+**** Org OKR management
+:PROPERTIES:
+:ID:       5d1a93dc-79ba-4fe4-8622-da81c63bf866
+:END:
+
+I use org to track my objectives / key results across both work & personal stuff.
+
+#+begin_src emacs-lisp
+  (defun cm/org-okr-add-properties ()
+    "Creates a property drawer and adds OKR properties if missing."
+    (interactive)
+    (let ((props (org-get-property-block nil t)))
+      (unless (org-entry-get nil "okr_progress")
+	(org-entry-put nil "okr_progress" "0.0"))
+      (unless (org-entry-get nil "okr_target")
+	(org-entry-put nil "okr_target" "1.0"))
+      (unless (org-entry-get nil "okr_start")
+	(org-entry-put nil "okr_start" "0.0"))
+      (unless (org-entry-get nil "okr_update")
+	(org-entry-put nil "okr_update" (format-time-string "[%Y-%m-%d %a]")))
+      (unless (org-entry-get nil "okr_score")
+	(org-entry-put nil "okr_score" "1.0"))))
+
+  (defun cm/org-okr-update-properties ()
+    "Interactive function to update OKR properties in an org heading."
+    (interactive)
+    (cm/org-okr-add-properties)
+    (let* ((heading (nth 4 (org-heading-components)))
+	   (okr-target (org-entry-get nil "okr_target"))
+	   (okr-start (org-entry-get nil "okr_start"))
+	   (okr-progress (org-entry-get nil "okr_progress"))
+	   (okr-score (org-entry-get nil "okr_score")))
+      (when (and okr-progress okr-score (org-entry-get nil "okr_update"))
+	(let* ((okr-progress-prompt (concat heading ": OKR progress (start: " okr-start " cur: " okr-progress " tgt: " okr-target "): "))
+	       (new-okr-progress (read-string okr-progress-prompt))
+	       (okr-score-prompt (concat heading ": OKR score (" okr-score "): "))
+	       (new-okr-score (read-string okr-score-prompt))
+	       (new-okr-update (format-time-string "[%Y-%m-%d %a]")))
+	  (org-entry-put nil "okr_progress" new-okr-progress)
+	  (org-entry-put nil "okr_score" new-okr-score)
+	  (org-entry-put nil "okr_update" new-okr-update)))))
+
+  (defun cm/org-okr-update ()
+    "Interactive function to update OKR properties in an org heading."
+    (interactive)
+    (find-file (cm/org-dir "okrs.org"))
+    (org-map-entries 'cm/okr-update-properties t 'tree))
+
+  (defun cm/okr-scores ()
+    "Update the current heading's OKR score to be the average of its descendants scores."
+    (interactive)
+    (let* ((scores-sum 0.0)
+	   (scores-count 0))
+      (org-map-entries
+       #'(lambda ()
+	   (let* ((okr-score (org-entry-get nil "okr_score")))
+	     (when okr-score
+	       (setq scores-sum (+ scores-sum (string-to-number okr-score)))
+	       (incf scores-count))))
+       t 'tree)
+      (message "scores-sum %s scores-count %s" scores-sum scores-count)
+      (when (> scores-count 0)
+	(let ((avg (/ scores-sum scores-count)))
+	  (message "scores avg: %s" avg)
+	  (org-entry-put nil "okr_score" (format "%.1f" avg))))))
 #+end_src
 
 *** RCIRC
@@ -6361,7 +6504,10 @@ A wholly owned subsidiary of Cisco.
     ("f" ffap "file at point")
     ("h" (let ((default-directory (file-name-as-directory (getenv "HOME"))))
 	   (call-interactively #'find-file))
-     "home files")
+     "home")
+    ("o" (let ((default-directory (file-name-as-directory (cm/org-dir))))
+	   (call-interactively #'find-file))
+     "org")
     ("q" nil "quit"))
   (global-set-key (kbd "C-c f") 'hydra-find-file/body)
 #+end_src

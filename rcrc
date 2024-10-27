@@ -6,7 +6,10 @@ pathprefixes=$h/bin:$h/.config/guix/current/bin:$h/.guix-profile/bin:$h/.guix-pr
 GUIX_LOCPATH=$HOME/.guix-profile/lib/locale
 history=$h/.rc_history
 SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
-SUDO_ASKPASS=`{which ssh-askpass}
+which ssh-askpass >/dev/null >[2=1]
+if (~ $status 0) {
+  SUDO_ASKPASS=`{which ssh-askpass}
+}
 GUILE_LOAD_PATH=$HOME/scm:$GUILE_LOAD_PATH
 fn read {
  x=() {
