@@ -3373,17 +3373,21 @@ org-mouse in case I already have a pointing device. I imagine
 Set up the styling. These are headers and footers that make it nicer
 to see my review adgendas, and easier on the eyes to follow.
 #+begin_src emacs-lisp
+  (use-package org-ql
+    :demand t)
+
+  ;; largely unused with org-ql
   (setq cm/org-sort-style '((org-agenda-skip-function '(org-agenda-skip-entry-if 'scheduled))
-			    (org-agenda-sorting-strategy
-			     '((agenda habit-down time-up priority-down category-keep)
-			       (todo tsia-up)
-			       (tags tsia-up)
-			       (search tsia-up)))))
+  			    (org-agenda-sorting-strategy
+  			     '((agenda habit-down time-up priority-down category-keep)
+  			       (todo tsia-up)
+  			       (tags tsia-up)
+  			       (search tsia-up)))))
 
   (defun cm/review-section (title)
     `((org-agenda-overriding-header ,(concat "########## " title " ##################################################"))))
   (defun cm/review-header (title)
-    `((org-agenda-overriding-header ,(concat "     " title))))
+    `((org-agenda-overriding-header ,(concat "## " title))))
   ;; this dynamic title sizing doesn't work because the org-agenda
   ;; buffer is created when org-agenda is called. :/
     ;; (let* ((basewidth (/ (- (window-body-width) (+ (length title) 6)) 4.0))
@@ -3394,23 +3398,20 @@ to see my review adgendas, and easier on the eyes to follow.
   (defun cm/org-context-agenda (key ctx title)
     (let ((ctxlist (if (listp ctx) ctx (list ctx))))
       `(,(concat "c" key) ,title
-	(,@(mapcar (lambda (x) `(tags-todo ,(concat x "-PROJECT-TODO=\"WAIT\"-TODO=\"DEFER\"")
-					   (,@cm/org-sort-style
-					    (org-agenda-overriding-header ,(concat title ": " x))))) ctxlist)
-	 (tags-todo ,(mapconcat #'(lambda (x) (concat x "-PROJECT+TODO=\"WAIT\"")) ctxlist "|")
-		    (,@cm/org-sort-style
-		     (org-agenda-override-header ,(concat title ": WAIT"))))
-	 (tags-todo ,(mapconcat #'(lambda (x) (concat x "-PROJECT+TODO=\"DEFER\"")) ctxlist "|")
-		    (,@cm/org-sort-style
-		     (org-agenda-override-header ,(concat title ": DEFER"))))
-	 (tags-todo ,(mapconcat #'(lambda (x) (concat x "-PROJECT")) ctxlist "|")
-		    ((org-agenda-skip-function '(org-agenda-skip-entry-if 'notscheduled))
-		     (org-agenda-sorting-strategy
-		      '((agenda habit-down time-up priority-down category-keep)
-			(todo tsia-up)
-			(tags tsia-up)
-			(search tsia-up)))
-		     (org-agenda-override-header ,(concat title ": SCHEDULED"))))))))
+        (,@(mapcar (lambda (x) `(org-ql-block
+  			       '(and (tags ,x)
+  				     (not (or (todo "WAIT" "DEFER")
+  					      (tags "PROJECT")
+  					      (and (scheduled) (not (deadline)))
+  					      (and (deadline) (not (deadline auto)))))
+  				     (todo))
+  				 ((org-ql-block-header ,(concat title ": " x))))) ctxlist)
+  	 (org-ql-block
+  	  '(and (tags ,@ctxlist) (todo "WAIT" "DEFER") (not (or (tags "PROJECT") (scheduled))))
+  	  ((org-ql-block-header ,(concat title ": WAIT/DEFER"))))
+  	 (org-ql-block
+  	  '(and (tags ,@ctxlist) (todo) (not (tags "PROJECT")) (or (scheduled) (deadline)))
+  	  ((org-ql-block-header ,(concat title ": SCHEDULED/DEADLINE"))))))))
 #+end_src
 
 The org agenda. It's mostly for gtd usage, so I have the following views:
@@ -3444,169 +3445,177 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
   (defun cm/day-agendas ()
     `(("d" "Full Day Agenda"
        ((agenda "Today" ((org-agenda-span 1)))
-	(todo "NEXT"))
+        (org-ql-block '(todo "NEXT")))
        ((org-agenda-start-with-log-mode t)))
       ("i" "Inbox"
-       ((tags-todo "-{.*}"))
-       ((org-agenda-overriding-header "Inbox")))
+       ((org-ql-block
+         '(or (and (todo) (not (tags-local))) (path "from-mobile.org"))
+        ((org-ql-block-header "Inbox")))))
       ("n" "Next agenda"
-       ((todo "NEXT")
-	(todo "TODO"))
-       ((org-agenda-skip-function '(org-agenda-skip-entry-if 'scheduled))
-	(org-agenda-sorting-strategy
-	 '((todo tag-up tsia-up)
-	   (search tsia-up)))))))
+       ((org-ql-block '(and (todo "NEXT") (not (scheduled)))
+  		    ((org-ql-block-header "Next Items")))
+        (org-ql-block '(and (todo "TODO") (not (scheduled)))
+  		    ((org-ql-block-header "Todo Items")))))))
 
   (defun cm/context-agendas ()
     `(("p" "Project Agenda"
        ((stuck "")
-	(tags-todo "PROJECT-TODO=\"WAIT\"-TODO=\"DEFER\"")
-	(tags-todo "PROJECT+TODO=\"WAIT\"")
-	(tags-todo "PROJECT+TODO=\"DEFER\"")
-	(tags-todo "PROJECT"))
-       ,cm/org-sort-style)
+        (org-ql-block
+         '(and (tags "PROJECT") (not (todo "WAIT")) (not (todo "DEFER")))
+         ((org-ql-block-header "Projects not blocked")))
+        (org-ql-block
+         '(and (tags "PROJECT") (todo "WAIT"))
+         ((org-ql-block-header "Projects waiting")))
+        (org-ql-block
+         '(and (tags "PROJECT") (todo "DEFER"))
+         ((org-ql-block-header "Projects deferred")))
+        (org-ql-block
+         '(and (tags "PROJECT") (todo))
+         ((org-ql-block-header "All projects")))))
       ,(cm/org-context-agenda "h" '("HOME" "COMPUTER")  "Home Agenda")
       ,(cm/org-context-agenda "w" '("WORK" "COMPUTER")  "Work Agenda")
       ,(cm/org-context-agenda "m" '("MOBILE")  "Mobile Agenda")
       ("ca" "People Agenda"
        ((tags-todo "AGENDA-PROJECT-TODO=\"WAIT\"-TODO=\"DEFER\"|-PROJECT+TODO=\"WAIT\"-TODO=\"DEFER\""))
        ((org-agenda-skip-function '(org-agenda-skip-entry-if 'scheduled))
-	(org-agenda-sorting-strategy
-	 '((agenda habit-down time-up priority-down category-keep)
-	   (tags alpha-down)))))
+  	(org-agenda-sorting-strategy
+  	 '((agenda habit-down time-up priority-down category-keep)
+  	   (tags alpha-down)))))
       ("ct" "Tickler Agenda"
-       ((tags-todo "-PROJECT-TODO=\"WAIT\"-TODO=\"DEFER\"")
-	(tags-todo "PROJECT-TODO=\"WAIT\"-TODO=\"DEFER\""))
-       ((org-agenda-skip-function '(org-agenda-skip-entry-if 'notscheduled))
-       (org-agenda-sorting-strategy '(tsia-up))))))
+       ((org-ql-block
+         '(and (todo) (not (or (todo "WAIT" "DEFER") (tags "PROJECT"))) (scheduled))
+         ((org-ql-block-header "Tasks: Scheduled / Tickled")))
+        (org-ql-block
+         '(and (todo) (not (todo "WAIT" "DEFER")) (tags "PROJECT") (scheduled))
+         ((org-ql-block-header "Projects: Scheduled / Tickled")))))))
+
+  (defun cm/insert-agenda (text)
+    (org-agenda-prepare)
+    (insert (org-add-props (concat text) nil 'face 'org-agenda-struction))
+    (insert "\n"))
 
   (defun cm/review-agendas ()
     `(("rd" "Daily Review"
        ((agenda)
-	(todo "DONE|NVM")
-	(todo "WAIT")
-	(todo "DEFER"))
-       ((org-agenda-span 3)
-	(org-agenda-start-day "-1d")))
+        (org-ql-block
+         '(todo "DONE" "NVM" "WAIT" "DEFER")))
+        ((org-agenda-span 3)
+         (org-agenda-start-day "-1d")))
       ("rs" "Weekly Snippet Review"
        ((agenda))
        ((org-agenda-span 7)
-	(org-agenda-start-on-weekday 1)
-	(org-agenda-start-with-log-mode t)
-	(org-agenda-archives-mode t)))
+        (org-agenda-start-on-weekday 1)
+        (org-agenda-start-with-log-mode t)
+        (org-agenda-archives-mode t)))
       ("rw" "Weekly Review Agenda"
-       (;; GET CLEAR
-  	(tags-todo "noop" ,(cm/review-section "Get Clear!"))
-	(tags-todo "noop" ,(cm/review-header "Collect Loose Papers and Materials"))
-	(tags-todo "-{.*}-TODO=\"WAIT\"-TODO=\"DEFER\""
-		   ,(cm/review-header
-		     (concat
-		      "Get IN to ZERO\n"
-		      "Digital Inboxes:\n"
-		      "- [[https://keep.google.com][Google Keep]]\n"
-		      "- [[https://fastmail.com][Personal Inbox]]\n"
-		      "- [[https://www.google.com/maps/timeline][Location History]]\n"
-		      "- [[https://photos.google.com][Recent photos]]\n"
-		      "- [[file:~/downloads][Recent downloads]]\n"
-		      "- Unarchived phone messages\n"
-		      "- [[file:~][Loose home files]]\n"
-		      "- Inbox headings from org: \n")))
-	(tags-todo "noop" ,(cm/review-header "Empty Your Head!"))
+       ((cm/insert-agenda "# Get Clear!")
+        (cm/insert-agenda "## Collect Loose Papers and Materials")
+        (cm/insert-agenda (concat "## Get IN to ZERO\n"
+  		      "Digital Inboxes:\n"
+  		      "- [[https://keep.google.com][Google Keep]]\n"
+  		      "- [[https://fastmail.com][Personal Inbox]]\n"
+  		      "- [[https://www.google.com/maps/timeline][Location History]]\n"
+  		      "- [[https://photos.google.com][Recent photos]]\n"
+  		      "- [[file:~/downloads][Recent downloads]]\n"
+  		      "- Unarchived phone messages\n"
+  		      "- [[file:~][Loose home files]]\n"
+  		      "- Inbox headings from org: \n"))
+        (org-ql-block '(and (todo) (not (or (tags) (todo "WAIT" "DEFER"))) (path "from-mobile.org")))
+        (cm/insert-agenda "## Empty Your Head!")
 
-	;; GET CURRENT
-	(tags-todo "noop" ,(cm/review-section "Get Current!"))
-	(tags-todo "-PROJECT-TODO=\"WAIT\"-TODO=\"DEFER\""
-		   (,@(cm/review-header "Review Actions Lists:\n- Mark things that are invalid/done from the past week\n- Ensure all next actions are physically described")
-		    (org-agenda-skip-function '(org-agenda-skip-entry-if 'scheduled))))
-	(todo "DONE|NVM")
-	(tags-todo "-PROJECT-TODO=\"WAIT\"-TODO=\"DEFER\""
-		   (,@(cm/review-header "Review Scheduled Actions Lists")
-		    (org-agenda-skip-function '(org-agenda-skip-entry-if 'notscheduled))))
-	(agenda "" (,@(cm/review-header "Review Previous Week Calendar Data")
-		    (org-agenda-skip-function nil)
-		    (org-agenda-span 14)
-		    (org-agenda-start-day ,(concat "-" (number-to-string (+ 14 (cm/days-back-to-monday))) "d"))))
-	(agenda "" (,@(cm/review-header "Review Current Week Calendar Data")
-		    (org-agenda-skip-function nil)
-		    (org-agenda-span 7)
-		    (org-agenda-start-day ,(concat "-" (number-to-string (cm/days-back-to-monday)) "d"))))
+        (cm/insert-agenda "# Get Current!")
+        (org-ql-block '(and (todo) (deadline :to today)) ((org-ql-block-header "## Overdue items")))
+        (org-ql-block '(and (not (or (tags "PROJECT") (todo "WAIT" "DEFER") (scheduled))) (todo)) ((org-ql-block-header "## Actions\n- Mark things that are invalid/done from the past week\n- Ensure all next actions are physically described")))
+        (org-ql-block '(and (done) (not (ancestors (tags "ARCHIVE")))))
 
-	(agenda "" (,@(cm/review-header "Review Next Week Calendar Data")
-		    (org-agenda-skip-function nil)
-		    (org-agenda-span 14)
-		    (org-agenda-start-day ,(concat "+" (number-to-string (- 7 (cm/days-back-to-monday))) "d"))))
-	(tags-todo "-PROJECT+TODO=\"WAIT\"" ,(cm/review-header "Review Waiting For List: Mark things as done, add things you're waiting for"))
-	(stuck "" ,(cm/review-header "Review Stuck Projects: Someday/Maybe or Next Actions!"))
-	(tags-todo "PROJECT-TODO=\"WAIT\"-TODO=\"DEFER\"" ,(cm/review-header "Review Projects and Larger Outcomes: Add missing next actions, make sure each is naturally planned"))
-	(tags-todo "PROJECT+TODO=\"WAIT\"" ,(cm/review-header "Review Waiting For Projects and Larger Outcomes: Add missing next actions, make sure each is naturally planned"))
-	(tags-todo "-PROJECT+TODO=\"DEFER\"" ,(cm/review-header "Review Deferred Actions: Mark as TODO if we should do them in the next ~month, and mark as NVM if never"))
-	(tags-todo "PROJECT+TODO=\"DEFER\"" ,(cm/review-header "Review Deferred Projects: Mark as TODO if we should do them in the next ~month, and mark as NVM if never"))
-	(tags "CHECKLIST" ,(cm/review-header "Review Relevant Checklists: Any missing? Any new ones that could be added?"))
+        (org-ql-block '(and (todo) (scheduled) (not (or (tags "PROJECT") (todo "WAIT" "DEFER")))) ((org-ql-block-header "## Scheduled Actions")))
+        (org-ql-block '(and (todo) (deadline) (not (or (tags "PROJECT") (todo "WAIT" "DEFER") (scheduled)))) ((org-ql-block-header "## Actions w/Deadline")))
 
-	;; GET CREATIVE
-	(tags-todo "noop" ,(cm/review-section "Get Creative!"))
-	(tags "SOMEDAY" ,(cm/review-header "Review Someday/Maybe List"))
-	(tags-todo "noop" ,(cm/review-header "Empty Your Head!")))
+        (cm/insert-agenda "## Calendar: Previous week: [[https://calendar.google.com][gcal]]")
+        (cm/insert-agenda "## Calendar: Current week: [[https://calendar.google.com][gcal]]")
+        (cm/insert-agenda "## Calendar: Next week: [[https://calendar.google.com][gcal]]")
+
+        (org-ql-block '(and (todo "WAIT") (not (tags "PROJECT"))) ((org-ql-block-header "## Waiting For: Mark things as done, add things you're waiting for")))
+
+        (org-ql-block
+         '(and (tags "PROJECT")
+  	     (not (done))
+  	     (not (descendants (and (todo "TODO" "NEXT") (not (scheduled)))))
+  	     (not (scheduled)))
+         ((org-ql-block-header "## Stuck projects: someday/maybe or develop next actions")))
+
+        (org-ql-block '(and (tags "PROJECT") (not (todo "WAIT" "DEFER"))) ((org-ql-block-header "## Projects")))
+        (org-ql-block '(and (tags "PROJECT") (todo "WAIT")) ((org-ql-block-header "## Projects: Waiting For")))
+
+        (org-ql-block '(and (todo "DEFER") (not (tags "PROJECT"))) ((org-ql-block-header "## Deferred Actions")))
+        (org-ql-block '(and (tags "PROJECT") (todo "DEFER")) ((org-ql-block-header "## Deferred Projects")))
+
+        (org-ql-block '(tags "CHECKLIST") ((org-ql-block-header "## Checklists")))
+        
+        (cm/insert-agenda "# Get Creative!")
+        (org-ql-block '(tags "SOMEDAY")
+  		    ((org-ql-block-header "## Someday/Maybe")))
+        (cm/insert-agenda "## Empty your head!"))
+    
        ((org-agenda-span 22)
-	(org-agenda-start-on-weekday 1)
-	(org-agenda-start-day ,(concat "-" (number-to-string (cm/days-back-to-monday)) "d"))))
+        (org-agenda-start-on-weekday 1)
+        (org-agenda-start-day ,(concat "-" (number-to-string (cm/days-back-to-monday)) "d"))))
       ("rq" "Quarterly Review Agenda"
-       (;; GET CLEAR
-	(tags-todo "noop" ,(cm/review-section "Get Clear!"))
-	(tags-todo "noop" ,(cm/review-header "Empty Your Head!"))
-
-	;; GET CURRENT
-	(tags-todo "noop" ,(cm/review-section "Get Current!"))
-	(tags-todo "noop" ,(cm/review-header "Read and Review Life Purpose"))
-	(tags-todo "noop" ,(cm/review-header "Read and Review Visions"))
-	(tags-todo "noop" ,(cm/review-header "Read and Review Goals and Objectives"))
-	(tags "AREA" ,(cm/review-header "Read and Review Areas of Focus and Responsibility"))
-	(tags-todo "PROJECT" ,(cm/review-header "Read and Review Projects and Alignment"))
-
-	;; GET CREATIVE
-	(tags-todo "noop" ,(cm/review-section "Get Creative!"))
-	(tags-todo "noop" ,(cm/review-header "What Went Well This Quarter, and Why?"))
-	(tags-todo "noop" ,(cm/review-header "What Went Poorly This Quarter, and Why?"))
-	(tags-todo "noop" ,(cm/review-header "Am I Headed the Right Direction?"))
-	(tags-todo "noop" ,(cm/review-header "Empty Your Head!")))
+       ((cm/insert-agenda "# Get Clear!")
+        (cm/insert-agenda "## Empty your head!")
+        
+        ;; GET CURRENT
+        (cm/insert-agenda "# Get Current!")
+        (cm/insert-agenda "## Read and Review Life Purpose")
+        (cm/insert-agenda "## Read and Review Visions")
+        (cm/insert-agenda "## Read and Review Goals and Objectives")
+        (org-ql-block '(tags "AREA") ((org-ql-block-header "## Read and Review Areas of Focus and Responsibility")))
+        (org-ql-block '(and (todo) (tags "PROJECT")) ((org-ql-block-header "## Read and Review Projects and Alignment")))
+        
+        ;; GET CREATIVE
+        (cm/insert-agenda "# Get Creative!")
+        (cm/insert-agenda "## What Went Well This Quarter, and Why?")
+        (cm/insert-agenda "## What Went Poorly This Quarter, and Why?")
+        (cm/insert-agenda "## Am I Headed the Right Direction?")
+        (cm/insert-agenda "## Empty Your Head!"))
        ((org-agenda-entry-text-maxlines 1000)
-	(org-agenda-entry-text-mode 1)))))
+        (org-agenda-entry-text-mode 1)))))
 
   (defun cm/checklist-agendas ()
     '(("x" "All Checklists"
        ((tags "CHECKLIST"))
        ((org-agenda-entry-text-maxlines 100)
-	(org-agenda-entry-text-mode 1)))))
+  	(org-agenda-entry-text-mode 1)))))
 
   ;; add a5 size to ps-page-dimensions-database
   (setq ps-page-dimensions-database (append ps-page-dimensions-database (list (list 'a5 (/ (* 14.8 72) 2.54) (/ (* 21.0 72) 2.54) "A5"))))
   (defun cm/print-agendas ()
     '(("ZP" "Printable Agenda"
        ((agenda "Today" ((org-agenda-span 1)))
-	(todo "NEXT"))
+  	(todo "NEXT"))
        ((ps-landscape-mode nil)
-	;; (ps-mode-paper-size '(421 595)) ; a5
-	(ps-paper-type 'letter)
-	(ps-number-of-columns 1)
-	;; (ps-right-header '("/pagenumberstring load" ps-time-stamp-yyyy-mm-dd))
-	(ps-print-header nil)
-	(ps-print-header-frame nil)
-	(org-agenda-start-with-log-mode t)
-	(org-agenda-with-colors-nil)
-	(org-agenda-remove-tags t))
+  	;; (ps-mode-paper-size '(421 595)) ; a5
+  	(ps-paper-type 'letter)
+  	(ps-number-of-columns 1)
+  	;; (ps-right-header '("/pagenumberstring load" ps-time-stamp-yyyy-mm-dd))
+  	(ps-print-header nil)
+  	(ps-print-header-frame nil)
+  	(org-agenda-start-with-log-mode t)
+  	(org-agenda-with-colors-nil)
+  	(org-agenda-remove-tags t))
        ("~/tmp/supernote_agenda.pdf"))))
 
   (defun cm/org-set-agenda ()
     (interactive)
     (setq org-agenda-custom-commands
-	  (append
-	   (cm/day-agendas)
-	   (cm/context-agendas)
-	   (cm/review-agendas)
-	   (cm/checklist-agendas)
-	   (cm/print-agendas)
-	   '(("ZR" "Receipt Agenda"
-	      ((org-receipt-agenda)))))))
+  	  (append
+  	   (cm/day-agendas)
+  	   (cm/context-agendas)
+  	   (cm/review-agendas)
+  	   (cm/checklist-agendas)
+  	   (cm/print-agendas)
+  	   '(("ZR" "Receipt Agenda"
+  	      ((org-receipt-agenda)))))))
 #+end_src
 Dynamism! So a big part of what makes these nice is that they compute
 what the right numbers of days on either side (via ndays) so I can see
@@ -3950,73 +3959,74 @@ This add some commands for managing and clocking my time in a hydra.
      :ID:       8bb80482-a3c3-4e9b-bc23-27fdfdf4d14c
      :END:
 #+begin_src emacs-lisp
-  (add-to-list 'auto-mode-alist '("\\.org'$" . org-mode))
-  (global-set-key (kbd "C-c l") 'org-store-link)
-  (cm/defun-local-wrap cm/org-load-agenda-wrapped cm/org-load-agenda)
-  (global-set-key (kbd "C-c a") 'cm/org-load-agenda-wrapped)
-  (setq org-clock-persist 'history)
-  (org-clock-persistence-insinuate)
+    (add-to-list 'auto-mode-alist '("\\.org'$" . org-mode))
+    (global-set-key (kbd "C-c l") 'org-store-link)
+    (cm/defun-local-wrap cm/org-load-agenda-wrapped cm/org-load-agenda)
+    (global-set-key (kbd "C-c a") 'cm/org-load-agenda-wrapped)
+    (setq org-clock-persist 'history)
+    (org-clock-persistence-insinuate)
 
-  ;; need to set this manually as I load org so early.
-  (setq org-x11idle-exists-p t) 
-  (setq org-clock-x11idle-program-name "xprintidle")
-  (setq org-clock-idle-time 10)
+    ;; need to set this manually as I load org so early.
+    (setq org-x11idle-exists-p t) 
+    (setq org-clock-x11idle-program-name "xprintidle")
+    (setq org-clock-idle-time 10)
 
-  (setq org-agenda-files (list (cm/org-dir)))
+    (setq org-agenda-files (list (cm/org-dir)))
 
-  ;; we also strip calendars.org from here
-  (defun cm/org-buffer-files ()
-    (cl-remove-if #'(lambda (x)
-		      (or
-		       (string-suffix-p "calendars.org" x)
-		       (string-suffix-p "_old" x)
-		       (and x (not (buffer-base-buffer (get-buffer x))))))
-	       (mapcar #'buffer-file-name (org-buffer-list 'files))))
+    ;; we also strip calendars.org from here
+    (defun cm/org-buffer-files ()
+      (cl-remove-if #'(lambda (x)
+  		      (or
+  		       (string-suffix-p "calendars.org" x)
+  		       (string-suffix-p "_old" x)
+  		       (not x)
+  		       (buffer-base-buffer (get-buffer x))))
+  	       (mapcar #'buffer-file-name (org-buffer-list 'files))))
 
-  (setq org-refile-targets `((nil
-			      :maxlevel . 5)
-			     (cm/org-buffer-files
-			      :maxlevel . 5)
-			     ((,(cm/org-dir "gtd.org")
-			       ,(cm/org-dir "work.org"))
-			      :maxlevel . 5)))
+    (setq org-refile-targets `((nil
+  			      :maxlevel . 5)
+  			     (cm/org-buffer-files
+  			      :maxlevel . 5)
+  			     ((,(cm/org-dir "gtd.org")
+  			       ,(cm/org-dir "work.org"))
+  			      :maxlevel . 5)))
 
-  ;; my dimmed face isn't that dim
-  (face-spec-set
-   'org-agenda-dimmed-todo-face
-   '((((background light)) (:foreground "dark orange"))
-     (((background dark)) (:foreground "light goldenrod")))
-   'face-defface-spec)
+    ;; my dimmed face isn't that dim
+    (face-spec-set
+     'org-agenda-dimmed-todo-face
+     '((((background light)) (:foreground "dark orange"))
+       (((background dark)) (:foreground "light goldenrod")))
+     'face-defface-spec)
 
-  (setq org-src-fontify-natively t)
-  (setq org-fontify-done-headline t)
-  (setq calendar-mark-diary-entries-flag t)
-  (setq org-adapt-indentation nil)
-  (setq org-agenda-dim-blocked-tasks t)
-  (setq org-agenda-include-all-todo t)
-  (setq org-agenda-include-diary t)
-  (setq org-agenda-show-all-dates t)
-  (setq org-agenda-skip-deadline-if-done t)
-  (setq org-agenda-skip-deadline-prewarning-if-scheduled t)
-  (setq org-agenda-skip-scheduled-if-done t)
-  (setq org-agenda-skip-scheduled-if-deadline-is-shown 'not-today)
-  (setq org-agenda-span 'week)
-  (setq org-agenda-tags-column -90)
-  (setq org-agenda-use-tag-inheritance nil)
-  (setq org-agenda-window-setup 'current-window)
-  (setq org-enforce-todo-dependencies t)
-  (setq org-export-with-sub-superscripts nil)
-  (setq org-startup-folded nil)
-  (setq org-file-apps '((auto-mode . emacs)
-			("\\.mm\\'" . default)
-			("\\.x?html?\\'" . default)
-			;; firefox no longer supports mhtml :(
-			("\\.mhtml\\'" . "google-chrome %s")
-			("\\.pdf\\'" . default)))
-  (setq org-hide-leading-stars t)
-  (setq org-indirect-buffer-display 'current-window)
-  (setq org-outline-path-complete-in-steps nil)
-  (setq org-pretty-entities-include-sub-superscripts nil)
+    (setq org-src-fontify-natively t)
+    (setq org-fontify-done-headline t)
+    (setq calendar-mark-diary-entries-flag t)
+    (setq org-adapt-indentation nil)
+    (setq org-agenda-dim-blocked-tasks t)
+    (setq org-agenda-include-all-todo t)
+    (setq org-agenda-include-diary t)
+    (setq org-agenda-show-all-dates t)
+    (setq org-agenda-skip-deadline-if-done t)
+    (setq org-agenda-skip-deadline-prewarning-if-scheduled t)
+    (setq org-agenda-skip-scheduled-if-done t)
+    (setq org-agenda-skip-scheduled-if-deadline-is-shown 'not-today)
+    (setq org-agenda-span 'week)
+    (setq org-agenda-tags-column -90)
+    (setq org-agenda-use-tag-inheritance nil)
+    (setq org-agenda-window-setup 'current-window)
+    (setq org-enforce-todo-dependencies t)
+    (setq org-export-with-sub-superscripts nil)
+    (setq org-startup-folded nil)
+    (setq org-file-apps '((auto-mode . emacs)
+  			("\\.mm\\'" . default)
+  			("\\.x?html?\\'" . default)
+  			;; firefox no longer supports mhtml :(
+  			("\\.mhtml\\'" . "google-chrome %s")
+  			("\\.pdf\\'" . default)))
+    (setq org-hide-leading-stars t)
+    (setq org-indirect-buffer-display 'current-window)
+    (setq org-outline-path-complete-in-steps nil)
+    (setq org-pretty-entities-include-sub-superscripts nil)
 #+end_src
 
 
@@ -4547,32 +4557,88 @@ How I deploy my personal website.
 :END:
 #+begin_src emacs-lisp
   (setq cm/org-journal-fmts
-	'((today "%Y-%m-%d.org" "Daily Plan: %Y-%m-%d: %A" "")
-	  (weekly "%Y-%m-w%W.org" "Weekly Plan: %Y-%m-w%W" "* Monday\n\n* Tuesday\n\n* Wednesday\n\n* Thursday\n\n* Friday\n\n* Weekend\n\n")
-	  (monthly "%Y-%m.org" "Monthly Plan: %Y-%m" "")
-	  (quarterly "%Y-q%q.org" "Quarterly Plan: %Y-q%q" "")
-	  (yearly "%Y.org" "Yearly Plan: %Y" "")))
+  	'((day "%Y-%m-%d.org" "Daily Plan: %Y-%m-%d: %A" "[[id:85A8B7A4-0FF0-4CA1-B8C7-3E3B10187B29][Plan: Daily]]\n")
+  	  (week "%Y-%m-w%W.org" "Weekly Plan: %Y-%m-w%W" "[[id:2857A59C-491E-40B2-8F9A-2962BCF6854A][Plan: Weekly]]\n\n* Monday\n\n* Tuesday\n\n* Wednesday\n\n* Thursday\n\n* Friday\n\n* Weekend\n\n")
+  	  (month "%Y-%m.org" "Monthly Plan: %Y-%m" "[[id:2ACF80AB-41F1-4F78-BC81-AD868A4931C6][Plan: Monthly]]\n")
+  	  (quarter "%Y-q%q.org" "Quarterly Plan: %Y-q%q" "[[id:60FCAAD4-6C27-4041-9B29-8358D6F91C6E][Plan: Quarterly]]\n")
+  	  (year "%Y.org" "Yearly Plan: %Y" "[[id:50441B2D-B676-4C97-B903-49F8B1CD601F][Plan: Yearly]]\n")))
 
-  (defun cm/org-journal-header (type)
+  (defun cm/org-journal-header (type time)
     (interactive)
     (let ((template (assoc type cm/org-journal-fmts)))
-      (format-time-string (concat ":PROPERTIES:\n:ID: " (org-id-new) "\n:END:\n#+title: " (nth 2 template) "\n#+date: <%Y-%m-%d>\n\n" (nth 3 template)))))
+      (format-time-string (concat ":PROPERTIES:\n:ID: " (org-id-new) "\n:END:\n#+title: " (nth 2 template) "\n#+date: <%Y-%m-%d>\n\n" (nth 3 template)) time)))
 
-  (defun cm/org-journal-file (type)
+  (defun cm/org-journal-file (type time)
     (interactive)
-    (file-truename (expand-file-name (format-time-string (cm/org-dir (concat "_notes/" (nth 1 (assoc type cm/org-journal-fmts))))))))
+    (file-truename (expand-file-name (format-time-string (cm/org-dir (concat "_notes/" (nth 1 (assoc type cm/org-journal-fmts)))) time))))
+
+  (defun cm/org-journal-open-all (time)
+    (interactive)
+    (delete-other-windows)
+    (split-window-right -80)
+    ;; open day
+    (cm/org-journal-open-at 'day time)
+    (other-window 1)
+    (split-window-below)
+    (split-window-below)
+    (balance-windows)
+    (cm/org-journal-open-at 'week time)
+    (other-window 1)
+    (cm/org-journal-open-at 'month time)
+    (other-window 1)
+    (cm/org-journal-open-at 'quarter time)
+    (split-window-right)
+    (other-window 1)
+    (cm/org-journal-open-at 'year time)
+    (other-window 1))
+
+  (defun cm/org-journal-read-type ()
+    (interactive)
+    (let ((selected (intern (completing-read "Type: " (list 'd 'w 'm 'q 'y 'a)))))
+      (case selected
+        (a 'all)
+        (d 'day)
+        (w 'week)
+        (m 'month)
+        (q 'quarter)
+        (y 'year))))
+
+  (defun cm/org-journal-find ()
+    (interactive)
+    (let ((ts (org-read-date nil 'to-time nil "Journal Date: "))
+  	(type (cm/org-journal-read-type)))
+      (cm/org-journal-open-at type ts)))
+
+  (defun cm/org-journal-open-at (type time)
+    (if (eq type 'all)
+        (cm/org-journal-open-all time)
+      (let ((jfile (cm/org-journal-file type time)))
+        (if (file-exists-p jfile)
+  	  (find-file jfile)
+  	(find-file jfile)
+  	(goto-char (point-min))
+  	(insert (cm/org-journal-header type time))))))
 
   (defun cm/org-journal-open (type)
-    (let ((jfile (cm/org-journal-file type)))
-      (if (file-exists-p jfile)
-	  (find-file jfile)
-	(find-file jfile)
-	(goto-char (point-min))
-	(insert (cm/org-journal-header type)))))
+    (interactive)
+    (cm/org-journal-open-at type (current-time)))
 
   ;; need to configure the dailies to work
 
-  (global-set-key (kbd "C-c j") (lambda () (interactive) (cm/org-journal-open 'today)))
+  ;; now all under C-c j
+  (defhydra hydra-cm-org-journal (global-map "C-c j" :exit t)
+    "Journaling heals the soul, but maybe you should make a plan"
+    ("d" (cm/org-journal-open 'day) "open today's file" :column "planning")
+    ("j" (cm/org-journal-open 'day) "open today's file")
+    ("w" (cm/org-journal-open 'week) "open this week's file")
+    ("m" (cm/org-journal-open 'month) "open this month's file")
+    ("q" (cm/org-journal-open 'quarter) "open this quarter's file")
+    ("y" (cm/org-journal-open 'year) "open this year's file")
+    ("a" (cm/org-journal-open 'all) "open all files related to today" :column "navigating")
+    ("f" (cm/org-journal-find) "open all files related to time selected"))
+
+  (global-set-key (kbd "C-c j") 'hydra-cm-org-journal/body)
+
 #+end_src
 **** Checklist Creation
 :PROPERTIES:
@@ -4901,15 +4967,16 @@ Let's first layout what we want the keymap to be like:
     ("g" org-roam-graph "show roam graph")
     ("f" org-roam-node-find "find note")
     ("i" org-roam-node-insert "insert roam refererce")
-    ("jd" (cm/org-journal-open 'today) "open today's file" :column "planning")
-    ("jj" (cm/org-journal-open 'today) "open today's file")
-    ("jw" (cm/org-journal-open 'weekly) "open this week's file")
-    ("jm" (cm/org-journal-open 'monthly) "open this month's file")
-    ("jq" (cm/org-journal-open 'quarterly) "open this quarter's file")
-    ("jy" (cm/org-journal-open 'yearly) "open this year's file")
+    ("jd" (cm/org-journal-open 'day) "open today's file" :column "planning")
+    ("jj" (cm/org-journal-open 'day) "open today's file")
+    ("jw" (cm/org-journal-open 'week) "open this week's file")
+    ("jm" (cm/org-journal-open 'month) "open this month's file")
+    ("jq" (cm/org-journal-open 'quarter) "open this quarter's file")
+    ("jy" (cm/org-journal-open 'year) "open this year's file")
     ("q" nil "quit"))
 
   (global-set-key (kbd "C-c n") 'hydra-cm-org-notes/body)
+
 #+end_src
 
 #+begin_src emacs-lisp
