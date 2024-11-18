@@ -590,7 +590,7 @@ DIRECTORIES may be a string or list of strings.  If DIRECTORIES
 is nil, prompt with `helm-read-file-name'.  With prefix or
 TOGGLE-RECURSION non-nil, toggle recursion from the default.
 Files in DIRECTORIES are filtered using
-`helm-org-rifle-directories-filename-regexp'."
+`elm-org-rifle-directories-filename-regexp'."
   ;; This does not need to be defined with helm-org-rifle-define-command because it calls helm-org-rifle-files which is.
   (interactive)
   (let* ((recursive (if (or toggle-recursion current-prefix-arg)
@@ -604,6 +604,7 @@ Files in DIRECTORIES are filtered using
                                             (s-matches? helm-org-rifle-directories-filename-regexp (f-filename file)))
                                           recursive)
                                  directories))))
+    (message "files: %S" files)
     (if files
         (helm-org-rifle-files files)
       (error "No org files found in directories: %s" (s-join " " directories)))))

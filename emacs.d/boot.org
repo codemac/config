@@ -3462,6 +3462,26 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
          check less frequently. Some of the above may move into here just so
           we don't end up conflicting over time.
 #+begin_src emacs-lisp
+
+  (require 'org-roam)
+
+  (defun cm/inbox-agenda-from-roam-string-node-link (backlink)
+    (let* ((node (org-roam-backlink-source-node backlink))
+  	   (file (org-roam-node-file node))
+  	   (file-title (org-roam-node-file-title node))
+  	   (title (org-roam-node-title node))
+  	   (combined-title (if (equalp file-title title) title (concat file-title "/" title))))
+      (concat "[[file:" file "][" combined-title "]]")))
+
+  (defun cm/inbox-agenda-from-roam-string ()
+    (let* ((inbox-uuid "10923aad-abe0-4878-9c00-c1d23977db81")
+  	   (remaining-things (org-roam-backlinks-get (org-roam-node-from-id inbox-uuid)))
+  	   (file-links (mapcar #'cm/inbox-agenda-from-roam-string-node-link remaining-things)))
+      (if file-links
+  	(mapconcat #'identity (cons "Org-Roam Inbox" file-links) "\n  ")
+        "")))
+
+
   (defun cm/day-agendas ()
     `(("d" "Full Day Agenda"
        ((agenda "Today" ((org-agenda-span 1)))
@@ -3470,34 +3490,13 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
       ("i" "Inbox"
        ((org-ql-block
          '(or (and (todo) (not (tags-local))) (path "from-mobile.org"))
-        ((org-ql-block-header "Inbox")))))
+         ((org-ql-block-header "Inbox")))
+        (cm/insert-agenda #'cm/inbox-agenda-from-roam-string)))
       ("n" "Next agenda"
        ((org-ql-block '(and (todo "NEXT") (not (scheduled)))
   		    ((org-ql-block-header "Next Items")))
         (org-ql-block '(and (todo "TODO") (not (scheduled)))
   		    ((org-ql-block-header "Todo Items")))))))
-
-  (require 'org-roam)
-
-  (defun cm/inbox-agenda-from-roam-string-node-link (backlink)
-    (let* ((node (org-roam-backlink-source-node backlink))
-	   (file (org-roam-node-file node))
-	   (file-title (org-roam-node-file-title node))
-	   (title (org-roam-node-title node))
-	   (combined-title (if (equalp file-title title) title (concat file-title "/" title))))
-      (concat "[[file:" file "][" combined-title "]]")))
-
-  (defun cm/inbox-agenda-from-roam-string ()
-    (let* ((inbox-uuid "10923aad-abe0-4878-9c00-c1d23977db81")
-	   (remaining-things (org-roam-backlinks-get (org-roam-node-from-id inbox-uuid)))
-	   (file-links (mapcar #'cm/inbox-agenda-from-roam-string-node-link remaining-things)))
-      (mapconcat #'identity (cons "Org-Roam Inbox" file-links) "\n  ")))
-
-  (defun cm/inbox-agenda ()
-    `(("i" "Inbox"
-       ((tags-todo "-{.*}" ((org-agenda-overriding-header "Org Inbox")))
-	(tags-todo "noop" ((org-agenda-overriding-header ,(cm/inbox-agenda-from-roam-string)))))
-       ((org-agenda-overriding-header "Inbox")))))
 
 
   ;; 2023-11-06: My old contexts were:
@@ -3553,9 +3552,13 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
          ((org-ql-block-header "Projects: Scheduled / Tickled")))))))
 
   (defun cm/insert-agenda (text)
-    (org-agenda-prepare)
-    (insert (org-add-props (concat text) nil 'face 'org-agenda-struction))
-    (insert "\n"))
+    (let ((src (cond
+  	      ((functionp text) (funcall text))
+  	      ((symbolp text) (funcall (symbol-function text)))
+  	      (t text))))
+      (org-agenda-prepare)
+      (insert (org-add-props (concat src) nil 'face 'org-agenda-structure))
+      (insert "\n")))
 
   (defun cm/review-agendas ()
     `(("rd" "Daily Review"
@@ -3584,6 +3587,7 @@ The org agenda. It's mostly for gtd usage, so I have the following views:
   		      "- [[file:~][Loose home files]]\n"
   		      "- Inbox headings from org: \n"))
         (org-ql-block '(and (todo) (not (or (tags) (todo "WAIT" "DEFER"))) (path "from-mobile.org")))
+        (cm/insert-agenda #'cm/inbox-agenda-from-roam-string)
         (cm/insert-agenda "## Empty Your Head!")
 
         (cm/insert-agenda "# Get Current!")
@@ -5022,8 +5026,8 @@ Let's first layout what we want the keymap to be like:
 #+begin_src emacs-lisp
   (defhydra hydra-cm-org-notes (global-map "C-c n" :exit t)
     "Use your notes wisely, Luke"
-    ("n" deft "deftly search through all notes" :column "searching")
-    ("s" cm/org-notes-search "search through all notes")
+    ("n" cm/org-rifle-global "deftly search through all notes" :column "searching")
+    ("s" cm/org-rifle-global "search through all notes")
     ("a" cm/org-rifle-agenda "search agenda org files in ~/org")
     ("r" cm/org-notes-capture "new note")
     ("l" org-roam-buffer-toggle "show org-roam links" :column "roaming")
@@ -5107,10 +5111,11 @@ the files.
     (interactive)
     (helm-org-rifle-agenda-files))
 
-  (defun cm/org-rifle-global()
+  (defun cm/org-rifle-global ()
     "search through all org files"
     (interactive)
-    (helm-org-rifle-directories (list (cm/org-dir)) t))
+    (let ((helm-org-rifle-diretories-recursive t))
+      (helm-org-rifle-directories (list (cm/org-dir)))))
 #+end_src
 ***** Deft support functions
 :PROPERTIES:
